@@ -72,12 +72,52 @@ function updEnemies(){
       e.ang+=.04; e.x+=Math.cos(e.ang)*.9+e.kx; e.y+=Math.sin(e.ang*1.3)*.7+e.ky;
       e.x=Math.max(4,Math.min(SW*16-20,e.x)); e.y=Math.max(4,Math.min(SH*16-20,e.y));
       if(d<40){ player.kx+=(player.x-e.x)/d*0.5; player.ky+=(player.y-e.y)/d*0.5; }
+
+    } else if(e.type==='squirrel'){ // la ardilla ladrona: roba 1 baya y huye; cazarla paga 3
+      noContact=true; e.t++;
+      if(e.st==='flee'){
+        const [bx,by]=moveBlocked(e,e.x+e.fx*1.9+e.kx,e.y+e.fy*1.4+e.ky);
+        if(bx)e.fx*=-1; if(by)e.fy*=-1;
+        if(--e.ft<=0) e.despawn=true;
+      } else if(e.st==='dash'){
+        moveBlocked(e,e.x+dx/d*1.6+e.kx,e.y+dy/d*1.6+e.ky);
+        if(rectsHit([e.x+3,e.y+4,10,9],[player.x+4,player.y+8,8,8])){
+          if(berries>0){ berries--; SFX.bump(); shake=2;
+            puff(player.x+8,player.y+8,'#d84878',6,1.2);
+            showToast('¡BAYA ROBADA!','caza a la ardilla'); }
+          e.st='flee'; e.ft=110;
+          e.fx=Math.sign(e.x-player.x)||1; e.fy=Math.sign(e.y-player.y)||0;
+        }
+        if(d>110) e.st='wander';
+      } else { // curiosea como un blob tímido
+        e.t2=(e.t2||0)-1;
+        if(e.t2<=0){ e.t2=50+hash(e.x|0,e.y|0)%60;
+          const a=Math.random()*6.283; e.vx=Math.cos(a)*.45; e.vy=Math.sin(a)*.45; }
+        const [bx,by]=moveBlocked(e,e.x+e.vx+e.kx,e.y+e.vy+e.ky);
+        if(bx)e.vx*=-1; if(by)e.vy*=-1;
+        if(berries>0&&d<56){ e.st='dash'; SFX.blip(); }
+      }
+
+    } else if(e.type==='icicle'){ // cuelga del risco; cae cuando pasas por debajo
+      if(e.st==='hang'){ noContact=true;
+        if(Math.abs(dx)<9&&dy>4&&dy<80){ e.st='shake'; e.st2=20; SFX.bump(); }
+      } else if(e.st==='shake'){ noContact=true;
+        e.x=e.x0+((tick&2)?1:-1);
+        if(--e.st2<=0){ e.st='fall'; e.vy=.6; e.x=e.x0; }
+      } else { // cae y se hace añicos
+        e.vy=Math.min(3.4,e.vy+.22); e.y+=e.vy;
+        const ty=(e.y+14)>>4, tx=(e.x+8)>>4;
+        if(e.y>SH*16||(grid[ty]&&grid[ty][tx]!==undefined&&isSolid(grid[ty][tx]))){
+          e.despawn=true; SFX.cut();
+          puff(e.x+8,e.y+10,'#dff0ff',8,1.4); puff(e.x+8,e.y+10,'#a8d0e8',5,1);
+        }
+      }
     }
 
     // ----- daño por contacto -----
     const eb=[e.x+3,e.y+4,10,9], pb=[player.x+4,player.y+8,8,8];
     if(!noContact&&player.inv===0&&state==='play'&&rectsHit(eb,pb)){
-      player.hp--; player.inv=60; shake=8; SFX.hurt(); hitStop=3;
+      player.hp-=(e.dmg||1); player.inv=60; shake=8; SFX.hurt(); hitStop=3;
       player.kx=(player.x-e.x)/d*2.5; player.ky=(player.y-e.y)/d*2.5;
       if(player.hp<=0) die();
     }
@@ -97,11 +137,19 @@ function updEnemies(){
     }
   }
   enemies=enemies.filter(e=>{
+    if(e.despawn) return false; // se fue sin más (ardilla huida, carámbano roto)
     if(e.hp<=0){
       SFX.edie(); puff(e.x+8,e.y+8,'#e8e8d8',8,1.4); puff(e.x+8,e.y+8,'#9088a0',5,1);
+      if(e.type==='squirrel'){ // la caza paga: 3 bayas
+        for(let i=0;i<3;i++) pickups.push({kind:'berry',x:e.x+i*7-3,y:e.y+4,t:0});
+        return false;
+      }
       const r=Math.random(), hc=(e.type==='thorn'?.5:.25);
       if(r<hc) pickups.push({kind:'heart',x:e.x+4,y:e.y+4,t:0});
-      else if(r<hc+.3) pickups.push({kind:'berry',x:e.x+4,y:e.y+4,t:0});
+      else if(r<hc+.3){ // los bichos curtidos sueltan el doble
+        const n=e.fast?2:1;
+        for(let i=0;i<n;i++) pickups.push({kind:'berry',x:e.x+4+i*8-4,y:e.y+4,t:0});
+      }
       return false;
     } return true;
   });

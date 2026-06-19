@@ -109,7 +109,7 @@ const SPROUT_SIDE_B = spr([ // paso, piernas abiertas
 "....kmk..kmk....",
 "................",
 ]);
-const BLOB = spr([
+const BLOB_ROWS=[
 "................",
 "................",
 "................",
@@ -126,8 +126,10 @@ const BLOB = spr([
 "................",
 "................",
 "................",
-]);
-const BAT = spr([
+];
+const BLOB = spr(BLOB_ROWS);
+const BLOB_FAST = spr(BLOB_ROWS,{g:'#58a8c8',G:'#2e6890'}); // blob de escarcha (variante rápida)
+const BAT_ROWS=[
 "................",
 "................",
 "................",
@@ -144,7 +146,9 @@ const BAT = spr([
 "................",
 "................",
 "................",
-],{d:'#5c3080'});
+];
+const BAT = spr(BAT_ROWS,{d:'#5c3080'});
+const BAT_FAST = spr(BAT_ROWS,{p:'#c84848',P:'#802020',d:'#802020'}); // murciélago carmesí (variante rápida)
 const BEETLE = spr([ // escarabajo acorazado — mira a la derecha; el frente (dcha) blinda
 "................",
 "................",
@@ -670,9 +674,9 @@ const EMBER_SPR = spr([   // la Brasa de Primavera
 "................",
 "................",
 ],{o:'#f8a030',Y:'#f8e060'});
-const TOPO_SPR = spr([    // el TOPO REAL
-"................",
-"................",
+const TOPO_SPR = spr([    // el TOPO REAL — con su coronita de oro
+".....C.C.C......",
+".....CCCCC......",
 ".....kkkkkk.....",
 "...kkbbbbbbkk...",
 "..kbbbbbbbbbbk..",
@@ -687,7 +691,7 @@ const TOPO_SPR = spr([    // el TOPO REAL
 "................",
 "................",
 "................",
-],{b:'#7a5a38',n:'#e89cb8',c:'#e8d8c0'});
+],{b:'#7a5a38',n:'#e89cb8',c:'#e8d8c0',C:'#f8d030'});
 const HOOK_SPR = spr([    // la Raíz-Gancho
 "................",
 "................",
@@ -724,9 +728,9 @@ const TEAR_SPR = spr([    // la Lágrima de Verano
 "................",
 "................",
 ],{b:'#3878d8',B:'#78c8f8'});
-const WASP_SPR = spr([    // la REINA AVISPA
-"................",
-"..kk.......kk...",
+const WASP_SPR = spr([    // la REINA AVISPA — tiara de oro entre las alas
+"......C.C.......",
+"..kk..CCC..kk...",
 ".kwwk.....kwwk..",
 ".kwwwk...kwwwk..",
 "..kwwwk.kwwwk...",
@@ -741,7 +745,7 @@ const WASP_SPR = spr([    // la REINA AVISPA
 ".......k........",
 "................",
 "................",
-],{a:'#1a1410',y:'#f8d030',w:'#d8e8f0'});
+],{a:'#1a1410',y:'#f8d030',w:'#d8e8f0',C:'#ffe9a0'});
 const WIND_SPR = spr([    // EL VIENTO DEL NORTE — espíritu de tormenta
 "....wwwwww......",
 "..wwccccccww....",
@@ -778,12 +782,131 @@ const FLAKE_SPR = spr([   // el COPO ETERNO
 "................",
 "................",
 ],{w:'#dff0ff'});
+/* --- los vecinos, cada uno con su silueta (el diálogo manda sobre el diseño) --- */
+const PETRA_SPR = spr([ // la niña del diente de león: bajita, con su vilano
+"................",
+"......kwwk......",
+".....kwwwwk.....",
+"......kdk.......",
+"....kkkkkkkk....",
+"...kssssssssk...",
+"...kskssssksk...",
+"...kssssssssk...",
+"....kssssssk....",
+".....kkkkkk.....",
+"....kbbbbbbk....",
+"....kbbbbbbk....",
+"....kbbbbbbk....",
+"....kmk..kmk....",
+"................",
+"................",
+],{b:'#d84878',w:'#f0f0e0'});
+const LUPA_SPR = spr([ // la jardinera: pamela de paja con flor
+"......kRk.......",
+".....kyyyyyk....",
+"....kyyyyyyyk...",
+"...kssssssssk...",
+"...kskssssksk...",
+"...kskssssksk...",
+"...kssssssssk...",
+"....kssssssk....",
+".....kkkkkk.....",
+"....kbbbbbbk....",
+"...ksbbbbbbbk...",
+"....kbbbbbbk....",
+"....kbbbbbbk....",
+"....kmmk..kmk...",
+"................",
+"................",
+],{b:'#3878d8',y:'#e8c860',R:'#e84848'});
+const MOSS_SPR = spr([ // el pescador: gorra de musgo y caña al hombro
+"................",
+"....kcccccck....",
+"...kcccccccck...",
+"....kkkkkkkk..w.",
+"...kssssssssk.A.",
+"...kskssssksk.A.",
+"...kskssssksk.A.",
+"...kssssssssk.A.",
+"....kssssssk..A.",
+".....kkkkkk...A.",
+"....kbbbbbbk..A.",
+"...ksbbbbbbbk.A.",
+"....kbbbbbbk..A.",
+"....kbbbbbbk....",
+"....kmmk..kmk...",
+"................",
+],{b:'#6a5838',c:'#3a5a2a',w:'#d8e8f0'});
+const TILO_SPR = spr([ // el tendero: hoja de tilo (corazón) y delantal
+".....kl.lk......",
+"....klllllk.....",
+"......klk.......",
+"....kkkkkkkk....",
+"...kssssssssk...",
+"...kskssssksk...",
+"...kskssssksk...",
+"...kssssssssk...",
+"....kssssssk....",
+".....kkkkkk.....",
+"....kbwwwwbk....",
+"...ksbwwwwbbk...",
+"....kbwwwwbk....",
+"....kbwwwwbk....",
+"....kmmk..kmk...",
+"................",
+],{b:'#e8b050',l:'#3a7a30',w:'#f0e8d0'});
 const NPCS={
-  h:{name:'Petra', img:spr(SPROUT_DOWN_ROWS,{b:'#d84878'})},
-  j:{name:'Lupa',  img:spr(SPROUT_DOWN_ROWS,{b:'#3878d8'})},
-  y:{name:'Moss',  img:spr(SPROUT_DOWN_ROWS,{b:'#6a5838',l:'#3a7a30'})},
-  g:{name:'Tilo',  img:spr(SPROUT_DOWN_ROWS,{b:'#e8b050',l:'#3a7a30'})}, // el tendero
+  h:{name:'Petra', img:PETRA_SPR},
+  j:{name:'Lupa',  img:LUPA_SPR},
+  y:{name:'Moss',  img:MOSS_SPR},
+  g:{name:'Tilo',  img:TILO_SPR}, // el tendero
 };
+/* retratos del diálogo (a lo Golden Sun): el sprite del hablante, en grande */
+const PORTRAITS={
+  'RAÍZ':ELDER, 'PETRA':PETRA_SPR, 'LUPA':LUPA_SPR, 'MOSS':MOSS_SPR, 'TILO':TILO_SPR,
+  'EL VIENTO':WIND_SPR, 'EL TOPO REAL':TOPO_SPR, 'LA REINA':WASP_SPR,
+};
+/* --- fauna nueva: la ardilla ladrona y el carámbano --- */
+const SQUIRREL_ROWS=[
+"................",
+"................",
+"...........kk...",
+"..........kqqk..",
+".....kk..kqqqqk.",
+"....kqqk.kqqqqk.",
+"...kqqqqkkqqqk..",
+"...kqwqqqqqqk...",
+"...kqqqqqqqk....",
+"....kqqqqqqk....",
+".....kqqqqk.....",
+"....kqk..kqk....",
+"................",
+"................",
+"................",
+"................",
+];
+const SQUIRREL = spr(SQUIRREL_ROWS,{q:'#b07840',w:'#1a1410'});
+const SQUIRREL_L = flipH(SQUIRREL);
+const SQUIRREL_WHITE = whiten(SQUIRREL);
+const ICICLE_SPR = spr([ // carámbano colgante
+"....kwwwwwk.....",
+"....kwiiiwk.....",
+".....kwiiwk.....",
+".....kwiiwk.....",
+"......kwiwk.....",
+"......kwiwk.....",
+".......kwik.....",
+".......kwik.....",
+"........kwk.....",
+"........kwk.....",
+".........k......",
+"................",
+"................",
+"................",
+"................",
+"................",
+],{w:'#dff0ff',i:'#a8d0e8'});
+const ICICLE_WHITE = whiten(ICICLE_SPR);
 const SPIN_ICON=(()=>{ // icono del Remolino para zurrón y tienda
   const c=document.createElement('canvas'); c.width=16; c.height=16;
   const g=c.getContext('2d');
@@ -812,5 +935,7 @@ const E_SPR = { // [tipo] → {img, white} (algunos con orientación se resuelve
   ghost:{a:GHOST, w:whiten(GHOST)},
   frog:{a:FROG, jump:FROG_JUMP, w:whiten(FROG), wjump:whiten(FROG_JUMP)},
   thorn:{a:THORN, open:THORN_OPEN, w:whiten(THORN), wopen:whiten(THORN_OPEN)},
+  squirrel:{a:SQUIRREL, b:SQUIRREL_L, w:SQUIRREL_WHITE},
+  icicle:{a:ICICLE_SPR, w:ICICLE_WHITE},
 };
 

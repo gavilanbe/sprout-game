@@ -21,6 +21,8 @@ let hasBomb=false, hasEmber=false, bossDone=false, thawed=false;
 let hasHook=false, hasTear=false, boss2Done=false, summered=false, marshIntro=false;
 /* capítulo 3: la cima del viento */
 let hasFlake=false, boss3Done=false, cycled=false, peakIntro=false;
+let windVisit=false;          // ya escuchaste la nana en la cima (post-final)
+let bossCard=null;            // {txt,t} cartel de presentación de jefe
 let hook=null; // {tx,ty,sx0,sy0} animación del gancho
 const opened=new Set();   // verjas abiertas y grietas voladas
 let bombs=[], projs=[], boss=null, npcs=[];
@@ -60,11 +62,23 @@ function die(){ if(state==='dying'||state==='over') return;
   state='dying'; deathT=70; wilts++; player.atk=0; bombs=[]; projs=[]; windProjs=[];
   SFX.hurt(); shake=6; }
 
-const player={x:44,y:26,dir:0,frame:0,anim:0,hp:6,maxHp:6,inv:0,atk:0,kx:0,ky:0,charge:0,spin:0}; // dormido en su cama-maceta
+const player={x:44,y:26,dir:0,frame:0,anim:0,hp:6,maxHp:6,inv:0,atk:0,kx:0,ky:0,charge:0,spin:0,ivx:0,ivy:0}; // dormido en su cama-maceta
 
-/* diálogo */
-let dlg=null; // {pages:[], page, chars, cb, who}
-function say(pages,cb,who){ dlg={pages:pages.slice(),page:0,chars:0,cb:cb||null,who:who||null}; state='dialog'; }
+/* diálogo: caja FIJA de 3 líneas — cada página del guion se trocea en
+   pantallas de 3 líneas (con retrato caben 13 columnas; sin él, 17) */
+function paginate(pages,who){
+  if(typeof wrapText!=='function') return pages.slice(); // por si acaso en arranques raros
+  const cols=(who&&typeof PORTRAITS!=='undefined'&&PORTRAITS[who])?13:17, out=[];
+  for(const p of pages){
+    const ls=wrapText(p,cols);
+    for(let i=0;i<ls.length;i+=3) out.push(ls.slice(i,i+3).join('\n'));
+  }
+  return out;
+}
+let dlg=null; // {pages:[], page, chars, cb, who, ask}
+function say(pages,cb,who){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:cb||null,who:who||null,ask:null}; state='dialog'; }
+/* pregunta con respuesta: al acabar la última página, Z=sí / X=no → cb(bool) */
+function ask(pages,who,cb){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:null,who:who||null,ask:cb}; state='dialog'; }
 
 /* transición de pantalla */
 let trans=null; // {dx,dy,t,dur,from,to}

@@ -48,12 +48,20 @@ function drawPlayer(){
 }
 function drawEnemy(e){
   const flash=e.flash>4;
-  // tipos antiguos
+  // tipos antiguos (los curtidos se distinguen por el color)
   if(e.type==='blob'||e.type==='bat'){
-    const img=flash?(e.type==='blob'?BLOB_WHITE:BAT_WHITE):(e.type==='blob'?BLOB:BAT);
+    const img=flash?(e.type==='blob'?BLOB_WHITE:BAT_WHITE)
+                   :(e.type==='blob'?(e.fast?BLOB_FAST:BLOB):(e.fast?BAT_FAST:BAT));
     const sq=e.type==='blob' ? Math.sin(tick*.12+e.x)*0.12 : Math.sin(tick*.3+e.x)*0.18;
     ctx.save(); ctx.translate((e.x|0)+8,(e.y|0)+16); ctx.scale(1+sq,1-sq);
     ctx.drawImage(img,-8,-16); ctx.restore(); return;
+  }
+  if(e.type==='squirrel'){ // la ardilla mira hacia donde corre
+    const S=E_SPR.squirrel;
+    const toward = e.st==='dash' ? Math.sign(player.x-e.x) : (e.st==='flee' ? e.fx : Math.sign(e.vx||1));
+    const img=flash?S.w:(toward>0?S.b:S.a);
+    const hop=(e.st==='wander')?0:((tick&4)?-1:0);
+    ctx.drawImage(img,e.x|0,(e.y|0)+hop); return;
   }
   if(e.type==='gust'){ // remolino: anillos girando, sin sprite fijo
     ctx.save(); ctx.translate((e.x|0)+8,(e.y|0)+8);
@@ -89,26 +97,66 @@ function drawUI(){
   ctx.fillStyle=C.uiText; ctx.font='8px "Press Start 2P"'; ctx.textBaseline='top';
   ctx.drawImage(BERRY_SPR,82,PLAY_H+4);
   ctx.fillText('x'+berries,92,PLAY_H+4);
-  ctx.drawImage(ACORN,120,PLAY_H+4);
-  ctx.fillText('x'+seeds,131,PLAY_H+4);
+  if(!won){ // las semillas importan hasta entregarlas...
+    ctx.drawImage(ACORN,120,PLAY_H+4);
+    ctx.fillText('x'+seeds,131,PLAY_H+4);
+  } else if(hasBomb){ // ...luego ese hueco recuerda que X planta bombas
+    ctx.fillText('X',118,PLAY_H+4);
+    ctx.drawImage(BOMB_SPR,0,0,16,16,128,PLAY_H+2,12,12);
+  }
+}
+/* parte el texto en líneas de ≤maxc columnas, respetando los \n del guion:
+   ningún diálogo vuelve a salirse de su caja */
+function wrapText(s,maxc){
+  const out=[];
+  for(const raw of s.split('\n')){
+    let ln=raw;
+    while(ln.length>maxc){
+      let cut=ln.lastIndexOf(' ',maxc);
+      if(cut<1) cut=maxc;
+      out.push(ln.slice(0,cut));
+      ln=ln.slice(cut).replace(/^ /,'');
+    }
+    out.push(ln);
+  }
+  return out;
 }
 function drawDialog(){
-  const x=4,y=78,w=152,h=46;
+  const full=dlg.pages[dlg.page];      // ya viene paginado a ≤3 líneas (paginate)
+  const lines=full.split('\n');
+  const x=4, w=152, h=46;              // caja FIJA, tamaño de siempre
+  const y=(player.y+8>56)?6:78;        // arriba si Sprout anda por abajo: nunca lo tapa
   ctx.fillStyle=PAL.k; ctx.fillRect(x-1,y-1,w+2,h+2);
   ctx.fillStyle='#183020'; ctx.fillRect(x,y,w,h);
   ctx.strokeStyle=C.uiText; ctx.lineWidth=1; ctx.strokeRect(x+1.5,y+1.5,w-3,h-3);
   ctx.font='8px "Press Start 2P"'; ctx.textBaseline='top';
-  if(dlg.who){ // quién habla, en su cartelita
-    const nw=dlg.who.length*8+8;
-    ctx.fillStyle=PAL.k; ctx.fillRect(x+3,y-10,nw+2,12);
-    ctx.fillStyle='#0e2014'; ctx.fillRect(x+4,y-9,nw,10);
-    ctx.fillStyle=C.flowerC; ctx.fillText(dlg.who,x+8,y-8);
+  const por=dlg.who&&PORTRAITS[dlg.who];
+  if(por){ // retrato a lo Golden Sun: el hablante, en grande, en su marquito
+    ctx.fillStyle=PAL.k; ctx.fillRect(x+3,y+4,38,38);
+    ctx.fillStyle='#0e2014'; ctx.fillRect(x+4,y+5,36,36);
+    ctx.drawImage(por,0,0,16,16,x+6,y+7,32,32);
+    ctx.strokeStyle=C.flowerC; ctx.strokeRect(x+3.5,y+4.5,37,37);
   }
+  if(dlg.who){ // quién habla, en su cartelita (debajo si la caja está arriba)
+    const nw=dlg.who.length*8+8, py=(y===78)?y-10:y+h+1;
+    ctx.fillStyle=PAL.k; ctx.fillRect(x+3,py,nw+2,12);
+    ctx.fillStyle='#0e2014'; ctx.fillRect(x+4,py+1,nw,10);
+    ctx.fillStyle=C.flowerC; ctx.fillText(dlg.who,x+8,py+2);
+  }
+  const tx0=por?x+46:x+6;
   ctx.fillStyle=C.uiText;
-  const pg=dlg.pages[dlg.page].slice(0,dlg.chars|0).split('\n');
-  pg.forEach((ln,i)=>ctx.fillText(ln,x+6,y+7+i*12));
-  if((dlg.chars|0)>=dlg.pages[dlg.page].length&&(tick&31)<20){
-    ctx.fillText('▼',x+w-14,y+h-11);
+  let budget=dlg.chars|0; // el tecleo recorre las líneas ya envueltas
+  lines.forEach((ln,i)=>{
+    if(budget<=0) return;
+    ctx.fillText(ln.slice(0,budget),tx0,y+7+i*12);
+    budget-=ln.length+1;
+  });
+  if((dlg.chars|0)>=full.length){
+    if(dlg.ask&&dlg.page===dlg.pages.length-1){ // pregunta: elige
+      ctx.fillStyle=C.flowerC; ctx.fillText('Z:sí  X:no',x+w-86,y+h-10);
+    } else if((tick&31)<20){
+      ctx.fillStyle=C.uiText; ctx.fillText('▼',x+w-14,y+h-11);
+    }
   }
 }
 /* el GRAN ROBLE del pueblo: el corazón del lore, y un marcador vivo de tu progreso.
@@ -148,6 +196,13 @@ function drawScene(){
       if((tick&15)===7) parts.push({x:120,y:44,vx:0,vy:-.3,life:12,col:'#78c8f8'}); }
     if(cycled){ ctx.drawImage(FLAKE_SPR,48,86);
       if((tick&15)===11) parts.push({x:56,y:92,vx:0,vy:-.3,life:12,col:'#dff0ff'}); }
+    if(cycled){ // las 8 hermanas germinaron alrededor de su Roble
+      [[26,70],[40,78],[58,70],[74,78],[90,70],[106,78],[26,86],[106,86]].forEach(([gx,gy],i)=>{
+        const bob=Math.sin(tick*.05+i*1.3)>0?0:1;
+        ctx.drawImage(SEEDLING_SPR,gx,gy+bob);
+        if(((tick+i*9)%140)===0) parts.push({x:gx+8,y:gy+9,vx:0,vy:-.25,life:16,col:PAL.l});
+      });
+    }
   }
   // semillas y corazones
   const ITEM_SPRS={blade:BLADE_SPR,bomb:BOMB_SPR,ember:EMBER_SPR,hook:HOOK_SPR,tear:TEAR_SPR,flake:FLAKE_SPR};
@@ -195,35 +250,45 @@ function drawScene(){
       ctx.fillStyle='#6e5a4c'; ctx.fillRect(boss.mx+3+wob,boss.my+11,10,3);
       ctx.fillStyle='#8a7460'; ctx.fillRect(boss.mx+5+wob,boss.my+11,4,1);
     } else {
+      if(boss.st==='yield'){ // tregua: halo que invita a acercarse
+        ctx.fillStyle='rgba(120,232,120,'+(0.22+0.16*Math.sin(tick*.3))+')';
+        ctx.beginPath(); ctx.arc(boss.x+8,boss.y+8,16,0,6.28); ctx.fill();
+      }
       const img=boss.flash>5?TOPO_WHITE:TOPO_SPR;
-      const sq=Math.sin(tick*.2)*.08;
-      ctx.save(); ctx.translate(boss.x+8,boss.y+13); ctx.scale(1+sq,1-sq);
+      const sq=Math.sin(tick*.2)*.08, S=1.5; // un rey se ve desde lejos
+      const tr=boss.st==='yield'?((tick&2)?.5:-.5):0;
+      ctx.save(); ctx.translate(boss.x+8+tr,boss.y+13); ctx.scale((1+sq)*S,(1-sq)*S);
       ctx.drawImage(img,-8,-13); ctx.restore();
     }
   }
   if(boss&&boss.type==='avispa'){
+    const grounded=boss.st==='tired'||boss.st==='yield';
+    if(boss.st==='yield'){
+      ctx.fillStyle='rgba(120,232,120,'+(0.22+0.16*Math.sin(tick*.3))+')';
+      ctx.beginPath(); ctx.arc(boss.x+8,boss.y+8,16,0,6.28); ctx.fill();
+    }
     const img=boss.flash>5?WASP_WHITE:WASP_SPR;
-    const flap=boss.st==='tired'?0:Math.sin(tick*.6)*.18;
+    const flap=grounded?0:Math.sin(tick*.6)*.18, S=1.5;
     ctx.save(); ctx.translate(boss.x+8,boss.y+8);
-    if(boss.st==='tired') ctx.rotate(.35);
-    ctx.scale(1+flap,1-flap);
+    if(grounded) ctx.rotate(boss.st==='yield'?.2:.35);
+    ctx.scale((1+flap)*S,(1-flap)*S);
     ctx.drawImage(img,-8,-8); ctx.restore();
-    if(boss.st!=='tired'){ // sombra en el suelo
-      ctx.fillStyle='rgba(10,10,20,.35)'; ctx.fillRect((boss.x+4)|0,104,8,3);
+    if(!grounded){ // sombra en el suelo
+      ctx.fillStyle='rgba(10,10,20,.35)'; ctx.fillRect((boss.x+2)|0,104,12,3);
     }
   }
   if(boss&&boss.type==='viento'){
     const resting=boss.st==='rest';
     if(resting){ // ¡VULNERABLE! halo que pulsa para invitar a golpear
       ctx.fillStyle='rgba(120,232,120,'+(0.25+0.2*Math.sin(tick*.3))+')';
-      ctx.beginPath(); ctx.arc(boss.x+8,boss.y+8,13,0,6.28); ctx.fill();
+      ctx.beginPath(); ctx.arc(boss.x+8,boss.y+8,20,0,6.28); ctx.fill();
     }
     const img=boss.flash>5?WIND_WHITE:WIND_SPR;
-    const sweeping=boss.st==='sweep';
+    const sweeping=boss.st==='sweep', S=2; // el hermano del Roble, a su escala
     ctx.save(); ctx.translate(boss.x+8,boss.y+8);
-    if(sweeping) ctx.scale(1.3,0.8);
-    else if(resting){ const g=Math.sin(tick*.4)*.05; ctx.scale(1+g,1-g); } // jadea
-    else { const w=Math.sin(tick*.18)*.12; ctx.scale(1+w,1-w); }
+    if(sweeping) ctx.scale(1.3*S,0.8*S);
+    else if(resting){ const g=Math.sin(tick*.4)*.05; ctx.scale((1+g)*S,(1-g)*S); } // jadea
+    else { const w=Math.sin(tick*.18)*.12; ctx.scale((1+w)*S,(1-w)*S); }
     ctx.globalAlpha=boss.st==='float'?0.6:1; // translúcido = intocable; sólido = tocable
     ctx.drawImage(img,-8,-8); ctx.globalAlpha=1; ctx.restore();
     if(boss.st==='aim'){ // marca la línea del barrido
@@ -232,8 +297,12 @@ function drawScene(){
     }
     if(resting&&boss.hp<=2&&(tick&31)<20){ // exhausto: invita a hablarle
       ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#fff';
-      ctx.fillText('Z',(boss.x+6)|0,(boss.y-12)|0);
+      ctx.fillText('Z',(boss.x+6)|0,(boss.y-22)|0);
     }
+  }
+  if(boss&&boss.st==='yield'&&(tick&31)<20){ // la tregua se señala igual que con el Viento
+    ctx.font='8px "Press Start 2P"'; ctx.fillStyle='#fff';
+    ctx.fillText('Z',(boss.x+6)|0,(boss.y-18)|0);
   }
   if(state==='hook'&&hook){ // la liana
     const x0=hook.fx+8, y0=hook.fy+12, x1=player.x+8, y1=player.y+12;
@@ -530,6 +599,16 @@ function drawFile(){ // ELIGE BROTE — selección de archivo a lo Zelda
   }
   ctx.textAlign='left';
 }
+function drawBossCard(){ // presentación de jefe, a lo Zelda
+  if(!bossCard) return;
+  const a=Math.max(0,Math.min(1,(130-bossCard.t)/10,bossCard.t/30));
+  ctx.globalAlpha=a;
+  ctx.fillStyle='rgba(5,8,10,.88)'; ctx.fillRect(0,30,160,20);
+  ctx.fillStyle='#e84848'; ctx.fillRect(0,30,160,1); ctx.fillRect(0,49,160,1);
+  ctx.font='8px "Press Start 2P"'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillStyle='#fffbe8'; ctx.fillText(bossCard.txt,80,36);
+  ctx.globalAlpha=1; ctx.textAlign='left';
+}
 function drawToast(){ // aviso de misión: cartelito dorado arriba
   if(!toast) return;
   const a=Math.max(0,Math.min(1,(140-toast.t)/8,toast.t/14));
@@ -560,7 +639,7 @@ function drawShop(){ // el mostrador de Tilo
   });
   ctx.fillStyle='#13241a'; ctx.fillRect(12,86,136,20);
   ctx.fillStyle='#9ec7aa';
-  L[shopSel].d.split('\n').forEach((ln,i)=>ctx.fillText(ln,16,88+i*9));
+  wrapText(L[shopSel].d,16).slice(0,2).forEach((ln,i)=>ctx.fillText(ln,16,88+i*9));
   ctx.textAlign='center'; ctx.fillStyle='#7fae8c';
   if((tick&95)<60) ctx.fillText('Z:comprar X:salir',80,111);
   ctx.textAlign='left';
@@ -613,6 +692,7 @@ function draw(){
   }
   if(state==='dialog'&&dlg) drawDialog();
   if(state==='shop') drawShop();
+  if(state==='play'||state==='dialog') drawBossCard();
   if(state==='play'||state==='dialog'||state==='give'||state==='itemget'||state==='shop') drawToast();
   if(fadeIn>0){ ctx.fillStyle='rgba(6,12,7,'+(fadeIn/70).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); }
 
@@ -635,11 +715,15 @@ function draw(){
     // tesoros
     ctx.textAlign='left'; ctx.fillStyle=C.uiText;
     ctx.drawImage(ACORN,34,60); ctx.fillText('x'+seeds,46,60);
-    const nDiary=[...collected].filter(i=>i[0]==='0').length;
-    ctx.drawImage(DIARY_SPR,74,60); ctx.fillText(nDiary+'/5',86,60);
+    const nDiary=[...collected].filter(i=>i[0]==='d').length;
+    ctx.drawImage(DIARY_SPR,74,60); ctx.fillText(nDiary+'/'+Object.keys(DIARY).length,86,60);
     if(keysHeld>0){ ctx.drawImage(ACORN,116,60); ctx.fillStyle=PAL.a; ctx.fillText('x'+keysHeld,128,60); ctx.fillStyle=C.uiText; }
     for(let i=0;i<player.maxHp/2;i++) ctx.drawImage(HEART_FULL,34+i*9,76);
     ctx.drawImage(BERRY_SPR,116,76); ctx.fillText('x'+berries,128,76);
+    if(wilts>0){ // las veces que te marchitaste, como cicatriz discreta
+      ctx.drawImage(SPROUT_WILT,0,0,16,16,116,88,12,12);
+      ctx.fillStyle='#9ec7aa'; ctx.fillText('x'+wilts,130,92); ctx.fillStyle=C.uiText;
+    }
     // estaciones recuperadas
     ctx.fillStyle='#9ec7aa'; ctx.fillText('EST:',34,94);
     if(thawed) ctx.drawImage(EMBER_SPR,62,86);
@@ -701,11 +785,6 @@ function draw(){
     ctx.fillStyle='#8a9a6a'; ctx.fillText('de cada brote caído',80,92);
     ctx.fillText('nace una semilla.',80,101);
     if((tick&47)<32){ ctx.fillStyle='#9ed86a'; ctx.fillText('Z: REBROTAR',80,114); }
-    ctx.textAlign='left';
-  }
-  if(won){
-    ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
-    ctx.fillStyle=C.flowerC; ctx.fillText('♥',80,4);
     ctx.textAlign='left';
   }
   ctx.restore();

@@ -5,12 +5,26 @@ function under(rows,x,y){
   for(const [dx,dy] of n){ const r=rows[y+dy]; if(r&&r[x+dx]==='s') return 's'; }
   return '.';
 }
+/* post-final: las cuatro estaciones giran de verdad por el valle (~50s cada una) */
+function seasonPhase(){ return cycled?(((tick/3000)|0)%4):-1; }
+const inValleyScr=(x,y)=>x>=0&&x<=3&&y>=0&&y<=2;
 function renderScreenTo(c2d, rows, ox, oy){
+  const valley=inValleyScr(sx,sy), ph=valley?seasonPhase():-1;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){
     let ch=rows[y][x];
     if(ch==='z'&&won) ch='zd';                 // zarza seca
     else if(thawed&&sy===-1&&THAW[ch]) ch=THAW[ch]; // deshielo del norte (la cima sigue nevada)
     else if(sy===3&&!summered&&AUTUMN[ch]) ch=AUTUMN[ch]; // otoño eterno de las marismas
+    else if(sx>=10&&sx<=11){ // el Tronco Hueco es madera viva; el panal, ámbar
+      const P=(sx===10&&sy===2)?HIVE:TRONCO; if(P[ch]) ch=P[ch];
+    }
+    else if(valley&&!won&&WILT[ch]) ch=WILT[ch]; // el valle se apaga sin sus semillas
+    else if(ph>=0){ // el ciclo restaurado: primavera→verano→otoño→invierno
+      if(ph===0){ if(ch==='.'&&hash(x*7+3,y*5+1)%5===0) ch='f'; }
+      else if(ph===1){ if(SUMMER_P[ch]) ch=SUMMER_P[ch]; }
+      else if(ph===2){ if(AUTUMN[ch]) ch=AUTUMN[ch]; }
+      else if(WINTER_P[ch]) ch=WINTER_P[ch];
+    }
     const t=TILES[ch]||TILES['.'];
     let fr=0;
     if(t.anim) fr=(tick>>4)&1;
@@ -27,7 +41,7 @@ function buildRows(kx,ky){
   return src;
 }
 /* marcadores de enemigo en los mapas → tipo */
-const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '@':'gust' };
+const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '@':'gust', '$':'squirrel', '¡':'icicle' };
 function spawnEnemy(type,x,y,fast){
   const base={type,x:x*16,y:y*16,hp:1,vx:0,vy:0,t:hash(x,y)%90,flash:0,kx:0,ky:0,fast};
   if(type==='blob')   return {...base,hp:2+fast};
@@ -38,6 +52,8 @@ function spawnEnemy(type,x,y,fast){
   if(type==='frog')   return {...base,hp:2,st:'sit',jx:0,jy:0};
   if(type==='thorn')  return {...base,hp:3,st:'closed',y:y*16-2};
   if(type==='gust')   return {...base,hp:2,ang:hash(x,y)%628/100};
+  if(type==='squirrel') return {...base,hp:2,st:'wander',dirx:1};
+  if(type==='icicle') return {...base,hp:1,st:'hang',x0:x*16,vy:0,dmg:2};
   return base;
 }
 function regionFloor(){ return sy<=-1?'n':(sx>=6?'q':(sy===3?'·':'.')); }
@@ -69,7 +85,9 @@ function loadScreen(nx,ny){
     if(ENEMY_MARK[ch]){
       grid[y][x]= inDng?'q':(sy<=-1?'n':(sy===3?regionFloor():under(grid,x,y)));
       const fast=(inDng||sy<=-1)?1:0;
-      enemies.push(spawnEnemy(ENEMY_MARK[ch],x,y,fast));
+      const en=spawnEnemy(ENEMY_MARK[ch],x,y,fast);
+      if(en.dmg===undefined) en.dmg=(sy<=-1)?2:1; // el frío del norte muerde el doble
+      if(!(en.type==='icicle'&&thawed&&sy===-1)) enemies.push(en); // sin invierno no hay carámbanos
     } else if(/[1-8]/.test(ch)){
       const id=sx+','+sy+','+x+','+y;
       grid[y][x]=under(grid,x,y);
@@ -95,20 +113,23 @@ function loadScreen(nx,ny){
       grid[y][x]='q';
       if(!hasHook) pickups.push({kind:'hook',x:x*16,y:y*16,t:0});
     } else if(ch==='0'){
-      const id='0'+sx+','+sy+','+x+','+y;
+      const id='d'+sx+','+sy+','+x+','+y; // prefijo propio: no choca con ids de semilla
       grid[y][x]=regionFloor();
       if(!collected.has(id)) pickups.push({kind:'diary',id,x:x*16+4,y:y*16+4,t:0});
     } else if(ch==='J'){
       grid[y][x]='q';
-      if(!bossDone) boss={type:'topo',hp:8,maxHp:8,st:'burrow',t:90,x:x*16,y:y*16,flash:0,mx:x*16,my:y*16};
+      const bhp=8+(bladeLvl-1)*3; // los jefes respetan tu filo
+      if(!bossDone) boss={type:'topo',hp:bhp,maxHp:bhp,st:'burrow',t:90,x:x*16,y:y*16,flash:0,mx:x*16,my:y*16,calmMsg:false};
       else if(!hasEmber) pickups.push({kind:'ember',x:x*16,y:y*16,t:0});
     } else if(ch==='!'){
       grid[y][x]='q';
-      if(!boss2Done) boss={type:'avispa',hp:8,maxHp:8,st:'hover',t:90,x:x*16,y:y*16,flash:0,mx:x*16,my:16,vx:0,vy:0,cyc:0};
+      const bhp=8+(bladeLvl-1)*3;
+      if(!boss2Done) boss={type:'avispa',hp:bhp,maxHp:bhp,st:'hover',t:90,x:x*16,y:y*16,flash:0,mx:x*16,my:16,vx:0,vy:0,cyc:0,calmMsg:false};
       else if(!hasTear) pickups.push({kind:'tear',x:x*16,y:y*16,t:0});
     } else if(ch==='^'){
       grid[y][x]='n';
-      if(!boss3Done) boss={type:'viento',hp:10,maxHp:10,st:'float',t:120,x:x*16,y:16,flash:0,vx:0,vy:0,cyc:0,calmMsg:false};
+      const bhp=10+(bladeLvl-1)*3;
+      if(!boss3Done) boss={type:'viento',hp:bhp,maxHp:bhp,st:'float',t:120,x:x*16,y:16,flash:0,vx:0,vy:0,cyc:0,calmMsg:false};
       else if(!hasFlake) pickups.push({kind:'flake',x:x*16,y:y*16,t:0});
     } else if(ch==='C'){
       if(opened.has('C:'+sx+','+sy+':'+x+','+y)) grid[y][x]=regionFloor();
@@ -159,9 +180,16 @@ function loadScreen(nx,ny){
     pendingSay=["(Aquí arriba el\ninvierno nunca se\nfue. Sopla fuerte.)"]; }
   if(sy===3&&!summered&&sx===2&&!marshIntro){ marshIntro=true;
     pendingSay=["(Las hojas caen\nsin parar. Huele\na otoño viejo...)"]; }
-  setTrack((sx===9||sx===8)?'casa':(sy===-3?'cima':(sy<=-1?'nieve':(sx>=6?'cueva':(sy===3?'pantano':'valle')))));
+  // la cima, en paz: la nana recuperada (una sola vez)
+  if(sx===1&&sy===-3&&cycled&&!windVisit){ windVisit=true; pendingSay=WIND_WHISPER.slice(); }
+  // la séptima página del diario: aparece en la plaza al cerrar el ciclo con las 6 leídas
+  if(sx===1&&sy===1&&cycled&&!collected.has('dplaza')&&
+     [...collected].filter(i=>i[0]==='d').length>=6)
+    pickups.push({kind:'diary',id:'dplaza',x:8*16+4,y:2*16+4,t:0});
+  setTrack(boss?'jefe':((sx===9||sx===8)?'casa':(sy===-3?'cima':(sy<=-1?'nieve':(sx>=6?'cueva':(sy===3?'pantano':'valle'))))));
   visited.add(sx+','+sy);
   if(boss&&AC) SFX.boss(); // sting al entrar en sala de jefe
+  bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':'EL VIENTO DEL NORTE',t:130}:null;
   // al cruzar a una región nueva, su entrada pasa a ser tu punto de rebrote
   const reg=regionOf(sx,sy);
   if(reg!=='casa'&&respawnPoint.reg!==reg&&REGION_ANCHOR[reg]) respawnPoint={...REGION_ANCHOR[reg],reg};

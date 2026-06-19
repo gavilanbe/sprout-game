@@ -30,15 +30,26 @@ function startTransition(dx,dy){
   lastEntry={sx,sy,x:player.x,y:player.y}; // checkpoint
 }
 function findFree(px,py,axis){
-  for(let off=0;off<=140;off+=4){
-    for(const s of (off?[-1,1]:[1])){
-      const nx = axis==='x' ? px+off*s : px;
-      const ny = axis==='y' ? py+off*s : py;
-      if(nx<0||nx>144||ny<-4||ny>106) continue;
-      if(boxFree(nx+4,ny+8,8,8)) return [nx,ny];
+  for(const ax of [axis, axis==='x'?'y':'x']){ // primero el eje natural, luego el otro
+    for(let off=0;off<=140;off+=4){
+      for(const s of (off?[-1,1]:[1])){
+        const nx = ax==='x' ? px+off*s : px;
+        const ny = ax==='y' ? py+off*s : py;
+        if(nx<0||nx>144||ny<-4||ny>106) continue;
+        if(boxFree(nx+4,ny+8,8,8)) return [nx,ny];
+      }
     }
   }
-  return [px,py];
+  // última red: el tile libre más cercano de toda la pantalla
+  let best=null,bd=1e9;
+  for(let ty=0;ty<SH;ty++) for(let tx=0;tx<SW;tx++){
+    const nx=tx*16+4, ny=ty*16-4;
+    if(nx>144||ny>106) continue;
+    if(!boxFree(nx+4,ny+8,8,8)) continue;
+    const d=(nx-px)*(nx-px)+(ny-py)*(ny-py);
+    if(d<bd){ bd=d; best=[nx,ny]; }
+  }
+  return best||[px,py];
 }
 
 function update(){
@@ -209,9 +220,15 @@ function update(){
   if(state==='dialog'){
     const pg=dlg.pages[dlg.page];
     if(dlg.chars<pg.length){ dlg.chars+= (keys.fire?3:0.55); if((tick&3)===0&&dlg.chars<pg.length)SFX.blip(); }
+    // pregunta: en la última página, Z = sí / X = no
+    const lastDone=dlg.page===dlg.pages.length-1&&dlg.chars>=pg.length;
+    if(dlg.ask&&lastDone&&keys.alt){ keys.alt=false;
+      const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return;
+    }
     if(keys.fire){ keys.fire=false;
       if(dlg.chars<pg.length) dlg.chars=pg.length;
       else if(dlg.page<dlg.pages.length-1){ dlg.page++; dlg.chars=0; }
+      else if(dlg.ask){ const cb=dlg.ask; dlg=null; state='play'; SFX.blip(); cb(true); }
       else { const cb=dlg.cb; dlg=null; state='play'; if(cb)cb(); }
     }
     updParts(); return;
@@ -230,7 +247,29 @@ function update(){
   if(keys.menu){ keys.menu=false; state='pause'; pauseView=0; SFX.blip(); return; }
   if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;
+  if(bossCard&&--bossCard.t<=0) bossCard=null; // cartel de presentación de jefe
   if((tick&15)===0) checkQuests(); // el registro de misiones detecta avances
+  // ----- clima ambiental: el mundo cuenta su estado -----
+  {
+    const ph=inValleyScr(sx,sy)?seasonPhase():-1;
+    if(sy<=-1&&!(thawed&&sy===-1)&&!(boss&&boss.type==='viento')){ // nieve del norte
+      const mask=(sy===-3&&boss3Done)?15:3; // la cumbre en paz nieva mansa
+      if((tick&mask)===0) parts.push({x:Math.random()*160,y:-4,
+        vx:(Math.random()-.5)*.3,vy:.5+Math.random()*.4,life:90,col:(tick&4)?'#dff0ff':'#ffffff'});
+    }
+    if(sy===3&&!summered&&(tick&7)===0) // las hojas caen sin parar en la marisma
+      parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.3,
+        life:110,col:(tick&8)?'#c87830':'#e8a040'});
+    if(sx===1&&sy===1&&summered&&ph<0&&(tick&31)===0) // luciérnagas en la plaza
+      parts.push({x:20+Math.random()*120,y:20+Math.random()*70,
+        vx:(Math.random()-.5)*.2,vy:-Math.random()*.15,life:50,col:'#fff7c0'});
+    if(ph===0&&(tick&15)===0) // primavera del ciclo: pétalos
+      parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.4,vy:.35,life:100,col:(tick&16)?'#f8c8e0':C.flower2});
+    if(ph===2&&(tick&7)===0) // otoño del ciclo: hojarasca
+      parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4,life:110,col:(tick&8)?'#c87830':'#e8a040'});
+    if(ph===3&&(tick&5)===0) // invierno amable: nieve-azúcar (la de Petra)
+      parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.4,life:110,col:'#ffffff'});
+  }
   if(wakeT>0){
     wakeT--;
     if(wakeT===25) SFX.blip();
@@ -256,14 +295,22 @@ function update(){
       player.dir = dy<0?1:dy>0?0:(dx<0?2:3);
       tryPushBlock();           // empujar rocas-raíz
       if(dx&&dy){dx*=.72;dy*=.72;}
-      const sp=1.2;
-      tryMove(dx*sp,dy*sp);
-      player.anim+=.13; player.frame=(player.anim|0)%2;
+    }
+    const sp=1.2;
+    const ptx2=(player.x+8)>>4, pty2=(player.y+12)>>4;
+    const onIce = grid[pty2]&&grid[pty2][ptx2]==='i'&&!(thawed&&sy===-1); // hielo de verdad: resbala
+    if(onIce){ // patina: el impulso manda y el control llega tarde
+      player.ivx+=(dx*sp-player.ivx)*.07; player.ivy+=(dy*sp-player.ivy)*.07;
+    } else { player.ivx=dx*sp; player.ivy=dy*sp; }
+    if(Math.abs(player.ivx)>.05||Math.abs(player.ivy)>.05){
+      tryMove(player.ivx,player.ivy);
+      if(dx||dy){ player.anim+=.13; player.frame=(player.anim|0)%2; }
+      if(onIce&&(tick&7)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:0,vy:.1,life:8,col:'#cfe6f4'});
       // brizna al pisar hierba alta
       const tx=(player.x+8)>>4, ty=(player.y+13)>>4;
-      if(grid[ty]&&grid[ty][tx]==='t'&&(tick&7)===0)
+      if(grid[ty]&&grid[ty][tx]==='t'&&(dx||dy)&&(tick&7)===0)
         parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:(Math.random()-.5)*.6,vy:-.6,life:12,col:C.grassDD});
-    } else player.anim=0, player.frame=0;
+    } else { player.anim=0; player.frame=0; }
     if(keys.fire){ keys.fire=false; attack(); }
   }
 
@@ -314,8 +361,8 @@ function update(){
       if(brokeC) SFX.secret();
       // daña enemigos y jefe
       for(const e of enemies){ if(Math.hypot(e.x+8-(b.x+8),e.y+8-(b.y+8))<28){ e.hp-=3; e.flash=8; } }
-      if(boss&&boss.st!=='burrow'&&Math.hypot(boss.x+8-(b.x+8),boss.y+8-(b.y+8))<30){ boss.hp-=3; boss.flash=10;
-        if(boss.type==='viento'&&boss.hp<2) boss.hp=2; } // al Viento no se le remata con bombas
+      if(boss&&boss.st!=='burrow'&&boss.st!=='yield'&&Math.hypot(boss.x+8-(b.x+8),boss.y+8-(b.y+8))<30){
+        if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-3); boss.flash=10; } } // a ningún jefe se le remata con bombas
       // y a ti, si estás cerca
       if(player.inv===0&&Math.hypot(player.x+8-(b.x+8),player.y+12-(b.y+8))<24){
         player.hp--; player.inv=60; SFX.hurt(); hitStop=3; if(player.hp<=0) die();
@@ -367,8 +414,7 @@ function update(){
     if(boss&&boss.flash===0&&Math.hypot(boss.x+8-w.x,boss.y+8-w.y)<13){
       const vul=(boss.type==='topo'&&boss.st==='up')||(boss.type==='avispa'&&boss.st==='tired')||(boss.type==='viento'&&boss.st==='rest');
       if(vul){
-        if(boss.type==='viento'){ if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-bladeLvl); boss.flash=10; SFX.ehit(); } else SFX.bump(); }
-        else { boss.hp-=bladeLvl; boss.flash=10; SFX.ehit(); }
+        if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-bladeLvl); boss.flash=10; SFX.ehit(); } else SFX.bump();
         w.t=0; puff(w.x,w.y,'#a8ec78',8,1.3);
       }
     }
@@ -379,8 +425,17 @@ function update(){
   if(boss&&boss.type==='viento'){
     if(boss.flash>0)boss.flash--;
     boss.t--;
-    const enraged=boss.hp<=5, calmed=boss.hp<=2; // a media vida se enfurece; casi sin vida, se rinde
+    const enraged=boss.hp<=Math.ceil(boss.maxHp/2), calmed=boss.hp<=2; // a media vida se enfurece; casi sin vida, se rinde
     const dx=player.x-boss.x, dy=player.y-boss.y, d=Math.hypot(dx,dy)||1;
+    // la ventisca ES su barra de vida: ruge cuando ataca, amaina cuando cae
+    if(!calmed){
+      if(boss.st!=='rest'&&(tick&1)===0){
+        const n=boss.st==='sweep'?2:1;
+        for(let i=0;i<n;i++) parts.push({x:-4,y:Math.random()*120,
+          vx:2+Math.random()*1.6,vy:(Math.random()-.5)*.4,life:70,col:(tick&2)?'#dff0ff':'#9ec7e8'});
+      } else if(boss.st==='rest'&&(tick&7)===0)
+        parts.push({x:-4,y:Math.random()*120,vx:1.1,vy:(Math.random()-.5)*.3,life:60,col:'#cfe8ff'});
+    }
     if(calmed){
       if(boss.st!=='rest'){ boss.st='rest'; boss.t=999; if(boss.y<60)boss.y=96; shake=4; SFX.bump(); }
       boss.t=999; // exhausto: ya no se levanta; espera que alguien le hable
@@ -409,10 +464,10 @@ function update(){
       if((tick&7)===0) parts.push({x:boss.x+8,y:boss.y+4,vx:(Math.random()-.5)*.6,vy:-.4,life:10,col:'#9ec7e8'});
       if(!calmed&&boss.t<=0){ boss.st='float'; boss.t=enraged?90:120; }
     }
-    // contacto (exhausto ya no hace daño)
+    // contacto (exhausto ya no hace daño; entero, muerde un corazón)
     const bb=[boss.x+2,boss.y+3,12,11], pb=[player.x+4,player.y+8,8,8];
     if(!calmed&&player.inv===0&&rectsHit(bb,pb)){
-      player.hp--; player.inv=60; shake=8; SFX.hurt(); hitStop=3;
+      player.hp-=2; player.inv=60; shake=8; SFX.hurt(); hitStop=3;
       player.kx=(player.x-boss.x)/d*3.2; player.ky=(player.y-boss.y)/d*3.2;
       if(player.hp<=0) die();
     }
@@ -422,11 +477,21 @@ function update(){
       else SFX.bump(); // la hoja lo atraviesa: ya no pelea
     }
   }
-  // LA REINA AVISPA
+  // LA REINA AVISPA — tampoco muere: agotada, concede la Lágrima (Z a su lado)
   if(boss&&boss.type==='avispa'){
     if(boss.flash>0)boss.flash--;
     boss.t--;
-    if(boss.st==='hover'){
+    if(boss.hp<=2&&boss.st!=='yield'){ // la tregua
+      boss.st='yield'; boss.t=999; boss.y=Math.min(96,Math.max(48,boss.y));
+      enemies=[]; projs=[]; SFX.bump(); shake=4;
+      if(!boss.calmMsg){ boss.calmMsg=true;
+        pendingSay=["(La Reina se posa,\nagotada. Su\nzumbido suena a\ntregua...)",
+                    "(Ya no pelea.\nAcércate y pulsa\nZ.)"]; }
+    }
+    if(boss.st==='yield'){ // respira en el suelo, esperándote
+      boss.t=999;
+      if((tick&7)===0) parts.push({x:boss.x+8,y:boss.y+4,vx:(Math.random()-.5)*.5,vy:-.3,life:10,col:'#f8d030'});
+    } else if(boss.st==='hover'){
       boss.x+=Math.sin(tick*.06)*1.1; boss.y=18+Math.sin(tick*.11)*6;
       boss.x=Math.max(16,Math.min(128,boss.x));
       if(boss.t<=0){ boss.st='aim'; boss.t=30; }
@@ -444,32 +509,39 @@ function update(){
       if(boss.t<=0){
         boss.st='hover'; boss.t=110; boss.cyc++;
         if(boss.cyc%2===1&&enemies.length<2){ // llama a una abeja
-          enemies.push({type:'bat',x:boss.x,y:boss.y,hp:1,vx:0,vy:0,t:0,flash:0,kx:0,ky:0,homing:0,fast:1});
+          enemies.push({type:'bat',x:boss.x,y:boss.y,hp:1,vx:0,vy:0,t:0,flash:0,kx:0,ky:0,homing:0,fast:1,dmg:1});
           SFX.blip();
         }
       }
     }
-    // contacto y golpes
+    // contacto y golpes (la tregua no hace daño; entera, muerde un corazón)
     const bb=[boss.x+2,boss.y+3,12,10], pb=[player.x+4,player.y+8,8,8];
-    if(player.inv===0&&boss.st!=='tired'&&rectsHit(bb,pb)){
-      player.hp--; player.inv=60; shake=8; SFX.hurt();
+    if(player.inv===0&&boss.st!=='tired'&&boss.st!=='yield'&&rectsHit(bb,pb)){
+      player.hp-=2; player.inv=60; shake=8; SFX.hurt();
       const d=Math.hypot(player.x-boss.x,player.y-boss.y)||1;
       player.kx=(player.x-boss.x)/d*3; player.ky=(player.y-boss.y)/d*3;
       if(player.hp<=0) die();
     }
-    if(meleeActive()&&boss.flash===0&&boss.st==='tired'&&rectsHit(meleeBox(),bb)){ boss.hp-=meleeDmg(); boss.flash=10; SFX.ehit(); hitStop=4; }
-    if(boss.hp<=0){
-      SFX.fanfare(); shake=12;
-      puff(boss.x+8,boss.y+8,'#f8d030',16,2); puff(boss.x+8,boss.y+8,'#1a1410',10,1.5);
-      pickups.push({kind:'tear',x:72,y:56,t:0});
-      boss=null; boss2Done=true; projs=[]; save();
+    if(meleeActive()&&boss.flash===0&&boss.st==='tired'&&rectsHit(meleeBox(),bb)){
+      if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-meleeDmg()); boss.flash=10; SFX.ehit(); hitStop=4; }
+      else SFX.bump(); // ya no pelea: la hoja no insiste
     }
   }
-  // EL TOPO REAL
+  // EL TOPO REAL — tampoco muere: agotado, cede la Brasa (Z a su lado)
   if(boss&&boss.type==='topo'){
     if(boss.flash>0)boss.flash--;
     boss.t--;
-    if(boss.st==='burrow'){
+    if(boss.hp<=2&&boss.st!=='yield'){ // la tregua: sale del agujero y se encoge
+      if(boss.st==='burrow'||boss.st==='warn'){ boss.x=boss.mx; boss.y=boss.my; puff(boss.x+8,boss.y+12,'#5a4a40',10,1.5); }
+      boss.st='yield'; boss.t=999; projs=[]; SFX.bump(); shake=4;
+      if(!boss.calmMsg){ boss.calmMsg=true;
+        pendingSay=["(El Topo Real se\nencoge, jadeando,\nfuera de su\nagujero...)",
+                    "(Ya no pelea.\nAcércate y pulsa\nZ.)"]; }
+    }
+    if(boss.st==='yield'){ // tiembla, esperándote
+      boss.t=999;
+      if((tick&7)===0) parts.push({x:boss.x+4+Math.random()*8,y:boss.y+12,vx:(Math.random()-.5)*.4,vy:-.3,life:10,col:'#8a7460'});
+    } else if(boss.st==='burrow'){
       const d=Math.hypot(player.x-boss.mx,player.y-boss.my)||1;
       boss.mx+=(player.x-boss.mx)/d*0.9; boss.my+=(player.y-boss.my)/d*0.9;
       boss.mx=Math.max(20,Math.min(124,boss.mx)); boss.my=Math.max(20,Math.min(92,boss.my));
@@ -487,23 +559,20 @@ function update(){
         projs.push({x:boss.x+8,y:boss.y+8,vx:(player.x+8-(boss.x+8))/d*1.5,vy:(player.y+12-(boss.y+8))/d*1.5,t:90});
         SFX.ehit();
       }
-      // contacto
+      // contacto (un corazón entero)
       const bb=[boss.x+2,boss.y+3,12,10], pb=[player.x+4,player.y+8,8,8];
       if(player.inv===0&&rectsHit(bb,pb)){
-        player.hp--; player.inv=60; shake=8; SFX.hurt();
+        player.hp-=2; player.inv=60; shake=8; SFX.hurt();
         const d=Math.hypot(player.x-boss.x,player.y-boss.y)||1;
         player.kx=(player.x-boss.x)/d*3; player.ky=(player.y-boss.y)/d*3;
         if(player.hp<=0) die();
       }
       // hoja
-      if(meleeActive()&&boss.flash===0&&rectsHit(meleeBox(),bb)){ boss.hp-=meleeDmg(); boss.flash=10; SFX.ehit(); hitStop=4; }
-      if(boss.t<=0){ boss.st='burrow'; boss.t=100+hash(tick,7)%60; boss.mx=boss.x; boss.my=boss.y; }
-    }
-    if(boss.hp<=0){
-      SFX.fanfare(); shake=12;
-      puff(boss.x+8,boss.y+8,'#7a5a38',16,2); puff(boss.x+8,boss.y+8,'#e8d8c0',10,1.5);
-      pickups.push({kind:'ember',x:boss.x,y:boss.y,t:0});
-      boss=null; bossDone=true; projs=[]; save();
+      if(meleeActive()&&boss.flash===0&&rectsHit(meleeBox(),bb)){
+        if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-meleeDmg()); boss.flash=10; SFX.ehit(); hitStop=4; }
+        else SFX.bump();
+      }
+      if(boss.t<=0&&boss.st==='up'){ boss.st='burrow'; boss.t=100+hash(tick,7)%60; boss.mx=boss.x; boss.my=boss.y; }
     }
   }
 

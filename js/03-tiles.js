@@ -85,8 +85,10 @@ TILES['S']={v:1,frames:[mkTile(g=>{grassBase(g,9);
 })]};
 TILES['E']={v:1,frames:TILES['.'].frames.slice(0,1)}; // hierba bajo el anciano
 TILES['Ñ']=TILES['.']; // suelo sagrado bajo el Roble: hierba (sólida); el árbol pone sus raíces
-function altarTile(s){ return mkTile(g=>{ // altar de estación: pedestal de piedra con cuenco
-  grassBase(g,33+s);
+function altarTile(s){ return mkTile(g=>{ // altar de estación: pedestal sobre tierra sagrada
+  g.fillStyle=C.path; g.fillRect(0,0,16,16); // base neutra: vale para toda estación
+  for(let i=0;i<5;i++){const h=hash(37+s*13+i,i*5);
+    g.fillStyle=C.pathD; g.fillRect(h%14+1,(h>>3)%14+1,1,1);}
   g.fillStyle=PAL.k; g.fillRect(2,6,12,9);
   g.fillStyle='#b0a890'; g.fillRect(3,7,10,7);
   g.fillStyle='#d0c8b0'; g.fillRect(4,7,8,2);
@@ -94,6 +96,15 @@ function altarTile(s){ return mkTile(g=>{ // altar de estación: pedestal de pie
   g.fillStyle=PAL.k; g.fillRect(4,2,8,5);     // el cuenco que espera su reliquia
   g.fillStyle='#8a8aa0'; g.fillRect(5,3,6,3);
   g.fillStyle='#6a6a80'; g.fillRect(5,5,6,1);
+  if(s===1){ // motivo tallado: capullo de primavera
+    g.fillStyle='#e88ab0'; g.fillRect(7,10,2,2); g.fillStyle='#f8c8e0'; g.fillRect(7,10,1,1);
+  } else if(s===2){ // sol de verano
+    g.fillStyle='#e8b050'; g.fillRect(7,10,2,2);
+    g.fillStyle='#f8e060'; g.fillRect(6,10,1,1); g.fillRect(9,11,1,1); g.fillRect(7,9,1,1); g.fillRect(8,12,1,1);
+  } else { // copo de invierno
+    g.fillStyle='#9ec7e8'; g.fillRect(7,10,2,2);
+    g.fillStyle='#dff0ff'; g.fillRect(6,10,1,1); g.fillRect(9,10,1,1); g.fillRect(7,9,1,1); g.fillRect(8,12,1,1);
+  }
 });}
 TILES['[']={v:1,frames:[altarTile(1)]}; // primavera
 TILES[']']={v:1,frames:[altarTile(2)]}; // verano
@@ -299,11 +310,138 @@ TILES['>']={v:1,frames:[mkTile(g=>{
   g.fillStyle='#2a2018'; g.fillRect(4,6,8,3);
   g.fillStyle='#16100c'; g.fillRect(5,9,6,4);
 })]};
+/* --- el valle mustio (antes de devolver las semillas): el verdor se apaga --- */
+function wiltBase(g,seed){
+  g.fillStyle='#a8a858'; g.fillRect(0,0,16,16);
+  for(let i=0;i<7;i++){const h=hash(seed*23+i,i*7);
+    g.fillStyle=(h%3===0)?'#7a7a40':'#90904c';
+    g.fillRect(h%15,(h>>4)%15,(h%2)+1,1);}
+}
+TILES['w0']={v:3,frames:[0,1,2].map(s=>mkTile(g=>wiltBase(g,s)))};
+TILES['w1']={anim:true,frames:[0,1].map(f=>mkTile(g=>{wiltBase(g,4);
+  g.fillStyle='#7a7a40';
+  for(let i=0;i<4;i++){const x=2+i*4, sway=f?(i%2):((i+1)%2);
+    g.fillRect(x+sway,7,1,7); g.fillRect(x+1+sway,9,1,5);}
+}))};
+TILES['w2']={v:1,frames:[mkTile(g=>{wiltBase(g,6); // árbol mustio
+  g.fillStyle=PAL.k; g.fillRect(2,1,12,11);
+  g.fillStyle='#6a7a3a'; g.fillRect(3,2,10,9);
+  g.fillStyle='#8a9a4a'; g.fillRect(4,3,3,2); g.fillRect(9,5,3,2);
+  g.fillStyle=PAL.k; g.fillRect(6,11,4,4);
+  g.fillStyle='#6a4a28'; g.fillRect(7,11,2,4);
+})]};
+TILES['wb']={v:1,frames:[mkTile(g=>{wiltBase(g,8); // arbusto reseco
+  g.fillStyle=PAL.k; g.fillRect(3,3,10,10);
+  g.fillStyle='#7a7a40'; g.fillRect(4,4,8,8);
+  g.fillStyle='#90904c'; g.fillRect(5,5,2,2); g.fillRect(9,7,2,2);
+})]};
+TILES['wr']={v:2,frames:[0,1].map(s=>mkTile(g=>{wiltBase(g,10+s); // roca sobre suelo mustio
+  g.fillStyle=PAL.k; g.fillRect(2,3,12,11);
+  g.fillStyle=C.rock; g.fillRect(3,4,10,9);
+  g.fillStyle=C.rockL; g.fillRect(4,5,4,2); g.fillRect(5+s*3,8,2,1);
+  g.fillStyle=C.rockD; g.fillRect(9,9,3,3); g.fillRect(3,11,3,2);
+}))};
+TILES['wS']={v:1,frames:[mkTile(g=>{wiltBase(g,13); // cartel sobre suelo mustio
+  g.fillStyle=PAL.k; g.fillRect(2,2,12,8); g.fillRect(7,10,2,5);
+  g.fillStyle=C.wood; g.fillRect(3,3,10,6);
+  g.fillStyle=C.woodD; g.fillRect(4,4,8,1); g.fillRect(4,6,6,1); g.fillRect(7,10,1,5);
+})]};
+TILES['nr']={v:2,frames:[0,1].map(s=>mkTile(g=>{snowBase(g,10+s); // roca nevada
+  g.fillStyle=PAL.k; g.fillRect(2,3,12,11);
+  g.fillStyle=C.rock; g.fillRect(3,4,10,9);
+  g.fillStyle='#e8f0f8'; g.fillRect(3,4,10,2); // capa de nieve
+  g.fillStyle=C.rockD; g.fillRect(9,9,3,3); g.fillRect(3,11,3,2);
+}))};
+TILES['nS']={v:1,frames:[mkTile(g=>{snowBase(g,13); // cartel nevado
+  g.fillStyle=PAL.k; g.fillRect(2,2,12,8); g.fillRect(7,10,2,5);
+  g.fillStyle=C.wood; g.fillRect(3,3,10,6);
+  g.fillStyle='#e8f0f8'; g.fillRect(2,2,12,2);
+  g.fillStyle=C.woodD; g.fillRect(4,6,6,1); g.fillRect(7,10,1,5);
+})]};
+TILES['nb']={v:1,frames:[mkTile(g=>{snowBase(g,15); // arbusto con gorro de nieve
+  g.fillStyle=PAL.k; g.fillRect(3,3,10,10);
+  g.fillStyle=C.canopy; g.fillRect(4,4,8,8);
+  g.fillStyle='#e8f0f8'; g.fillRect(4,4,8,3); g.fillRect(6,8,3,2);
+})]};
+TILES['ar']={v:2,frames:[0,1].map(s=>mkTile(g=>{autumnBase(g,10+s); // roca entre hojarasca
+  g.fillStyle=PAL.k; g.fillRect(2,3,12,11);
+  g.fillStyle=C.rock; g.fillRect(3,4,10,9);
+  g.fillStyle=C.rockL; g.fillRect(4,5,4,2);
+  g.fillStyle=C.rockD; g.fillRect(9,9,3,3); g.fillRect(3,11,3,2);
+}))};
+TILES['aS']={v:1,frames:[mkTile(g=>{autumnBase(g,13); // cartel otoñal
+  g.fillStyle=PAL.k; g.fillRect(2,2,12,8); g.fillRect(7,10,2,5);
+  g.fillStyle=C.wood; g.fillRect(3,3,10,6);
+  g.fillStyle=C.woodD; g.fillRect(4,4,8,1); g.fillRect(4,6,6,1); g.fillRect(7,10,1,5);
+})]};
+/* verano vivo (fase del ciclo post-final): hierba cálida */
+TILES['g1']={v:3,frames:[0,1,2].map(s=>mkTile(g=>{
+  g.fillStyle='#8cc84a'; g.fillRect(0,0,16,16);
+  for(let i=0;i<7;i++){const h=hash(s*29+i,i*7);
+    g.fillStyle=(h%4===0)?'#e8d060':((h%3===0)?'#6aa83a':'#7ab842');
+    g.fillRect(h%15,(h>>4)%15,(h%2)+1,1);}
+}))};
+/* arbusto de otoño (para las marismas y la fase otoñal) */
+TILES['bA']={v:1,frames:[mkTile(g=>{autumnBase(g,8);
+  g.fillStyle=PAL.k; g.fillRect(3,3,10,10);
+  g.fillStyle='#c87830'; g.fillRect(4,4,8,8);
+  g.fillStyle='#e8a040'; g.fillRect(5,5,2,2); g.fillRect(9,7,2,2); g.fillRect(6,9,2,1);
+  g.fillStyle=PAL.k; g.fillRect(4,4,1,1); g.fillRect(11,11,1,1);
+})]};
+/* --- el TRONCO HUECO por dentro: madera viva, no cueva --- */
+TILES['vw']={v:2,frames:[0,1].map(s=>mkTile(g=>{ // pared de madera con anillos
+  g.fillStyle='#5a3c22'; g.fillRect(0,0,16,16);
+  g.fillStyle='#422c18'; for(let y=2;y<16;y+=5) g.fillRect(0,y,16,2);
+  g.fillStyle='#6e4c2c'; for(let y=0;y<16;y+=5) g.fillRect(0,y,16,1);
+  g.fillStyle='#422c18'; g.fillRect(s?4:11,0,1,16);
+}))};
+TILES['qw']={v:3,frames:[0,1,2].map(s=>mkTile(g=>{ // suelo de duramen
+  g.fillStyle='#8a6438'; g.fillRect(0,0,16,16);
+  for(let i=0;i<4;i++){const h=hash(s*31+i,i*13);
+    g.fillStyle=(h%2)?'#7a5630':'#9a7444';
+    g.fillRect(h%14+1,(h>>3)%14+1,2,1);}
+}))};
+TILES['vh']={v:2,frames:[0,1].map(s=>mkTile(g=>{ // pared de panal: celdas de ámbar
+  g.fillStyle='#a87828'; g.fillRect(0,0,16,16);
+  g.fillStyle='#8a5e1c';
+  for(let y=0;y<16;y+=5) for(let x=((y/5)|0)%2?4:0;x<16;x+=8){
+    g.fillRect(x,y,7,4);
+  }
+  g.fillStyle='#d8a838';
+  for(let y=1;y<16;y+=5) for(let x=((y/5)|0+(s?1:0))%2?5:1;x<16;x+=8) g.fillRect(x,y,5,2);
+}))};
+TILES['qh']={v:2,frames:[0,1].map(s=>mkTile(g=>{ // suelo de cera
+  g.fillStyle='#c89c48'; g.fillRect(0,0,16,16);
+  for(let i=0;i<4;i++){const h=hash(s*37+i,i*11);
+    g.fillStyle=(h%2)?'#b08838':'#d8ac58';
+    g.fillRect(h%14+1,(h>>3)%14+1,2,1);}
+}))};
+TILES['⌐']={v:1,frames:[mkTile(g=>{ // estantería de Tilo con su género
+  g.fillStyle='#6a4828'; g.fillRect(0,0,16,16);
+  g.fillStyle='#8a5828'; g.fillRect(1,1,14,14);
+  g.fillStyle='#c08850'; g.fillRect(1,5,14,2); g.fillRect(1,11,14,2);
+  g.fillStyle=PAL.l; g.fillRect(3,2,2,3);                       // hoja embotellada
+  g.fillStyle='#58e8d8'; g.fillRect(7,2,3,3);                   // frasco de savia
+  g.fillStyle=PAL.a; g.fillRect(12,3,2,2);                      // bellota
+  g.fillStyle='#d84878'; g.fillRect(4,8,2,2); g.fillRect(10,8,3,2); // bayas en tarros
+})]};
+
 /* al deshelarse, el norte reverdece reutilizando tiles del valle */
 const THAW={'n':'.','Y':'T','M':'r','i':'f'};
-const AUTUMN={'.':'·','T':'¥','t':'†','f':'·',',':'·','b':'b'};
+const AUTUMN={'.':'·','T':'¥','t':'†','f':'·',',':'·','b':'bA','Q':'bA',
+              'r':'ar','S':'aS','Ñ':'·','E':'·','h':'·','j':'·','y':'·'};
+/* el valle ANTES de recuperar las semillas: mustio (sólo visual) */
+const WILT={'.':'w0',',':'w0','t':'w1','T':'w2','f':'w0','b':'wb',
+            'r':'wr','S':'wS','Ñ':'w0','E':'w0','h':'w0','j':'w0','y':'w0'};
+/* fases del ciclo post-final (sólo visual; primavera = tiles normales + flores) */
+const SUMMER_P={'.':'g1',',':'g1','Ñ':'g1','E':'g1','h':'g1','j':'g1','y':'g1'};
+const WINTER_P={'.':'n',',':'n','t':'n','f':'n','T':'Y','b':'nb','Q':'nb',
+                'r':'nr','S':'nS','Ñ':'n','E':'n','h':'n','j':'n','y':'n'};
+/* el Tronco Hueco y el panal de la Reina, con su propia madera */
+const TRONCO={'v':'vw','q':'qw'};
+const HIVE={'v':'vh','q':'qh'};
 
-const SOLID = new Set(['b','Q','T','r','W','F','H','D','R','S','E','I','u','Y','M','G','C','v','=','O','h','j','y','g','ñ','Ñ','~','¥','#',')','[',']','}']);
+const SOLID = new Set(['b','Q','T','r','W','F','H','D','R','S','E','I','u','Y','M','G','C','v','=','O','h','j','y','g','ñ','Ñ','~','¥','#',')','[',']','}','⌐']);
 function isSolid(ch){
   if(ch==='z') return !won;       // la zarza se seca al florecer el valle
   return SOLID.has(ch);

@@ -62,13 +62,14 @@ const MAPS = {
 "...}pp.j..",
 "....pp....",
 ],
-'2,1':[ // pradera este
+'2,1':[ // pradera este — una runa duerme tras la roca agrietada (bomba)
+        // OJO: el borde este (col 9, filas 0-3) es el ÚNICO paso seco al lago: no tapiarlo
 "..t....t..",
-".....b....",
-"..Z....t..",
-"t...t.....",
-".....B...W",
-"..t.....WW",
+".rrr...t..",
+".rOr..Z...",
+".rCr......",
+"t....B...W",
+"..t..$..WW",
 ".b....t.WW",
 ".....t..WW",
 ],
@@ -98,13 +99,13 @@ const MAPS = {
 "....p.....",
 "..B.p..t..",
 ".t..p4....",
-"....pp.B..",
+"..$.pp.B..",
 ".t...p....",
 "rrrrrrrrrr",
 ],
 '2,2':[ // playa este — semilla 5; grietas hacia las marismas
 "..t.......",
-"......t...",
+"...$..t...",
 "...sss....",
 "..ssssss..",
 ".sss5ssss.",
@@ -123,9 +124,9 @@ const MAPS = {
 "rrrrrrrrrr",
 ],
 /* ====== LAS MONTAÑAS DEL NORTE (invierno eterno) ====== */
-'0,-1':[ // ladera nevada
+'0,-1':[ // ladera nevada — ojo con los carámbanos del risco
 "MMMMMMMMMM",
-"M..n.YY..M",
+"M.¡n.YY..M",
 "Mn..n...nM",
 "M.Y...n..n",
 "Mn..U....n",
@@ -146,7 +147,7 @@ const MAPS = {
 '2,-1':[ // la boca de la cueva
 "MMMMMMMMMM",
 "M.MMMGMMMM",
-"M...nn...n",
+"M.¡.nn.¡.n",
 "Mn.Y..n.Yn",
 "n..n...V.M",
 "n.Y...nn.M",
@@ -247,7 +248,7 @@ const MAPS = {
 ],
 '8,9':[ // LA TIENDA DE TILO (casa NE del pueblo)
 "IIIIIIIIII",
-"IuoooooouI",
+"Iu⌐oo⌐oouI",
 "IooogooooI",
 "IoñññññooI",
 "IooooooooI",

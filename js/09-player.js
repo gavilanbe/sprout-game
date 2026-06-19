@@ -1,7 +1,21 @@
 'use strict';
 /* ---------- JUGADOR ---------- */
+function solidCorners(x,y,w,h){ // cuántas esquinas de la caja pisan sólido
+  let n=0;
+  if(solidAt(x,y))n++; if(solidAt(x+w-1,y))n++;
+  if(solidAt(x,y+h-1))n++; if(solidAt(x+w-1,y+h-1))n++;
+  return n;
+}
 function tryMove(dx,dy){
   const HX=4,HY=8,HW=8,HH=8; // hitbox en los pies
+  const cur=solidCorners(player.x+HX,player.y+HY,HW,HH);
+  if(cur>0){ // válvula de escape: si estás incrustado, todo paso que no empeore vale
+    let nx=player.x+dx;
+    if(solidCorners(nx+HX,player.y+HY,HW,HH)<=cur) player.x=nx;
+    let ny=player.y+dy;
+    if(solidCorners(player.x+HX,ny+HY,HW,HH)<=cur) player.y=ny;
+    return;
+  }
   let nx=player.x+dx;
   if(boxFree(nx+HX,player.y+HY,HW,HH)) player.x=nx;
   let ny=player.y+dy;
@@ -94,8 +108,24 @@ function attack(){
         SFX.fanfare(); shake=14;
         puff(boss.x+8,boss.y+8,'#dff0ff',18,2); puff(boss.x+8,boss.y+8,'#9ec7e8',12,1.6);
         pickups.push({kind:'flake',x:boss.x,y:boss.y,t:0});
-        boss=null; boss3Done=true; enemies=[]; projs=[]; save();
+        boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima');
       },'EL VIENTO');
+      return;
+    }
+  }
+  // el Topo y la Reina tampoco mueren: agotados, ceden su tesoro (Z a su lado)
+  if(boss&&boss.st==='yield'&&(boss.type==='topo'||boss.type==='avispa')){
+    const bd=Math.hypot(player.x-boss.x,player.y-boss.y);
+    if(bd<30){
+      const isTopo=boss.type==='topo', bx=boss.x, by=boss.y;
+      say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>{
+        SFX.fanfare(); shake=10;
+        puff(bx+8,by+8,isTopo?'#7a5a38':'#f8d030',16,2);
+        puff(bx+8,by+8,isTopo?'#e8d8c0':'#1a1410',10,1.5);
+        pickups.push({kind:isTopo?'ember':'tear',x:bx,y:by,t:0});
+        if(isTopo) bossDone=true; else boss2Done=true;
+        boss=null; enemies=[]; projs=[]; save(); setTrack('cueva');
+      },isTopo?'EL TOPO REAL':'LA REINA');
       return;
     }
   }
@@ -116,6 +146,25 @@ function attack(){
        "Ya nadie lo\nolvida. Por eso\nestá algo apartado:\nél era así."]:
       ["ALTAR DEL\nINVIERNO.","Está apartado de\nlos otros dos,\ncomo esperando a\nalguien que no\nvuelve."]); return; }
     if(ch==='g'||ch==='ñ'){ openShop(); return; } // Tilo, o hablarle por encima del mostrador
+    if(ch==='j'&&hasBlade&&!lupaPot&&berries>=10){ // el trueque de Lupa: ahora pregunta antes
+      SFX.blip();
+      ask(["Traes 10 BAYAS...\n¿Me las das para\nmi receta\nespecial?"],'LUPA',yes=>{
+        if(yes){ berries-=10; lupaPot=true; player.maxHp+=2; player.hp=player.maxHp;
+          SFX.fanfare(); save();
+          say(["¡Trato es trato,\nbrote!","Mi receta secreta:\n¡CORAZÓN DE SAVIA!\nTu vigor aumenta."],null,'LUPA');
+        } else say(["Sin prisa, brote.\nAquí estaré."],null,'LUPA');
+      });
+      return;
+    }
+    if(ch==='y'&&hasBlade&&berries>=5&&player.hp<=player.maxHp-2){ // la sopa de Moss: ídem
+      SFX.blip();
+      ask(["Mal aspecto traes.\n¿Sopa de pescador\npor 5 BAYAS?\nCura del todo."],'MOSS',yes=>{
+        if(yes){ berries-=5; player.hp=player.maxHp; SFX.heart(); save();
+          say(["5 bayas, marchando\nsopa de pescador...","¡Como nuevo,\nbrote!"],null,'MOSS');
+        } else say(["Tú mismo. La olla\nsigue al fuego."],null,'MOSS');
+      });
+      return;
+    }
     if(NPCS[ch]){ SFX.blip(); say(NPC_TALK[ch](),null,NPCS[ch].name.toUpperCase()); return; }
     if(ch==='D'){
       if(sx===0&&sy===1&&tx===3){ enterHouse(); return; } // tu casa
@@ -216,7 +265,7 @@ function shopList(){
   if(bladeLvl===1)      L.push({id:'b2',name:'AFILAR HOJA',cost:12,d:'La Hoja hará\ndaño DOBLE.'});
   else if(bladeLvl===2) L.push({id:'b3',name:'TEMPLAR HOJA',cost:30,d:'La Hoja hará\ndaño TRIPLE.'});
   else                  L.push({id:'bmax',name:'HOJA SUPREMA',cost:0,d:'Tu filo está\nal máximo.',off:true});
-  if(!hasSpin) L.push({id:'spin',name:'REMOLINO',cost:20,d:'Mantén Z, suelta:\n¡giro + tornadito!'});
+  if(!hasSpin) L.push({id:'spin',name:'REMOLINO',cost:20,d:'Carga Z y suelta:\n¡giro+tornadito!'});
   else         L.push({id:'spinok',name:'REMOLINO',cost:0,d:'Ya lo dominas.',off:true});
   if(!shopHeart) L.push({id:'hp',name:'CORAZÓN SAVIA',cost:35,d:'+2 de vigor\nmáximo.'});
   else           L.push({id:'hpok',name:'CORAZÓN SAVIA',cost:0,d:'Vendido.',off:true});
@@ -235,7 +284,7 @@ function buyShop(){
   const L=shopList(), it=L[shopSel];
   if(it.id==='out'){ state='play'; SFX.blip(); return; }
   if(it.off){ SFX.bump(); return; }
-  if(berries<it.cost){ SFX.bump(); showToast('TE FALTAN BAYAS',it.cost+' por '+it.name); return; }
+  if(berries<it.cost){ SFX.bump(); showToast('FALTAN '+(it.cost-berries)+' BAYAS',it.name); return; }
   berries-=it.cost; SFX.fanfare(); save();
   if(it.id==='b2'){ bladeLvl=2; save();
     say(["¡Chas! Filo como\nel rocío. Tu Hoja\nhace daño DOBLE."],null,'TILO'); }

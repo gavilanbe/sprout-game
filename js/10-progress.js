@@ -11,7 +11,7 @@ function save(){
   try{ localStorage.setItem(slotKey(curSlot),JSON.stringify({
     seeds, hasBlade, hasBomb, hasEmber, won, bossDone, thawed, beachIntro,
     hasHook, hasTear, boss2Done, summered, marshIntro,
-    hasFlake, boss3Done, cycled, peakIntro, keysHeld, wilts,
+    hasFlake, boss3Done, cycled, peakIntro, keysHeld, wilts, windVisit,
     berries, lupaPot, bladeLvl, hasSpin, shopHeart, tiloMet, elderMet,
     respawn:respawnPoint,
     maxHp:player.maxHp,
@@ -23,7 +23,7 @@ function loadGame(d){ // d: datos del slot ya leídos
     seeds=d.seeds||0; hasBlade=!!d.hasBlade; hasBomb=!!d.hasBomb; hasEmber=!!d.hasEmber;
     won=!!d.won; bossDone=!!d.bossDone; thawed=!!d.thawed; beachIntro=!!d.beachIntro;
     hasFlake=!!d.hasFlake; boss3Done=!!d.boss3Done; cycled=!!d.cycled; peakIntro=!!d.peakIntro;
-    keysHeld=d.keysHeld||0; wilts=d.wilts||0;
+    keysHeld=d.keysHeld||0; wilts=d.wilts||0; windVisit=!!d.windVisit;
     hasHook=!!d.hasHook; hasTear=!!d.hasTear; boss2Done=!!d.boss2Done;
     summered=!!d.summered; marshIntro=!!d.marshIntro;
     berries=d.berries||0; lupaPot=!!d.lupaPot;
@@ -50,7 +50,7 @@ function newGame(){ // borra todo y arranca la cinemática (llamar tras audio())
   seeds=0; hasBlade=false; hasBomb=false; hasEmber=false; won=false; bossDone=false;
   thawed=false; beachIntro=false; announced8=false; bloomDone=false; noBladeMsg=0;
   hasHook=false; hasTear=false; boss2Done=false; summered=false; marshIntro=false;
-  hasFlake=false; boss3Done=false; cycled=false; peakIntro=false; keysHeld=0; wilts=0;
+  hasFlake=false; boss3Done=false; cycled=false; peakIntro=false; keysHeld=0; wilts=0; windVisit=false;
   berries=0; lupaPot=false; visited.clear(); pauseView=0;
   bladeLvl=1; hasSpin=false; shopHeart=false; tiloMet=false; elderMet=false;
   giveFx=null; toast=null; toastQ=[]; qPrev=null;
@@ -76,9 +76,9 @@ function questList(){
   if(summered) q.push({id:'copo',txt:'Sube a la CIMA',done:hasFlake});
   if(hasFlake) q.push({id:'copo2',txt:'El COPO a RAÍZ',done:cycled});
   if(cycled) q.push({id:'fin',txt:'Valle restaurado',done:true});
-  // extra (opcionales)
-  if(hasBlade&&!lupaPot) q.push({id:'lupa',txt:'LUPA: 10 bayas',done:false,side:true});
-  if(hasBlade&&(bladeLvl<3||!hasSpin)) q.push({id:'tilo',txt:'TIENDA: el barrio',done:false,side:true});
+  // extra (opcionales) — con done de verdad: así celebran su "MISIÓN CUMPLIDA"
+  if(hasBlade) q.push({id:'lupa',txt:'LUPA: 10 bayas',done:lupaPot,side:true});
+  if(hasBlade) q.push({id:'tilo',txt:'TIENDA: el barrio',done:bladeLvl>=3&&hasSpin,side:true});
   return q;
 }
 function showToast(t1,t2){ toastQ.push({t1,t2,t:140}); }
