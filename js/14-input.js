@@ -27,6 +27,22 @@ if('ontouchstart' in window){
     el.addEventListener('pointerup',e=>{e.preventDefault(); if(k==='fire')keys.fireHeld=false; if(!oneShot(k))keys[k]=false;});
     el.addEventListener('pointerleave',()=>{ if(k==='fire')keys.fireHeld=false; if(!oneShot(k))keys[k]=false;}); };
   bind('tU','up');bind('tD','down');bind('tL','left');bind('tR','right');bind('tA','fire');bind('tB','alt');bind('tM','menu');
+
+  /* nada de zoom del navegador al jugar: ni doble-tap, ni pinza, ni gesto.
+     (touch-action:none ya lo bloquea en Chrome/Android; esto cubre también iOS/WebKit,
+     que ignora user-scalable y necesita cancelar los gestos a mano) */
+  let lastTap=0;
+  document.addEventListener('touchend',e=>{
+    const t=e.timeStamp||performance.now();
+    if(t-lastTap<=350) e.preventDefault(); // doble-tap
+    lastTap=t;
+  },{passive:false});
+  document.addEventListener('touchmove',e=>{
+    if(e.touches.length>1||(e.scale&&e.scale!==1)) e.preventDefault(); // pinza
+  },{passive:false});
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>
+    document.addEventListener(ev,e=>e.preventDefault()));
+  document.addEventListener('dblclick',e=>e.preventDefault());
 }
 
 /* mando (Gamepad API): stick/cruceta mueven, A=Z, B=X, start/select=zurrón */
@@ -52,13 +68,23 @@ function pollGamepad(){
   }
 }
 
-/* ---------- ESCALADO ENTERO ---------- */
+/* ---------- ESCALADO ---------- */
 function fit(){
+  if(document.body.classList.contains('touch')){
+    // móvil: el lienzo agarra toda la pantalla manteniendo proporción
+    // (los mandos quedan en los márgenes, sin tapar el HUD de abajo)
+    const s=Math.min(window.innerWidth/VW, window.innerHeight/VH);
+    cv.style.width=VW*s+'px'; cv.style.height=VH*s+'px';
+    return;
+  }
+  // escritorio: escalado ENTERO (píxeles nítidos), dejando hueco para cabecera y pistas
   const headRoom=200;
   const s=Math.max(1,Math.min(
     Math.floor((window.innerWidth-60)/VW),
     Math.floor((window.innerHeight-headRoom)/VH)));
   cv.style.width=VW*s+'px'; cv.style.height=VH*s+'px';
 }
-window.addEventListener('resize',fit); fit();
+window.addEventListener('resize',fit);
+window.addEventListener('orientationchange',()=>setTimeout(fit,100));
+fit();
 
