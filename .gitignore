@@ -1,0 +1,3 @@
+# original sin procesar del fondo del título (2,1 MB) — en el repo va solo el PNG ya
+# reescalado a 160 px (assets/title-bg.png). Se conserva en disco para reprocesar.
+assets/title-bg-src.png

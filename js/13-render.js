@@ -398,7 +398,13 @@ function drawCloud(x,y,s){ // nube esponjosa
   ctx.fillRect(x+1,y,w-2,3); ctx.fillRect(x,y+2,w,3);
   ctx.fillStyle='#c8d8e8'; ctx.fillRect(x+1,y+5,w-2,1);
 }
-function drawTitleBg(){ // paisaje del valle: cielo, sol, nubes, montañas, pinar, pradera y el Gran Roble
+function titlePanOff(){ // paneo del fondo: -travel (mostrando el pie) -> 0 (cima, con el Gran Roble)
+  const travel=Math.max(0,(titleBgOk?TITLE_BG.height:VH)-VH);
+  const k=Math.min(1,titleT/TITLE_PAN_D), e=1-(1-k)*(1-k)*(1-k); // easeOutCubic
+  return -travel*(1-e);
+}
+function drawTitleBg(){ // tira del valle con paneo vertical; si el PNG no cargó, valle procedural
+  if(titleBgOk){ ctx.drawImage(TITLE_BG,0,titlePanOff()|0); return; }
   ctx.fillStyle='#5088dc'; ctx.fillRect(0,0,160,16);
   ctx.fillStyle='#68a8e8'; ctx.fillRect(0,16,160,14);
   ctx.fillStyle='#86c0f0'; ctx.fillRect(0,30,160,26);
@@ -549,9 +555,7 @@ function drawTitle(){
     ctx.fillStyle='#fffbe8'; ctx.fillText(sub,80,60);
     ctx.globalAlpha=1;
   }
-  // Sprout pequeñín ante el Gran Roble: la escala cuenta la historia
-  const bob=Math.sin(tick*.05)>0?0:1;
-  ctx.drawImage(P_SPRITES[2][0],104,88+bob);
+  // (sin personaje en el título: solo el fondo con paneo y el logo que cae arriba)
   if(titleT>=TITLE_MENU){
     ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
     if((tick&47)<32){

@@ -48,7 +48,8 @@ let titleT=0, fontsReady=false;
 let bootT=0, bootGo=0; // encendido GB: caída del logo / frames saboreando el ding
 /* selección de archivo (3 slots, a lo Zelda) */
 let curSlot=0, fileSel=0, fileConfirm=false, fileUD=0, slotCache=[null,null,null];
-const TITLE_T0=22, TITLE_STAG=9, TITLE_DUR=20;
+const TITLE_PAN_D=110;                             // 1º el fondo sube (~1.8 s) y AHÍ ARRIBA cae el título
+const TITLE_T0=TITLE_PAN_D+16, TITLE_STAG=9, TITLE_DUR=20;  // el logo empieza a caer al posarse el paneo
 const TITLE_LAND=TITLE_T0+5*TITLE_STAG+TITLE_DUR;  // última letra posada
 const TITLE_LEAF0=TITLE_LAND+8, TITLE_LEAFD=104;   // la Hoja Ancestral cae meciéndose
 const TITLE_SHINE=TITLE_LEAF0+TITLE_LEAFD+6;       // empieza el ciclo de destellos
