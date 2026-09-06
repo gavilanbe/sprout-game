@@ -113,8 +113,8 @@ function drawQuests(){
   if(!act.length){ txt('(nada pendiente)',12,y,'#5d8a6b'); y+=10; }
   for(const q of act.slice(0,5)){ txt((q.side?'* ':'> ')+q.txt,8,y,q.side?'#c8b070':C.uiText); y+=10; }
   y+=4; txt('CUMPLIDAS',6,y,'#7fae8c'); y+=10;
-  for(const q of done.slice(-5)){ txt('v '+q.txt,8,y,'#4c7259'); y+=9; }
-  txt('Corazones: '+pieces+'/4 cuartos',6,123,'#5d8a6b');
+  for(const q of done.slice(-4)){ txt('v '+q.txt,8,y,'#4c7259'); y+=9; }
+  txt('Cuartos de corazón: '+pieces+'/4',80,124,'#5d8a6b','center');
 }
 /* ---------- CINEMÁTICA, TÍTULO, ARCHIVOS, ENCENDIDO ---------- */
 function drawCine(){
