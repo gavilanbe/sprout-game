@@ -5,3 +5,7 @@ assets/title-bg-src.png
 # ajustes locales del editor / sistema
 .claude/settings.local.json
 .DS_Store
+
+# Herramientas de verificación (el juego no necesita dependencias)
+node_modules/
+test-results/

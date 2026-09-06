@@ -1,7 +1,7 @@
 # SPROUT y las 8 semillas — arquitectura
 
-Zelda-like estilo Game Boy (160×144, tiles de 16px) sin dependencias ni build:
-HTML + canvas + WebAudio. Se sirve con cualquier estático
+Zelda-like estilo Game Boy Color (160×144, tiles de 16 px) sin dependencias ni
+build: HTML + canvas + WebAudio. Se sirve con cualquier estático
 (`python3 -m http.server 8741`) y funciona como PWA.
 
 ## Cómo está organizado
@@ -14,88 +14,96 @@ numerados — datos primero, lógica después, arranque al final.
 
 | Módulo | Qué vive aquí |
 |---|---|
-| `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL`/`C` |
-| `js/02-sprites.js` | Helpers (`spr`, `sprN`, `flipH`…) y TODOS los sprites: jugador, bichos, jefes, NPCs, reliquias, arte del título (logo, `LEAF_PAGE` hoja-pergamino, `OAK`/`OAK_GRAND`) |
-| `js/03-tiles.js` | `TILES` (pre-renderizados), altares, `SOLID`, permutas visuales: `THAW`/`AUTUMN`/`WILT` (valle mustio pre-semillas)/`SUMMER_P`+`WINTER_P` (ciclo post-final)/`TRONCO`+`HIVE` (mazmorra 2) |
-| `js/04-maps.js` | `MAPS`: cada pantalla es 8 strings de 10 chars. Leyenda en los comentarios |
-| `js/05-texts.js` | `TXT`, `DIARY`, `RUNAS`, `NPC_TALK`, `CINE`, `WIND_PEACE` — todo el guion |
+| `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL` (sprites) y `C` (mundo), utilidades (`hash`, `mkCanvas`, `mix`, `shade`) |
+| `js/02-sprites.js` | `spr`/`sprN` (filas de texto → canvas), héroe (4 direcciones, 2 fotogramas, ataque, alzar objeto), vecinos, criaturas (`E_SPR`), minijefes 24 px y guardianes 32 px (`BOSS_SPR`), objetos, amuletos, iconos, logo y Gran Roble |
+| `js/03-tiles.js` | Arte de tiles procedural con caché (`cached`), paletas por bioma (`BIOMES`), **autotiles** (agua, acantilado, muro, camino, arena, barro), leyenda (`GROUND`, `SOLID`, `ENEMY_MARK`…) y `renderScreenTo()` |
+| `js/04-maps.js` | `MAPS`: cada pantalla es 8 strings de 10 chars. Leyenda completa en la cabecera. `CHESTS` (cofres) y `PLACE_NAMES` |
+| `js/05-texts.js` | `TXT`, `AMULETS`, `DIARY`, `RUNAS`, `NPC_TALK`, `CINE`, treguas, `MID_INTRO`, `ROOM_HINTS`, `CREDITS` — todo el guion |
 | `js/06-audio.js` | Chiptune WebAudio: `beep`/`noise`, `SFX.*`, `TRACKS` y el secuenciador |
-| `js/07-state.js` | Estado global (flags de progreso, `player`, `say()`, toasts) |
-| `js/08-world.js` | `loadScreen()` (spawnea pantalla desde el mapa), colisiones, partículas |
-| `js/09-player.js` | Movimiento, `attack()` (toda interacción con Z), remolino, tienda de Tilo |
-| `js/10-progress.js` | Guardado (3 slots), `questList()` (misiones derivadas del estado), `giveItem()`, `bloom()` |
-| `js/11-enemies.js` | IA de los bichos comunes (`updEnemies`) |
-| `js/12-update.js` | Máquina de estados (`update()`): boot/título/archivos/cine/juego/diálogo/tienda/pausa + jefes |
-| `js/13-render.js` | Todo el dibujado: escena, Gran Roble, HUD, diálogos, pausa, tienda, título, boot GB |
-| `js/14-input.js` | Teclado, táctil, mando, escalado entero |
-| `js/15-boot.js` | API de debug `window.__sprout`, PWA, arranque y bucle a 60 Hz |
+| `js/07-state.js` | Estado global (flags de progreso, `player`, inventario, amuletos), `hurt()`, `say()`/`ask()` y `paginate()` |
+| `js/08-world.js` | Regiones y biomas (`regionOf`, `screenBiome`), `loadScreen()` (spawnea la pantalla), fondo pre-renderizado (`rebuildBg`/`markDirty`), colisiones, partículas |
+| `js/09-player.js` | Movimiento con deslizamiento en esquinas, Hoja, remolino, empujar bloques, cortar, cristales, antorchas, `interact()` (todo lo que se hace con Z), objetos de X (`useItem`), gancho, vaina, salto, tiendas |
+| `js/10-progress.js` | Guardado (3 slots), `newGame()`, `questList()` (derivada del estado), entregas visibles, `bloom()` |
+| `js/11-enemies.js` | IA de las 16 criaturas (`updEnemies`), daño (`damageEnemy`), escudo |
+| `js/12-bosses.js` | Los tres guardianes (Topo, Reina, Viento) y los tres minijefes (Rey, Zángano, Guardián de Hielo) |
+| `js/13-update.js` | Máquina de estados (`update()`): boot/título/archivos/cine/juego/diálogo/pausa/tienda/gancho/caída/créditos; bombas, proyectiles, tornaditos, vaina, recogibles, salidas |
+| `js/14-render.js` | Escena: fondo cacheado, Gran Roble, actores ordenados por profundidad, jefes, gancho, partículas, oscuridad con luz, barra de jefe |
+| `js/15-ui.js` | HUD, diálogo con retrato, cartel de jefe, avisos, tiendas, **zurrón** (objetos/amuletos, mapa, tareas), cinemática, título, archivos, encendido, créditos, `draw()` |
+| `js/16-input.js` | Teclado, táctil, mando, escalado entero |
+| `js/17-boot.js` | API de debug `window.__sprout`, PWA, arranque y bucle a 60 Hz |
 
 Regla de oro: **los datos no llaman a la lógica**. Sprites, tiles, mapas y
-textos (02–05) son declarativos; la lógica (08–12) los consume. Si un texto
+textos (02–05) son declarativos; la lógica (08–13) los consume. Si un texto
 necesita decidir según el estado, es una función que se evalúa al hablar
 (patrón `NPC_TALK`).
 
+## El render
+
+`loadScreen()` marca el fondo sucio; `rebuildBg()` pinta la pantalla entera dos
+veces (fotograma 0 y 1 de agua, hierba alta y antorchas) en dos canvas. Cada
+frame se dibuja el fondo cacheado y encima los actores. Cualquier cambio en
+`grid` (cortar, abrir, empujar, encender) llama a `markDirty()`.
+
+Los tiles se generan una vez y se guardan en `TILE_CACHE` por clave
+(clase + variante + bioma + fotograma). Los autotiles calculan un bitmask de
+vecinos (`edgesOf`) y componen bordes en lugar de dibujar 47 variantes a mano.
+Las permutas de estación son solo visuales: la colisión usa el char del grid.
+
 ## Recetas para crecer
 
-**Una pantalla nueva** → añade la clave `'x,y'` a `MAPS` (04). Si toca con
-una existente, las transiciones funcionan solas. Pantallas "interiores"
-(casa `9,9`, tienda `8,9`) usan claves fuera del mundo y entradas/salidas
-explícitas (`placeAt`, tile `x` de felpudo en 09/12).
-⚠️ Al EDITAR una pantalla existente, no tapies sus bordes compartidos:
-comprueba que cada borde abierto del vecino siga teniendo celdas libres
-enfrente (el atasco de la pradera este '2,1' vino de cerrar las filas 0-2
-del borde con el lago). Red de seguridad: `findFree` (12) busca hueco en
-ambos ejes y `tryMove` (09) deja salir andando si quedas incrustado.
+**Una pantalla nueva** → añade la clave `'x,y'` a `MAPS`. Si toca con una
+existente, las transiciones funcionan solas. Los bordes compartidos deben
+tener celdas libres enfrente (el test `Grafo del mundo` lo comprueba).
+Interiores y mazmorras usan claves fuera del valle y entradas explícitas
+(`placeAt`, felpudo `x`).
 
-**Un tile nuevo** → `TILES['χ']` en 03 con `mkTile`; añádelo a `SOLID` si
-bloquea. Úsalo en los mapas. Si tiene interacción con Z, su rama en
-`attack()` (09); si spawnea algo al cargar, su rama en `loadScreen()` (08).
+**Un tile nuevo** → función de dibujo en 03 (`cached(...)`), rama en
+`drawGround`/`drawObject`, alta en `GROUND` o `SOLID`. Si tiene interacción
+con Z, su rama en `interact()` (09); si spawnea algo al cargar, su rama en
+`loadScreen()` (08).
 
-**Un enemigo nuevo** → sprite en 02, entrada en `E_SPR`, marcador en
+**Un enemigo nuevo** → sprite en 02 y entrada en `E_SPR`, marcador en
 `ENEMY_MARK` + caso en `spawnEnemy` (08), IA en `updEnemies` (11), dibujo en
-`drawEnemy` (13).
+`drawEnemy` (14).
+
+**Un objeto de X** → flag en 07, `getItem()` y `useItem()` en 09, icono en
+`X_ICON` (15), añadir a `X_ITEMS` (13) y a `save()`/`loadGame()`/`newGame()`.
+
+**Un amuleto** → entrada en `AMULETS` (05), sprite en `AMULET_ROWS` (02), su
+efecto donde toque (consultando `hasAmulet('id')`), y un sitio donde
+conseguirlo: `CHESTS` (04), tienda de Corteza (09) o regalo de un vecino.
 
 **Una misión nueva** → una entrada en `questList()` (10) derivada de flags.
 Las misiones NUNCA guardan estado propio: se calculan, así no mienten.
-Los avisos (toasts) salen solos al cambiar la lista.
-
-**Un objeto comprable** → entrada en `shopList()` + efecto en `buyShop()` (09).
-
-**Una pista musical** → en `TRACKS` (06): melodía `[midi,corcheas]`,
-acordes por compás, `beats:3|4`. Actívala en el selector de `loadScreen` (08).
 
 **Progreso nuevo** → flag en 07, persistencia en `save()`/`loadGame()`/
-`newGame()` (10), y sus efectos visibles (¡siempre!): mundo (08/13),
-diálogos (05), misiones (10).
+`newGame()` (10), y sus efectos visibles (mundo, diálogos, misiones).
 
 ## Convenciones
 
-- 160×144 lógicos; UI inferior de 16px; pantallas de 10×8 tiles.
-- Paleta GBC contenida: usa `PAL`/`C` antes que hex nuevos.
+- 160×144 lógicos; UI inferior de 16 px; pantallas de 10×8 tiles.
+- Paleta contenida: usa `PAL`/`C`/`BIOMES` antes que hex nuevos.
 - El lore manda: Raíz ES el Gran Roble; el Viento es su hermano; Sprout es
-  la novena bellota. Todo cambio visible debe contar progreso (árbol,
-  altares, flores del pueblo, clima ambiental por región).
-- **Ningún jefe muere**: a 2 PV entran en `st:'yield'` y ceden su tesoro
-  al hablarles con Z (el daño se clampa a 2 en hoja/bomba/tornadito).
-  El cartel de presentación sale de `bossCard`; el tema, de `TRACKS.jefe`.
-- **Diálogos**: `say(pages,cb,who)` y `ask(pages,who,cb)` (última página:
-  Z=sí/X=no → `cb(bool)`). Caja FIJA de 3 líneas que se coloca arriba si
-  Sprout anda por la mitad inferior (nunca lo tapa). `paginate()` (07)
-  envuelve con `wrapText` y trocea cada página en pantallas de 3 líneas:
-  no hace falta contar caracteres en el guion. Si `who` está en
-  `PORTRAITS` (02), sale su retrato a lo Golden Sun (texto a 13 columnas).
-- Permutas de tiles = SOLO visuales (en `renderScreenTo`): la colisión usa
-  el char original del grid. Tile con "césped propio" → crea su variante
-  (`wr/wS/nr/nS/ar/aS...`) o quedará verde fuera de temporada.
-- Guardado: `localStorage` por slots (`sprout.save.s0..2`). Campo nuevo =
-  tocar `save()` + `loadGame()` + `newGame()`.
-- El audio del navegador nace en el primer gesto: por eso existe el boot
-  GB (NAHUELGABE™). Nada debe sonar antes de `audio()`.
+  la novena bellota. Todo cambio visible debe contar progreso.
+- **Ningún jefe muere**: a 2 PV entran en `st:'yield'` (o `rest` el Viento) y
+  ceden su tesoro al hablarles con Z. Los minijefes sí caen y sueltan su
+  herramienta.
+- **Diálogos**: `say(pages,cb,who)` y `ask(pages,who,cb)`. Caja fija de 3
+  líneas arriba o abajo (nunca tapa a Sprout). Si `who` está en `PORTRAITS`,
+  sale el retrato (16 o 32 px). Los avisos (toasts) esperan a que no haya diálogo.
+- Guardado: `localStorage` por slots (`sprout.save.s0..2`).
+- El audio nace en el primer gesto: por eso existe el boot GB. Nada suena antes
+  de `audio()`.
+- Puertas con cerrojo y de guardián van en el **lado por el que se entra**
+  (la transición coloca al jugador en el borde de la sala siguiente).
 
-## Debug
+## Debug y pruebas
 
 `window.__sprout` en consola: `info()`, `warp(sx,sy,x,y)`, `gear()`,
-`addBerries(n)`, `win()/thaw()/summer()/cycle()/meet()`, `shopUI()`,
-`quests()`, `freeze(n)` (congela `n` frames), `cine(p,f)`, `playTrack(n)`,
-`winds()`, `tick()`… Para tests visuales: congela con `freeze(100000)`
-ANTES de capturar (las capturas tardan) y `freeze(0)` para soltar.
+`allAmulets()`, `addBerries(n)`, `win()/thaw()/summer()/cycle()`, `killBoss()`,
+`giveKey()/bigKey()`, `solvePlates()`, `pause(p)`, `shopUI(kind)`, `equip(a,b)`,
+`setX(k)`, `freeze(n)`, `cine(p)`, `title(t)`…
+
+`tests/verify.cjs` arranca el juego en Chromium (Playwright), pone
+`window.__manual=true` para conducir `update()` a mano y comprueba arranque,
+mapas, puzles, objetos, jefes y guardado.

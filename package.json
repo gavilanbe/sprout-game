@@ -1,0 +1,6 @@
+{
+  "name": "sprout-pacto-estaciones",
+  "private": true,
+  "scripts": { "test": "node tests/verify.cjs" },
+  "devDependencies": { "playwright": "1.58.2" }
+}

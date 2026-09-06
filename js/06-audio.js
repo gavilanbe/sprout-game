@@ -175,3 +175,42 @@ function startMusic(){
   },25);
 }
 
+
+/* ---------- efectos nuevos ---------- */
+Object.assign(SFX,{
+  jump(){ beep('square',300,720,.14,.05); },
+  land(){ noise(.06,.04,false); beep('square',180,90,.06,.03); },
+  boomer(){ beep('square',900,600,.06,.03); },
+  torch(){ noise(.12,.05,true); beep('triangle',420,880,.18,.05); },
+  crystal(){ const a=audio(),t=a.currentTime; [84,88,91].forEach((m,i)=>beep('square',f(m),0,.12,.04,t+i*.05)); },
+  key(){ const a=audio(),t=a.currentTime; [76,83,88].forEach((m,i)=>beep('square',f(m),0,.1,.05,t+i*.07)); },
+  unlock(){ const a=audio(),t=a.currentTime; noise(.1,.05,false,t); beep('square',200,400,.12,.05,t+.1); beep('square',400,800,.2,.05,t+.2); },
+  fall(){ beep('square',400,60,.5,.06); },
+  stun(){ beep('square',700,700,.05,.03); beep('square',700,700,.05,.03,audio().currentTime+.08); },
+  equip(){ beep('square',660,0,.06,.04); beep('square',990,0,.1,.04,audio().currentTime+.06); },
+  menu(){ beep('square',520,0,.04,.03); },
+  block(){ beep('square',240,240,.05,.04); noise(.04,.03,true); },
+  charge(){ beep('square',440,880,.2,.03); },
+  grass(){ noise(.07,.03,false); },
+  piece(){ const a=audio(),t=a.currentTime; [72,76,79,76,84].forEach((m,i)=>beep('square',f(m),0,.09,.05,t+i*.07)); },
+});
+/* ---------- pistas nuevas: templo helado, gruta, minijefe ---------- */
+Object.assign(TRACKS,{
+  templo:{ EI:.22, lead:'triangle', leadVol:.05, echo:true, pah:false, bassVol:.075,
+    mel:[
+      [76,2],[74,2],[71,2],  [69,4],[71,2],  [72,2],[71,2],[69,2],  [64,6],
+      [69,2],[72,2],[76,2],  [77,4],[76,2],  [74,2],[72,2],[71,2],  [69,6],
+    ],
+    chords:[CH_Am,CH_Em,CH_F,CH_Am, CH_F,CH_G,CH_Em,CH_Am] },
+  gruta:{ EI:.26, lead:'triangle', leadVol:.04, echo:true, pah:false, bassVol:.06,
+    mel:[ [57,4],[60,2],  [59,4],[57,2],  [55,4],[57,2],  [52,6],  [57,4],[60,2],  [62,4],[60,2],  [59,4],[56,2],  [57,6] ],
+    chords:[CH_Am,CH_Am,CH_Em,CH_Em, CH_Am,CH_F,CH_Em,CH_Am] },
+  minijefe:{ EI:.15, lead:'square', leadVol:.038, echo:false, pah:true, bassVol:.095, beats:4,
+    mel:[
+      [64,2],[64,1],[64,1],[67,2],[64,2],  [69,2],[67,2],[64,2],[62,2],
+      [64,2],[64,1],[64,1],[70,2],[69,2],  [67,2],[69,2],[70,2],[72,2],
+      [76,4],[75,2],[72,2],  [76,2],[75,2],[72,2],[69,2],
+      [70,2],[69,2],[67,2],[64,2],  [62,4],[63,4],
+    ],
+    chords:[CH_Em,CH_Em,[43,62,67],[43,62,67], CH_Em,CH_C,[47,62,66],CH_Em] },
+});

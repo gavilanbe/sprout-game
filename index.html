@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>SPROUT · una microaventura</title>
+<title>SPROUT · y las 8 semillas</title>
+<meta name="description" content="Un Zelda-like estilo Game Boy Color: el Valle Raíz, tres mazmorras, guardianes que no mueren y las cuatro estaciones.">
 <meta name="theme-color" content="#0b1a10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -88,22 +89,22 @@
 <body>
 <header>
   <h1>SPR<span class="seed">O</span>UT</h1>
-  <div class="tag">y las 8 semillas · una microaventura hecha a mano</div>
+  <div class="tag">y las 8 semillas · un Zelda-like hecho a mano</div>
 </header>
 
 <div class="shell">
-  <canvas id="cv" width="160" height="144"></canvas>
+  <canvas id="cv" width="160" height="144" aria-label="SPROUT: aventura del Valle Raíz"></canvas>
   <div class="scan"></div>
 </div>
 
 <div class="keys">
   <span><kbd>←↑↓→</kbd> mover</span>
   <span><kbd>Z</kbd> hoja / hablar</span>
-  <span><kbd>X</kbd> bomba</span>
+  <span><kbd>X</kbd> objeto</span>
   <span><kbd>↵</kbd> zurrón</span>
   <span><kbd>M</kbd> música</span>
 </div>
-<footer>HECHO A MANO CON RECTÁNGULOS · 2026</footer>
+<footer>OCHO SEMILLAS · CUATRO ESTACIONES · NINGÚN GUARDIÁN MUERE</footer>
 
 <div id="touch">
   <div class="tbtn" id="tU">▲</div><div class="tbtn" id="tD">▼</div>
@@ -126,9 +127,11 @@
 <script src="js/09-player.js"></script>
 <script src="js/10-progress.js"></script>
 <script src="js/11-enemies.js"></script>
-<script src="js/12-update.js"></script>
-<script src="js/13-render.js"></script>
-<script src="js/14-input.js"></script>
-<script src="js/15-boot.js"></script>
+<script src="js/12-bosses.js"></script>
+<script src="js/13-update.js"></script>
+<script src="js/14-render.js"></script>
+<script src="js/15-ui.js"></script>
+<script src="js/16-input.js"></script>
+<script src="js/17-boot.js"></script>
 </body>
 </html>
