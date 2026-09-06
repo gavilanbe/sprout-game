@@ -129,7 +129,7 @@ const server=http.createServer((req,res)=>{
       // entrar por la boca de la cueva
       __go(2,-1,80,40); player.x=5*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['cueva',sx,sy]);
       // sala de las raíces: bloques (2,3)→(2,1) y (5,3)→(5,1)
-      __go(7,0,72,90); __skipDialog(); enemies=[]; for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; keys.up=true; for(let i=0;i<60;i++){ __step(1); } keys.up=false; }
+      __go(7,0,72,90); __skipDialog(); enemies=[]; for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; for(let k=0;k<2;k++){ keys.up=true; for(let i=0;i<14;i++){ __step(1); } keys.up=false; __step(1); } }
       log.push(['placas',grid[1][2],grid[1][5],grid[6][4]]);
       // pulsador y llave
       __go(7,1,72,30); enemies=[]; player.x=5*16; player.y=4*16-6; __step(3); log.push(['pulsador',grid[3][1]]);
@@ -150,6 +150,54 @@ const server=http.createServer((req,res)=>{
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['deshielo',thawed,screenBiome(1,-1)]);
       return log; });
     eq(r,[['cueva',6,0],['placas','#','#','q'],['pulsador','q'],['llave',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo',true,'valley']]);
+  });
+  await check('Camino crítico: el Tronco Hueco (llave, Zángano, gancho, cristal, llave grande, Reina)',async()=>{
+    const r=await ev(()=>{ const log=[];
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; hasBomb=true; xItem='bomb'; announced8=true; bloomDone=true;
+      __go(1,3,72,60); player.x=4*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['tronco',sx,sy]);
+      __go(11,0,72,90); enemies=[]; const k=pickups.find(p=>p.kind==='key'); player.x=k.x; player.y=k.y-4; __step(3); __skipDialog(); player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.tronco,grid[3][9]]);
+      __go(12,0,40,60); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<300){ midboss.st='stunned'; midboss.t=60; midboss.flash=0; player.x=midboss.x; player.y=midboss.y+26; player.dir=1; player.atk=11; hitStop=0; __step(1); }
+      __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['zángano',midDrone,hasHook]);
+      __go(11,1,72,40); enemies=[]; const east0=grid[5][7]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); log.push(['cristal',east0,grid[5][7],grid[5][2]]);
+      __go(12,1,40,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.tronco]);
+      xItem='hook'; __go(10,1,72,20); enemies=[]; player.x=4*16; player.y=2*16-4; player.dir=0; keys.alt=true; __step(1); const hs=state; __step(70); log.push(['canal',hs,(player.y+12)>>4]);
+      player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['puerta',grid[7][4]]);
+      __go(10,2,72,96); __skipDialog(); boss.hp=2; __step(3); __skipDialog(); player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
+      const t=pickups.find(p=>p.kind==='tear'); if(t){ player.x=t.x; player.y=t.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['lágrima',boss2Done,hasTear]);
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['verano',summered,screenBiome(2,3)]);
+      return log; });
+    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['cristal','æ','Æ','º'],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'valley']]);
+  });
+  await check('Camino crítico: el Templo de la Cima (bloques, cerrojo, llave grande, Guardián, vilano, antorchas, cima, Viento)',async()=>{
+    const r=await ev(()=>{ const log=[];
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; hasBomb=true; hasHook=true; hasLantern=true; xItem='bomb'; announced8=true; bloomDone=true;
+      __go(1,-2,72,90); enemies=[]; player.x=4*16; player.y=5*16-4; keys.alt=true; __step(1); __step(90); log.push(['grieta',grid[4][4]]);
+      xItem='hook'; player.x=4*16; player.y=4*16-4; player.dir=1; keys.alt=true; __step(1); __step(70); log.push(['canal',(player.y+12)>>4]);
+      player.x=4*16; player.y=1*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['templo',sx,sy]);
+      __go(14,1,72,90); enemies=[]; __skipDialog();
+      player.x=1*16; player.y=2*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); player.x=3*16; player.y=1*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1);
+      player.x=5*16; player.y=4*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); player.x=7*16; player.y=3*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false;
+      log.push(['bloques',grid[3][3],grid[5][7],pickups.some(p=>p.kind==='key')]);
+      const k=pickups.find(p=>p.kind==='key'); if(k){ player.x=k.x; player.y=k.y-4; __step(20); __skipDialog(); }
+      __go(15,1,20,60); enemies=[]; player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.templo,grid[3][9]]);
+      __go(16,1,72,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.templo]);
+      __go(16,0,72,100); __skipDialog(); enemies=[]; xItem='bomb'; let n=0; while(midboss&&n++<400){ hitStop=0; if(midboss.soft<=0){ player.x=midboss.x+4; player.y=midboss.y+24; keys.alt=true; __step(1); __step(82); } else { player.x=midboss.x+12-8; player.y=midboss.y+26; player.dir=1; player.atk=11; __step(1); } }
+      __step(4); const f=pickups.find(p=>p.kind==='feather'); if(f){ player.x=f.x; player.y=f.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['guardián',midIce,hasFeather]);
+      __go(15,0,72,60); enemies=[]; xItem='feather'; player.x=9*16; player.y=3*16-4; player.dir=2; keys.alt=true; __step(1); keys.left=true; __step(30); keys.left=false; log.push(['salto',(player.x+8)>>4,state]);
+      xItem='lantern'; for(const [x,y,d] of [[3,1,2],[6,1,3],[3,6,2],[6,6,3]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); } log.push(['antorchas',grid[1][4]]);
+      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['puerta',grid[0][4]]); player.y=-6; __step(1); log.push(['cima',sx,sy]);
+      __skipDialog(); boss.hp=2; __step(3); __skipDialog(); boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
+      const fl=pickups.find(p=>p.kind==='flake'); if(fl){ player.x=fl.x; player.y=fl.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['copo',boss3Done,hasFlake]);
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['final',cycled,state]);
+      return log; });
+    eq(r,[['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],['copo',true,true],['final',true,'credits']]);
+  });
+  await check('Zurrón y tiendas por teclado: equipar objeto y amuleto, comprar en Tilo',async()=>{
+    eq(await ev(()=>{ hasBomb=true; hasHook=true; amulets.add('raiz'); amulets.add('buho'); equipped=[null,null]; xItem='bomb'; __go(0,1,60,70);
+      keys.menu=true; __step(1); const p=state; keys.right=true; __step(1); keys.right=false; __step(1); keys.fire=true; __step(1); const x1=xItem;
+      keys.down=true; __step(1); keys.down=false; __step(1); keys.fire=true; __step(1); keys.right=true; __step(1); keys.right=false; __step(1); keys.fire=true; __step(1); const eq1=equipped.slice();
+      keys.menu=true; __step(1); const back=state;
+      berries=100; __sprout.shopUI('tilo'); keys.fire=true; __step(1); __skipDialog(); return [p,x1,eq1,back,bladeLvl,berries]; }),['pause','hook',['raiz','buho'],'play',2,85]);
   });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }

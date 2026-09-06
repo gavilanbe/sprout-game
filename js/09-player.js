@@ -42,10 +42,11 @@ function doSpin(){
   windProjs.push({x:player.x+8,y:player.y+10,vx:D[0]*2.1,vy:D[1]*2.1,t:70,ang:0,hits:new Set()});
 }
 /* empuje de rocas-raíz: encarado y avanzando un instante */
-let pushHold=0;
+let pushHold=0, pushLatch=false; // un empujón por pulsación: hay que soltar la cruceta para volver a empujar
 const plateCells=new Set();
 function tryPushBlock(){
   const ft=facingTile(); if(!ft||ft[2]!=='#'){ pushHold=0; return; }
+  if(pushLatch) return;
   const [tx,ty]=ft;
   const dxc=(player.x+8)-(tx*16+8), dyc=(player.y+12)-(ty*16+10);
   const off=(player.dir<2)?Math.abs(dxc):Math.abs(dyc); if(off>9){ pushHold=0; return; }
@@ -56,7 +57,7 @@ function tryPushBlock(){
   const dest=grid[dy][dx];
   if(dest!=='_'&&dest!==regionFloor()&&dest!=='q'){ pushHold=0; return; }
   if(enemies.some(e=>Math.abs(e.x-dx*16)<10&&Math.abs(e.y-dy*16)<10)){ pushHold=0; return; }
-  pushHold=0;
+  pushHold=0; pushLatch=true;
   grid[ty][tx]=plateCells.has(tx+','+ty)?'_':regionFloor();
   grid[dy][dx]='#'; markDirty();
   if(player.dir===0){ player.x=tx*16; player.y=ty*16-4; } else if(player.dir===1){ player.x=tx*16; player.y=ty*16+4; }

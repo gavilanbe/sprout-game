@@ -117,7 +117,7 @@ function update(){
     if(keys.left)dx=-1; else if(keys.right)dx=1;
     if(keys.up)dy=-1; else if(keys.down)dy=1;
     if(inBed&&(dx||dy)){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); puff(player.x+8,player.y+10,'#c06030',4,.8); noise(.1,.04,false); }
-    if(dx||dy){ player.dir=dy<0?1:dy>0?0:(dx<0?2:3); tryPushBlock(); if(dx&&dy){dx*=.72;dy*=.72;} }
+    if(dx||dy){ player.dir=dy<0?1:dy>0?0:(dx<0?2:3); tryPushBlock(); if(dx&&dy){dx*=.72;dy*=.72;} } else { pushLatch=false; pushHold=0; }
     let sp=playerSpeed();
     const slow=(onTile==='m'||onTile==='w')&&!hasAmulet('rana'); if(slow) sp*=.55;
     const onIce=onTile==='i'&&!(thawed&&sy===-1);

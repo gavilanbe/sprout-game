@@ -38,7 +38,7 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
 - **Puzles**: bloques sobre placas, pulsadores, antorchas que abren verjas,
   cristales que alternan bloques rojos y azules, hielo resbaladizo, llaves pequeñas
   y llaves grandes.
-- Tienda de Tilo, cabaña de Corteza, trueques con los vecinos, 15 tipos de bicho,
+- Tienda de Tilo, cabaña de Corteza, trueques con los vecinos, 16 tipos de bicho,
   diario del Roble, piedras rúnicas, clima por región y las cuatro estaciones
   girando al final.
 - Guardado en 3 ranuras, mandos táctiles, gamepad y PWA.
