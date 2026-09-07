@@ -25,23 +25,30 @@ Resolución real de Game Boy (160×144), tiles de 16 px, paleta GBC y banda sono
 *chiptune* generada en vivo con WebAudio. **Cero dependencias, cero paso de build**:
 HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
 
-- **50 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
-  una gruta oscura y **tres mazmorras** con llaves, puertas de guardián y puzles.
+- **55 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
+  un glaciar, una cala escondida, cuevas secretas bajo los arbustos y **tres
+  mazmorras** con llaves, puertas de guardián y puzles.
 - **Tres guardianes que no mueren** (el Topo Real, la Reina Avispa y el Viento del
   Norte) y **tres minijefes** (el Escarabajo Rey, el Zángano Capitán y el Guardián
   de Hielo), cada uno con su truco.
 - **Seis herramientas** — la Hoja Ancestral, la Bellota-bomba, la Raíz-gancho, la
-  Vaina voladora, el Farol de brasa y el Vilano — y **ocho amuletos** equipables
+  Vaina voladora, el Farol de brasa y el Vilano — y **nueve amuletos** equipables
   (dos a la vez) que cambian cómo juegas.
 - **Backtracking de verdad**: cada herramienta reabre el valle (rocas agrietadas,
   islas, agujeros, cuevas oscuras) con corazones, cuartos de corazón y amuletos.
 - **Puzles**: bloques sobre placas, pulsadores, antorchas que abren verjas,
   cristales que alternan bloques rojos y azules, hielo resbaladizo, llaves pequeñas
   y llaves grandes.
-- Tienda de Tilo, cabaña de Corteza, trueques con los vecinos, 16 tipos de bicho,
-  diario del Roble, piedras rúnicas, clima por región y las cuatro estaciones
-  girando al final.
-- Guardado en 3 ranuras, mandos táctiles, gamepad y PWA.
+- **Lore**: un prólogo ilustrado, el diario del Roble (diez páginas), piedras
+  rúnicas, libros en las estanterías, las cinco **Cartas del Viento** que nadie
+  abrió y guardianes que siguen hablando después de la tregua. Todo se relee en
+  la pestaña de Recuerdos.
+- Tienda de Tilo, cabaña de Corteza, el pozo de los deseos, trueques con los
+  vecinos, 19 tipos de bicho, clima por región y las cuatro estaciones girando
+  al final.
+- Zurrón con cinco pestañas (objetos y amuletos, mapa, el valle, recuerdos y
+  ajustes), guardado en 3 ranuras con capítulo y tiempo, mandos táctiles,
+  gamepad y PWA.
 
 ## 🎨 Arte
 
@@ -88,7 +95,8 @@ a visitarlos, tendrán algo que decirte.
 | `Z` / espacio | Hoja · hablar · abrir · recoger |
 | Mantener y soltar `Z` | Remolino (cuando lo aprendas de Tilo) |
 | `X` | Usar el objeto equipado (bomba, gancho, vaina, farol, vilano) |
-| `Enter` / `Escape` | Zurrón: objetos y amuletos · mapa · tareas |
+| `Enter` / `Escape` | Abrir y cerrar el zurrón |
+| `X` en el zurrón | Cambiar de pestaña (zurrón · mapa · valle · recuerdos · ajustes) |
 | `M` | Música on/off |
 
 En el zurrón, `Z` sobre un objeto lo equipa en `X`; `Z` sobre un amuleto lo pone o

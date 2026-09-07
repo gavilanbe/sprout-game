@@ -15,7 +15,11 @@
 ```
 
 Interiores: casa de Sprout (9,9), tienda de Tilo (8,9), cabaña de Corteza (7,9,
-en el Claro), Gruta de los Ecos (5,9, en los Riscos).
+en el Claro), Gruta de los Ecos (5,9, en los Riscos), Bodega del Bosque (4,9,
+bajo un arbusto del Bosque) y Madriguera del Camino (3,9, bajo un arbusto del
+Camino). Pantallas extra: Glaciar del Silencio (4,-1, al este del Mirador), Cala
+del Silencio (0,3, al oeste del Tronco) y Ciénaga de las Cartas (4,3, al este del
+Jardín).
 
 ## Progresión
 
@@ -32,11 +36,21 @@ sopa; tras el verano regala la **Piel de rana**), Tilo (filo ×2, ×3 tras el
 deshielo, remolino, escudo, corazón, cuarto), Corteza (Anillo de savia, Corazón de
 musgo), el Topo tras la tregua (Corona del Topo).
 
+## Las Cartas del Viento
+
+Cinco sobres que Raíz nunca abrió. Glaciar (hielo), Cala (arena), Ciénaga (junto
+a los lirios), Bodega del Bosque (arbusto con escalera) y Sendero del pico (tras
+el canal, con el gancho). Con las cinco, Raíz entrega el **Susurro del Viento**:
+el Remolino se carga al instante y el tornadito llega más lejos.
+
+El pozo del barrio concede un cuarto de corazón por 20 bayas, una sola vez.
+
 ## Corazones
 
 Se empieza con 3. Corazones enteros: pradera (bomba), lago (gancho), jardín sumergido
 (gancho), tienda de Tilo. Cuartos (4 = 1 corazón): juncal (gancho), mirador (bomba),
-pista de hielo del templo, marisma oeste, tienda de Tilo. Máximo: 10.
+pista de hielo del templo, marisma oeste, madriguera del camino, pozo del barrio y
+tienda de Tilo. Máximo: 10.
 
 ## Amuletos (dos a la vez)
 
@@ -50,6 +64,7 @@ pista de hielo del templo, marisma oeste, tienda de Tilo. Máximo: 10.
 | Ojo de búho | Brillan grietas, arbustos y cofres | Cascada del Ámbar (cofre, bomba) |
 | Piel de rana | El barro y el vado no frenan | Moss, tras el verano |
 | Corona del Topo | Bombas sin daño propio y más grandes | El Topo Real, tras la tregua |
+| Susurro del Viento | Remolino instantáneo, tornadito lejano | Raíz, con las cinco cartas |
 
 ## Las mazmorras
 
@@ -112,3 +127,14 @@ golemitos de hielo solo caen con bombas. Los fuegos fatuos se apagan con el
 tornadito. La vaina aturde 90 fotogramas y hace 1 de daño.
 
 Ningún guardián baja de 2 PV. Guardianes: 10, 10 y 14 PV. Minijefes: 8, 8 y 6.
+
+## Equilibrio
+
+`ENEMY_STATS` (08) fija vida y daño por criatura; el valle hace medio corazón por
+toque, los rodapúas del norte y los golemitos del templo hacen uno entero, los
+blobs y murciélagos del norte y las marismas llevan un punto más de vida, y todo
+bicho del templo lleva otro. Los guardianes telegrafían más tiempo (Viento 40
+fotogramas, Reina 34, Topo 100 en pie) y los minijefes quedan expuestos más rato
+(Rey 60, Zángano 80, Guardián ablandado 220). Daño: hierba 6 % corazón, arbusto
+12 %, bicho 22 % (pincho 40 %). Bayas: hierba 14 %, arbusto 30 %, bicho 35 %
+(el Anillo de savia lo dobla).
