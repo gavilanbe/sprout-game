@@ -1494,3 +1494,132 @@ const OAK_GRAND=(()=>{
   return c;
 })();
 const OAK_GRAND_DARK=darken(OAK_GRAND);
+
+/* ============================================================
+   SEGUNDA PASADA: criaturas y objetos nuevos
+   ============================================================ */
+const TOPILLO=spr([ // topillo: asoma del agujero y muerde
+"................",
+"................",
+"................",
+"......kkkk......",
+".....kAAAAk.....",
+"....kAAAAAAk....",
+"....kAqAAqAk....",
+"....kAAzzAAk....",
+"....kAAAAAAk....",
+"...kAAAAAAAAk...",
+"..kvvkAAAAkvvk..",
+"..kkkkAAAAkkkk..",
+"...kkkkkkkkkk...",
+"....kTTTTTTk....",
+".....kkkkkk.....",
+"................",
+],{A:'#7a5a38',z:'#e89cb8',v:'#e8d8c0',T:'#3a3026'});
+const TOPILLO_HOLE=sprN([
+"....kkkkkkkk....",
+"...kTTTTTTTTk...",
+"..kTtttttttttk..",
+"..kTtttttttttk..",
+"...kTTTTTTTTk...",
+"....kkkkkkkk....",
+],{T:'#3a3026',t:'#241c14'});
+const LIRIO=spr([ // lirio de agua: flor que escupe semillas
+"................",
+"................",
+".......k........",
+"......kzk.......",
+".....kzZzk......",
+"....kzZyZzk.....",
+"....kzZyZzk.....",
+".....kzZzk......",
+"......kdk.......",
+"....kkkdkkk.....",
+"...kggggggggk...",
+"..kgLgggggggk...",
+"..kggggkgggggk..",
+"...kggggggggk...",
+"....kkkkkkkk....",
+"................",
+],{z:'#f050a0',Z:'#ff90c8',g:'#58a848',L:'#88d868'});
+const LIRIO_B=spr([ // abierto: escupe
+"................",
+"......k.k.k.....",
+".....kzkzkzk....",
+"....kzZzZzZzk...",
+"....kzZyyyZzk...",
+"....kzZyyyZzk...",
+"....kzZzZzZzk...",
+".....kzkzkzk....",
+"......kkdkk.....",
+"....kkkdkkk.....",
+"...kggggggggk...",
+"..kgLgggggggk...",
+"..kggggkgggggk..",
+"...kggggggggk...",
+"....kkkkkkkk....",
+"................",
+],{z:'#f050a0',Z:'#ff90c8',g:'#58a848',L:'#88d868'});
+const RODAHOJA=spr([ // rodahoja: bola de hojarasca que rebota
+"................",
+"................",
+".....kkkkkk.....",
+"....kaAaaAak....",
+"...kaaAaaaAak...",
+"..kAaaaAaaaaAk..",
+"..kaaAaaaaAaak..",
+"..kaaaaAaaaaak..",
+"..kAaaaaaAaaak..",
+"..kaaAaaaaaAak..",
+"...kaaaAaaaak...",
+"....kAaaaAak....",
+".....kkkkkk.....",
+"................",
+"................",
+"................",
+],{a:'#c87830',A:'#a05820'});
+const RODAHOJA_B=spr([
+"................",
+"................",
+".....kkkkkk.....",
+"....kAaaaAak....",
+"...kaAaaAaaak...",
+"..kaaaAaaaAaak..",
+"..kAaaaaAaaaak..",
+"..kaaAaaaaaAak..",
+"..kaaaaAaaaaak..",
+"..kAaaaaaAaaak..",
+"...kaaAaaaaak...",
+"....kaaAaaak....",
+".....kkkkkk.....",
+"................",
+"................",
+"................",
+],{a:'#c87830',A:'#a05820'});
+Object.assign(E_SPR,{
+  topillo:{a:TOPILLO},
+  lirio:{a:LIRIO,b:LIRIO_B},
+  rodahoja:{a:RODAHOJA,b:RODAHOJA_B},
+});
+for(const k of ['topillo','lirio','rodahoja']){ const S=E_SPR[k]; S.w={}; for(const f in S){ if(f==='w')continue; S.w[f]=whiten(S[f]); } }
+const LETTER_SPR=sprN([ // carta del Viento: sobre azul con sello de copo
+"kkkkkkkkkkkk",
+"kNNNNNNNNNNk",
+"kNnkNNNNknNk",
+"kNNnkNNknNNk",
+"kNNNnkknNNNk",
+"kNNNNccNNNNk",
+"kNNNNNNNNNNk",
+"kkkkkkkkkkkk",
+],{c:'#58c8e8'});
+const SEED_ICON=ACORN_GOLD;
+AMULET_ROWS.susurro=["....kkkk....","...kcnnck...","..kcnwwnck..","..knwccwnk..","..knwccwnk..","..kcnwwnck..","...kcnnck...","....kkkk....","....kck.....","...kkkkk....","............","............"];
+AMULET_SPR.susurro=sprN(AMULET_ROWS.susurro,{w:'#ffffff'});
+/* iconos de pestaña del zurrón (10×10) */
+const TAB_ICONS={
+  zurron:sprN(["...kkkk...","..kAAAAk..",".kAAAAAAk.","kaaaaaaaak","kaaawaaaak",".kaaaaaak.","..kaaaak..","...kaak...","....kk....",".........."]),
+  mapa:sprN(["kkkkkkkkkk","kvvvkvvvvk","kvvkkvvvvk","kvkvvvkvvk","kvvvvkkvvk","kvvkvvvkvk","kvvvvvvvvk","kvkkvvvkvk","kvvvvvvvvk","kkkkkkkkkk"],{v:'#c8b070'}),
+  valle:sprN(["...kkkk...","..kddddk..",".kdlddldk.","kdddlddddk","kdlddddldk",".kddddddk.","..kkkkkk..","....kAk...","....kAk...","...kkkkk.."]),
+  recuerdos:sprN(["kkkkkkkkk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kvAAAvvvk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kkkkkkkkk.",".........."]),
+  ajustes:sprN(["...kkkk...","..ktttTk..",".kttkkttk.","kttk..kttk","kttk..kttk",".kttkkttk.","..ktttTk..","...kkkk...","..........",".........."]),
+};

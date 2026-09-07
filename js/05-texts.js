@@ -250,3 +250,101 @@ const ROOM_HINTS={
   '6,0':["(LA CUEVA DEL TOPO.\nHuele a tierra\nremovida.)"],
   '10,0':["(EL TRONCO HUECO.\nLa madera zumba\npor dentro.)"],
 };
+
+/* ============================================================
+   SEGUNDA PASADA: más principio, más lore
+   ============================================================ */
+/* prólogo ilustrado (cada página lleva su viñeta: ver drawCinePanel) */
+CINE.splice(0,CINE.length,
+  "Hace mucho, el\nGRAN ROBLE tenía\nocho semillas.",
+  "Con ellas, todo\nel valle era\nverde y feliz.",
+  "Pero al VIENTO\nDEL NORTE nadie\nlo recordaba...",
+  "Una noche aulló\ncon furia y robó\nlas semillas.",
+  "Sin ellas, todo\nverdor se apaga\npoco a poco.",
+  "Y esta mañana,\nen una maceta\ndel pueblo...",
+  "...un pequeño\nbrote abrió los\nojos."
+);
+/* Petra te despierta */
+const PETRA_WAKE=[
+  "¡Brote! ¡Al fin!\nLlevas TRES\nprimaveras dormido\nen esa maceta.",
+  "Soy Petra. Vivo\naquí al lado. El\nabuelo Raíz me\nmanda a buscarte.",
+  "Está en la PLAZA,\nal este del pueblo,\nbajo el árbol\ngrande.",
+  "Dice que es\nurgente. Y cuando\nel abuelo dice\nurgente...",
+  "...es que el valle\nse muere de\nverdad. ¡Corre!",
+];
+const PETRA_WAKE2=["(Petra sale\ncorriendo. La\npuerta queda\nabierta.)"];
+/* señales nuevas */
+TXT.signs['1,1']=["PLAZA DE LAS\nESTACIONES.","Aquí vive Raíz,\nla voz del Roble.\nTres altares\nvacíos lo rodean."];
+TXT.signs['2,1']=["PRADERA DEL\nRECUERDO. Este:\nla orilla de Moss.","Norte: el claro\ndel bosque."];
+TXT.signs['1,2']=["CAMINO DE LOS\nDIENTES DE LEÓN.","Oeste: la playa.\nEste: las dunas."];
+TXT.signs['3,0']=["JUNCAL DEL NORTE.\nCuidado con los\nmurciélagos."];
+/* libros de las estanterías */
+const BOOKS={
+  '9,9':{title:'Cómo cuidar un brote',pages:["«CÓMO CUIDAR UN\nBROTE», por Raíz.","«Riégalo con agua\ndel lago. Háblale\nde noche. Déjalo\ndormir todo lo",
+    "que necesite: un\nbrote no despierta\nhasta que el valle\nlo llama.»","(Hay tres marcas\nde agua en la\nmaceta: tres\nprimaveras.)"]},
+  '8,9':{title:'Recetario de Tilo',pages:["«RECETARIO DE\nTILO».","«Corazón de savia:\nsavia del Roble,\nmiel del panal y\nsol de mediodía.",
+    "Farol de brasa:\nuna chispa que\nnunca se apague y\ncorteza curada.»","«Nota: Corteza\ntalla mejor que yo.\nNo se lo digáis.»"]},
+  '7,9':{title:'Leyendas de los amuletos',pages:["«LEYENDAS DE LOS\nAMULETOS», por\nCorteza.","«El Ojo de Búho lo\ntalló una lechuza\nque veía en la\nniebla.",
+    "El Cascabel lo\nperdió el propio\nViento al huir.","La Corona del Topo\nes una lámpara\nde mina, pero él\nno lo sabe.»",
+    "«Y el Susurro...\nel Susurro lo\nhacen cinco cartas\nque nadie leyó.»"]},
+};
+/* las CARTAS DEL VIENTO: cinco sobres nunca abiertos, dispersos por el valle */
+const LETTERS={
+  '4,-1':["CARTA DEL VIENTO\n(1 de 5):","«Hermano: hoy he\ncubierto de nieve\ntus raíces para\nque duerman.",
+          "No me has dado las\ngracias. No pasa\nnada. Mañana lo\nharás.»"],
+  '0,3':["CARTA DEL VIENTO\n(2 de 5):","«Hermano: todo el\nvalle canta tu\nnombre. Del mío\nnadie se acuerda.",
+         "He empujado las\nolas hasta esta\ncala para que\nalguien me oiga.»"],
+  '4,3':["CARTA DEL VIENTO\n(3 de 5):","«Hermano: la Reina\nme pidió un otoño.\nTú le pediste más\nverano.",
+         "Dejé caer las\nhojas de todos\nmodos. Alguien\ntenía que hacerlo.»"],
+  '4,9':["CARTA DEL VIENTO\n(4 de 5):","«Hermano: he\nescondido esta\ncarta bajo un\narbusto, como las",
+         "semillas que te\nvoy a quitar. Si\nla encuentras, es\nque aún me buscas.»"],
+  '1,-2':["CARTA DEL VIENTO\n(5 de 5):","«Hermano: me subo\nal pico. Si alguna\nvez alguien dice\nmi nombre en voz",
+          "alta, bajaré.\nHasta entonces,\nque nieve.»"],
+};
+const LETTERS_DONE=["¡Las cinco cartas!\nRaíz querrá\nleerlas."];
+const RAIZ_LETTERS=[
+  "¿Cartas de mi\nhermano...? Nunca\nlas abrí. Nunca\nlas vi.",
+  "«...que alguien\ndiga mi nombre en\nvoz alta.» Ay,\nbrote.",
+  "Toma. Lo tallé\nhace mil años con\nlo que quedó de su\nvoz. Es tuyo.",
+];
+/* más diario */
+DIARY['3,-1']=["DIARIO DE RAÍZ:\n«Desde el mirador\nse ve el valle\nentero.","Mi hermano venía\naquí a mirar cómo\ncrecían mis\nsemillas.","Nunca le pregunté\nsi le parecían\nbonitas.»"];
+DIARY['4,0']=["DIARIO DE RAÍZ:\n«La cascada baja\nfría del glaciar.","Es agua de mi\nhermano. Sin ella,\nmi lago sería un\ncharco.","Tampoco se lo\nhe dicho.»"];
+DIARY['12,1']=["DIARIO DE RAÍZ:\n«Las abejas de la\nReina trabajaban\nsin descanso.","Yo pedía más\nflores. Ella\npedía un otoño.\nNo escuché.»"];
+DIARY['14,0']=["DIARIO DE RAÍZ:\n«Los antiguos\nlevantaron este\ntemplo para pedir\nque la nieve",
+  "volviera cada año.\nQué raro pedir\nfrío, pensaba yo.\nQué raro pedir\nque algo termine.»"];
+/* los guardianes, después de la tregua: conversaciones que crecen */
+const GUEST_TALK={
+  topo(){ const L=[];
+    if(!thawed) L.push(["—La Brasa ya es\ntuya, brote. Llé-\nvala al altar y\nque el valle\nrespire."]);
+    else if(!summered) L.push(["—¿Calorcito arriba?\nAquí abajo se\nnota. Las raíces\nya no tiemblan.","—Ve a ver a la\nReina. Está más\nenfadada que yo.\nCon razón."]);
+    else if(!cycled) L.push(["—Mi hermano de\nallá arriba, el\nViento... no es\nmalo, brote.","—Solo lleva mucho\ntiempo solo. Como\nyo antes de que\nbajaras."]);
+    else L.push(["—¿Nieva? Me gusta.\nLa nieve es la\nmanta de la\ntierra.","—Zzz... Cierra al\nsalir, brote."]);
+    return L[0]; },
+  avispa(){
+    if(!summered) return ["—Zzz... Lleva la\nLágrima al altar.\nMis flores\nesperan."];
+    if(!cycled) return ["—Las flores ya\ncierran de noche.\nGracias, brote.","—El Viento me\nescribió una vez.\nNunca abrí la\ncarta. Como Raíz.","—Si las\nencuentras...\nléelas por mí."];
+    return ["—Zzz... Verano,\notoño, invierno.\nAsí debe ser.","—Mis obreras\nduermen. Yo\ntambién. Zzz..."]; },
+  viento(){
+    if(!cycled) return ["(El Viento no dice\nnada. Canturrea\nbajito.)"];
+    return ["—...gracias por\ndecir mi nombre,\nbrote.","—Bajaré cada\ninvierno. Y me iré\ncada primavera.\nEs lo justo."]; },
+};
+/* el pozo de los deseos */
+const WELL_TALK=["Un pozo viejo.\nEl agua brilla al\nfondo, muy abajo."];
+const WELL_ASK=["Dicen que si\nechas 20 BAYAS y\npides un deseo,\nel pozo responde.","¿Echar 20 bayas?"];
+const WELL_DONE=["(Chof.)","(Silencio.)","(...y algo sube\nflotando desde el\nfondo.)"];
+/* nombres de objeto para la tarjeta de «¡nuevo!» */
+const ITEM_NAMES={blade:'HOJA ANCESTRAL',bomb:'BELLOTA-BOMBA',hook:'RAÍZ-GANCHO',boomer:'VAINA VOLADORA',lantern:'FAROL DE BRASA',feather:'VILANO DE PETRA',shield:'ESCUDO DE CORTEZA',ember:'BRASA DE PRIMAVERA',tear:'LÁGRIMA DE VERANO',flake:'COPO ETERNO'};
+AMULETS.susurro={name:'SUSURRO DEL VIENTO',desc:'El Remolino se\ncarga al instante\ny el tornadito\nvuela más lejos.'};
+const CHAPTER_NAMES=['Prólogo · El brote','Cap. 1 · La Brasa','Cap. 2 · La Lágrima','Cap. 3 · El Copo','Epílogo · El ciclo'];
+const CHAPTER_SHORT=['Prólogo','La Brasa','La Lágrima','El Copo','Epílogo'];
+/* más voces en el pueblo */
+NPC_TALK.h=function(){
+  if(!elderMet) return ["¡Corre a la PLAZA!\nEl abuelo Raíz te\nespera. Al ESTE,\nbajo el árbol."];
+  if(!hasBlade) return ["¿Ya has visto al\nabuelo? Pues a la\nPLAYA del suroeste.","Yo no puedo ir:\nmamá dice que hay\ncangrejos."];
+  if(!won) return ["¿Una hoja gigante?\n¡QUÉ ENVIDIA!","Yo solo tengo este\ndiente de león.\nNo corta nada.","Si alguna vez\nencuentras un\nVILANO grande...\n¡es mío, eh!"];
+  if(!thawed) return ["¿Has visto el\nespino seco del\nnorte? Da repelús.","Mamá llama\nRODAPÚAS a los\nerizos de allí.","Si se hacen bola,\n¡ni los toques\nde frente!"];
+  if(!summered) return ["¡Ha vuelto la\nprimavera!\n¡Eres mi héroe!","Oye... el abuelo\nRaíz te mira raro.","Como se mira a un\nnieto. Cosas mías,\nseguro."];
+  if(!cycled) return ["El abuelo dice\nque aún falta el\nINVIERNO.","¿Y quién quiere\nfrío?... ¿O sí?\nYa no sé.",hasFeather?"¡Ese vilano es\nMÍO! ...Bueno,\nquédatelo. Vuela\nmejor contigo.":"En el pico hay un\nTEMPLO viejo. Dicen\nque guarda un\nVILANO enorme."];
+  return ["¡Está nevando y\nNO da miedo!","Es como azúcar.\n¡El invierno\ntambién es bonito!"];
+};

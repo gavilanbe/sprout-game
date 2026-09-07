@@ -6,6 +6,7 @@ function seasonPhase(){ return cycled?(((tick/3000)|0)%4):-1; } // post-final: l
 function regionOf(nx,ny){
   if(ny===9&&nx>=7&&nx<=9) return 'casa';
   if(ny===9&&nx===5) return 'gruta';
+  if(ny===9&&(nx===3||nx===4)) return 'secreto';
   if(nx>=6&&nx<=8) return 'cueva';
   if(nx>=10&&nx<=12) return 'tronco';
   if(nx>=14&&nx<=16) return 'templo';
@@ -30,7 +31,7 @@ function screenStyle(nx,ny){ const r=regionOf(nx,ny);
   if(r==='templo') return 'ice'; return 'cave'; }
 function regionFloor(){ const r=regionOf(sx,sy);
   if(r==='norte') return (thawed&&sy===-1)?'.':'n';
-  if(r==='cueva'||r==='tronco'||r==='templo'||r==='gruta') return 'q';
+  if(r==='cueva'||r==='tronco'||r==='templo'||r==='gruta'||r==='secreto') return 'q';
   if(r==='casa') return 'o';
   if(r==='marisma') return summered?'.':'·';
   return '.';
@@ -53,6 +54,12 @@ function rebuildBg(){
   bgDirty=false;
 }
 function markDirty(){ bgDirty=true; }
+/* tabla de equilibrio: vida, daño (medios corazones) y velocidad base */
+const ENEMY_STATS={
+  blob:{hp:2,dmg:1}, bat:{hp:1,dmg:1}, beetle:{hp:3,dmg:1}, roller:{hp:3,dmg:1}, ghost:{hp:2,dmg:1}, frog:{hp:2,dmg:1},
+  thorn:{hp:3,dmg:1}, gust:{hp:2,dmg:0}, squirrel:{hp:2,dmg:0}, icicle:{hp:1,dmg:2}, seton:{hp:3,dmg:1}, crab:{hp:2,dmg:1},
+  wisp:{hp:2,dmg:1}, bee:{hp:1,dmg:1}, golem:{hp:4,dmg:2}, snail:{hp:2,dmg:1}, topillo:{hp:2,dmg:1}, lirio:{hp:3,dmg:1}, rodahoja:{hp:2,dmg:1},
+};
 /* spawn de enemigos */
 function spawnEnemy(type,x,y,fast){
   const base={type,x:x*16,y:y*16,hp:1,vx:0,vy:0,t:hash(x,y)%90,flash:0,kx:0,ky:0,fast,stun:0,dmg:1};
@@ -73,6 +80,9 @@ function spawnEnemy(type,x,y,fast){
     case 'bee':    return {...base,hp:1,homing:0};
     case 'golem':  return {...base,hp:4,dmg:2,st:'walk'};
     case 'snail':  return {...base,hp:2,st:'out'};
+    case 'topillo': return {...base,hp:2,st:'hide',t:60+hash(x,y)%60,hx:x*16,hy:y*16};
+    case 'lirio':  return {...base,hp:3,st:'closed',t:hash(x,y)%100};
+    case 'rodahoja': return {...base,hp:2,vx:(hash(x,y)&1)?1.1:-1.1,vy:(hash(y,x)&1)?.9:-.9};
   }
   return base;
 }
@@ -94,7 +104,10 @@ function loadScreen(nx,ny){
     if(ENEMY_MARK[ch]){
       grid[y][x]=regionFloor();
       const en=spawnEnemy(ENEMY_MARK[ch],x,y,fast);
-      if(r==='norte'&&en.dmg===1) en.dmg=2;
+      const st=ENEMY_STATS[en.type]; if(st){ en.hp=st.hp; en.dmg=st.dmg; }
+      if((r==='norte'||r==='marisma')&&(en.type==='blob'||en.type==='bat')) en.hp+=1; // bichos curtidos
+      if(r==='norte'&&en.type==='roller') en.dmg=2;
+      if(r==='templo'&&en.type!=='golem') en.hp+=1;
       if(en.type==='icicle'&&thawed&&sy===-1) continue; // sin invierno no hay carámbanos
       if(en.type==='thorn'&&dng) en.hp=4;
       enemies.push(en);
@@ -125,6 +138,8 @@ function loadScreen(nx,ny){
     else if(ch==='¬'){ grid[y][x]=regionFloor(); if(!hasFeather) pickups.push({kind:'feather',x:x*16,y:y*16,t:0}); }
     else if(ch==='0'){ grid[y][x]=regionFloor(); if(!collected.has('d'+id)) pickups.push({kind:'diary',id:'d'+id,x:x*16+4,y:y*16+4,t:0}); }
     else if(ch==='('){ grid[y][x]=regionFloor(); if(!collected.has('('+id)) pickups.push({kind:'key',id:'('+id,x:x*16+4,y:y*16+4,t:0}); }
+    else if(ch==='✉'){ grid[y][x]=under(grid,x,y); if(!collected.has('✉'+id)) pickups.push({kind:'letter',id:'✉'+id,x:x*16+2,y:y*16+4,t:0}); }
+    else if(ch==='ø'){ if(opened.has('HS'+sx+','+sy)) grid[y][x]='>'; }
     else if(ch==='ł'){ grid[y][x]=regionFloor(); if(!collected.has('ł'+id)) pickups.push({kind:'bigkey',id:'ł'+id,x:x*16+4,y:y*16+4,t:0}); }
     else if(ch==='J'){ grid[y][x]='q'; if(!bossDone) boss=makeBoss('topo',x,y); else if(!hasEmber) pickups.push({kind:'ember',x:x*16,y:y*16,t:0}); }
     else if(ch==='!'){ grid[y][x]='q'; if(!boss2Done) boss=makeBoss('avispa',x,y); else if(!hasTear) pickups.push({kind:'tear',x:x*16,y:y*16,t:0}); }
@@ -161,7 +176,7 @@ function loadScreen(nx,ny){
   if(sx===10&&sy===2&&boss2Done) npcs.push({ch:'reina',x:5,y:2,guest:'avispa'});
   if(sx===1&&sy===-3&&boss3Done) npcs.push({ch:'viento',x:4,y:2,guest:'viento'});
   const r2=regionOf(sx,sy);
-  setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?'casa':sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':r2==='gruta'?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='marisma'?'pantano':'valle'));
+  setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?'casa':sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':(r2==='gruta'||r2==='secreto')?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='marisma'?'pantano':'valle'));
   visited.add(key);
   if((boss||midboss)&&AC) SFX.boss();
   bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':'EL VIENTO DEL NORTE',t:130}:midboss?{txt:MID_CARD[midboss.type],t:130}:null;

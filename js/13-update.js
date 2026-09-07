@@ -24,6 +24,9 @@ function update(){
   if(hitStop>0){ hitStop--; return; }
   if(!toast&&toastQ.length&&(state==='play'||state==='trans')){ toast=toastQ.shift(); SFX.blip(); }
   if(toast&&--toast.t<=0) toast=null;
+  if(saveFlash>0) saveFlash--;
+  if(itemCardT>0) itemCardT--;
+  if(introDone&&!['boot','title','file','cine','credits'].includes(state)) playTime++;
   if(state!=='play'&&state!=='pause'&&state!=='shop'&&state!=='file') keys.menu=false;
   if(state==='pause'){ updPause(); return; }
   if(state==='shop'){
@@ -82,7 +85,7 @@ function update(){
       loadScreen(respawnPoint.sx,respawnPoint.sy); player.x=respawnPoint.x; player.y=respawnPoint.y; player.dir=0; bombs=[]; projs=[]; state='play'; fadeIn=30; sproutT=24; } return; }
   if(state==='dialog'){
     const pg=dlg.pages[dlg.page];
-    if(dlg.chars<pg.length){ dlg.chars+=(keys.fire?3:0.55); if((tick&3)===0&&dlg.chars<pg.length)SFX.blip(); }
+    if(dlg.chars<pg.length){ dlg.chars+=(keys.fire?3:0.55*(opts.textSpeed||1)); if((tick&3)===0&&dlg.chars<pg.length)SFX.blip(); }
     const lastDone=dlg.page===dlg.pages.length-1&&dlg.chars>=pg.length;
     if(dlg.ask&&lastDone&&keys.alt){ keys.alt=false; const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return; }
     if(keys.fire){ keys.fire=false;
@@ -102,7 +105,11 @@ function update(){
   if(bossCard&&--bossCard.t<=0) bossCard=null;
   if((tick&15)===0) checkQuests();
   weather();
-  if(wakeT>0){ wakeT--; if(wakeT===25) SFX.blip(); if(wakeT===0) say(["(¡Brote! ¡Brote!\nUna voz te llama\ndesde fuera.)"]); updParts(); return; }
+  if(wakeT>0){ wakeT--; if(wakeT===25) SFX.blip();
+    if(wakeT===0){ if(!petraWoke){ petraWoke=true; npcs.push({ch:'h',x:5,y:5}); puff(5*16+8,5*16+12,'#e8d0a0',6,1); noise(.1,.04,false);
+        say(PETRA_WAKE,()=>{ const n=npcs.find(q=>q.ch==='h'); if(n){ npcs=npcs.filter(q=>q!==n); puff(n.x*16+8,n.y*16+8,'#f0f0e0',8,1.2); } say(PETRA_WAKE2); save(); },'PETRA'); }
+      else say(["(¡Brote! ¡Brote!\nUna voz te llama\ndesde fuera.)"]); }
+    updParts(); return; }
   if(player.inv>0)player.inv--;
   if(hasAmulet('musgo')&&player.hp<player.maxHp&&++regen>=900){ regen=0; player.hp++; SFX.heart(); sparkle(player.x+8,player.y-2,'#a8e878'); }
   player.kx*=.75; player.ky*=.75;
@@ -142,9 +149,9 @@ function update(){
   // REMOLINO
   if(hasSpin&&hasBlade&&player.spin===0&&jumpT===0){
     if(keys.fireHeld&&player.atk===0){ player.charge++;
-      if(player.charge===36){ SFX.charge(); puff(player.x+8,player.y+8,'#a8ec78',8,1.2); }
-      if(player.charge>=36&&(tick&3)===0){ const a=tick*.5; parts.push({x:player.x+8+Math.cos(a)*11,y:player.y+9+Math.sin(a)*11,vx:0,vy:0,life:8,col:PAL.l,nog:true}); }
-    } else if(player.charge>0){ if(player.charge>=36) doSpin(); player.charge=0; }
+      const need=hasAmulet('susurro')?12:36; if(player.charge===need){ SFX.charge(); puff(player.x+8,player.y+8,'#a8ec78',8,1.2); }
+      if(player.charge>=need&&(tick&3)===0){ const a=tick*.5; parts.push({x:player.x+8+Math.cos(a)*11,y:player.y+9+Math.sin(a)*11,vx:0,vy:0,life:8,col:PAL.l,nog:true}); }
+    } else if(player.charge>0){ if(player.charge>=(hasAmulet('susurro')?12:36)) doSpin(); player.charge=0; }
   } else if(!keys.fireHeld) player.charge=0;
   if(player.spin>0){ player.spin--; if((tick&1)===0){ const a=(18-player.spin)*.7; parts.push({x:player.x+8+Math.cos(a)*14,y:player.y+9+Math.sin(a)*14,vx:Math.cos(a)*.8,vy:Math.sin(a)*.8,life:10,col:'#a8ec78',nog:true}); }
     if(player.spin===9) cutAt(meleeBox()); }
@@ -237,6 +244,8 @@ function updPickups(){
       if(p.kind==='seed'){ seeds++; collected.add(p.id); SFX.seed(); puff(p.x+4,p.y+4,C.flowerC,8,1.2); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
       else if(p.kind==='key'){ const dk=dungeonOf(sx,sy)||'x'; dungeonKeys[dk]=(dungeonKeys[dk]||0)+1; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.a,8,1.2); say(TXT.keyGet); save(); }
       else if(p.kind==='bigkey'){ const dk=dungeonOf(sx,sy)||'x'; bigKeys[dk]=true; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.y,10,1.4); say(TXT.bigkeyGet); save(); }
+      else if(p.kind==='letter'){ collected.add(p.id); SFX.secret(); puff(p.x+6,p.y+4,'#a8c0d8',10,1.2); const key=sx+','+sy; const n=lettersCount();
+        showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[])); save(); }
       else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"]); save(); }
       else if(big){ getItem(p.kind); }
       else if(p.kind==='berry'){ berries=Math.min(999,berries+1); SFX.blip(); puff(p.x+4,p.y+4,'#d84878',5,.9); }
@@ -248,7 +257,7 @@ function updPickups(){
 function updExits(){
   const htx=(player.x+8)>>4, hty=(player.y+13)>>4, ch=grid[hty]&&grid[hty][htx];
   if(ch==='x'){ if(sx===9) exitHouse(); else if(sx===8) exitShop(); else if(sx===7) placeAt(2,0,68,34,0); else if(sx===10&&sy===2) placeAt(10,1,68,18,0); else exitDungeon(); return; }
-  if(ch==='>'){ if(sx===10&&sy===1) placeAt(10,2,72,24,0); return; }
+  if(ch==='>'){ if(sx===10&&sy===1) placeAt(10,2,72,24,0); else if(regionOf(sx,sy)==='valle') enterSecret(); return; }
   if(keys.up&&player.dir===1){ const ft=facingTile();
     if(ft&&ft[2]==='D'&&sx===0&&sy===1&&ft[0]===3){ enterHouse(); return; }
     if(ft&&ft[2]==='D'&&sx===0&&sy===1&&ft[0]===7){ enterShop(); return; }
@@ -293,24 +302,33 @@ function updFile(){
 const X_ITEMS=['bomb','hook','boomer','lantern','feather'];
 function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather})[k]); }
 function updPause(){
-  if(keys.menu||(keys.alt&&pausePage!==0)){ keys.menu=false; keys.alt=false; state='play'; SFX.menu(); return; }
+  if(keys.menu){ keys.menu=false; state='play'; SFX.menu(); return; }
+  if(keys.alt){ keys.alt=false; pausePage=(pausePage+1)%5; pauseSel=0; loreSel=0; optSel=0; SFX.menu(); return; }
   const lr=(keys.right?1:0)-(keys.left?1:0), ud=(keys.down?1:0)-(keys.up?1:0);
   if(pausePage===0){
-    const items=ownedX(), am=[...amulets]; const n=items.length+am.length; // rejilla: objetos (fila 1) y amuletos (filas 2-3)
+    const items=ownedX(), am=[...amulets]; const n=items.length+am.length;
     if(lr!==pauseLR){ pauseLR=lr; if(lr&&n){ pauseSel=(pauseSel+lr+n)%n; SFX.blip(); } }
     if(ud!==pauseUD){ pauseUD=ud;
-      if(ud>0){ if(pauseSel<items.length){ if(am.length){ pauseSel=items.length; SFX.blip(); } } else if(pauseSel+4<n){ pauseSel+=4; SFX.blip(); } else { pausePage=1; pauseSel=0; SFX.menu(); } }
-      else if(ud<0){ if(pauseSel>=items.length+4){ pauseSel-=4; SFX.blip(); } else if(pauseSel>=items.length){ pauseSel=items.length?0:pauseSel; SFX.blip(); } } }
+      if(ud>0){ if(pauseSel<items.length){ if(am.length){ pauseSel=items.length; SFX.blip(); } } else if(pauseSel+5<n){ pauseSel+=5; SFX.blip(); } }
+      else if(ud<0){ if(pauseSel>=items.length+5){ pauseSel-=5; SFX.blip(); } else if(pauseSel>=items.length){ pauseSel=items.length?0:pauseSel; SFX.blip(); } } }
     if(keys.fire){ keys.fire=false;
       if(pauseSel<items.length){ xItem=items[pauseSel]; SFX.equip(); save(); }
       else if(am.length){ const id=am[pauseSel-items.length];
         if(equipped.includes(id)){ equipped[equipped.indexOf(id)]=null; SFX.blip(); }
         else { const slot=equipped[0]===null?0:equipped[1]===null?1:0; equipped[slot]=id; SFX.equip(); }
         save(); } }
-    if(keys.alt){ keys.alt=false; state='play'; SFX.menu(); }
-  } else {
-    if(lr!==pauseLR){ pauseLR=lr; if(lr){ pausePage=pausePage===1?2:1; SFX.blip(); } }
-    if(ud!==pauseUD){ pauseUD=ud; if(ud<0){ pausePage=0; pauseSel=0; SFX.menu(); } }
-    if(keys.fire){ keys.fire=false; SFX.blip(); }
-  }
+  } else if(pausePage===3){
+    const L=loreList();
+    if(ud!==pauseUD){ pauseUD=ud; if(ud&&L.length){ loreSel=(loreSel+ud+L.length)%L.length; SFX.blip(); } }
+    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); say(e.pages,()=>{ state='pause'; }); } }
+  } else if(pausePage===4){
+    const N=4;
+    if(ud!==pauseUD){ pauseUD=ud; if(ud){ optSel=(optSel+ud+N)%N; SFX.blip(); } }
+    const act=keys.fire||lr!==0; if(lr!==pauseLR) pauseLR=lr;
+    if(act){ keys.fire=false;
+      if(optSel===0){ opts.textSpeed=opts.textSpeed===1?2:1; saveOpts(); SFX.blip(); }
+      else if(optSel===1){ opts.shake=opts.shake?0:1; saveOpts(); SFX.blip(); }
+      else if(optSel===2){ musicOn=!musicOn; try{ localStorage.setItem('sprout.music',musicOn?'1':'0'); }catch(_){} SFX.blip(); }
+      else if(optSel===3&&keys.fire===false&&lr===0){ save(); state='title'; titleT=TITLE_MENU; parts=[]; setTrack('titulo'); SFX.menu(); } }
+  } else { if(lr!==pauseLR) pauseLR=lr; if(ud!==pauseUD) pauseUD=ud; if(keys.fire){ keys.fire=false; SFX.blip(); } }
 }

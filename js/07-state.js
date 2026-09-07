@@ -84,3 +84,11 @@ function say(pages,cb,who){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:cb|
 function ask(pages,who,cb){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:null,who:who||null,ask:cb}; state='dialog'; }
 let trans=null;
 function showToast(t1,t2){ toastQ.push({t1,t2,t:140}); }
+/* ---------- segunda pasada: ajustes, tiempo de juego, intro y lore ---------- */
+let opts={textSpeed:1,shake:1};
+try{ Object.assign(opts,JSON.parse(localStorage.getItem('sprout.opts')||'{}')); }catch(e){}
+function saveOpts(){ try{ localStorage.setItem('sprout.opts',JSON.stringify(opts)); }catch(e){} }
+let playTime=0, petraWoke=false, saveFlash=0, wellDone=false, lettersGiven=false, loreSel=0, optSel=0, itemCardT=0, itemCardName='';
+function lettersCount(){ let n=0; for(const id of collected) if(id[0]==='✉') n++; return n; }
+function chapterIdx(){ return cycled?4:summered?3:thawed?2:won?1:0; }
+function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)%60).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }

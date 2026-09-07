@@ -38,8 +38,8 @@ function meleeDmg(){ return bladeLvl+(hasAmulet('erizo')?1:0)+(player.spin>0?1:0
 function doSpin(){
   player.spin=18; player.charge=0; SFX.sword(); noise(.16,.06,true); shake=2;
   for(let i=0;i<10;i++){ const a=i/10*6.283; parts.push({x:player.x+8+Math.cos(a)*8,y:player.y+9+Math.sin(a)*8,vx:Math.cos(a)*1.4,vy:Math.sin(a)*1.4,life:14,col:i%2?PAL.l:'#a8ec78'}); }
-  const D=DIRV[player.dir];
-  windProjs.push({x:player.x+8,y:player.y+10,vx:D[0]*2.1,vy:D[1]*2.1,t:70,ang:0,hits:new Set()});
+  const D=DIRV[player.dir]; const far=hasAmulet('susurro');
+  windProjs.push({x:player.x+8,y:player.y+10,vx:D[0]*(far?2.6:2.1),vy:D[1]*(far?2.6:2.1),t:far?110:70,ang:0,hits:new Set()});
 }
 /* empuje de rocas-raíz: encarado y avanzando un instante */
 let pushHold=0, pushLatch=false; // un empujón por pulsación: hay que soltar la cruceta para volver a empujar
@@ -82,7 +82,9 @@ function cutAt(sb){
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){
     const ch=grid[y][x];
     if(!rectsHit(sb,[x*16+3,y*16+3,10,10])) continue;
-    if(ch==='b'||ch==='Q'){
+    if(ch==='ø'){ grid[y][x]='>'; opened.add('HS'+sx+','+sy); SFX.cut(); leaves(x*16+8,y*16+8); SFX.secret(); shake=3; any=true;
+      for(let i=0;i<6;i++) sparkle(x*16+3+Math.random()*10,y*16+2+Math.random()*10,PAL.Y); showToast('¡UNA ESCALERA!','bajo el arbusto'); save(); }
+    else if(ch==='b'||ch==='Q'){
       grid[y][x]=under(grid,x,y); SFX.cut(); leaves(x*16+8,y*16+8); any=true;
       if(ch==='Q'){ const id='Q'+sx+','+sy+','+x+','+y; cutQ.add(id);
         if(!collected.has(id)) pickups.push({kind:'seed',id,x:x*16+4,y:y*16+4,t:0}); }
@@ -143,12 +145,20 @@ function attack(){
 function interact([tx,ty,ch]){
   const guest=npcs.find(n=>n.guest&&n.x===tx&&n.y===ty);
   if(guest){ SFX.blip();
-    if(guest.guest==='topo'){ if(!topoGift){ topoGift=true; say(TOPO_AFTER,()=>giveAmulet('topo'),'EL TOPO REAL'); } else say(["—Cava con cuidado,\nbrote. Zzz..."],null,'EL TOPO REAL'); }
-    else if(guest.guest==='avispa') say(QUEEN_AFTER,null,'LA REINA');
-    else say(WIND_AFTER,null,'EL VIENTO');
+    if(guest.guest==='topo'){ if(!topoGift){ topoGift=true; say(TOPO_AFTER,()=>giveAmulet('topo'),'EL TOPO REAL'); } else say(GUEST_TALK.topo(),null,'EL TOPO REAL'); }
+    else if(guest.guest==='avispa') say(GUEST_TALK.avispa(),null,'LA REINA');
+    else say(GUEST_TALK.viento(),null,'EL VIENTO');
     return true; }
   if(ch==='S'){ SFX.blip(); say(TXT.signs[sx+','+sy]||TXT.sign); return true; }
-  if(ch==='O'){ SFX.blip(); say(RUNAS[sx+','+sy]||["Runas gastadas.\nNo se leen."]); return true; }
+  if(ch==='O'){ SFX.blip(); if(RUNAS[sx+','+sy]&&!collected.has('r:'+sx+','+sy)){ collected.add('r:'+sx+','+sy); showToast('RECUERDO ANOTADO','piedra rúnica'); save(); } say(RUNAS[sx+','+sy]||["Runas gastadas.\nNo se leen."]); return true; }
+  if(ch==='Ⓑ'){ const b=BOOKS[sx+','+sy]; SFX.blip(); if(!b){ say(["Libros de cuentas\ny catálogos de\nsemillas. Nada\nque leer."]); return true; }
+    if(!collected.has('b:'+sx+','+sy)){ collected.add('b:'+sx+','+sy); showToast('RECUERDO ANOTADO',b.title.slice(0,17)); save(); } say(b.pages); return true; }
+  if(ch==='Ω'){ SFX.blip();
+    if(wellDone){ say(["El pozo. El agua\nsigue brillando,\npero ya no\nresponde."]); return true; }
+    if(berries<20){ say(WELL_TALK.concat([WELL_ASK[0],"(No llevas 20\nbayas.)"])); return true; }
+    ask(WELL_TALK.concat(WELL_ASK),null,yes=>{ if(!yes){ say(["(Las bayas se\nquedan en tu\nzurrón.)"]); return; }
+      berries-=20; wellDone=true; SFX.blip(); noise(.3,.05,false); save();
+      say(WELL_DONE,()=>{ pickups.push({kind:'piece',id:'♥pozo',x:tx*16+4,y:ty*16+18,t:0,drop:20}); SFX.secret(); }); }); return true; }
   if(ch==='['){ SFX.blip(); say(thawed?["ALTAR DE LA\nPRIMAVERA.","La BRASA late aquí\nsu calor de\ndeshielo. El valle\nlo siente."]:["ALTAR DE LA\nPRIMAVERA.","El cuenco está\nfrío. Espera algo\nque lata como un\ncorazón."]); return true; }
   if(ch===']'){ SFX.blip(); say(summered?["ALTAR DEL\nVERANO.","La LÁGRIMA brilla\nfresca y tibia.\nEl sol dormido\ndespertó en ella."]:["ALTAR DEL\nVERANO.","El cuenco está\nseco. Espera un\nllanto que el sol\nquiera habitar."]); return true; }
   if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está apartado de\nlos otros dos,\ncomo esperando a\nalguien que no\nvuelve."]); return true; }
@@ -203,6 +213,7 @@ function interact([tx,ty,ch]){
 function elderTalk(){
   SFX.blip(); const sayR=(p,cb)=>say(p,cb,'RAÍZ');
   if(!elderMet){ elderMet=true; save(); sayR(TXT.elderIntro); return; }
+  if(lettersCount()>=5&&!lettersGiven){ lettersGiven=true; save(); sayR(RAIZ_LETTERS,()=>giveAmulet('susurro')); return; }
   if(seeds>=8&&!won){ giveItem(ACORN_GOLD,8,()=>sayR(TXT.elderWin,()=>{ won=true; SFX.fanfare(); bloom(); markDirty(); save(); })); return; }
   if(hasEmber&&!thawed){ giveItem(EMBER_SPR,1,()=>sayR(TXT.thaw,()=>{ thawed=true; SFX.fanfare(); bloom(); save(); })); return; }
   if(hasTear&&!summered){ giveItem(TEAR_SPR,1,()=>sayR(TXT.summer,()=>{ summered=true; SFX.fanfare(); bloom(); save(); })); return; }
@@ -219,7 +230,7 @@ function elderTalk(){
   else sayR(["Llevas "+seeds+" de 8\nsemillas. Atento:","A la vista: riscos\nNO, claro del\nbosque, orilla de\nMoss,","camino sur y\ndunas del este.","Brillan arbustos:\nbosque, juncal\nnorte y playa\nsuroeste."]);
 }
 function giveAmulet(id){ amulets.add(id); const a=AMULETS[id]; SFX.fanfare(); shake=4;
-  itemSpr=AMULET_SPR[id]; itemPages=TXT.amuletGet(a); state='itemget'; itemT=90; player.dir=0; player.atk=0;
+  itemSpr=AMULET_SPR[id]; itemPages=TXT.amuletGet(a); state='itemget'; itemT=100; itemCardName=a.name; player.dir=0; player.atk=0;
   puff(player.x+8,player.y,C.flowerC,12,1.4); save(); }
 /* ---------- X: el objeto equipado ---------- */
 function useItem(){
@@ -275,7 +286,10 @@ function enterDungeon(){
   else if(sx===1&&sy===-2) placeAt(15,2,72,88,1);
   else if(sx===0&&sy===0) placeAt(5,9,72,80,1);
 }
+function enterSecret(){ if(sx===1&&sy===0) placeAt(4,9,80,88,1); else if(sx===1&&sy===2) placeAt(3,9,80,88,1); }
 function exitDungeon(){
+  if(sx===4&&sy===9){ placeAt(1,0,96,92,0); return; }
+  if(sx===3&&sy===9){ placeAt(1,2,32,92,0); return; }
   if(sx===5) placeAt(0,0,20,30,0);
   else if(sx>=14) placeAt(1,-2,64,26,0);
   else if(sx>=10) placeAt(1,3,68,34,0);
@@ -337,7 +351,7 @@ function getItem(kind){
   if(kind==='tear') hasTear=true; if(kind==='flake') hasFlake=true; if(kind==='boomer') hasBoomer=true; if(kind==='lantern') hasLantern=true;
   if(kind==='feather') hasFeather=true; if(kind==='shield') hasShield=true;
   if(!xItem&&['bomb','hook','boomer','lantern','feather'].includes(kind)) xItem=kind;
-  [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; state='itemget'; itemT=110; player.dir=0; player.atk=0; player.spin=0; save();
+  [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
   puff(player.x+8,player.y+8,C.flowerC,14,1.6); puff(player.x+8,player.y+8,PAL.l,10,1.2);
 }
 function findFree(px,py,axis){

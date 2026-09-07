@@ -324,18 +324,29 @@ function tableTile(){ return cached('table',g=>{ R(g,1,4,14,7,PAL.k); R(g,2,5,12
 function lilyTile(f){ return cached('lily'+f,g=>{ // nenúfar: pisable sobre el agua
   R(g,3,5,10,8,PAL.k); R(g,4,6,8,6,'#58a848'); R(g,5,6,6,1,'#88d868'); R(g,8,8,2,2,'#2e7830'); if(f) PX(g,10,5,PAL.z);
 });}
+function wellTile(){ return cached('well',g=>{
+  R(g,1,4,14,11,PAL.k); R(g,2,5,12,9,C.rock); R(g,3,6,10,7,C.rockD); R(g,4,7,8,5,'#1a2a40'); R(g,5,8,6,1,'#3878d8');
+  R(g,3,1,2,4,PAL.k); R(g,11,1,2,4,PAL.k); R(g,2,0,12,2,C.woodD); R(g,3,0,10,1,C.wood); R(g,7,2,2,4,'#6a4828'); PX(g,8,3,PAL.a);
+  R(g,2,5,12,1,C.rockL); PX(g,4,9,C.rockL);
+});}
+function moundTile(v){ return cached('mound'+v,g=>{ R(g,3,9,10,5,'#5a4630'); R(g,4,8,8,1,'#6e5a40'); R(g,5,10,6,3,'#241c14'); R(g,6,11,4,1,'#3a3026'); });}
+function bookshelfTile(){ return cached('bookshelf',g=>{
+  R(g,0,0,16,16,'#6a4828'); R(g,1,1,14,14,'#8a5828'); R(g,1,5,14,1,'#c08850'); R(g,1,10,14,1,'#c08850');
+  [[2,1,'#c84848'],[4,1,'#3878d8'],[6,2,'#e8b050'],[8,1,'#2e8038'],[10,1,'#9858c8'],[12,2,'#c84848'],[2,6,'#e8b050'],[5,6,'#2e8038'],[7,7,'#58c8e8'],[9,6,'#c84848'],[11,6,'#f0f0e0'],[13,7,'#3878d8']].forEach(([x,y,c])=>R(g,x,y,2,4-(y%2),c));
+  R(g,3,11,10,3,'#e8d0a0'); R(g,4,12,8,1,'#c8a878');
+});}
 function pillarTile(){ return cached('pillar',g=>{ R(g,3,0,10,16,PAL.k); R(g,4,1,8,14,'#7a7490'); R(g,4,1,8,1,'#9a94b0'); R(g,5,2,2,12,'#9a94b0'); R(g,4,14,8,1,'#4a4460'); });}
 
 /* ============================================================
    LEYENDA DEL MAPA: char → clase de tile
    ============================================================ */
-const GROUND=new Set(['.',',','f','t','p','s','n','i','·','q','o','m','w','@','x','_','ç','%','&','º','æ','°','>']);
+const GROUND=new Set(['.',',','f','t','p','s','n','i','·','q','o','m','w','@','x','_','ç','%','&','º','æ','°','>','ʘ']);
 const WATER=new Set(['W','~','w','@']);
-const SOLID=new Set(['W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö']);
-const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '∞':'gust', '$':'squirrel', '¡':'icicle', '¿':'seton', c:'crab', 'Φ':'wisp', 'β':'bee', 'Γ':'golem', 'Σ':'snail' };
+const SOLID=new Set(['W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö','Ω','Ⓑ','ø']);
+const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '∞':'gust', '$':'squirrel', '¡':'icicle', '¿':'seton', c:'crab', 'Φ':'wisp', 'β':'bee', 'Γ':'golem', 'Σ':'snail', 'π':'topillo', 'λ':'lirio', 'Ψ':'rodahoja' };
 const MIDBOSS_MARK={ 'ℜ':'king', 'Δ':'drone', 'Θ':'iceguard' };
 const BOSS_MARK={ J:'topo', '!':'avispa', '^':'viento' };
-const ITEM_MARK={ L:'blade', K:'bomb', '+':'hook', '£':'boomer', '§':'lantern', '¬':'feather', '¦':'shield', 'ł':'bigkey', '(':'key', '9':'container', '♥':'piece', '0':'diary' };
+const ITEM_MARK={ L:'blade', K:'bomb', '+':'hook', '£':'boomer', '§':'lantern', '¬':'feather', '¦':'shield', 'ł':'bigkey', '(':'key', '9':'container', '♥':'piece', '0':'diary', '✉':'letter' };
 const CLIFF_LIKE=ch=>ch==='M';
 const WALL_LIKE=ch=>ch==='v'||ch==='I';
 function isGroundCh(ch){ return GROUND.has(ch); }
@@ -380,6 +391,7 @@ function drawGround(g,rows,x,y,ch,opts,f){
     case 'æ': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(toggleBlock(0,0),px,py); return;
     case '°': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(holeTile(style),px,py); return;
     case '>': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(stairsTile(),px,py); return;
+    case 'ʘ': { const under=groundUnder(rows,x,y,opts); drawGround(g,rows,x,y,under,opts,f); g.drawImage(moundTile(v%2),px,py); return; }
   }
   // objeto: suelo de debajo
   const under=groundUnder(rows,x,y,opts);
@@ -391,7 +403,10 @@ function drawObject(g,rows,x,y,ch,opts,f){
     case 'T': g.drawImage(treeTile(bio,v%2),px,py); return;
     case 'Y': g.drawImage(treeTile('snow',v%2),px,py); return;
     case '¥': g.drawImage(treeTile('autumn',v%2),px,py); return;
-    case 'b': case 'Q': g.drawImage(bushTile(bio,v%2),px,py); return;
+    case 'b': case 'Q': case 'ø': g.drawImage(bushTile(bio,v%2),px,py); return;
+    case 'Ω': g.drawImage(wellTile(),px,py); return;
+    case 'Ⓑ': g.drawImage(bookshelfTile(),px,py); return;
+    case 'ʘ': g.drawImage(moundTile(v%2),px,py); return;
     case 'r': g.drawImage(rockTile(v%2,bio),px,py); return;
     case 'C': g.drawImage(crackedTile(v%2),px,py); return;
     case 'M': { const e=edgesOf(rows,x,y,c=>!CLIFF_LIKE(c)); g.drawImage(cliffTile(e,v%3,bio),px,py); return; }

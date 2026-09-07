@@ -86,6 +86,17 @@ function updEnemies(){
       e.t++; if(e.t%8===0){ const [bx,by]=moveBlocked(e,e.x+Math.sign(dx)*2+e.kx,e.y+Math.sign(dy)*2+e.ky); }
       else moveBlocked(e,e.x+e.kx,e.y+e.ky);
       if(e.t%16===0&&d<60) shake=Math.max(shake,1);
+    } else if(e.type==='topillo'){ // asoma del agujero, muerde y se esconde
+      e.t--;
+      if(e.st==='hide'){ noContact=true; blindHit=true; if(e.t<=0){ e.st='up'; e.t=70; puff(e.x+8,e.y+12,'#5a4630',6,1); SFX.bump(); } }
+      else { if(e.t===40&&d<40){ const dxn=dx/d, dyn=dy/d; moveBlocked(e,e.x+dxn*6,e.y+dyn*6); }
+        if(e.t<=0){ e.st='hide'; e.t=90+hash(e.x|0,tick)%60; e.x=e.hx; e.y=e.hy; puff(e.x+8,e.y+12,'#5a4630',5,.8); } }
+    } else if(e.type==='lirio'){ // lirio de agua: quieto sobre el agua, abre y escupe
+      e.t++; if(e.st==='closed'){ if(e.t%150===110&&d<110){ e.st='open'; e.ot=40; } }
+      else { if(e.ot===30){ projs.push({x:e.x+8,y:e.y+6,vx:dx/d*1.4,vy:dy/d*1.4,t:80,kind:'seed'}); SFX.blip(); } if(--e.ot<=0) e.st='closed'; }
+    } else if(e.type==='rodahoja'){ // bola de hojarasca: rebota en diagonal
+      const [bx,by]=moveBlocked(e,e.x+e.vx+e.kx,e.y+e.vy+e.ky); if(bx) e.vx*=-1; if(by) e.vy*=-1; e.t++;
+      if((tick&7)===0) parts.push({x:e.x+4+Math.random()*8,y:e.y+12,vx:-e.vx*.3,vy:-.2,life:10,col:'#e8a040',nog:true});
     } else if(e.type==='snail'){ // avanza; al golpearlo se mete en la concha (invulnerable)
       e.t++; if(e.st==='out'){ if(e.t%3===0) moveBlocked(e,e.x+Math.sign(dx)*.5+e.kx,e.y+Math.sign(dy)*.5+e.ky); else moveBlocked(e,e.x+e.kx,e.y+e.ky); }
       else { blindHit=true; if(--e.shellT<=0) e.st='out'; }

@@ -3,12 +3,13 @@
 function slotKey(i){ return 'sprout.save.s'+i; }
 function readSlot(i){ try{ const r=localStorage.getItem(slotKey(i)); return r?JSON.parse(r):null; }catch(e){ return null; } }
 function save(){
+  if(state==='play') saveFlash=45;
   try{ localStorage.setItem(slotKey(curSlot),JSON.stringify({ v:3,
     seeds,hasBlade,hasBomb,hasEmber,won,bossDone,thawed,midKing,beachIntro,
     hasHook,hasTear,boss2Done,summered,midDrone,hasFlake,boss3Done,cycled,midIce,
     hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,
     amulets:[...amulets],equipped,xItem,topoGift,mossGift,wilts,windVisit,
-    berries,bladeLvl,hasSpin,shopHeart,shopPiece,tiloMet,cortezaMet,elderMet,
+    berries,bladeLvl,hasSpin,shopHeart,shopPiece,tiloMet,cortezaMet,elderMet,petraWoke,wellDone,lettersGiven,playTime,
     respawn:respawnPoint,maxHp:player.maxHp,
     collected:[...collected],cutQ:[...cutQ],opened:[...opened],visited:[...visited],
   })); }catch(e){}
@@ -27,7 +28,7 @@ function loadGame(d){
     (d.amulets||[]).forEach(a=>amulets.add(a)); equipped=[(d.equipped||[])[0]||null,(d.equipped||[])[1]||null]; xItem=d.xItem||null;
     topoGift=!!d.topoGift; mossGift=!!d.mossGift; wilts=d.wilts||0; windVisit=!!d.windVisit;
     berries=d.berries||0; bladeLvl=d.bladeLvl||1; hasSpin=!!d.hasSpin; shopHeart=!!d.shopHeart; shopPiece=!!d.shopPiece;
-    tiloMet=!!d.tiloMet; cortezaMet=!!d.cortezaMet; elderMet=!!d.elderMet||!!d.hasBlade;
+    tiloMet=!!d.tiloMet; cortezaMet=!!d.cortezaMet; elderMet=!!d.elderMet||!!d.hasBlade; petraWoke=!!d.petraWoke||!!d.elderMet; wellDone=!!d.wellDone; lettersGiven=!!d.lettersGiven; playTime=d.playTime||0;
     player.maxHp=d.maxHp||6; player.hp=player.maxHp;
     (d.collected||[]).forEach(i=>collected.add(i)); (d.cutQ||[]).forEach(i=>cutQ.add(i));
     (d.opened||[]).forEach(i=>opened.add(i)); (d.visited||[]).forEach(i=>visited.add(i));
@@ -47,12 +48,23 @@ function newGame(){
   hasHook=hasTear=boss2Done=summered=midDrone=false; hasFlake=boss3Done=cycled=midIce=false;
   hasBoomer=hasLantern=hasFeather=hasShield=false; pieces=0; dungeonKeys={}; bigKeys={}; equipped=[null,null]; xItem=null;
   topoGift=mossGift=false; wilts=0; windVisit=false; berries=0;
-  bladeLvl=1; hasSpin=shopHeart=shopPiece=tiloMet=cortezaMet=elderMet=false;
+  bladeLvl=1; hasSpin=shopHeart=shopPiece=tiloMet=cortezaMet=elderMet=false; petraWoke=wellDone=lettersGiven=false; playTime=0; npcs=[];
   giveFx=null; toast=null; toastQ=[]; qPrev=null; pausePage=0; pauseSel=0;
   respawnPoint={...REGION_ANCHOR.valle,reg:'valle'};
   player.maxHp=6; player.hp=6; player.x=44; player.y=26; player.dir=0; inBed=true;
   loadScreen(9,9); setTrack('titulo');
   introDone=true; state='cine'; cinePage=0; cineChars=0; cineFold=0; parts=[]; noise(.6,.025,false);
+}
+/* ---------- RECUERDOS: todo lo leído, en orden de descubrimiento ---------- */
+function loreList(){
+  const L=[];
+  for(const id of collected){
+    if(id[0]==='d'){ const key=id==='dplaza'?'dplaza':id.slice(1).split(',').slice(0,2).join(','); if(DIARY[key]) L.push({id,kind:'diario',title:(key==='dplaza'?'La plaza nevada':(PLACE_NAMES[key]||key)),pages:DIARY[key]}); }
+    else if(id.startsWith('r:')){ const key=id.slice(2); if(RUNAS[key]) L.push({id,kind:'runa',title:(PLACE_NAMES[key]||key),pages:RUNAS[key]}); }
+    else if(id.startsWith('b:')){ const key=id.slice(2); if(BOOKS[key]) L.push({id,kind:'libro',title:BOOKS[key].title,pages:BOOKS[key].pages}); }
+    else if(id[0]==='✉'){ const key=id.slice(1).split(',').slice(0,2).join(','); if(LETTERS[key]) L.push({id,kind:'carta',title:'Carta · '+(PLACE_NAMES[key]||key),pages:LETTERS[key]}); }
+  }
+  return L;
 }
 /* ---------- MISIONES: se derivan del estado, nunca mienten ---------- */
 function questList(){
@@ -69,7 +81,8 @@ function questList(){
   if(hasFlake) q.push({id:'copo2',txt:'El COPO a RAÍZ',done:cycled});
   if(cycled) q.push({id:'fin',txt:'Valle restaurado',done:true});
   if(hasBlade) q.push({id:'lupa',txt:'LUPA: 10 bayas',done:hasBoomer,side:true});
-  if(won) q.push({id:'amuletos',txt:'Amuletos '+amulets.size+'/8',done:amulets.size>=8,side:true});
+  if(won) q.push({id:'amuletos',txt:'Amuletos '+amulets.size+'/9',done:amulets.size>=9,side:true});
+  if(lettersCount()>0) q.push({id:'cartas',txt:'Cartas '+lettersCount()+'/5',done:lettersGiven,side:true});
   if(won) q.push({id:'corazones',txt:'Cuartos '+pieces+'/4',done:false,side:true,quiet:true});
   return q;
 }
