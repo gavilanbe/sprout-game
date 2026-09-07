@@ -27,13 +27,13 @@ function updEnemies(){
       e.t++;
       if(e.homing>0){ e.homing--; e.x+=e.vx+e.kx; e.y+=e.vy+e.ky; }
       else { e.x+=Math.sin(e.t*.05)*.5+e.kx; e.y+=Math.sin(e.t*.08)*.4+e.ky;
-        const dsh=e.fast?1.45:1.1; if(d<70&&e.t%120>96){ e.homing=40; e.vx=dx/d*dsh; e.vy=dy/d*dsh; } }
+        const dsh=e.fast?1.45:1.1; if(d<70&&e.t%120===88) flyText.push({x:e.x+8,y:e.y-4,txt:'!',t:14,col:'#f8d030'}); if(d<70&&e.t%120>96){ e.homing=40; e.vx=dx/d*dsh; e.vy=dy/d*dsh; } }
       e.x=Math.max(0,Math.min(SW*16-16,e.x)); e.y=Math.max(0,Math.min(SH*16-16,e.y));
     } else if(e.type==='beetle'){
       const sp=e.fast?.7:.5; const [bx]=moveBlocked(e,e.x+e.dir*sp+e.kx,e.y+e.ky); if(bx) e.dir*=-1;
       if((e.t=(e.t+1)%200)===0) e.dir=(dx<0?-1:1);
     } else if(e.type==='crab'){ // corre de lado, rápido
-      const sp=1.1; const [bx]=moveBlocked(e,e.x+e.dir*sp+e.kx,e.y+e.ky); if(bx) e.dir*=-1;
+      const sp=e.t%90<12?0:1.1; const [bx]=moveBlocked(e,e.x+e.dir*sp+e.kx,e.y+e.ky); if(bx) e.dir*=-1; // se agacha un instante antes de correr
       if((e.t=(e.t+1)%90)===0){ e.dir=(dx<0?-1:1); if(Math.abs(dy)>8) moveBlocked(e,e.x,e.y+Math.sign(dy)*4); }
     } else if(e.type==='roller'){
       if(e.st==='idle'){

@@ -76,6 +76,10 @@ Todo el arte se genera en el arranque a partir de texto y rectángulos:
 |:--:|:--:|
 | ![Zurrón](docs/screenshots/07-zurron.png) | ![Diálogo](docs/screenshots/08-dialogo.png) |
 
+| El prólogo ilustrado | Los recuerdos |
+|:--:|:--:|
+| ![Prólogo](docs/screenshots/11-prologo.png) | ![Recuerdos](docs/screenshots/12-recuerdos.png) |
+
 ## 📖 La historia
 
 El Viento del Norte robó las **8 semillas doradas** del Gran Roble y las esparció

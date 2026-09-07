@@ -98,7 +98,7 @@ function cutAt(sb){
   if(any) markDirty();
 }
 function dropLoot(x,y,pHeart,pBerry){
-  const r=Math.random(); const mult=hasAmulet('savia')?2:1;
+  const r=Math.random(); const mult=hasAmulet('savia')?2:1; if(player.hp<=2) pHeart=Math.min(.6,pHeart*2.5); // piedad: a punto de marchitarse llueven corazones
   if(r<pHeart) pickups.push({kind:'heart',x,y,t:0,drop:14});
   else if(r<pHeart+pBerry*mult) pickups.push({kind:'berry',x,y,t:0,drop:14});
 }
@@ -158,7 +158,7 @@ function interact([tx,ty,ch]){
     if(berries<20){ say(WELL_TALK.concat([WELL_ASK[0],"(No llevas 20\nbayas.)"])); return true; }
     ask(WELL_TALK.concat(WELL_ASK),null,yes=>{ if(!yes){ say(["(Las bayas se\nquedan en tu\nzurrón.)"]); return; }
       berries-=20; wellDone=true; SFX.blip(); noise(.3,.05,false); save();
-      say(WELL_DONE,()=>{ pickups.push({kind:'piece',id:'♥pozo',x:tx*16+4,y:ty*16+18,t:0,drop:20}); SFX.secret(); }); }); return true; }
+      say(WELL_DONE,()=>{ pickups.push({kind:'piece',id:'♥pozo',x:player.x+4,y:player.y+4,t:0,drop:20}); SFX.secret(); }); }); return true; }
   if(ch==='['){ SFX.blip(); say(thawed?["ALTAR DE LA\nPRIMAVERA.","La BRASA late aquí\nsu calor de\ndeshielo. El valle\nlo siente."]:["ALTAR DE LA\nPRIMAVERA.","El cuenco está\nfrío. Espera algo\nque lata como un\ncorazón."]); return true; }
   if(ch===']'){ SFX.blip(); say(summered?["ALTAR DEL\nVERANO.","La LÁGRIMA brilla\nfresca y tibia.\nEl sol dormido\ndespertó en ella."]:["ALTAR DEL\nVERANO.","El cuenco está\nseco. Espera un\nllanto que el sol\nquiera habitar."]); return true; }
   if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está apartado de\nlos otros dos,\ncomo esperando a\nalguien que no\nvuelve."]); return true; }
@@ -286,7 +286,7 @@ function enterDungeon(){
   else if(sx===1&&sy===-2) placeAt(15,2,72,88,1);
   else if(sx===0&&sy===0) placeAt(5,9,72,80,1);
 }
-function enterSecret(){ if(sx===1&&sy===0) placeAt(4,9,80,88,1); else if(sx===1&&sy===2) placeAt(3,9,80,88,1); }
+function enterSecret(){ if(sx===1&&sy===0) placeAt(4,9,80,70,1); else if(sx===1&&sy===2) placeAt(3,9,80,70,1); }
 function exitDungeon(){
   if(sx===4&&sy===9){ placeAt(1,0,96,92,0); return; }
   if(sx===3&&sy===9){ placeAt(1,2,32,92,0); return; }

@@ -28,6 +28,7 @@ function drawPlayer(){
   let s=P_SPRITES[player.dir][player.frame];
   if(player.atk>0&&player.atk>4) s=P_ATK[player.dir];
   if(state==='itemget') s=H_LIFT;
+  if(player.inv>54&&state==='play') s=P_WHITE[player.dir]; // destello al recibir daño
   ctx.drawImage(s,player.x|0,py|0);
   if(player.dir!==1&&player.atk>0) drawSword();
   if(player.spin>0){ const a=(1-player.spin/18)*6.283+[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir];

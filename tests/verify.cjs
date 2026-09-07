@@ -199,6 +199,20 @@ const server=http.createServer((req,res)=>{
       keys.menu=true; __step(1); const back=state;
       berries=100; __sprout.shopUI('tilo'); keys.fire=true; __step(1); __skipDialog(); return [p,x1,eq1,back,bladeLvl,berries]; }),['pause','hook',['raiz','buho'],'play',2,85]);
   });
+  await check('Segunda pasada: Petra despierta, escalera secreta, cartas y Susurro, pozo, libros y recuerdos, ajustes',async()=>{
+    const r=await ev(()=>{ const log=[];
+      newGame(); state='play'; introDone=true; hitStop=0; wakeT=1; __step(1); log.push(['petra',state,dlg&&dlg.who,npcs.some(n=>n.ch==='h')]); __skipDialog(); __step(1); __skipDialog(); log.push(['petra se va',petraWoke,npcs.length]);
+      hasBlade=true; elderMet=true; __go(1,0,110,80); enemies=[]; player.x=8*16; player.y=5*16-4; player.dir=0; keys.fire=true; __step(16); log.push(['escalera',grid[6][8],opened.has('HS1,0')]);
+      player.x=8*16; player.y=6*16-4; __step(3); log.push(['bodega',sx,sy]); const l=pickups.find(p=>p.kind==='letter'); enemies=[]; player.x=l.x; player.y=l.y-4; __step(3); __skipDialog(); log.push(['carta',lettersCount()]);
+      player.x=5*16; player.y=6*16-4; __step(3); log.push(['vuelta',sx,sy]);
+      for(const k of ['✉4,-1,2,3','✉0,3,3,4','✉4,3,7,6','✉1,-2,7,1']) collected.add(k); __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2); if(state==='itemget'){ itemT=0; __step(2); __skipDialog(); } log.push(['susurro',amulets.has('susurro'),lettersGiven]);
+      berries=25; pieces=0; __go(0,1,110,80); player.x=7*16; player.y=5*16-4; player.dir=0; keys.fire=true; __step(1); __skipDialog(); __step(2); __skipDialog(); __step(30); log.push(['pozo',wellDone,berries,pieces]);
+      __go(9,9,76,40); player.x=5*16; player.y=2*16-4; player.dir=1; keys.fire=true; __step(1); const bookDlg=state; __skipDialog(); log.push(['libro',bookDlg,collected.has('b:9,9'),loreList().length]);
+      keys.menu=true; __step(1); keys.alt=true; __step(1); keys.alt=true; __step(1); keys.alt=true; __step(1); const tab=pausePage; keys.fire=true; __step(1); const reading=state; __skipDialog(); log.push(['recuerdos',tab,reading,state]);
+      keys.alt=true; __step(1); keys.fire=true; __step(1); log.push(['ajustes',pausePage,opts.textSpeed]); opts.textSpeed=1; saveOpts(); keys.menu=true; __step(1); log.push(['cerrar',state]);
+      return log; });
+    eq(r,[['petra','dialog','PETRA',true],['petra se va',true,0],['escalera','>',true],['bodega',4,9],['carta',1],['vuelta',1,0],['susurro',true,true],['pozo',true,5,1],['libro','dialog',true,6],['recuerdos',3,'dialog','pause'],['ajustes',4,2],['cerrar','play']]);
+  });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }
   console.log(`\n${passed} pruebas pasan, ${failed} fallan`);

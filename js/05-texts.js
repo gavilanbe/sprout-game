@@ -5,7 +5,8 @@ const TXT = {
   signs:{
     '0,1':[ "BARRIO DEL ROBLE.\nEste: la PLAZA\nSAGRADA.",
             "Casa izquierda:\nla tuya. Derecha:\nTIENDA DE TILO.",
-            "Tilo paga en\nBAYAS. Corta\nhierba y arbustos:\nesconden cosas." ],
+            "Tilo paga en\nBAYAS. Corta\nhierba y arbustos:\nesconden cosas.",
+            "ENTER abre el\nZURRÓN: mapa,\ntareas y todo lo\nque lleves." ],
     '0,2':[ "Aquí reposa la\nHOJA ANCESTRAL.",
             "Sólo un brote de\ncorazón puro\npodrá alzarla." ],
   },
