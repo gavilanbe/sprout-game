@@ -46,7 +46,12 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
 - Tienda de Tilo, cabaña de Corteza, el pozo de los deseos, trueques con los
   vecinos, 19 tipos de bicho, clima por región y las cuatro estaciones girando
   al final.
-- Zurrón con cinco pestañas (objetos y amuletos, mapa, el valle, recuerdos y
+- HUD con paneles biselados: corazones que palpitan cuando quedan pocos, ranura
+  Z con la Hoja y su nivel, ranura X con el objeto (destella al usarlo),
+  contadores que rebotan, burbuja «Z» sobre lo que puedes usar y cartel con el
+  nombre de cada lugar al descubrirlo.
+- Zurrón con cinco pestañas (objetos y amuletos con el arte a doble tamaño, mapa
+  con **miniaturas reales** de las pantallas visitadas, el valle, recuerdos y
   ajustes), guardado en 3 ranuras con capítulo y tiempo, mandos táctiles,
   gamepad y PWA.
 

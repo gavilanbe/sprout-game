@@ -234,6 +234,7 @@ function giveAmulet(id){ amulets.add(id); const a=AMULETS[id]; SFX.fanfare(); sh
   puff(player.x+8,player.y,C.flowerC,12,1.4); save(); }
 /* ---------- X: el objeto equipado ---------- */
 function useItem(){
+  if(xItem) xFlash=10;
   if(!xItem) { if(hasBomb||hasHook||hasBoomer||hasLantern||hasFeather){ showToast('SIN OBJETO EN X','equípalo en el zurrón'); } return; }
   if(xItem==='bomb'){
     if(bombs.length>=2) return;

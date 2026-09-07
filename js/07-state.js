@@ -93,3 +93,7 @@ let playTime=0, petraWoke=false, saveFlash=0, wellDone=false, lettersGiven=false
 function lettersCount(){ let n=0; for(const id of collected) if(id[0]==='✉') n++; return n; }
 function chapterIdx(){ return cycled?4:summered?3:thawed?2:won?1:0; }
 function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)%60).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+/* ---------- HUD y menú elevados ---------- */
+const THUMBS={};                 // miniaturas del mapa por pantalla ('x,y' → canvas 18×14)
+let placeBanner=null;            // {txt,t} nombre del lugar al descubrirlo
+let hudBerryT=0, hudSeedT=0, xFlash=0, lastHp=6, hudHurtT=0, tabSlide=0;

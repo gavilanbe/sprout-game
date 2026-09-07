@@ -25,7 +25,8 @@ function update(){
   if(hitStop>0){ hitStop--; return; }
   if(!toast&&toastQ.length&&(state==='play'||state==='trans')){ toast=toastQ.shift(); SFX.blip(); }
   if(toast&&--toast.t<=0) toast=null;
-  if(saveFlash>0) saveFlash--;
+  if(saveFlash>0) saveFlash--; if(placeBanner&&(state==='play'||state==='trans')&&--placeBanner.t<=0) placeBanner=null; if(hudBerryT>0) hudBerryT--; if(hudSeedT>0) hudSeedT--; if(xFlash>0) xFlash--; if(hudHurtT>0) hudHurtT--; if(tabSlide>0) tabSlide--;
+  if(player.hp<lastHp) hudHurtT=18; lastHp=player.hp;
   if(itemCardT>0) itemCardT--;
   if(introDone&&!['boot','title','file','cine','credits'].includes(state)) playTime++;
   if(state!=='play'&&state!=='pause'&&state!=='shop'&&state!=='file') keys.menu=false;
@@ -254,14 +255,14 @@ function updPickups(){
     const big=['blade','bomb','ember','hook','tear','flake','boomer','lantern','feather'].includes(p.kind), cx=big?8:4;
     const d=Math.hypot(p.x+cx-(player.x+8),p.y+cx-(player.y+12));
     if(d<(big?12:11)&&(!p.drop||p.drop<8)){
-      if(p.kind==='seed'){ seeds++; collected.add(p.id); SFX.seed(); puff(p.x+4,p.y+4,C.flowerC,8,1.2); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
+      if(p.kind==='seed'){ seeds++; hudSeedT=30; collected.add(p.id); SFX.seed(); puff(p.x+4,p.y+4,C.flowerC,8,1.2); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
       else if(p.kind==='key'){ const dk=dungeonOf(sx,sy)||'x'; dungeonKeys[dk]=(dungeonKeys[dk]||0)+1; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.a,8,1.2); say(TXT.keyGet); save(); }
       else if(p.kind==='bigkey'){ const dk=dungeonOf(sx,sy)||'x'; bigKeys[dk]=true; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.y,10,1.4); say(TXT.bigkeyGet); save(); }
       else if(p.kind==='letter'){ collected.add(p.id); SFX.secret(); puff(p.x+6,p.y+4,'#a8c0d8',10,1.2); const key=sx+','+sy; const n=lettersCount();
         showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
       else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
-      else if(p.kind==='berry'){ berries=Math.min(999,berries+1); SFX.blip(); puff(p.x+4,p.y+4,'#d84878',5,.9); }
+      else if(p.kind==='berry'){ berries=Math.min(999,berries+1); hudBerryT=14; SFX.blip(); puff(p.x+4,p.y+4,'#d84878',5,.9); }
       else if(p.kind==='container'){ player.maxHp+=2; player.hp=player.maxHp; collected.add(p.id); SFX.fanfare(); puff(p.x+4,p.y+4,PAL.R,12,1.5); say(TXT.containerGet); save(); }
       else if(p.kind==='piece'){ collected.add(p.id); puff(p.x+4,p.y+4,PAL.R,10,1.3); addPiece(); }
       else { player.hp=Math.min(player.maxHp,player.hp+2); SFX.heart(); puff(p.x+4,p.y+4,PAL.R,6,1); }
@@ -316,7 +317,7 @@ const X_ITEMS=['bomb','hook','boomer','lantern','feather'];
 function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather})[k]); }
 function updPause(){
   if(keys.menu){ keys.menu=false; state='play'; SFX.menu(); return; }
-  if(keys.alt){ keys.alt=false; pausePage=(pausePage+1)%5; pauseSel=0; loreSel=0; optSel=0; SFX.menu(); return; }
+  if(keys.alt){ keys.alt=false; pausePage=(pausePage+1)%5; pauseSel=0; loreSel=0; optSel=0; tabSlide=8; SFX.menu(); return; }
   const lr=(keys.right?1:0)-(keys.left?1:0), ud=(keys.down?1:0)-(keys.up?1:0);
   if(pausePage===0){
     const items=ownedX(), am=[...amulets]; const n=items.length+am.length;

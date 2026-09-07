@@ -52,6 +52,22 @@ function rebuildBg(){
   for(let f=0;f<2;f++){ if(!bgCanvas[f]) bgCanvas[f]=mkCanvas(160,128);
     const g=bgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); renderScreenTo(g,grid,0,0,renderOpts(),f); }
   bgDirty=false;
+  const r=regionOf(sx,sy); if(r==='valle'||r==='norte'||r==='marisma') thumbOf(sx+','+sy,bgCanvas[0]);
+}
+/* miniatura de una pantalla para el mapa (18×14, sin actores) */
+function thumbOf(key,src){
+  if(!THUMBS[key]) THUMBS[key]=mkCanvas(18,14);
+  const g=THUMBS[key].getContext('2d'); g.imageSmoothingEnabled=true; g.clearRect(0,0,18,14); g.drawImage(src,0,0,160,128,0,0,18,14);
+  return THUMBS[key];
+}
+function ensureThumb(key){ // para partidas cargadas: dibuja la pantalla en frío
+  if(THUMBS[key]) return THUMBS[key];
+  const [x,y]=key.split(',').map(Number); if(!MAPS[key]) return null;
+  const rows=MAPS[key].map(r=>[...r].map(ch=>(ENEMY_MARK[ch]||MIDBOSS_MARK[ch]||BOSS_MARK[ch]||ITEM_MARK[ch]||/[1-8]/.test(ch))?'.':ch));
+  const c=mkCanvas(160,128); const r=regionOf(x,y);
+  const bio=screenBiome(x,y), floor=r==='norte'?((thawed&&y===-1)?'.':'n'):r==='marisma'?(summered?'.':'·'):'.';
+  renderScreenTo(c.getContext('2d'),rows,0,0,{bio,style:'cave',floor,sx:x,sy:y,crystal:false,openChests:new Set()},0);
+  return thumbOf(key,c);
 }
 function markDirty(){ bgDirty=true; }
 /* tabla de equilibrio: vida, daño (medios corazones) y velocidad base */
@@ -177,7 +193,8 @@ function loadScreen(nx,ny){
   if(sx===1&&sy===-3&&boss3Done) npcs.push({ch:'viento',x:4,y:2,guest:'viento'});
   const r2=regionOf(sx,sy);
   setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?((sx===8||sx===7)?'tienda':'casa'):sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':(r2==='gruta'||r2==='secreto')?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='marisma'?'pantano':'valle'));
-  visited.add(key);
+  const firstVisit=!visited.has(key); visited.add(key);
+  if(firstVisit&&PLACE_NAMES[key]&&introDone&&!boss&&!midboss) placeBanner={txt:PLACE_NAMES[key],t:110};
   if((boss||midboss)&&AC) SFX.boss();
   bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':'EL VIENTO DEL NORTE',t:130}:midboss?{txt:MID_CARD[midboss.type],t:130}:null;
   if(midboss&&!hinted.has('mid'+midboss.type)){ hinted.add('mid'+midboss.type); pendingSay=MID_INTRO[midboss.type].slice(); }
