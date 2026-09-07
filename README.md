@@ -80,6 +80,17 @@ Todo el arte se genera en el arranque a partir de texto y rectángulos:
 |:--:|:--:|
 | ![Prólogo](docs/screenshots/11-prologo.png) | ![Recuerdos](docs/screenshots/12-recuerdos.png) |
 
+## 🎵 Música
+
+Catorce pistas chiptune generadas en vivo con WebAudio: cuatro voces por pista
+(melodía con vibrato y eco, contramelodía, bajo de triángulo y batería del canal
+de ruido), ondas de pulso al 12,5 % y 25 % como en la Game Boy y un compresor de
+salida. Toda la banda sonora comparte dos ideas: el **motivo de Sprout** («el brote
+que trepa», la-si-do-re-mi), que abre el título y el vals del valle y se vuelve
+menor en los guardianes; y la **nana de Raíz**, que suena en casa y crece hasta
+llenar los créditos. Título, valle, casa, tienda, norte helado, marismas, cueva,
+templo, cima, guardián, minijefe, gruta, marchitarse y créditos.
+
 ## 📖 La historia
 
 El Viento del Norte robó las **8 semillas doradas** del Gran Roble y las esparció

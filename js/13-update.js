@@ -78,7 +78,7 @@ function update(){
   if(state==='fall'){ deathT--; if(deathT<=0){ state='play'; player.x=lastEntry.x; player.y=lastEntry.y; if(lastEntry.sx!==sx||lastEntry.sy!==sy){ loadScreen(lastEntry.sx,lastEntry.sy); } hurt(1,undefined,undefined,true); player.inv=40; fadeIn=20; } updParts(); return; }
   if(state==='dying'){ deathT--; if(deathT===54){ SFX.wilt(); }
     if((tick&3)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+4,vx:(Math.random()-.5)*.5,vy:.3+Math.random()*.4,life:30,col:['#c8b070','#a87838','#6a8a3a'][(tick/3|0)%3]});
-    updParts(); if(deathT<=0){ state='over'; } return; }
+    updParts(); if(deathT<=0){ state='over'; setTrack('marchito'); } return; }
   if(state==='credits'){ creditsT++; if((tick&7)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:140,col:[PAL.l,C.flower3,C.flowerC,'#ffffff'][(tick>>3)&3],nog:true});
     updParts(); if(keys.fire&&creditsT>CREDITS.length*22+80){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } if(keys.fire&&creditsT<=CREDITS.length*22+80) keys.fire=false; return; }
   if(state==='over'){ if(keys.fire){ keys.fire=false; player.hp=player.maxHp; player.inv=90; inBed=false;
@@ -141,7 +141,7 @@ function update(){
     if(keys.alt){ keys.alt=false; useItem(); if(state!=='play')return; }
   }
   // pulsador de suelo: abre las verjas de la sala
-  if(onTile==='%'&&state==='play'){ opened.add('G'+sx+','+sy); SFX.secret(); shake=4;
+  if(onTile==='%'&&state==='play'){ opened.add('G'+sx+','+sy); SFX.puzzle(); shake=4;
     for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='%') grid[y][x]='&';
     openGates(); save(); }
   // caer en un agujero

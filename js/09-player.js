@@ -68,7 +68,7 @@ function tryPushBlock(){
 function checkPlates(){
   if(plateCells.size===0||opened.has('PZ'+sx+','+sy)) return;
   for(const c of plateCells){ const [x,y]=c.split(',').map(Number); if(grid[y][x]!=='#') return; }
-  opened.add('PZ'+sx+','+sy); SFX.secret(); shake=4;
+  opened.add('PZ'+sx+','+sy); SFX.puzzle(); shake=4;
   let gate=false;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='='){ grid[y][x]='q'; gate=true; puff(x*16+8,y*16+8,'#8a7048',6,1.2); }
   if(!gate){ // sin verja: cae una llave en el centro de la sala
@@ -111,7 +111,7 @@ function toggleCrystal(){
 }
 function lightTorch(tx,ty){ grid[ty][tx]=';'; opened.add('T'+sx+','+sy+':'+tx+','+ty); SFX.torch(); puff(tx*16+8,ty*16+4,'#f8a030',8,1.2); markDirty();
   let all=true; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') all=false;
-  if(all){ opened.add('G'+sx+','+sy); SFX.secret(); shake=4; openGates(); showToast('¡LAS ANTORCHAS ARDEN!','la verja se abre'); }
+  if(all){ opened.add('G'+sx+','+sy); SFX.puzzle(); shake=4; openGates(); showToast('¡LAS ANTORCHAS ARDEN!','la verja se abre'); }
   save();
 }
 /* ---------- Z: hablar / abrir / golpear ---------- */
@@ -217,7 +217,7 @@ function elderTalk(){
   if(seeds>=8&&!won){ giveItem(ACORN_GOLD,8,()=>sayR(TXT.elderWin,()=>{ won=true; SFX.fanfare(); bloom(); markDirty(); save(); })); return; }
   if(hasEmber&&!thawed){ giveItem(EMBER_SPR,1,()=>sayR(TXT.thaw,()=>{ thawed=true; SFX.fanfare(); bloom(); save(); })); return; }
   if(hasTear&&!summered){ giveItem(TEAR_SPR,1,()=>sayR(TXT.summer,()=>{ summered=true; SFX.fanfare(); bloom(); save(); })); return; }
-  if(hasFlake&&!cycled){ giveItem(FLAKE_SPR,1,()=>sayR(TXT.cycle,()=>{ cycled=true; SFX.fanfare(); bloom(); markDirty(); save(); state='credits'; creditsT=0; parts=[]; setTrack('titulo'); })); return; }
+  if(hasFlake&&!cycled){ giveItem(FLAKE_SPR,1,()=>sayR(TXT.cycle,()=>{ cycled=true; SFX.fanfare(); bloom(); markDirty(); save(); state='credits'; creditsT=0; parts=[]; setTrack('creditos'); })); return; }
   if(cycled) sayR(["Las cuatro\nestaciones giran.\nEl valle respira.","¿Aún no lo ves,\nbrote? Mírame\nbien. Mira el árbol.","Yo SOY el Roble.\nViejo y plantado,\nsoñando este valle.","Y tú creciste de\nmi última bellota,\nla novena...","...la única que mi\nhermano Viento\nnunca encontró.","Gracias por traer\na casa a tus\nhermanas. ♥"]);
   else if(summered&&boss3Done) sayR(["¿Ese frío azul en\ntu zurrón...?\n¡El Copo! Tráelo."]);
   else if(summered) sayR(["Solo queda el\nINVIERNO, en el\npico del norte.","Sube por el campo\nhelado. Necesitarás\nbomba, gancho y\nel farol de Tilo","para cruzar el\nTEMPLO DE LA CIMA.\nNo subas a luchar:\nsube a recordar."]);
