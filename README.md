@@ -63,6 +63,13 @@ Todo el arte se genera en el arranque a partir de texto y rectángulos:
   minijefes de 24 px y guardianes de 32 px con retrato en el diálogo.
 - Oscuridad con luz de farol y antorchas, sombras bajo cada actor, estelas de la
   Hoja, números de daño, sacudida de pantalla y *hit-stop*.
+- Cajas de texto con piel según quién habla: madera para los carteles, piedra
+  para las runas, pergamino para diarios y libros, papel azul para las cartas.
+  Las palabras clave se iluminan solas, el texto respira en la puntuación, el
+  retrato habla y las preguntas tienen cursor.
+- Marchitarse es una escena: Sprout se dobla, pierde las hojas, se seca y cae
+  una semilla; en la pantalla de rebrote eliges volver (a la entrada de la
+  pantalla, o de la mazmorra) o guardar y salir, y germinas de nuevo.
 
 | La plaza del Gran Roble | El Topo Real |
 |:--:|:--:|

@@ -13,12 +13,23 @@ function drawSword(){
     ctx.beginPath(); ctx.arc(0,0,15,base-1.3,base+sweep+.2); ctx.stroke(); ctx.restore(); }
 }
 function drawPlayer(){
-  if(state==='dying'){ const k=1-deathT/70; ctx.save(); ctx.translate(player.x+8,player.y+15); ctx.rotate(k*0.6); ctx.translate(0,k*2);
-    ctx.globalAlpha=Math.max(.25,1-k*.7); ctx.drawImage(deathT<35?H_WILT:P_SPRITES[player.dir][0],-8,-15); ctx.globalAlpha=1; ctx.restore(); return; }
+  if(state==='dying'){ // marchitarse por fases: se dobla, se seca, cae la semilla
+    const k=1-deathT/120;
+    if(deathT<=22){ const fallK=1-deathT/22; drawShadow(player.x+8,player.y+15,3+fallK*2); ctx.drawImage(SEED_FALL,(player.x+4)|0,(player.y+14-(1-fallK)*(1-fallK)*18-6)|0); return; }
+    drawShadow(player.x+8,player.y+15,6);
+    ctx.save(); ctx.translate(player.x+8,player.y+15);
+    if(k<.2){ if((tick&3)<2) ctx.drawImage(P_WHITE[player.dir],-8,-15); else ctx.drawImage(P_SPRITES[player.dir][0],-8,-15); }
+    else if(k<.5){ const j=(k-.2)/.3; ctx.rotate(j*0.25); ctx.drawImage(j<.5?H_DROOP:H_WILT,-8,-15); }
+    else { const j=(k-.5)/.32; ctx.rotate(0.25+j*0.6); ctx.translate(0,j*3); ctx.scale(1,1-j*.35); ctx.globalAlpha=Math.max(.3,1-j*.6); ctx.drawImage(H_WILT,-8,-15); }
+    ctx.restore(); return; }
   if(state==='fall'){ const k=1-deathT/40; ctx.save(); ctx.translate(player.x+8,player.y+10); ctx.rotate(k*6); ctx.scale(1-k,1-k); ctx.drawImage(P_SPRITES[0][0],-8,-8); ctx.restore(); return; }
   if(inBed){ ctx.drawImage(wakeT>25?H_SLEEP:H_WAKE,(player.x+4)|0,(player.y+2)|0); return; }
-  if(sproutT>0){ const k=sproutT/24; ctx.drawImage(k>.5?H_SEEDLING:P_SPRITES[0][0],player.x|0,(player.y+(k*6|0))|0);
-    if((tick&3)===0) parts.push({x:player.x+8,y:player.y+12,vx:(Math.random()-.5)*.5,vy:-.4,life:14,col:'#9ed86a'}); return; }
+  if(sproutT>0){ // rebrotar: la semilla, el brote, y Sprout que se despliega
+    drawShadow(player.x+8,player.y+15,4);
+    if(sproutT>40){ ctx.drawImage(SEED_FALL,(player.x+4)|0,(player.y+8)|0); }
+    else if(sproutT>24){ ctx.drawImage(H_SEEDLING,player.x|0,(player.y+(sproutT-24)/16*4)|0); }
+    else { const j=1-sproutT/24; ctx.save(); ctx.translate(player.x+8,player.y+16); ctx.scale(1,.5+.5*j); ctx.drawImage(j<.5?H_WAKE:P_SPRITES[0][0],-8,-16+(j<.5?2:0)); ctx.restore(); }
+    return; }
   const inv=player.inv>0&&(tick&3)<2&&state==='play';
   drawShadow(player.x+8,player.y+15,jumpT>0?4:6);
   if(inv) return;
@@ -176,6 +187,7 @@ function drawScene(){
   for(const p of parts){ ctx.fillStyle=p.col;
     if(p.ring){ ctx.strokeStyle=p.col; ctx.lineWidth=2; ctx.globalAlpha=p.life/12; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1-p.life/12)+2,0,6.283); ctx.stroke(); ctx.globalAlpha=1; }
     else if(p.star){ ctx.fillRect(p.x|0,(p.y-1)|0,1,3); ctx.fillRect((p.x-1)|0,p.y|0,3,1); }
+    else if(p.leaf){ ctx.save(); ctx.translate(p.x|0,p.y|0); ctx.rotate(p.life*.3); ctx.drawImage(tintTo(LEAF_BIT,p.col),-1,-1); ctx.restore(); }
     else if(p.fly){ ctx.fillRect(p.x|0,(p.y+((tick>>2)&1))|0,1,1); ctx.fillRect((p.x+2)|0,(p.y+((tick>>2)&1))|0,1,1); }
     else ctx.fillRect(p.x|0,p.y|0,p.life>8?2:1,p.life>8?2:1); }
   for(const f of flyText){ ctx.font='8px "Press Start 2P"'; ctx.globalAlpha=Math.min(1,f.t/10); ctx.fillStyle=PAL.k; ctx.fillText(f.txt,(f.x-3)|0,(f.y+1)|0); ctx.fillStyle=f.col; ctx.fillText(f.txt,(f.x-4)|0,f.y|0); ctx.globalAlpha=1; }

@@ -55,8 +55,9 @@ const player={x:44,y:26,dir:0,frame:0,anim:0,hp:6,maxHp:6,inv:0,atk:0,kx:0,ky:0,
 function hasAmulet(id){ return equipped.includes(id); }
 function playerSpeed(){ return hasAmulet('viento')?1.5:1.2; }
 function die(){ if(state==='dying'||state==='over') return;
-  state='dying'; deathT=70; wilts++; player.atk=0; bombs=[]; projs=[]; windProjs=[]; boomer=null;
-  SFX.hurt(); shake=6; }
+  state='dying'; deathT=120; wilts++; player.atk=0; player.spin=0; player.charge=0; bombs=[]; projs=[]; windProjs=[]; boomer=null; jumpT=0; overSel=0;
+  SFX.hurt(); shake=8; hitStop=6; }
+let overSel=0;
 function hurt(n,fromX,fromY,force){ // daño al jugador, con amuleto de raíz y escudo
   if(player.inv>0&&!force) return false;
   if(hasAmulet('raiz')) n=Math.max(1,Math.ceil(n/2));
@@ -80,8 +81,8 @@ function paginate(pages,who){
   return out;
 }
 let dlg=null; // {pages, page, chars, cb, who, ask}
-function say(pages,cb,who){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:cb||null,who:who||null,ask:null}; state='dialog'; }
-function ask(pages,who,cb){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:null,who:who||null,ask:cb}; state='dialog'; }
+function say(pages,cb,who,style){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:cb||null,who:who||null,ask:null,style:style||'normal',pause:0,sel:0,t:0}; state='dialog'; }
+function ask(pages,who,cb,style){ dlg={pages:paginate(pages,who),page:0,chars:0,cb:null,who:who||null,ask:cb,style:style||'normal',pause:0,sel:0,t:0}; state='dialog'; }
 let trans=null;
 function showToast(t1,t2){ toastQ.push({t1,t2,t:140}); }
 /* ---------- segunda pasada: ajustes, tiempo de juego, intro y lore ---------- */

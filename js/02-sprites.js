@@ -1623,3 +1623,24 @@ const TAB_ICONS={
   recuerdos:sprN(["kkkkkkkkk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kvAAAvvvk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kkkkkkkkk.",".........."]),
   ajustes:sprN(["...kkkk...","..ktttTk..",".kttkkttk.","kttk..kttk","kttk..kttk",".kttkkttk.","..ktttTk..","...kkkk...","..........",".........."]),
 };
+/* ---------- marchitarse: pose intermedia y semilla ---------- */
+const H_DROOP=spr([ // se dobla: hojas caídas hacia un lado, ojos medio cerrados
+"................",
+"................",
+"....kk..........",
+"...kLlkk........",
+"....kllkk.......",
+".....kdkkkkkk...",
+"....kkkkssssk...",
+"...ksssssssssk..",
+"..kssskkssskssk.",
+"..kssssssssssk..",
+"..kSSsssssssSk..",
+"...kSSSSSSSSk...",
+"....kbbbbbbk....",
+"...ksbbbbbbbsk..",
+"....kmmk.kmmk...",
+".....kk...kk....",
+]);
+const SEED_FALL=sprN(["..kkkk..",".kAAAAk.","kAAAAAAk","kaaawaak",".kaaaak.","..kaak..","...kk..."]);
+const LEAF_BIT=sprN(["kk.","klk",".kk"]);

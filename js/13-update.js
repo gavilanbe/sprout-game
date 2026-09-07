@@ -17,6 +17,7 @@ function startTransition(dx,dy){
   if(!boxFree(player.x+4,player.y+8,8,8)){ [player.x,player.y]=findFree(player.x,player.y,dx?'y':'x'); }
   lastEntry={sx,sy,x:player.x,y:player.y};
 }
+let overUD=0;
 function playerOnTile(){ const [tx,ty]=playerTile(); return grid[ty]&&grid[ty][tx]; }
 function update(){
   tick++;
@@ -76,29 +77,41 @@ function update(){
     updParts(); return;
   }
   if(state==='fall'){ deathT--; if(deathT<=0){ state='play'; player.x=lastEntry.x; player.y=lastEntry.y; if(lastEntry.sx!==sx||lastEntry.sy!==sy){ loadScreen(lastEntry.sx,lastEntry.sy); } hurt(1,undefined,undefined,true); player.inv=40; fadeIn=20; } updParts(); return; }
-  if(state==='dying'){ deathT--; if(deathT===54){ SFX.wilt(); }
-    if((tick&3)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+4,vx:(Math.random()-.5)*.5,vy:.3+Math.random()*.4,life:30,col:['#c8b070','#a87838','#6a8a3a'][(tick/3|0)%3]});
-    updParts(); if(deathT<=0){ state='over'; setTrack('marchito'); } return; }
-  if(state==='credits'){ creditsT++; if((tick&7)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:140,col:[PAL.l,C.flower3,C.flowerC,'#ffffff'][(tick>>3)&3],nog:true});
-    updParts(); if(keys.fire&&creditsT>CREDITS.length*22+80){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } if(keys.fire&&creditsT<=CREDITS.length*22+80) keys.fire=false; return; }
-  if(state==='over'){ if(keys.fire){ keys.fire=false; player.hp=player.maxHp; player.inv=90; inBed=false;
-      loadScreen(respawnPoint.sx,respawnPoint.sy); player.x=respawnPoint.x; player.y=respawnPoint.y; player.dir=0; bombs=[]; projs=[]; state='play'; fadeIn=30; sproutT=24; } return; }
+  if(state==='dying'){ deathT--; const k=1-deathT/120;
+    if(deathT===100){ SFX.wilt(); }
+    if(deathT>50&&(tick&5)===0) parts.push({x:player.x+5+Math.random()*6,y:player.y+2,vx:(Math.random()-.5)*.7,vy:.25+Math.random()*.3,life:40,col:k<.4?PAL.l:['#c8b070','#a87838','#6a8a3a'][(tick/3|0)%3],leaf:true});
+    if(deathT===50){ SFX.fall(); }
+    if(deathT===22){ SFX.land(); puff(player.x+8,player.y+14,'#8a7048',6,.8); }
+    updParts(); if(deathT<=0){ state='over'; overSel=0; setTrack('marchito'); } return; }
+  if(state==='over'){ const ud=(keys.down?1:0)-(keys.up?1:0); if(ud&&overUD!==ud){ overSel=(overSel+ud+2)%2; SFX.menu(); } overUD=ud;
+    if(keys.fire){ keys.fire=false;
+      if(overSel===1){ save(); state='title'; titleT=TITLE_MENU; parts=[]; setTrack('titulo'); return; }
+      player.hp=player.maxHp; player.inv=120; inBed=false;
+      const dng=dungeonOf(sx,sy)||regionOf(sx,sy)==='gruta'||regionOf(sx,sy)==='secreto';
+      if(dng){ loadScreen(respawnPoint.sx,respawnPoint.sy); player.x=respawnPoint.x; player.y=respawnPoint.y; }
+      else { loadScreen(lastEntry.sx,lastEntry.sy); player.x=lastEntry.x; player.y=lastEntry.y; if(!boxFree(player.x+4,player.y+8,8,8)) [player.x,player.y]=findFree(player.x,player.y,'x'); }
+      player.dir=0; bombs=[]; projs=[]; state='play'; fadeIn=30; sproutT=48; } return; }
   if(state==='dialog'){
-    const pg=dlg.pages[dlg.page];
-    if(dlg.chars<pg.length){ dlg.chars+=(keys.fire?3:0.55*(opts.textSpeed||1)); if((tick&3)===0&&dlg.chars<pg.length)SFX.blip(); }
+    const pg=dlg.pages[dlg.page]; dlg.t++;
+    if(dlg.chars<pg.length){
+      if(dlg.pause>0&&!keys.fire) dlg.pause--;
+      else { const before=dlg.chars|0; dlg.chars+=(keys.fire?3:0.6*(opts.textSpeed||1)); const now=Math.min(pg.length,dlg.chars|0);
+        for(let i=before;i<now;i++){ const c=pg[i]; if('.!?…'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:10); else if(',;:'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:5); }
+        if((tick&3)===0&&dlg.chars<pg.length) SFX.blip(); } }
     const lastDone=dlg.page===dlg.pages.length-1&&dlg.chars>=pg.length;
-    if(dlg.ask&&lastDone&&keys.alt){ keys.alt=false; const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return; }
+    if(dlg.ask&&lastDone){ const lr=(keys.right?1:0)-(keys.left?1:0); if(lr&&dlg.lr!==lr){ dlg.sel=lr>0?1:0; SFX.menu(); } dlg.lr=lr;
+      if(keys.alt){ keys.alt=false; const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return; } }
     if(keys.fire){ keys.fire=false;
       if(dlg.chars<pg.length) dlg.chars=pg.length;
-      else if(dlg.page<dlg.pages.length-1){ dlg.page++; dlg.chars=0; }
-      else if(dlg.ask){ const cb=dlg.ask; dlg=null; state='play'; SFX.blip(); cb(true); }
+      else if(dlg.page<dlg.pages.length-1){ dlg.page++; dlg.chars=0; dlg.pause=0; }
+      else if(dlg.ask){ const cb=dlg.ask, yes=dlg.sel===0; dlg=null; state='play'; if(yes) SFX.blip(); else SFX.bump(); cb(yes); }
       else { const cb=dlg.cb; dlg=null; state='play'; if(cb)cb(); } }
     keys.alt=false; updParts(); return;
   }
   if(state==='trans'){ trans.t++; if(trans.t>=trans.dur){ state='play'; trans=null; } return; }
 
   /* === PLAY === */
-  if(sproutT>0){ if(sproutT===24) SFX.regrow(); sproutT--; if(fadeIn>0)fadeIn--; updParts(); return; }
+  if(sproutT>0){ if(sproutT===40) SFX.regrow(); if(sproutT===14) SFX.chime(); if((tick&3)===0&&sproutT<40) sparkle(player.x+2+Math.random()*12,player.y+4+Math.random()*10,sproutT>24?'#a8e878':'#fff0a0'); sproutT--; if(fadeIn>0)fadeIn--; updParts(); return; }
   if(keys.menu){ keys.menu=false; state='pause'; pausePage=0; pauseSel=0; SFX.menu(); return; }
   if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;
@@ -245,8 +258,8 @@ function updPickups(){
       else if(p.kind==='key'){ const dk=dungeonOf(sx,sy)||'x'; dungeonKeys[dk]=(dungeonKeys[dk]||0)+1; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.a,8,1.2); say(TXT.keyGet); save(); }
       else if(p.kind==='bigkey'){ const dk=dungeonOf(sx,sy)||'x'; bigKeys[dk]=true; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.y,10,1.4); say(TXT.bigkeyGet); save(); }
       else if(p.kind==='letter'){ collected.add(p.id); SFX.secret(); puff(p.x+6,p.y+4,'#a8c0d8',10,1.2); const key=sx+','+sy; const n=lettersCount();
-        showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[])); save(); }
-      else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"]); save(); }
+        showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
+      else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
       else if(p.kind==='berry'){ berries=Math.min(999,berries+1); SFX.blip(); puff(p.x+4,p.y+4,'#d84878',5,.9); }
       else if(p.kind==='container'){ player.maxHp+=2; player.hp=player.maxHp; collected.add(p.id); SFX.fanfare(); puff(p.x+4,p.y+4,PAL.R,12,1.5); say(TXT.containerGet); save(); }
@@ -320,7 +333,7 @@ function updPause(){
   } else if(pausePage===3){
     const L=loreList();
     if(ud!==pauseUD){ pauseUD=ud; if(ud&&L.length){ loreSel=(loreSel+ud+L.length)%L.length; SFX.blip(); } }
-    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); say(e.pages,()=>{ state='pause'; }); } }
+    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); say(e.pages,()=>{ state='pause'; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':'paper'); } }
   } else if(pausePage===4){
     const N=4;
     if(ud!==pauseUD){ pauseUD=ud; if(ud){ optSel=(optSel+ud+N)%N; SFX.blip(); } }

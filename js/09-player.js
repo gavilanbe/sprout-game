@@ -149,10 +149,10 @@ function interact([tx,ty,ch]){
     else if(guest.guest==='avispa') say(GUEST_TALK.avispa(),null,'LA REINA');
     else say(GUEST_TALK.viento(),null,'EL VIENTO');
     return true; }
-  if(ch==='S'){ SFX.blip(); say(TXT.signs[sx+','+sy]||TXT.sign); return true; }
-  if(ch==='O'){ SFX.blip(); if(RUNAS[sx+','+sy]&&!collected.has('r:'+sx+','+sy)){ collected.add('r:'+sx+','+sy); showToast('RECUERDO ANOTADO','piedra rúnica'); save(); } say(RUNAS[sx+','+sy]||["Runas gastadas.\nNo se leen."]); return true; }
-  if(ch==='Ⓑ'){ const b=BOOKS[sx+','+sy]; SFX.blip(); if(!b){ say(["Libros de cuentas\ny catálogos de\nsemillas. Nada\nque leer."]); return true; }
-    if(!collected.has('b:'+sx+','+sy)){ collected.add('b:'+sx+','+sy); showToast('RECUERDO ANOTADO',b.title.slice(0,17)); save(); } say(b.pages); return true; }
+  if(ch==='S'){ SFX.blip(); say(TXT.signs[sx+','+sy]||TXT.sign,null,null,'wood'); return true; }
+  if(ch==='O'){ SFX.blip(); if(RUNAS[sx+','+sy]&&!collected.has('r:'+sx+','+sy)){ collected.add('r:'+sx+','+sy); showToast('RECUERDO ANOTADO','piedra rúnica'); save(); } say(RUNAS[sx+','+sy]||["Runas gastadas.\nNo se leen."],null,null,'stone'); return true; }
+  if(ch==='Ⓑ'){ const b=BOOKS[sx+','+sy]; SFX.blip(); if(!b){ say(["Libros de cuentas\ny catálogos de\nsemillas. Nada\nque leer."],null,null,'paper'); return true; }
+    if(!collected.has('b:'+sx+','+sy)){ collected.add('b:'+sx+','+sy); showToast('RECUERDO ANOTADO',b.title.slice(0,17)); save(); } say(b.pages,null,null,'paper'); return true; }
   if(ch==='Ω'){ SFX.blip();
     if(wellDone){ say(["El pozo. El agua\nsigue brillando,\npero ya no\nresponde."]); return true; }
     if(berries<20){ say(WELL_TALK.concat([WELL_ASK[0],"(No llevas 20\nbayas.)"])); return true; }
