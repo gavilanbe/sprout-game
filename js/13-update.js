@@ -85,20 +85,8 @@ function update(){
     updParts(); return;
   }
   if(state==='fall'){ deathT--; if(deathT<=0){ state='play'; player.x=lastEntry.x; player.y=lastEntry.y; if(lastEntry.sx!==sx||lastEntry.sy!==sy){ loadScreen(lastEntry.sx,lastEntry.sy); } hurt(1,undefined,undefined,true); player.inv=40; fadeIn=20; } updParts(); return; }
-  if(state==='dying'){ deathT--; const k=1-deathT/120;
-    if(deathT===100){ SFX.wilt(); }
-    if(deathT>50&&(tick&5)===0) parts.push({x:player.x+5+Math.random()*6,y:player.y+2,vx:(Math.random()-.5)*.7,vy:.25+Math.random()*.3,life:40,col:k<.4?PAL.l:['#c8b070','#a87838','#6a8a3a'][(tick/3|0)%3],leaf:true});
-    if(deathT===50){ SFX.fall(); }
-    if(deathT===22){ SFX.land(); puff(player.x+8,player.y+14,'#8a7048',6,.8); }
-    updParts(); if(deathT<=0){ state='over'; overSel=0; setTrack('marchito'); } return; }
-  if(state==='over'){ const ud=(keys.down?1:0)-(keys.up?1:0); if(ud&&overUD!==ud){ overSel=(overSel+ud+2)%2; SFX.menu(); } overUD=ud;
-    if(keys.fire){ keys.fire=false;
-      if(overSel===1){ save(); state='title'; titleT=TITLE_MENU; parts=[]; setTrack('titulo'); return; }
-      player.hp=player.maxHp; player.inv=120; inBed=false;
-      const dng=dungeonOf(sx,sy)||regionOf(sx,sy)==='gruta'||regionOf(sx,sy)==='secreto';
-      if(dng){ loadScreen(respawnPoint.sx,respawnPoint.sy); player.x=respawnPoint.x; player.y=respawnPoint.y; }
-      else { loadScreen(lastEntry.sx,lastEntry.sy); player.x=lastEntry.x; player.y=lastEntry.y; if(!boxFree(player.x+4,player.y+8,8,8)) [player.x,player.y]=findFree(player.x,player.y,'x'); }
-      player.dir=0; bombs=[]; projs=[]; state='play'; fadeIn=30; sproutT=48; } return; }
+  if(state==='dying'){ updWilt(); return; }     // marchitarse en el campo y bajar a la tierra (15c)
+  if(state==='over'){ updMarchito(); return; }  // el sueño: la voz del Roble y «¿otra vez?» (15c)
   if(state==='dialog'){
     const pg=dlg.pages[dlg.page]; dlg.t++; dlg.pt=(dlg.pt||0)+1;
     if(dlg.t===1&&(dlg.style||'normal')==='normal'){ const yb=(player.y+8>56)?7:78; for(const [lx,ly] of [[6,yb],[154,yb],[154,yb+46],[6,yb+46]]) for(let i=0;i<2;i++) parts.push({k:'blade',x:lx,y:ly,vx:(lx<80?-1:1)*(.4+Math.random()*.6),vy:-.6-Math.random()*.5,life:26,max:26,col:i?'#78d838':'#a8e870',rot:Math.random()*6,vr:.3}); }
@@ -120,7 +108,7 @@ function update(){
   if(state==='trans'){ trans.t++; if(trans.t>=trans.dur){ state='play'; trans=null; } return; }
 
   /* === PLAY === */
-  if(sproutT>0){ if(sproutT===40) SFX.regrow(); if(sproutT===14) SFX.chime(); if((tick&3)===0&&sproutT<40) sparkle(player.x+2+Math.random()*12,player.y+4+Math.random()*10,sproutT>24?'#a8e878':'#fff0a0'); sproutT--; if(fadeIn>0)fadeIn--; updParts(); return; }
+  if(sproutT>0){ updRebrote(); return; } // rebrotar: germina y sale de la tierra (15c)
   if(keys.menu){ keys.menu=false; state='pause'; pausePage=0; pauseSel=0; SFX.menu(); return; }
   if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;

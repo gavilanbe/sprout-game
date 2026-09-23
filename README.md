@@ -86,9 +86,14 @@ Todo el arte se genera en el arranque a partir de texto y rectángulos:
   para las runas, pergamino para diarios y libros, papel azul para las cartas.
   Las palabras clave se iluminan solas, el texto respira en la puntuación, el
   retrato habla y las preguntas tienen cursor.
-- Marchitarse es una escena: Sprout se dobla, pierde las hojas, se seca y cae
-  una semilla; en la pantalla de rebrote eliges volver (a la entrada de la
-  pantalla, o de la mazmorra) o guardar y salir, y germinas de nuevo.
+- Marchitarse es una escena: el mundo pierde el color, Sprout se seca y se
+  deshace en polvo, y sólo una hoja verde baja planeando junto a su semilla. La
+  semilla se hunde en la tierra hasta las raíces del Gran Roble y, en un sueño
+  de anillos que ondulan con los colores de la estación, el Roble te habla
+  (según dónde y cuántas veces has caído, con una pista si te venció un jefe):
+  «¿Lo intentamos otra vez?». Si dices que sí, la luz se recoge en una semilla
+  a la entrada de la pantalla (o de la mazmorra), germina al son del motivo y
+  Sprout sale de un salto; si no, se guarda y vuelves al título. Z lo acelera.
 
 | La plaza del Gran Roble | El Topo Real |
 |:--:|:--:|

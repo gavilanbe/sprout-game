@@ -263,11 +263,15 @@ const TRACKS={
     leadM:N('.:12 E5:4  .:16  .:8 B4:4 .:4  .:16  .:12 A5:4  .:16  .:8 G5:4 E5:4  .:16'),
     harmM:N('A3:16  A3:16  E3:16  E3:16  A3:16  F3:16  E3:16  A3:16'),
     bass:'drone', drums:['............h...'] },
-  /* MARCHITO — el brote cae: sting corto en bucle lento */
-  marchito:{ bpm:70, steps:16, lead:'triangle', harm:'p125', leadVol:.05, harmVol:.012, bassVol:.05, drumVol:0, echo:.3, space:.4, arpVol:0, vary:false,
-    chords:[KAm,KAm,KFm,KFm, KE,KE,KAm,KAm],
-    leadM:N('E5:4 D5:4 C5:8  B4:4 A4:4 G#4:8  F4:16  .:16  E4:8 D4:8  C4:16  .:16  .:16'),
-    harm:'arp', bass:'drone', drums:[] },
+  /* MARCHITO — la nana de las raíces: bajo tierra, el Roble le canta a la semilla. 3/4 lento,
+     de La menor a Do; a mitad asoma el motivo de Sprout (la-si-do-re… ¡mi!) como una promesa */
+  marchito:{ bpm:66, steps:12, lead:'triangle', harm:'p125', leadVol:.056, harmVol:.013, bassVol:.042, drumVol:0, echo:.34, space:.5, arpVol:.005, vary:false, duet:false,
+    chords:[KAm,KF,KC,KG, KAm,KF,KG,KC],
+    leadM:N('E5:6 D5:3 C5:3  C5:6 A4:6  G4:3 A4:3 C5:3 E5:3  D5:9 .:3  A4:3 B4:3 C5:3 D5:3  E5:9 C5:3  D5:3 B4:3 G4:3 B4:3  C5:12'),
+    bass:'waltz', drums:[] },
+  /* SILENCIO — al caer y al volver: nada suena (sólo los efectos) */
+  silencio:{ bpm:60, steps:16, lead:'triangle', harm:'p125', leadVol:.01, harmVol:.01, bassVol:.01, drumVol:0, echo:0, space:.3, arpVol:0, vary:false, duet:false,
+    chords:[KAm], leadM:N('.:16'), harmM:N('.:16'), bass:N('.:16'), drums:[] },
   /* CRÉDITOS — la nana de Raíz, en grande, y el motivo al final */
   creditos:{ bpm:104, steps:12, lead:'square', harm:'p25', leadVol:.045, harmVol:.026, bassVol:.08, drumVol:.028, echo:.2, fat:5, space:.26, arpVol:.007,
     chords:[KC,KG,KC,KAm, KC,KG,KF,KC, KF,KC,KG,KAm, KF,KG,KC,KC, KAm,KC,KG,KAm, KAm,KC,KF,KC, KF,KG,KC,KC, KF,KG,KC,KC],

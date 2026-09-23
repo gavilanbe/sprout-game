@@ -494,20 +494,6 @@ function drawCredits(){
   if(creditsT>CREDITS.length*22+80&&(tick&31)<22){ roundBox(53,126,54,13,PAL.k); roundBox(54,127,52,11,'#2a5a30'); txtO('PULSA',58,129,'#fffbe8','left','#0c2010'); badge('Z',93,128); }
   ctx.fillStyle='#000'; ctx.fillRect(0,0,160,8); ctx.fillRect(0,136,160,8);
 }
-function drawOver(){
-  ctx.fillStyle='rgba(12,10,6,.9)'; ctx.fillRect(0,0,VW,VH);
-  for(let y=0;y<VH;y+=8) for(let x=((y>>3)&1)*8;x<VW;x+=16){ ctx.fillStyle='rgba(20,16,8,.5)'; ctx.fillRect(x,y,8,8); }
-  // la semilla, y unas raíces que crecen mientras esperas
-  const t=Math.min(1,(tick%600)/240); ctx.strokeStyle='#8a7048'; ctx.lineWidth=1;
-  for(let i=0;i<4;i++){ const a=Math.PI/2+(i-1.5)*.45, L=6+t*(14+i*3); ctx.beginPath(); ctx.moveTo(80,58); ctx.lineTo((80+Math.cos(a)*L)|0,(58+Math.sin(a)*L)|0); ctx.stroke(); }
-  ctx.drawImage(SEED_FALL,0,0,8,7,72,44,16,14);
-  if((tick&7)<4) parts.push({x:74+Math.random()*12,y:50,vx:(Math.random()-.5)*.4,vy:.3,life:24,col:'#a87838',nog:true});
-  for(const p of parts){ ctx.fillStyle=p.col; ctx.fillRect(p.x|0,p.y|0,1,1); p.x+=p.vx;p.y+=p.vy;p.life--; } parts=parts.filter(p=>p.life>0);
-  txtO('SPROUT SE MARCHITÓ',80,14,'#c8b070','center');
-  txt('de cada brote caído',80,27,'#a8b880','center'); txt('nace una semilla',80,37,'#a8b880','center');
-  const opts2=['REBROTAR','AL TÍTULO']; opts2.forEach((o,i)=>{ const y=92+i*16, sel=overSel===i; if(sel){ ctx.fillStyle='#1b3a26'; ctx.fillRect(40,y-3,80,14); ctx.drawImage(ACORN,44+((tick&15)<8?0:1),y-1); } txt(o,84,y,sel?'#9ed86a':'#5d8a6b','center'); });
-  txtS(overSel===0?(dungeonOf(sx,sy)?'a la entrada de la mazmorra':'a la entrada de esta pantalla'):'se guarda tu progreso',80,131,'#6a8a60','center');
-}
 /* rayos que giran detrás de un objeto recién conseguido */
 function drawRays(cx,cy,k){ ctx.save(); ctx.translate(cx,cy); ctx.rotate(tick*.02); const R=30*k;
   for(let i=0;i<10;i++){ const a=i/10*6.283; ctx.fillStyle=i&1?'rgba(255,246,192,.42)':'rgba(255,220,120,.26)'; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a-.16)*R,Math.sin(a-.16)*R); ctx.lineTo(Math.cos(a+.16)*R,Math.sin(a+.16)*R); ctx.closePath(); ctx.fill(); }
@@ -617,6 +603,7 @@ function draw(){
   if(state==='cine'){ drawCine(); ctx.restore(); return; }
   if(state==='seasoncine'){ drawSeasonCine(); ctx.restore(); return; }
   if(state==='ending'){ drawEnding(); ctx.restore(); return; }
+  if(state==='over'){ drawMarchito(); ctx.restore(); return; } // el sueño bajo tierra (15c)
   if(state==='trans'){ const k=trans.t/trans.dur, e=smooth(k), ox=-trans.dx*160*e, oy=-trans.dy*128*e;
     ctx.drawImage(trans.a,ox,oy); ctx.drawImage(trans.b,ox+trans.dx*160,oy+trans.dy*128);
     const s=P_SPRITES[player.dir][(tick>>3)&1], pxFrom=player.x+trans.dx*160, pyFrom=player.y+trans.dy*128;
@@ -635,8 +622,8 @@ function draw(){
   if(state==='play'||state==='dialog') drawBossCard();
   if(state==='play'||state==='give'||state==='itemget') drawToast();
   if(fadeIn>0){ ctx.fillStyle='rgba(6,12,7,'+(fadeIn/70).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); }
+  drawRebroteFx(); // rebrotar (15c): la luz que se recoge en la semilla y la savia que te protege luego
   if(state==='fall'){ ctx.fillStyle='rgba(4,4,8,'+(0.8*(1-deathT/40)).toFixed(2)+')'; ctx.fillRect(0,0,VW,PLAY_H); }
-  if(state==='dying'){ const k=1-deathT/70; ctx.fillStyle='rgba(30,22,8,'+(0.7*k).toFixed(2)+')'; ctx.fillRect(0,0,VW,PLAY_H); }
-  if(state==='over'){ drawOver(); }
+  if(state==='dying') drawWilt(); // el mundo se apaga, Sprout se marchita, la semilla baja (15c)
   ctx.restore();
 }
