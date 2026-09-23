@@ -148,6 +148,9 @@ const SFX = {
   bagClose(){ const a=audio(),t=a.currentTime; noise(.08,.028,false,t,2200); beep('p25',f(84),f(79),.07,.016,t); },
   bagAway(){ const a=audio(),t=a.currentTime; noise(.14,.018,false,t,1800); beep('triangle',300,760,.13,.024,t); },
   tab(){ const a=audio(),t=a.currentTime; noise(.035,.022,true,t,3800); beep('square',900,1200,.035,.018,t); },
+  // el momento del arma (15d): la atrapa, y el obturador que congela la viñeta
+  momentCatch(){ const a=audio(),t=a.currentTime; [72,76,79].forEach((m,i)=>beep('p25',f(m),0,.07,.03,t+i*.035)); noise(.05,.02,true,t,5000); },
+  momentFreeze(){ const a=audio(),t=a.currentTime; noise(.04,.05,true,t,6500); beep('square',1900,950,.03,.02,t); beep('triangle',112,40,.34,.1,t+.012); noise(.24,.035,false,t+.02,700); beep('p125',f(84),f(96),.2,.022,t+.05); },
   block(){ beep('square',240,240,.05,.04); noise(.04,.03,true); },
   charge(){ beep('square',440,880,.2,.03); },
   grass(){ noise(.07,.03,false); },

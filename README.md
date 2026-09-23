@@ -52,6 +52,11 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
   rúnicas, libros en las estanterías, las cinco **Cartas del Viento** que nadie
   abrió y guardianes que siguen hablando después de la tregua. Todo se relee en
   la pestaña de Recuerdos.
+- **Cada arma tiene su momento**: Sprout la atrapa al vuelo y la alza, el mundo
+  se congela en una viñeta tramada con los colores de esa arma (franjas de cine,
+  líneas de velocidad, el arma en grande con su nombre) y una frase del valle,
+  como «Dentro de cada bellota duerme un roble con prisa». Dos segundos y medio;
+  Z lo acelera.
 - Mejoras que se notan: la Hoja en tres temples (la última lanza un rayo de hoja),
   el Remolino y el **Gran Remolino**, el **Escudo de Roble** que devuelve disparos,
   bellotas-bomba contadas con **belloteros** que rebrotan y el zurrón de bellotas.

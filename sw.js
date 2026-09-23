@@ -1,5 +1,5 @@
 /* SPROUT — service worker: código siempre fresco (network-first), recursos cache-first */
-const CACHE = 'sprout-v13';
+const CACHE = 'sprout-v14';
 const CODE = [
   './', './index.html', './assets/title-bg.png',
   './js/01-core.js',
@@ -26,6 +26,7 @@ const CODE = [
   './js/15a-intro.js',
   './js/15b-zurron.js',
   './js/15c-marchitar.js',
+  './js/15d-momento.js',
   './js/16-input.js',
   './js/16a-shell.js',
   './js/17-boot.js',

@@ -389,8 +389,10 @@ function getItem(kind){
   if(kind==='feather') hasFeather=true; if(kind==='shield') hasShield=true;
   if(kind==='molinillo') hasPinwheel=true; if(kind==='amber') hasAmber=true;
   if(!xItem&&['bomb','hook','boomer','lantern','feather','molinillo'].includes(kind)) xItem=kind;
-  [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; screenFlash(8,'#fff6c0'); player.squash=.4; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
+  const arm=typeof MOMENT_ARMS!=='undefined'&&MOMENT_ARMS[kind]; // las armas tienen su momento (15d): la fanfarria suena al congelar
+  [itemSpr,itemPages]=M[kind]; if(!arm) SFX.fanfare(); shake=6; screenFlash(8,'#fff6c0'); player.squash=.4; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
   puff(player.x+8,player.y+8,C.flowerC,14,1.6); puff(player.x+8,player.y+8,PAL.l,10,1.2);
+  if(arm) startMoment(kind);
 }
 function findFree(px,py,axis){
   for(const ax of [axis, axis==='x'?'y':'x']){

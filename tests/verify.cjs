@@ -549,6 +549,17 @@ const server=http.createServer((req,res)=>{
       return log; });
     eq(r,[['valle',true,4,'...¿Sprout? ¿Me oyes?',['play',true,true,true],'0,1','60,70',true,true,'play',true,1],['cueva',true,2,true,true,true,true,'play',true],['no','no','title',3]]);
   });
+  await check('El momento del arma: Sprout la atrapa, la viñeta se congela con su frase, Z la acelera y sigue el cartel de uso; las reliquias, como siempre',async()=>{
+    eq(await ev(()=>{ __go(2,1,70,70); enemies=[]; npcs=[]; hasHook=false; const log=[];
+      getItem('hook'); log.push(state,!!moment);
+      for(let i=0;i<M_POSE+2;i++){ __step(1); draw(); } log.push(!!(moment&&moment.snap),moment.t>=M_POSE);
+      keys.fire=true; __step(1); const typed=moment.chars===MOMENT_ARMS.hook.line.length; keys.fire=true; __step(1); log.push(typed,moment.t>=M_POSE+M_FREEZE);
+      for(let i=0;i<M_REL+2;i++){ __step(1); draw(); } const txt=dlg?dlg.pages.join(' '):'';
+      log.push(state,moment===null,!txt.includes('¡La RAÍZ'),txt.includes('ENTER'));
+      __skipDialog(); log.push(state,hasHook);
+      getItem('ember'); log.push(state,moment===null); itemT=0; __step(2); __skipDialog();
+      return log; }),['itemget',true, true,true, true,true, 'dialog',true,true,true, 'play',true, 'itemget',true]);
+  });
   await check('La consola: la pantalla copia el juego a píxeles exactos, los botones se hunden con el teclado, el LED avisa y el color de carcasa se guarda',async()=>{
     eq(await ev(()=>{ __go(1,1,64,76); draw(); present();
       const s=document.getElementById('screen'), N=s.width/160, g=s.getContext('2d'), c=cv.getContext('2d');

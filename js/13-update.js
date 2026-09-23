@@ -74,7 +74,7 @@ function update(){
       else { state='play'; fadeIn=70; wakeT=90; parts=[]; setTrack('casa'); } }
     updParts(); return;
   }
-  if(state==='itemget'){ itemT--; if((tick&3)===0) puff(player.x+8,player.y-10,C.flowerC,2,1.2); updParts(); if(itemT<=0) say(itemPages||TXT.bladeGet); return; }
+  if(state==='itemget'){ if(moment){ updMoment(); return; } itemT--; if((tick&3)===0) puff(player.x+8,player.y-10,C.flowerC,2,1.2); updParts(); if(itemT<=0) say(itemPages||TXT.bladeGet); return; } // las armas: su momento (15d)
   if(state==='hook'){
     hook.t++;
     if(hook.fail){ if(hook.t>14){ hook=null; state='play'; } updParts(); return; }

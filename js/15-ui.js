@@ -483,7 +483,8 @@ function draw(){
   if(state==='pause'){ drawPause(); ctx.restore(); return; }
   if(state==='dialog'&&zLore&&dlg){ drawPause(); drawDialog(); ctx.restore(); return; } // un recuerdo leído desde el zurrón
   drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
-  if(state==='itemget'){ const bob=Math.sin(tick*.15)*1.5; drawRays(player.x+8,player.y-9,Math.min(1,(120-itemT)/14)); ctx.drawImage(itemSpr||BLADE_SPR,(player.x+(itemSpr&&itemSpr.width===12?2:0))|0,(player.y-17+bob)|0);
+  if(state==='itemget'&&moment) drawMoment(); // el momento del arma (15d)
+  else if(state==='itemget'){ const bob=Math.sin(tick*.15)*1.5; drawRays(player.x+8,player.y-9,Math.min(1,(120-itemT)/14)); ctx.drawImage(itemSpr||BLADE_SPR,(player.x+(itemSpr&&itemSpr.width===12?2:0))|0,(player.y-17+bob)|0);
     if(itemCardName){ const a=Math.min(1,(120-itemT)/12); ctx.globalAlpha=a; const y=player.y+8>56?8:88; ctx.fillStyle='rgba(5,10,7,.92)'; ctx.fillRect(8,y,144,24); ctx.strokeStyle=C.flowerC; ctx.strokeRect(8.5,y+.5,143,23);
       txtS('¡NUEVO!',80,y+4,'#9ec7aa','center'); txtO(itemCardName,80,y+12,C.flowerC,'center'); ctx.globalAlpha=1; } }
   if(saveFlash>0&&(state==='play'||state==='trans')){ ctx.globalAlpha=Math.min(1,saveFlash/12); ctx.drawImage(ACORN,148,PLAY_H-10); ctx.globalAlpha=1; }
