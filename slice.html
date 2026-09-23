@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14231e">
+  <meta name="description" content="Una pequeña aventura de SPROUT con sprites generados por imagen: explora, corta, recupera una semilla y devuelve la vida al claro.">
+  <title>SPROUT · La primera semilla</title>
+  <link rel="stylesheet" href="js/slice/slice.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="index.html" aria-label="Volver al juego completo"><span class="brand-sprout">✳</span> SPROUT<span class="wordmark-sub">POCKET ADVENTURES</span></a>
+    <span class="edition"><i></i> EDICIÓN BOTÁNICA <span>·</span> 01</span>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">UN PEQUEÑO BROTE. UNA GRAN AVENTURA.</p><h1>La primera semilla<span>.</span></h1></div>
+      <p class="intro-copy">Cruza el arroyo, encuentra la semilla<br>y devuelve la vida al bosque.</p>
+    </section>
+    <div class="play-layout">
+      <aside class="fieldnotes">
+        <span class="section-label">DIARIO DE CAMPO</span>
+        <span class="chapter-number">01<span>/ 03</span></span>
+        <h2 id="place-name">El claro dormido</h2>
+        <p id="place-description">El bosque guarda el aliento.<br>Algo pequeño puede despertarlo.</p>
+        <div class="route" aria-label="Las tres zonas del bosque"><span class="current" data-room="0">El claro</span><span data-room="1">El arroyo</span><span data-room="2">La arboleda</span></div>
+        <div class="field-illustration"><canvas id="botanical" width="96" height="100" aria-label="Ilustración del brote"></canvas><span>SPROUT · ESPÉCIMEN Nº 009</span></div>
+      </aside>
+      <section class="console" aria-label="Demo jugable">
+        <div class="console-top"><span><i class="power"></i> VALLE RAÍZ</span><span id="screen-scale">320 × 288</span></div>
+        <div class="screen-wrap" id="screen-wrap">
+          <canvas id="game" width="320" height="288" tabindex="0" aria-label="SPROUT: muévete con flechas o WASD, Z para hablar o atacar, X para esquivar, Enter para pausar"></canvas>
+          <div class="screen-message" id="loading"><span class="loading-leaf">✳</span><strong>Despertando el bosque…</strong><span>Preparando los sprites</span></div>
+          <div class="screen-message" id="start-screen" hidden><span class="eyebrow">UNA AVENTURA DE BOLSILLO</span><h2>Todo empieza<br>con una semilla.</h2><p>Un claro. Un arroyo. Un pequeño tesoro.</p><button class="primary" id="start">Entrar al bosque <span>↵</span></button><span class="start-hint">FLECHAS PARA MOVERTE · Z PARA ACTUAR</span></div>
+          <div class="screen-message" id="pause-screen" hidden><span class="eyebrow">TÓMATE UN RESPIRO</span><h2>El bosque te espera.</h2><button class="primary" id="resume">Seguir explorando <span>↵</span></button></div>
+          <div class="screen-message" id="complete-screen" hidden><span class="eyebrow">UNA SEMILLA. UN NUEVO COMIENZO.</span><h2>El claro vuelve<br>a respirar.</h2><p id="completion-copy">Has traído la primavera al Valle Raíz.</p><button class="primary" id="continue">Pasear por el bosque <span>→</span></button><button class="text-button" id="replay">Volver a empezar</button></div>
+        </div>
+        <div class="console-bottom"><span>SPROUT <b>COLOR</b></span><div class="speaker"><i></i><i></i><i></i><i></i><i></i></div><span class="console-caption">GROW A LITTLE.</span></div>
+      </section>
+      <aside class="quest-panel">
+        <span class="section-label">TU PEQUEÑA MISIÓN</span>
+        <h2>Que vuelva<br>la primavera.</h2>
+        <ol class="quest-list"><li id="quest-explore" class="active"><span class="quest-marker">01</span><div><strong>Sigue el sendero</strong><p>El arroyo queda al este.</p></div></li><li id="quest-seed"><span class="quest-marker">02</span><div><strong>Recupera la semilla</strong><p>Busca en la arboleda.</p></div></li><li id="quest-plant"><span class="quest-marker">03</span><div><strong>Despierta el claro</strong><p>Vuelve al altar de piedra.</p></div></li></ol>
+        <div class="tip"><span>UNA PISTA DEL BOSQUE</span><p id="hint">Las hojas abren caminos.<br>Acércate a Tilo y pulsa <kbd>Z</kbd>.</p></div>
+        <button class="asset-button" id="show-assets"><span class="asset-icon">▦</span><span>El taller de Sprout<small>Animaciones, piezas y PNG</small></span><span>↗</span></button>
+      </aside>
+    </div>
+    <div class="below-game"><div class="controls"><span><kbd>↑↓←→</kbd> / <kbd>WASD</kbd> mover</span><span><kbd>Z</kbd> hoja / hablar</span><span><kbd>X</kbd> esquivar</span><span><kbd>↵</kbd> pausa</span></div><div class="toolbar"><button id="sound" aria-pressed="false">♪ Sonido desactivado</button><button id="pause" disabled>Pausar</button><button id="restart">Reiniciar</button></div></div>
+    <div class="touch-controls" aria-label="Controles táctiles"><div class="dpad"><button data-key="ArrowUp" aria-label="Arriba">↑</button><button data-key="ArrowLeft" aria-label="Izquierda">←</button><button data-key="ArrowDown" aria-label="Abajo">↓</button><button data-key="ArrowRight" aria-label="Derecha">→</button></div><div class="action-buttons"><button data-key="KeyX">X<small>esquivar</small></button><button data-key="KeyZ">Z<small>hoja</small></button></div></div>
+    <footer><span>UN EXPERIMENTO JUGABLE CON ARTE GENERADO POR IMAGEN</span><a href="index.html">Explorar el juego completo <span>↗</span></a></footer>
+  </main>
+  <dialog id="assets-dialog" aria-labelledby="assets-title"><div class="dialog-top"><span class="section-label">EL CUADERNO DE ARTE</span><button id="close-assets" aria-label="Cerrar">✕</button></div><h2 id="assets-title">Un brote, píxel a píxel.</h2><p>Un único kit de piezas generado por imagen. 196 fotogramas coherentes: reposo, caminar, hoja, esquiva, daño, interacción, recogida, plantar, marchitarse y rebrotar.</p><div class="sprite-stage"><canvas id="sprite-preview" width="160" height="160" aria-label="Vista ampliada de la animación"></canvas><span id="frame-label">SUR · FOTOGRAMA 01 / 04</span></div><div class="direction-buttons" aria-label="Dirección de la animación"><button data-direction="0" aria-pressed="true">↓ Sur</button><button data-direction="1" aria-pressed="false">← Oeste</button><button data-direction="2" aria-pressed="false">→ Este</button><button data-direction="3" aria-pressed="false">↑ Norte</button></div><div class="animation-buttons" aria-label="Tipo de animación"><button data-animation="idle" aria-pressed="false">Reposo</button><button data-animation="walk" aria-pressed="true">Caminar</button><button data-animation="attack" aria-pressed="false">Hoja</button><button data-animation="dash" aria-pressed="false">Esquiva</button></div><a class="character-workshop-link" href="character.html">Abrir el taller: los 10 estados, cuadro a cuadro ↗</a><div class="asset-specs"><span>JUEGO<b>320 × 288 px</b></span><span>PERSONAJE<b>80 × 80 px / celda</b></span><span>MÁSTER PNG<b>1254 × 1254 px</b></span></div><p class="asset-note">Los originales se conservan completos. Para jugar, las celdas se recortan y se adaptan a una cuadrícula pequeña. Al ampliar usamos píxeles enteros; no se añade desenfoque.</p><div class="downloads"><a href="assets/slice/hero-v2/walk.png" download>↓ Caminar</a><a href="assets/slice/hero-v2/attack.png" download>↓ Atacar</a><a href="assets/slice/ready/woodland.png" download>↓ Bosque</a><a href="assets/slice/hero-v2/atlas.json" download>↓ Datos del atlas</a></div><div class="downloads masters"><a href="assets/slice/hero-v2/parts-master.png" download>Máster de personaje · 1254 px</a><a href="assets/slice/woodland-atlas.png" download>Máster de bosque · 1254 px</a></div></dialog>
+  <div class="sr-only" id="announcement" aria-live="polite"></div>
+  <script type="module" src="js/slice/game.js"></script>
+</body>
+</html>

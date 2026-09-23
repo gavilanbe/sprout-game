@@ -1,0 +1,65 @@
+{
+  "format": "grid",
+  "columns": 4,
+  "rows": 4,
+  "filter": "nearest",
+  "premultipliedAlpha": false,
+  "directions": [
+    "down",
+    "left",
+    "right",
+    "up"
+  ],
+  "walk": {
+    "file": "sprout-walk.png",
+    "cell": [
+      32,
+      36
+    ],
+    "anchor": [
+      16,
+      34
+    ],
+    "fps": 9,
+    "framesPerDirection": 4
+  },
+  "attack": {
+    "file": "sprout-attack.png",
+    "cell": [
+      48,
+      48
+    ],
+    "anchor": [
+      24,
+      42
+    ],
+    "fps": 12.5,
+    "framesPerDirection": 4
+  },
+  "woodland": {
+    "file": "woodland.png",
+    "cell": [
+      64,
+      64
+    ],
+    "items": [
+      "grass",
+      "path",
+      "water",
+      "paving",
+      "oak",
+      "bush",
+      "rocks",
+      "bridge_vertical",
+      "tilo",
+      "slime_rest",
+      "slime_hop",
+      "altar",
+      "chest_closed",
+      "chest_open",
+      "golden_seed",
+      "daisies"
+    ]
+  },
+  "notes": "Normalized exports of the generated masters. Original detail stays in the source PNGs. Tree is sampled at 64px; other terrain and props are sampled at 32px and exported at 2x."
+}

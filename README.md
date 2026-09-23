@@ -20,6 +20,12 @@
 
 ## 🌱 Qué es esto
 
+**Nuevo experimento:** [La primera semilla](slice.html), una demo independiente
+de tres pantallas con sprites generados por imagen, animaciones de caminar y
+atacar, una misión completa y visor de assets. Funciona a 320 × 288 con escalado
+entero. Los másteres y las hojas listas para reutilizar se incluyen en
+`assets/slice/`. [Detalles, prompts y resolución](docs/slice/README.md).
+
 **SPROUT** es una aventura tipo *Link's Awakening* que corre en cualquier navegador.
 Resolución real de Game Boy (160×144), tiles de 16 px, paleta GBC y banda sonora
 *chiptune* generada en vivo con WebAudio. **Cero dependencias, cero paso de build**:
