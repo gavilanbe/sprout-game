@@ -52,11 +52,15 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
   rúnicas, libros en las estanterías, las cinco **Cartas del Viento** que nadie
   abrió y guardianes que siguen hablando después de la tregua. Todo se relee en
   la pestaña de Recuerdos.
-- **Cada arma tiene su momento**: Sprout la atrapa al vuelo y la alza, el mundo
-  se congela en una viñeta tramada con los colores de esa arma (franjas de cine,
-  líneas de velocidad, el arma en grande con su nombre) y una frase del valle,
-  como «Dentro de cada bellota duerme un roble con prisa». Dos segundos y medio;
-  Z lo acelera.
+- **Cada arma tiene su cinemática**, con la ambición de la intro de *Oracle of
+  Seasons*: Sprout dibujado en grande (por piezas, sombreado y con poses) la
+  blande en su escenario (tajo de la Hoja en primavera, ¡BUM! de la bellota en
+  la cueva, la raíz-gancho que le lleva volando al poste, la vaina que da la
+  vuelta a la pantalla, la llamarada del farol en plena noche, el vilano que
+  planea entre nubes, las piedras que rebotan en el escudo, el molinillo que se
+  lleva la hojarasca), con primer plano de su cara decidida y un título con el
+  nombre enorme y una frase del valle. Después, ya en el juego, el gestito de
+  cogerla. Z lo acelera.
 - **La Hoja es una hoja**: nervios, borde dentado y peciolo; se dobla al coger
   impulso, enseña el envés al girar y da un latigazo al final, suelta hojitas y
   rocío, suena a hojas y salpica savia al golpear.
