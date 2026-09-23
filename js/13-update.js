@@ -297,9 +297,8 @@ function updTitle(){
   if(titleT>=TITLE_INTRO&&(titleT%23)===0) parts.push({k:'mote',x:Math.random()*160,y:70+Math.random()*60,vx:(Math.random()-.5)*.1,vy:-.2,life:180,max:180,nog:true,sway:Math.random()*6,col:'#fff6c0'});
   updParts();
   for(let i=0;i<6;i++){ if(titleT===TITLE_T0+i*TITLE_STAG+TITLE_DUR){ shake=(i===5)?5:2; puff(LOGO_POS[i]+8,LOGO_Y+20,'#cfe8d8',6,1); if(AC){ SFX.thud(i===5?9:i); if(i===5) SFX.ping(); } } }
-  if(titleT>TITLE_LEAF0&&titleT<TITLE_LEAF0+TITLE_LEAFD&&(titleT%9)===0) parts.push({x:50+Math.random()*60,y:Math.random()*24,vx:(Math.random()-.5)*.5,vy:.45,life:70,col:[PAL.l,'#a8ec78',C.canopyL][titleT%3]});
-  if(AC&&[11,34,57,79].includes(titleT-TITLE_LEAF0)) SFX.swoosh();
-  if(titleT===TITLE_LEAF0+TITLE_LEAFD){ shake=2; puff(56,LOGO_Y+16,'#a8ec78',5,.7); puff(106,LOGO_Y+2,'#a8ec78',5,.7); if(AC){ noise(.18,.045,false); SFX.chime(); } }
+  if(false) parts.push({x:50+Math.random()*60,y:Math.random()*24,vx:(Math.random()-.5)*.5,vy:.45,life:70,col:[PAL.l,'#a8ec78',C.canopyL][titleT%3]});
+  if(titleT===TITLE_LAND+14){ for(let i=0;i<10;i++) sparkle(LOGO_X+Math.random()*120,LOGO_Y+Math.random()*26,'#fff6c0'); if(AC) SFX.chime(); }
   if(AC&&titleT===TITLE_LAND+8) SFX.ping();
   if(AC&&titleT===TITLE_MENU) SFX.menuIn();
   if(AC&&titleT>TITLE_MENU){ const cyc=(titleT-TITLE_SHINE)%190; if(cyc===0) SFX.shing(); else if(cyc===36) SFX.ping(); }

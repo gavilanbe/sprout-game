@@ -112,23 +112,53 @@ function introSfx(t){ if(!AC) return;
 const INTRO_CAPS=[[8,140,'UNA NOCHE, CAYÓ UNA SEMILLA DEL CIELO'],[INTRO_A+6,INTRO_A+150,'Y EL VALLE DESPERTÓ CON ELLA'],[INTRO_A+170,TITLE_INTRO-8,'PRIMAVERA, VERANO, OTOÑO, INVIERNO']];
 function drawLetterbox(t,k){ const h=Math.round(14*k); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
   for(const [a,b,s] of INTRO_CAPS) if(t>=a&&t<b){ const al=Math.min(1,(t-a)/14,(b-t)/14); ctx.globalAlpha=al; txtS(s,80,135,'#e8dcc0','center'); ctx.globalAlpha=1; } }
-/* ---------- plano C: las 8 semillas vuelven al Roble durante el paneo ---------- */
+/* ---------- la escena del título: el Gran Roble en su colina, con la estación del momento ---------- */
+const OAK_SEASON=(()=>{ const to=[
+    ['#0c2e1a','#1a5a2c','#2c8038','#4aa444','#f0a0c8','#ffd8ec'],   // primavera: el Roble en flor
+    null,                                                              // verano: tal cual
+    ['#4a1c0c','#8a3a14','#b85a1c','#e08a30','#f4b850','#fce090'],   // otoño
+    ['#10302a','#1c5a3a','#2e7a4a','#8ab8a0','#dce8f0','#ffffff']];  // invierno: nieve en la copa
+  return to.map(t=>{ if(!t) return OAK_GRAND; const m={}; OAK_LEAF.forEach((c,i)=>m[c]=t[i]); return recolor(OAK_GRAND,m); }); })();
+const TITLE_HILL=SEASONS.map(S=>{ const c=mkCanvas(160,50), g=c.getContext('2d'), G=S.ground;
+  for(let x=0;x<160;x++){ const top=Math.round(14+Math.pow(Math.abs(x-80)/80,1.6)*18);
+    for(let y=top;y<50;y++){ const d=y-top; g.fillStyle=d===0?G[3]:d<3?G[0]:(d<5&&((x+y)&1))?G[0]:y>40?G[1]:G[0]; g.fillRect(x,y,1,1); } }
+  const r=seeded(9); for(let i=0;i<26;i++){ const x=(r()*156)|0, y=24+((r()*24)|0); g.fillStyle=G[1]; g.fillRect(x,y,1,1); g.fillRect(x+2,y,1,1); g.fillStyle=G[2]; g.fillRect(x+1,y+1,1,1); }
+  for(let i=0;i<10;i++){ const x=(r()*154)|0, y=26+((r()*20)|0), col=S.flowers[i%3]; g.fillStyle=col; g.fillRect(x+1,y,1,1); g.fillRect(x,y+1,3,1); g.fillRect(x+1,y+2,1,1); g.fillStyle=C.flowerC; g.fillRect(x+1,y+1,1,1); }
+  return c; });
+function drawTitleScene(si,crane){
+  const S=SEASONS[si], P=PARA[si], d=k=>Math.round((1-crane)*k);
+  ctx.drawImage(P.sky,0,d(-6)); glowAt(128,24+d(8),22,'rgba(255,250,220,.35)'); ctx.drawImage(disc(7,S.sun),121,17+d(8));
+  const drift=Math.round((tick*.12)%320); ctx.drawImage(P.clouds,-drift,20+d(10)); ctx.drawImage(P.clouds,320-drift,20+d(10));
+  ctx.drawImage(P.mount,-40,52+d(24)); ctx.drawImage(P.hills,-90,66+d(40));
+  const hy=94+d(64); ctx.drawImage(TITLE_HILL[si],0,hy);
+  const oy=hy-58; drawShadow(80,hy+24,26); ctx.drawImage(OAK_SEASON[si],37,oy);
+  // Sprout mira al Roble, a doble tamaño, con parpadeo
+  const blink=((tick+40)%180)<6, spr=blink?P_BLINK[3]:P_SPRITES[3][0], bob=((tick>>5)&1)?1:0;
+  drawShadow(28,hy+36,8); ctx.drawImage(spr,12,hy+6+bob,32,32);
+}
+function drawSeasonWorld(){
+  const crane=titleT<TITLE_INTRO?0:1-Math.pow(1-clamp((titleT-TITLE_INTRO)/TITLE_PAN_D,0,1),3);
+  if(titleT<TITLE_MENU){ drawTitleScene(0,crane); return; }
+  const si=menuSeason(), w=(titleT-TITLE_MENU)%MENU_SEASON, prev=(si+3)%4;
+  if(w<26&&titleT>=TITLE_MENU+MENU_SEASON){ drawTitleScene(prev,1); const r=Math.round(w*8), cx=LOGO_POS[3]+11, cy=LOGO_Y+14;
+    ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,r,0,6.283); ctx.clip(); drawTitleScene(si,1); ctx.restore();
+    ctx.strokeStyle='rgba(255,255,240,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,r,0,6.283); ctx.stroke(); }
+  else drawTitleScene(si,1);
+}
+/* ---------- plano C: las 8 semillas vuelven a la copa ---------- */
 function drawSeedsHome(){
-  const t=titleT-TITLE_INTRO; if(t<0||t>TITLE_PAN_D+40) return; const off=titlePanOff();
+  const t=titleT-TITLE_INTRO; if(t<0||t>TITLE_PAN_D+40) return;
   for(let i=0;i<8;i++){ const k=clamp((t-i*6)/(TITLE_PAN_D-10),0,1), e=1-(1-k)*(1-k);
-    const a=i/8*6.283+t*.05, rad=(1-e)*40+10, wx=80+Math.cos(a)*rad, wy=300-e*205+Math.sin(a)*rad*.4;
-    const y=wy+off; if(k>=1){ if(((t+i*5)&15)<8) sparkle(80+Math.cos(a)*14,95+off+Math.sin(a)*6,'#fff0a0'); continue; }
-    glowAt(wx,y,8,'rgba(255,230,140,.4)'); ctx.drawImage(ACORN_GOLD,(wx-4)|0,(y-4)|0); }
+    const a=i/8*6.283+t*.06, rad=(1-e)*46+12, x=80+Math.cos(a)*rad, y=150-e*96+Math.sin(a)*rad*.4;
+    if(k>=1){ if(((t+i*5)&15)<8) sparkle(80+Math.cos(a)*18,62+Math.sin(a)*8,'#fff0a0'); continue; }
+    glowAt(x,y,8,'rgba(255,230,140,.45)'); ctx.drawImage(ACORN_GOLD,(x-4)|0,(y-4)|0); }
 }
 /* ---------- tras el logo: las estaciones giran ---------- */
 const MENU_SEASON=300;
 function menuSeason(){ return titleT<TITLE_MENU?0:(((titleT-TITLE_MENU)/MENU_SEASON)|0)%4; }
 function drawSeasonTint(){
   if(titleT<TITLE_MENU) return; const si=menuSeason(), w=(titleT-TITLE_MENU)%MENU_SEASON;
-  const tint=[null,'rgba(255,214,120,.10)','rgba(232,110,40,.20)','rgba(190,214,255,.30)'][si];
-  if(tint){ ctx.globalAlpha=Math.min(1,w/30); ctx.fillStyle=tint; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-  if(si===3){ ctx.globalAlpha=Math.min(1,w/40)*.9; ctx.fillStyle='#ffffff'; for(let x=0;x<160;x+=2){ const h=hash(x,3)%3; ctx.fillRect(x,143-h,2,h+1); } ctx.globalAlpha=1; }
-  if(w<24){ const r=w*8, cx=LOGO_POS[3]+15, cy=LOGO_Y+10; ctx.strokeStyle='rgba(255,255,240,'+(1-w/24).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,r,0,6.283); ctx.stroke(); }
+  if(w<10&&(w&1)===0) for(let i=0;i<3;i++) sparkle(LOGO_POS[3]+4+Math.random()*16,LOGO_Y+4+Math.random()*16,'#fff6c0');
 }
 function menuSeasonParts(){
   if(titleT<TITLE_MENU) return; const si=menuSeason(), S=SEASONS[si], w=(titleT-TITLE_MENU)%MENU_SEASON;

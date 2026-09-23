@@ -1088,29 +1088,44 @@ function glyph(g){ return glyphC(g,'#b0f068','#70d838','#2e8038'); }
 function scale2(c,sw,sh){ const n=document.createElement('canvas'); n.width=sw*2; n.height=sh*2;
   const g=n.getContext('2d'); g.imageSmoothingEnabled=false;
   g.drawImage(c,0,0,sw,sh,0,0,sw*2,sh*2); return n; }
-/* letras 13×16 con esquinas achaflanadas */
-const LG_S=glyph(silRects(13,16,
-  [[0,0,13,5],[0,0,5,9],[0,7,13,4],[8,7,5,9],[0,11,13,5]],
-  [[0,0,2,2],[11,3,2,2],[0,11,2,2],[11,14,2,2]]));
-const LG_P=glyph(silRects(13,16,
-  [[0,0,5,16],[0,0,13,5],[8,0,5,11],[0,7,13,4]],
-  [[11,0,2,2],[11,8,2,3]]));
-const LG_R=glyph(silRects(13,16,
-  [[0,0,5,16],[0,0,13,5],[8,0,5,11],[0,7,13,4],[5,9,4,3],[7,11,3,3],[9,13,4,3]],
-  [[11,0,2,2],[11,8,2,3]]));
-const LG_U=glyph(silRects(13,16,
-  [[0,0,5,13],[8,0,5,13],[0,11,13,5]],
-  [[0,13,2,3],[11,13,2,3]]));
-const LG_T=glyph(silRects(13,16,
-  [[0,0,13,5],[4,0,5,16]],
-  [[0,0,1,2],[12,0,1,2],[4,14,1,2],[8,14,1,2]]));
-const ACORN2=scale2(ACORN,8,7);            // la O es la bellota dorada
+/* letras del logo, 16×20: relleno en degradado tramado (lima → verde hoja), bisel
+   claro arriba-izquierda y oscuro abajo-derecha, relieve de 3 px y contorno negro */
+function logoGlyph(m,fill,depth){
+  const h=m.length, w=m[0].length, c=mkCanvas(w+6,h+7), q=c.getContext('2d'), at=(x,y)=>y>=0&&y<h&&x>=0&&x<w&&m[y][x];
+  const ext=[[1,1],[1,2],[2,3]], solid=(x,y)=>at(x,y)||ext.some(([dx,dy])=>at(x-dx,y-dy));
+  for(let y=-1;y<=h+3;y++) for(let x=-1;x<=w+2;x++){ if(solid(x,y)) continue;
+    let e=false; for(let dy=-1;dy<=1&&!e;dy++) for(let dx=-1;dx<=1;dx++) if(solid(x+dx,y+dy)){ e=true; break; }
+    if(e){ q.fillStyle=PAL.k; q.fillRect(x+2,y+2,1,1); } }
+  for(let y=0;y<h+3;y++) for(let x=0;x<w+2;x++) if(!at(x,y)&&solid(x,y)){ q.fillStyle=(x+y)&1?depth[0]:depth[1]; q.fillRect(x+2,y+2,1,1); }
+  const n=fill.length-1;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ if(!m[y][x]) continue;
+    const t=y/(h-1)*n, i=Math.min(n-1,t|0), f=t-i; let col=f>.3+BAYER4[y&3][x&3]/16*.4?fill[i+1]:fill[i];
+    if(!at(x,y-1)||!at(x-1,y)) col=fill[0]; else if(!at(x,y+1)||!at(x+1,y)) col=depth[1];
+    q.fillStyle=col; q.fillRect(x+2,y+2,1,1); }
+  q.fillStyle='#ffffff'; for(let y=0;y<h;y++){ let done=false; for(let x=0;x<w&&!done;x++) if(m[y][x]&&!at(x,y-1)&&!at(x-1,y)){ q.fillRect(x+2,y+2,2,1); done=true; } if(done) break; }
+  return c; }
+const LOGO_FILL=['#f0ffc0','#c0f070','#80d840','#4cb038','#2e8a34'], LOGO_DEPTH=['#0e3a18','#185a24'];
+const LG=(r,c)=>logoGlyph(silRects(16,20,r,c),LOGO_FILL,LOGO_DEPTH);
+const LG_S=LG([[0,0,16,6],[0,0,6,11],[0,8,16,5],[10,8,6,12],[0,14,16,6]],[[0,0,2,2],[14,0,2,1],[10,4,6,2],[0,14,6,2],[0,18,2,2],[14,18,2,2]]);
+const LG_P=LG([[0,0,6,20],[0,0,16,6],[10,0,6,13],[0,8,16,5]],[[14,0,2,2],[14,11,2,2]]);
+const LG_R=LG([[0,0,6,20],[0,0,16,6],[10,0,6,12],[0,8,15,4],[6,12,5,3],[8,14,5,3],[10,16,6,4]],[[14,0,2,2],[13,10,3,2]]);
+const LG_U=LG([[0,0,6,16],[10,0,6,16],[0,14,16,6]],[[0,18,2,2],[14,18,2,2]]);
+const LG_T=LG([[0,0,16,6],[5,0,6,20]],[[0,0,1,2],[15,0,1,2]]);
+/* la O: una bellota dorada grande, con capuchón tramado */
+const LOGO_ACORN=(()=>{ const c=mkCanvas(22,26), g=c.getContext('2d');
+  blobArt(g,2,8,18,16,[{x:9,y:6,r:8,ry:7},{x:9,y:9,r:6.5,ry:6}],['#8a5a08','#c88a10','#f0c020','#f8e060','#fffbd0'],{grad:.5,dither:.7});
+  blobArt(g,1,4,20,9,[{x:10,y:6,r:10,ry:4.2}],['#3a2008','#5a3414','#7a4a20','#a06a34','#c89058'],{grad:.3});
+  g.fillStyle='#3a2008'; for(let x=3;x<19;x+=3) for(let y=6;y<11;y+=2) g.fillRect(x+((y>>1)&1),y,1,1);
+  g.fillStyle=PAL.k; g.fillRect(10,0,3,5); g.fillStyle='#6a4018'; g.fillRect(11,1,1,4); g.fillStyle='#78d838'; g.fillRect(13,1,4,2); g.fillStyle=PAL.k; g.fillRect(13,0,4,1); g.fillRect(17,1,1,2); g.fillRect(13,3,4,1);
+  g.fillStyle='#ffffff'; g.fillRect(6,13,2,2); g.fillRect(5,15,1,1);
+  return c; })();
+const ACORN2=LOGO_ACORN;
 const LOGO_GLYPHS=[
-  {img:LG_S,dy:0,w:16},{img:LG_P,dy:0,w:16},{img:LG_R,dy:0,w:16},
-  {img:ACORN2,dy:4,w:18},{img:LG_U,dy:0,w:16},{img:LG_T,dy:0,w:16},
+  {img:LG_S,dy:0,w:19},{img:LG_P,dy:0,w:19},{img:LG_R,dy:0,w:19},
+  {img:LOGO_ACORN,dy:-2,w:21},{img:LG_U,dy:0,w:19},{img:LG_T,dy:0,w:19},
 ];
 LOGO_GLYPHS.forEach(g=>{ g.dark=darken(g.img); g.white=whiten(g.img); });
-const LOGO_X=31, LOGO_Y=26;
+const LOGO_X=Math.round(80-(19*5+21)/2)-1, LOGO_Y=10;
 const LOGO_POS=(()=>{ let x=LOGO_X; return LOGO_GLYPHS.map(g=>{ const p=x; x+=g.w; return p; }); })();
 /* fondo del título: tira vertical (arte externo) que se recorre con un paneo.
    Si no carga (offline la 1ª vez, etc.), drawTitleBg cae al valle procedural. */

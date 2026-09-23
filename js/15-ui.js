@@ -333,21 +333,24 @@ function drawBoot(){
 }
 function drawTitle(){
   if(drawIntro()) return;
-  drawTitleBg(); drawSeedsHome(); drawSeasonTint();
+  drawSeasonWorld(); drawSeedsHome(); drawSeasonTint();
   drawParts();
   const eachGlyph=(fn)=>{ LOGO_GLYPHS.forEach((gl,i)=>{ const k=(titleT-(TITLE_T0+i*TITLE_STAG))/TITLE_DUR; if(k<0) return; const y=LOGO_Y+gl.dy+(k>=1?0:-(1-easeOutBack(k))*52); fn(gl,i,LOGO_POS[i],y|0); }); };
-  if(titleT>=TITLE_LEAF0){ const FX=24, FY=1, lk=Math.min(1,(titleT-TITLE_LEAF0)/TITLE_LEAFD);
-    if(lk<1){ const ye=1-(1-lk)*(1-lk), ph=lk*Math.PI*4.6, amp=30*(1-lk), cx=FX+56+Math.sin(ph)*amp, cy=-40+(FY+33+40)*ye, rot=Math.cos(ph)*0.42*(1-lk*0.7);
-      ctx.save(); ctx.translate(cx|0,cy|0); ctx.rotate(rot); ctx.drawImage(LEAF_BLADE,-56,-33); ctx.restore(); } else ctx.drawImage(LEAF_BLADE,FX,FY); }
-  eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.dark,x+1,y+2); }); eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.img,x,y); });
+  eachGlyph((gl,i,x,y)=>{ ctx.globalAlpha=.35; ctx.drawImage(gl.dark,x+2,y+4); ctx.globalAlpha=1; }); eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.img,x,y); });
   if(titleT>=TITLE_SHINE){ const cyc=(titleT-TITLE_SHINE)%190;
-    if(cyc<34){ const gx=22+(cyc/34)*126; ctx.save(); ctx.beginPath(); ctx.moveTo(gx,LOGO_Y-4); ctx.lineTo(gx+9,LOGO_Y-4); ctx.lineTo(gx-5,LOGO_Y+24); ctx.lineTo(gx-14,LOGO_Y+24); ctx.closePath(); ctx.clip(); eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.white,x,y); }); ctx.restore(); }
-    else if(cyc<54){ const s=cyc<44?(cyc-34)>>1:(54-cyc)>>1; if(s>0){ const cx=LOGO_POS[3]+15, cy=LOGO_Y+3; ctx.fillStyle='#fff'; ctx.fillRect(cx-s,cy,s*2+1,1); ctx.fillRect(cx,cy-s,1,s*2+1); } } }
-  const a=Math.max(0,Math.min(1,(titleT-TITLE_LAND)/26));
-  if(a>0){ ctx.globalAlpha=a; const sub='Y LAS 8 SEMILLAS'; drawText(ctx,sub,81,62,PAL.k,'center'); txtOL(sub,80,60,'#ffe9a0','center','#3a1c08'); ctx.globalAlpha=1; }
+    if(cyc<34){ const gx=LOGO_X-8+(cyc/34)*140; ctx.save(); ctx.beginPath(); ctx.moveTo(gx,LOGO_Y-4); ctx.lineTo(gx+9,LOGO_Y-4); ctx.lineTo(gx-7,LOGO_Y+30); ctx.lineTo(gx-16,LOGO_Y+30); ctx.closePath(); ctx.clip(); eachGlyph((gl,i,x,y)=>{ ctx.globalAlpha=.85; ctx.drawImage(gl.white,x,y); ctx.globalAlpha=1; }); ctx.restore(); }
+    else if(cyc<54){ const s=cyc<44?(cyc-34)>>1:(54-cyc)>>1; if(s>0){ const cx=LOGO_POS[3]+7, cy=LOGO_Y+12; ctx.fillStyle='#fff'; ctx.fillRect(cx-s,cy,s*2+1,1); ctx.fillRect(cx,cy-s,1,s*2+1); } } }
+  // el subtítulo en una cinta de pergamino que baja
+  const a=clamp((titleT-TITLE_LAND)/22,0,1);
+  if(a>0){ const y=Math.round(38-(1-easeOutBack(a))*14); ctx.globalAlpha=Math.min(1,a*2); ribbon(80,y,textW('Y LAS 8 SEMILLAS')+14,'Y LAS 8 SEMILLAS'); ctx.globalAlpha=1; }
   if(titleT<TITLE_INTRO+16){ ctx.globalAlpha=1-(titleT-TITLE_INTRO)/16; ctx.fillStyle='#fff'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
   if(titleT>=TITLE_MENU){ const k=Math.min(1,(titleT-TITLE_MENU)/20), bob=Math.round(Math.sin(tick*.08)*1.5);
-    ctx.globalAlpha=k; if((tick&47)<34) txtOL('PULSA Z',80,111+bob,'#fffbe8','center','#1a2a10'); txtSO('M: MÚSICA',80,131,'#dff0d8','center','#0c1a08'); ctx.globalAlpha=1; }
+    ctx.globalAlpha=k;
+    // placa «PULSA Z» que respira
+    const on=(tick&47)<36, w=58, x=80-w/2, y=113+bob; roundBox(x-1,y-1,w+2,15,PAL.k); roundBox(x,y,w,13,'#2a5a30'); ctx.fillStyle='#4a8a48'; ctx.fillRect(x+1,y+1,w-2,1); ctx.fillStyle='#16361c'; ctx.fillRect(x+1,y+11,w-2,1);
+    if(on){ txtO('PULSA',x+8,y+3,'#fffbe8','left','#0c2010'); badge('Z',x+w-18,y+2); }
+    else { ctx.drawImage(CURSOR_SPR,x+4,y+3); txtO('PULSA',x+14,y+3,'#c8f080','left','#0c2010'); }
+    txtSO(SEASONS[menuSeason()].name,4,136,'#fff6d0','left','#1a1408'); txtSO('M MÚSICA',156,136,'#dff0d8','right','#0c1a08'); ctx.globalAlpha=1; }
 }
 function drawFile(){
   ctx.fillStyle=MENU.bg; ctx.fillRect(0,0,VW,VH);
