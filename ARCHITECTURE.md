@@ -31,7 +31,7 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/13-update.js` | Máquina de estados (`update()`): boot/título/archivos/cine/juego/diálogo/pausa/tienda/gancho/caída/créditos; bombas, proyectiles, tornaditos, vaina, recogibles, salidas |
 | `js/14-render.js` | Escena: fondo cacheado, Gran Roble, actores ordenados por profundidad, jefes, gancho, partículas, oscuridad con luz, barra de jefe |
 | `js/15-ui.js` | HUD, diálogo con retrato, cartel de jefe, avisos, tiendas, **zurrón** (objetos/amuletos, mapa, tareas), cinemática, título, archivos, encendido, créditos, `draw()` |
-| `js/15a-intro.js` | Intro del título por planos: noche con semilla-estrella, carrera por las cuatro estaciones (paralaje de 5 capas precalculadas, barrida de luz), las 8 semillas vuelven al Roble; tras el logo las estaciones siguen girando y la intro se repite en modo demostración |
+| `js/15a-intro.js` | Intro del título por planos, escena del título (el Roble en su colina: se mece, rayos, pájaros, Sprout que saluda; primavera y verano llegan floreciendo desde la copa, otoño e invierno con una ráfaga del Viento), el selector de partida **«Elige tu brote»** (la cámara baja a tres macetas: brote dormido, despierto bajo un rayo de luz, o semilla libre; ficha de madera con capítulo, tiempo, corazones, semillas, reliquias, amuletos y cartas) y el prólogo en siete planos |
 | `js/16-input.js` | Teclado, táctil, mando, escalado entero |
 | `js/17-boot.js` | API de debug `window.__sprout`, PWA, arranque y bucle a 60 Hz |
 

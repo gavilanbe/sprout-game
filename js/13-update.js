@@ -292,7 +292,7 @@ function updExits(){
 /* ---------- TÍTULO Y ARCHIVOS ---------- */
 function updTitle(){
   if(fontsReady) titleT++;
-  updIntro();
+  updIntro(); titleCam=Math.max(0,titleCam-1/22);
   if(titleT>=TITLE_INTRO&&titleT<TITLE_MENU&&(titleT%9)===0) parts.push({k:'leafF',x:Math.random()*170-10,y:-4,vx:.1+(Math.random()-.3)*.35,vy:.3+Math.random()*.3,life:220,max:220,nog:true,sway:Math.random()*6,col:[PAL.l,C.canopyL,'#f8c8e0',C.flowerC][(titleT/9|0)%4]});
   if(titleT>=TITLE_INTRO&&(titleT%23)===0) parts.push({k:'mote',x:Math.random()*160,y:70+Math.random()*60,vx:(Math.random()-.5)*.1,vy:-.2,life:180,max:180,nog:true,sway:Math.random()*6,col:'#fff6c0'});
   updParts();
@@ -304,15 +304,17 @@ function updTitle(){
   if(AC&&titleT>TITLE_MENU){ const cyc=(titleT-TITLE_SHINE)%190; if(cyc===0) SFX.shing(); else if(cyc===36) SFX.ping(); }
   if(keys.fire||keys.alt){ keys.fire=false; keys.alt=false; audio();
     if(titleT<TITLE_MENU) titleT=TITLE_MENU;
-    else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; SFX.blip(); } }
+    else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; fileT=0; fileWake[fileSel]=tick+12; fileSpotX=FILE_POT_X[fileSel]; SFX.blip(); } }
 }
 function updFile(){
-  updParts();
-  if(keys.menu){ keys.menu=false; if(fileConfirm) fileConfirm=false; else { state='title'; titleT=TITLE_MENU; } SFX.blip(); return; }
-  const ud=(keys.up?1:0)-(keys.down?1:0);
-  if(ud!==fileUD){ fileUD=ud; if(ud!==0&&!fileConfirm){ fileSel=(fileSel+(ud>0?2:1))%3; SFX.blip(); } }
+  updParts(); fileT++; titleCam=Math.min(1,titleCam+1/22); fileParts();
+  for(let i=0;i<3;i++) if(fileDelT[i]>0) fileDelT[i]--;
+  if(keys.menu){ keys.menu=false; if(fileConfirm) fileConfirm=false; else { state='title'; titleT=Math.max(titleT,TITLE_MENU); } SFX.blip(); return; }
+  const lr=((keys.right||keys.down)?1:0)-((keys.left||keys.up)?1:0);
+  if(lr!==fileUD){ fileUD=lr; if(lr!==0&&!fileConfirm){ fileSel=(fileSel+(lr>0?1:2))%3; fileWake[fileSel]=tick; SFX.blip(); } }
   if(keys.fire){ keys.fire=false;
-    if(fileConfirm){ try{ localStorage.removeItem(slotKey(fileSel)); }catch(e){} slotCache[fileSel]=null; fileConfirm=false; SFX.cut(); shake=3; }
+    if(fileConfirm){ try{ localStorage.removeItem(slotKey(fileSel)); }catch(e){} slotCache[fileSel]=null; fileConfirm=false; SFX.cut(); shake=3;
+      fileDelT[fileSel]=36; const cx=FILE_POT_X[fileSel]; bladeBits(cx,fileSoilY()-10,['#78d838','#a4e070','#2e8a34'],12); puff(cx,fileSoilY(),'#5a3a1c',6,.8); }
     else { curSlot=fileSel; const d=slotCache[fileSel]; if(d){ loadGame(d); state='play'; fadeIn=40; parts=[]; } else newGame(); } }
   if(keys.alt){ keys.alt=false; if(fileConfirm){ fileConfirm=false; SFX.blip(); } else if(slotCache[fileSel]){ fileConfirm=true; SFX.bump(); } }
 }
