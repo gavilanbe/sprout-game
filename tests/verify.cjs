@@ -26,10 +26,10 @@ const server=http.createServer((req,res)=>{
     window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } };
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
   });
-  await check('Todos los mapas miden 10×8; hay 8 semillas, 3 corazones, 5 cuartos y 10 diarios',async()=>{
+  await check('Todos los mapas miden 10×8; hay 8 semillas, 3 corazones, 8 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:3,pieces:5,diaries:10,maps:55});
+      {bad:[],seeds:8,hearts:3,pieces:8,diaries:10,maps:66});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -64,14 +64,14 @@ const server=http.createServer((req,res)=>{
   await check('Cueva del Topo: placas abren la verja; pulsador abre la otra; llave abre el cerrojo',async()=>{
     eq(await ev(()=>{ __go(7,0,72,70); const gate0=grid[6][4]; __sprout.solvePlates(); const gate1=grid[6][4];
       __go(7,1,72,30); const g0=grid[3][1]; player.x=5*16; player.y=4*16-6; __step(3); const g1=grid[3][1];
-      __go(8,1,72,80); enemies=[]; const k0=dungeonKeys.cueva||0; player.x=4*16+4; player.y=3*16-4; __step(3); __skipDialog(); const k1=dungeonKeys.cueva;
-      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); const door=grid[0][4]; return [gate0,gate1,g0,g1,k0,k1,door,dungeonKeys.cueva]; }),['=','q','=','q',0,1,'q',0]);
+      __go(7,-1,40,60); enemies=[]; const k0=dungeonKeys.cueva||0; const kp=pickups.find(p=>p.kind==='key'); player.x=kp.x; player.y=kp.y-4; __step(3); __skipDialog(); const k1=dungeonKeys.cueva;
+      __go(8,1,72,80); enemies=[]; player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); const door=grid[0][4]; return [gate0,gate1,g0,g1,k0,k1,door,dungeonKeys.cueva]; }),['=','q','=','q',0,1,'q',0]);
   });
   await check('El Escarabajo Rey solo sufre por detrás; al caer suelta la Bellota-bomba',async()=>{
     eq(await ev(()=>{ __go(8,0,72,90); __skipDialog(); const m0=midboss&&midboss.hp; midboss.dir=1; midboss.st='walk'; midboss.x=72; midboss.y=48;
       player.x=100; player.y=52; player.dir=2; player.atk=11; midboss.flash=0; __step(1); const front=midboss.hp;
       player.x=52; player.y=52; player.dir=3; player.atk=11; midboss.flash=0; __step(1); const back=midboss.hp;
-      __sprout.killBoss(); hitStop=0; __step(2); const drop=pickups.some(p=>p.kind==='bomb'); return [m0,front,back,midboss===null,midKing,drop]; }),[8,8,7,true,true,true]);
+      __sprout.killBoss(); hitStop=0; __step(2); const drop=pickups.some(p=>p.kind==='bomb'); return [m0,front,back,midboss===null,midKing,drop]; }),[10,10,9,true,true,true]);
   });
   await check('La bomba rompe rocas agrietadas y daña bichos; el amuleto del Topo evita el daño propio',async()=>{
     eq(await ev(()=>{ hasBomb=true; xItem='bomb'; __go(2,1,40,90); player.x=2*16; player.y=5*16-6; keys.alt=true; __step(1); const placed=bombs.length; __step(85); const broke=grid[4][2]; const hpA=player.hp;
@@ -100,7 +100,7 @@ const server=http.createServer((req,res)=>{
   await check('El Topo Real cede la Brasa con Z al rendirse; luego regala su corona',async()=>{
     eq(await ev(()=>{ bossDone=false; topoGift=false; __go(6,2,72,90); __skipDialog(); const hp=boss.hp; boss.hp=2; __step(2); __skipDialog(); const st=boss.st; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2);
       const ember=pickups.some(p=>p.kind==='ember'); __go(6,2,72,90); const guest=npcs.some(n=>n.guest==='topo'); player.x=5*16; player.y=3*16+2; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2); if(state==='itemget'){ itemT=0; __step(2); __skipDialog(); }
-      return [hp,st,bossDone,ember,guest,amulets.has('topo')]; }),[10,'yield',true,true,true,true]);
+      return [hp,st,bossDone,ember,guest,amulets.has('topo')]; }),[18,'yield',true,true,true,true]);
   });
   await check('El Viento se recuerda, no se vence; suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; __go(1,-3,72,90); __skipDialog(); boss.hp=2; __step(2); __skipDialog(); boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); const d=state; __skipDialog(); __step(2);
@@ -128,12 +128,17 @@ const server=http.createServer((req,res)=>{
       const log=[];
       // entrar por la boca de la cueva
       __go(2,-1,80,40); player.x=5*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['cueva',sx,sy]);
+      // la Sala de las Guardias: emboscada; al vencer cae una llave
+      __go(6,-1,72,60); __skipDialog(); const shut=grid[7][4]; enemies=[]; __step(2); const kr=pickups.find(p=>p.kind==='key'); player.x=kr.x; player.y=kr.y-4; __step(20); __skipDialog(); log.push(['guardias',shut,grid[7][4],dungeonKeys.cueva]);
+      // la Galería Oscura: la otra llave, en el saliente
+      __go(7,-1,40,60); enemies=[]; const kg=pickups.find(p=>p.kind==='key'); player.x=kg.x; player.y=kg.y-4; __step(3); __skipDialog(); log.push(['galería',dungeonKeys.cueva]);
       // sala de las raíces: bloques (2,3)→(2,1) y (5,3)→(5,1)
       __go(7,0,72,90); __skipDialog(); enemies=[]; for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; for(let k=0;k<2;k++){ keys.up=true; for(let i=0;i<14;i++){ __step(1); } keys.up=false; __step(1); } }
       log.push(['placas',grid[1][2],grid[1][5],grid[6][4]]);
       // pulsador y llave
       __go(7,1,72,30); enemies=[]; player.x=5*16; player.y=4*16-6; __step(3); log.push(['pulsador',grid[3][1]]);
-      __go(8,1,72,80); enemies=[]; player.x=4*16+4; player.y=3*16-4; __step(3); __skipDialog(); player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['llave',dungeonKeys.cueva,grid[0][4]]);
+      __go(8,1,72,80); enemies=[]; player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['llave',dungeonKeys.cueva,grid[0][4]]);
+      __go(7,1,72,30); enemies=[]; player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['nido',dungeonKeys.cueva,grid[7][4]]);
       // el Rey cae a bombazos... no hay bombas aún: por detrás con la Hoja
       __go(8,0,72,96); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<400){ midboss.st='stuck'; midboss.t=50; midboss.flash=0; player.x=midboss.x+12-(midboss.dir>0?26:-26)-8; player.y=midboss.y+4; player.dir=midboss.dir>0?3:2; player.atk=11; hitStop=0; __step(1); }
       __step(4); const bombPick=pickups.find(p=>p.kind==='bomb'); if(bombPick){ player.x=bombPick.x; player.y=bombPick.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
@@ -149,7 +154,7 @@ const server=http.createServer((req,res)=>{
       // a Raíz: primavera
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['deshielo',thawed,screenBiome(1,-1)]);
       return log; });
-    eq(r,[['cueva',6,0],['placas','#','#','q'],['pulsador','q'],['llave',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo',true,'valley']]);
+    eq(r,[['cueva',6,0],['guardias','=','q',1],['galería',2],['placas','#','#','q'],['pulsador','q'],['llave',1,'q'],['nido',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo',true,'valley']]);
   });
   await check('Camino crítico: el Tronco Hueco (llave, Zángano, gancho, cristal, llave grande, Reina)',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -158,7 +163,9 @@ const server=http.createServer((req,res)=>{
       __go(11,0,72,90); enemies=[]; const k=pickups.find(p=>p.kind==='key'); player.x=k.x; player.y=k.y-4; __step(3); __skipDialog(); player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.tronco,grid[3][9]]);
       __go(12,0,40,60); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<300){ midboss.st='stunned'; midboss.t=60; midboss.flash=0; player.x=midboss.x; player.y=midboss.y+26; player.dir=1; player.atk=11; hitStop=0; __step(1); }
       __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['zángano',midDrone,hasHook]);
+      __go(11,-1,72,60); __skipDialog(); enemies=[]; __step(2); const kc=pickups.find(p=>p.kind==='key'); player.x=kc.x; player.y=kc.y-4; __step(20); __skipDialog(); log.push(['colmena',dungeonKeys.tronco]);
       __go(11,1,72,40); enemies=[]; const east0=grid[5][7]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); log.push(['cristal',east0,grid[5][7],grid[5][2]]);
+      player.atk=0; player.x=8*16; player.y=5*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo este',grid[5][9],grid[6][9],dungeonKeys.tronco]);
       __go(12,1,40,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.tronco]);
       xItem='hook'; __go(10,1,72,20); enemies=[]; player.x=4*16; player.y=2*16-4; player.dir=0; keys.alt=true; __step(1); const hs=state; __step(70); log.push(['canal',hs,(player.y+12)>>4]);
       player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['puerta',grid[7][4]]);
@@ -166,7 +173,7 @@ const server=http.createServer((req,res)=>{
       const t=pickups.find(p=>p.kind==='tear'); if(t){ player.x=t.x; player.y=t.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['lágrima',boss2Done,hasTear]);
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['verano',summered,screenBiome(2,3)]);
       return log; });
-    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['cristal','æ','Æ','º'],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'valley']]);
+    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['colmena',1],['cristal','æ','Æ','º'],['cerrojo este','q','q',0],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'valley']]);
   });
   await check('Camino crítico: el Templo de la Cima (bloques, cerrojo, llave grande, Guardián, vilano, antorchas, cima, Viento)',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -191,6 +198,42 @@ const server=http.createServer((req,res)=>{
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['final',cycled,state]);
       return log; });
     eq(r,[['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],['copo',true,true],['final',true,'credits']]);
+  });
+  await check('Emboscada: al entrar se cierran las puertas; al vencer se abren y cae la llave',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true;
+      __go(6,-1,72,100); const before=grid[7][4]; player.y=4*16-4; __step(1); const shut=grid[7][4]; enemies=[]; __step(2);
+      const open=grid[7][4], key=pickups.some(p=>p.kind==='key'); __go(6,-1,72,60); return [before,shut,open,key,opened.has('RC6,-1'),grid[7][4]]; }),['q','=','q',true,true,'q']);
+  });
+  await check('Bellotas contadas: sin bellotas no hay bomba; el bellotero da tres y vuelve a brotar',async()=>{
+    eq(await ev(()=>{ hasBomb=true; bombAmmo=0; xItem='bomb'; __go(7,-1,40,90); enemies=[]; player.x=5*16; player.y=4*16-4; keys.alt=true; __step(1); const none=bombs.length;
+      player.x=1*16; player.y=5*16-4; player.dir=0; keys.fire=true; __step(14); const cut=grid[6][1];
+      const pk=pickups.find(p=>p.kind==='bombs'); if(pk){ player.x=pk.x-4; player.y=pk.y-8; } __step(20); const ammo=bombAmmo;
+      player.x=6*16; player.y=3*16-4; for(let i=0;i<500;i++) __step(1); return [none,cut,ammo,grid[6][1]]; }),[0,'q',3,'♣']);
+  });
+  await check('Cofres: el mapa del tronco y el zurrón de bellotas (20)',async()=>{
+    eq(await ev(()=>{ hasBomb=true; bombAmmo=4; hasHook=true; __go(12,-1,72,60); enemies=[]; player.x=5*16; player.y=3*16-4; player.dir=1; keys.fire=true; __step(1); const s1=state; itemT=0; __step(2); __skipDialog();
+      __go(12,2,72,20); enemies=[]; player.x=7*16; player.y=6*16-4; player.dir=1; keys.fire=true; __step(1); const s2=state; itemT=0; __step(2); __skipDialog();
+      keys.menu=true; __step(1); pausePage=1; draw(); const p=state; keys.menu=true; __step(1);
+      return [s1,dmaps.has('tronco'),s2,bombMax,bombAmmo,p]; }),['itemget',true,'itemget',20,20,'pause']);
+  });
+  await check('Topo Real: la Hoja rebota en su casco; una bomba en su túnel lo aturde y entonces sí sufre',async()=>{
+    eq(await ev(()=>{ bossDone=false; hasBomb=true; bombAmmo=10; xItem='bomb'; __go(6,2,72,96); __skipDialog(); enemies=[]; projs=[];
+      boss.st='up'; boss.t=90; boss.x=64; boss.y=40; const hp0=boss.hp; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; __step(1); const clang=boss.hp===hp0;
+      boss.st='burrow'; boss.t=200; boss.mx=64; boss.my=40; bombs=[{x:boss.mx+8,y:boss.my+16,t:1}]; hitStop=0; __step(1); const dz=boss.st;
+      player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); return [clang,dz,boss.hp<hp0-1]; }),[true,'dazed',true]);
+  });
+  await check('Reina Avispa: en vuelo la Hoja no hiere; la raíz-gancho la baja y queda a tu merced',async()=>{
+    eq(await ev(()=>{ boss2Done=false; hasHook=true; xItem='hook'; __go(10,2,72,96); __skipDialog(); enemies=[]; projs=[];
+      boss.st='hover'; boss.t=200; boss.x=64; boss.y=12; const hp0=boss.hp; player.x=72; player.y=90; player.dir=1; hitStop=0;
+      keys.alt=true; __step(1); const y=boss.st; __step(16); const pin=boss.st;
+      player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); return [y,pin,boss.hp<hp0]; }),['yanked','pinned',true]);
+  });
+  await check('Viento del Norte: con los cuatro braseros cae al suelo; el vilano esquiva su barrido',async()=>{
+    eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; xItem='lantern'; __go(1,-3,72,90); __skipDialog(); enemies=[]; projs=[]; const hp0=boss.hp;
+      for(const [x,y,d] of [[1,2,1],[8,2,1],[1,5,0],[8,5,0]]){ player.x=x*16; player.y=y*16-4; player.dir=d; hitStop=0; keys.alt=true; __step(1); }
+      const s1=boss.st; __step(40); const s2=boss.st; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); const hit=boss.hp<hp0;
+      boss.st='sweep'; boss.x=player.x-8; boss.y=player.y-8; boss.vx=.1; player.inv=0; jumpT=10; const hpP=player.hp; __step(1);
+      return [s1,s2,hit,player.hp===hpP]; }),['drop','rest',true,true]);
   });
   await check('Zurrón y tiendas por teclado: equipar objeto y amuleto, comprar en Tilo',async()=>{
     eq(await ev(()=>{ hasBomb=true; hasHook=true; amulets.add('raiz'); amulets.add('buho'); equipped=[null,null]; xItem='bomb'; __go(0,1,60,70);

@@ -7,7 +7,7 @@ function save(){
   try{ localStorage.setItem(slotKey(curSlot),JSON.stringify({ v:3,
     seeds,hasBlade,hasBomb,hasEmber,won,bossDone,thawed,midKing,beachIntro,
     hasHook,hasTear,boss2Done,summered,midDrone,hasFlake,boss3Done,cycled,midIce,
-    hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,
+    hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,bombAmmo,bombMax,dmaps:[...dmaps],dcomp:[...dcomp],
     amulets:[...amulets],equipped,xItem,topoGift,mossGift,wilts,windVisit,
     berries,bladeLvl,hasSpin,shopHeart,shopPiece,tiloMet,cortezaMet,elderMet,petraWoke,wellDone,lettersGiven,playTime,
     respawn:respawnPoint,maxHp:player.maxHp,
@@ -25,6 +25,7 @@ function loadGame(d){
     hasFlake=!!d.hasFlake; boss3Done=!!d.boss3Done; cycled=!!d.cycled; midIce=!!d.midIce;
     hasBoomer=!!d.hasBoomer; hasLantern=!!d.hasLantern; hasFeather=!!d.hasFeather; hasShield=!!d.hasShield;
     pieces=d.pieces||0; dungeonKeys={...(d.dungeonKeys||{})}; bigKeys={...(d.bigKeys||{})};
+    bombMax=d.bombMax||10; bombAmmo=d.bombAmmo===undefined?(d.hasBomb?bombMax:10):d.bombAmmo; dmaps.clear(); dcomp.clear(); (d.dmaps||[]).forEach(k=>dmaps.add(k)); (d.dcomp||[]).forEach(k=>dcomp.add(k));
     (d.amulets||[]).forEach(a=>amulets.add(a)); equipped=[(d.equipped||[])[0]||null,(d.equipped||[])[1]||null]; xItem=d.xItem||null;
     topoGift=!!d.topoGift; mossGift=!!d.mossGift; wilts=d.wilts||0; windVisit=!!d.windVisit;
     berries=d.berries||0; bladeLvl=d.bladeLvl||1; hasSpin=!!d.hasSpin; shopHeart=!!d.shopHeart; shopPiece=!!d.shopPiece;
@@ -47,6 +48,7 @@ function newGame(){
   seeds=0; hasBlade=hasBomb=hasEmber=won=bossDone=thawed=midKing=beachIntro=false; announced8=bloomDone=false; noBladeMsg=0;
   hasHook=hasTear=boss2Done=summered=midDrone=false; hasFlake=boss3Done=cycled=midIce=false;
   hasBoomer=hasLantern=hasFeather=hasShield=false; pieces=0; dungeonKeys={}; bigKeys={}; equipped=[null,null]; xItem=null;
+  bombAmmo=10; bombMax=10; dmaps.clear(); dcomp.clear();
   topoGift=mossGift=false; wilts=0; windVisit=false; berries=0;
   bladeLvl=1; hasSpin=shopHeart=shopPiece=tiloMet=cortezaMet=elderMet=false; petraWoke=wellDone=lettersGiven=false; playTime=0; npcs=[];
   giveFx=null; toast=null; toastQ=[]; qPrev=null; pausePage=0; pauseSel=0;

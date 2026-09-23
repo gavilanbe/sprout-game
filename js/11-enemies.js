@@ -20,8 +20,9 @@ function updEnemies(){
     if(stunned){ /* aturdido: no actúa */ }
     else if(e.type==='blob'){
       e.t--;
-      if(e.t<=0){ e.t=40+hash(e.x|0,e.y|0)%50; const a=Math.random()*6.283, sp=e.fast?.65:.4;
-        e.vx=Math.cos(a)*sp; e.vy=Math.sin(a)*sp; if(Math.random()<.3){e.vx=0;e.vy=0;} }
+      if(e.t<=0){ e.t=40+hash(e.x|0,e.y|0)%50; const sp=e.fast?.65:.4;
+        if(d<72&&Math.random()<(e.fast?.7:.5)){ e.vx=dx/d*sp*1.15; e.vy=dy/d*sp*1.15; e.t=28; e.squash=.25; } // te ha olido: salta hacia ti
+        else { const a=Math.random()*6.283; e.vx=Math.cos(a)*sp; e.vy=Math.sin(a)*sp; if(Math.random()<.3){e.vx=0;e.vy=0;} } }
       const [bx,by]=moveBlocked(e,e.x+e.vx+e.kx,e.y+e.vy+e.ky); if(bx)e.vx*=-1; if(by)e.vy*=-1;
     } else if(e.type==='bat'||e.type==='bee'){
       e.t++;

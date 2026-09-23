@@ -236,9 +236,13 @@ const CREDITS=[
 /* pistas de sala (la primera vez) */
 const ROOM_HINTS={
   '7,0':["(Rocas-raíz... Si\nte plantas y\nempujas, quizá\ncedan.)"],
-  '6,2':["(El suelo tiembla\nbajo tus raíces...)"],
-  '10,2':["(Un zumbido grave\nllena el panal...)"],
-  '1,-3':["(El viento aúlla\ntu nombre con\nrencor...)","(Mientras sopla no\npuedes tocarlo.","Cuando se canse y\ncaiga a tierra,\nbrillará: ¡ahí!)"],
+  '6,2':["(El suelo tiembla bajo tus raíces...)","(Dicen que el Topo lleva un CASCO DE ROCA: la Hoja rebota. Pero lo que ESTALLA en su túnel lo saca aturdido.)","(Los BELLOTEROS de las esquinas dan bellotas-bomba.)"],
+  '7,-1':["(Una grieta cruza la pared del este. Se cuela aire fresco...)"],
+  '10,-1':["(Un foso de raíces sin fondo. Al otro lado brilla un cofre.)"],
+  '16,2':["(Dos antorchas frías custodian un cofre tras una verja.)"],
+  '16,-1':["(El puente se hundió hace mil inviernos. Solo un vilano podría cruzarlo.)"],
+  '10,2':["(Un zumbido grave llena el panal...)","(La Reina vuela demasiado alto para la Hoja. Si la ENGANCHARAS con la raíz...)"],
+  '1,-3':["(El viento aúlla tu nombre con rencor...)","(Cuatro BRASEROS apagados rodean la cima: el frío lo sostiene en el aire. Enciéndelos con el FAROL.)","(Y si barre tu fila... ¡SALTA con el vilano!)"],
   '1,-2':["(Aquí arriba el\ninvierno nunca se\nfue. Sopla fuerte.)"],
   '2,3':["(Las hojas caen\nsin parar. Huele\na otoño viejo...)"],
   '0,2':["(La arena susurra.\nAlgo brilla entre\nlas dunas...)"],

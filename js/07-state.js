@@ -25,6 +25,8 @@ let hasHook=false, hasTear=false, boss2Done=false, summered=false, midDrone=fals
 let hasFlake=false, boss3Done=false, cycled=false, midIce=false;
 let hasBoomer=false, hasLantern=false, hasFeather=false, hasShield=false;
 let pieces=0, dungeonKeys={}, bigKeys={};  // llaves pequeñas por mazmorra, llaves grandes
+let bombAmmo=10, bombMax=10;                // bellotas-bomba: se gastan y se recogen
+const dmaps=new Set(), dcomp=new Set();     // mapas y brújulas de mazmorra
 let amulets=new Set(), equipped=[null,null], xItem=null; // amuletos poseídos, equipados y objeto en X
 let topoGift=false, mossGift=false;
 let windVisit=false, elderMet=false, tiloMet=false, cortezaMet=false;

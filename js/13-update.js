@@ -175,7 +175,7 @@ function update(){
   updBombs(); updProjs(); updWind(); updBoomer();
   updBoss(); updMidboss();
   updPickups();
-  updEnemies(); updParts();
+  updEnemies(); updRoomRules(); updParts();
   updExits();
 }
 function weather(){
@@ -202,23 +202,29 @@ function updBombs(){
       for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const ch=grid[y][x];
         if(Math.hypot(x*16+8-(b.x+8),y*16+8-(b.y+8))<R0){
           if(ch==='C'){ grid[y][x]=regionFloor(); opened.add('C:'+sx+','+sy+':'+x+','+y); puff(x*16+8,y*16+8,'#a89078',8,1.4); brokeC=true; }
-          else if(ch==='b'||ch==='t'){ cutAt([x*16,y*16,16,16]); }
+          else if(ch==='b'||ch==='t'||ch==='♣'){ cutAt([x*16,y*16,16,16]); }
           else if(ch==='¢'){ toggleCrystal(); }
         } }
       if(brokeC){ SFX.secret(); markDirty(); save(); }
       for(const e of enemies){ if(Math.hypot(e.x+8-(b.x+8),e.y+8-(b.y+8))<(big?36:28)){ damageEnemy(e,3,b.x,b.y); } }
-      if(boss&&boss.st!=='burrow'&&boss.st!=='yield'&&Math.hypot(boss.x+16-(b.x+8),boss.y+16-(b.y+8))<38){ if(boss.hp>2){ boss.hp=Math.max(2,boss.hp-3); boss.flash=10; } }
+      if(boss) bossBomb(b.x+8,b.y+8,big);
       blastMidboss(b.x+8,b.y+8);
       if(!big&&player.inv===0&&Math.hypot(player.x+8-(b.x+8),player.y+12-(b.y+8))<24) hurt(1,b.x,b.y);
     } }
   bombs=bombs.filter(b=>b.t>0);
 }
 function updProjs(){
-  for(const p of projs){ p.x+=p.vx; p.y+=p.vy; p.t--;
+  for(const p of projs){
+    if(p.kind==='fall'){ // algo cae del techo: primero la sombra, luego el golpe
+      p.delay--; if(p.delay>0) continue; p.t=0;
+      puff(p.x,p.y,p.ice?'#dff0ff':'#8a7460',8,1.3); SFX.cut(); shake=Math.max(shake,3);
+      if(player.inv===0&&jumpT===0&&Math.hypot(p.x-(player.x+8),p.y-(player.y+12))<11) hurt(p.dmg||2,p.x,p.y-10);
+      continue; }
+    p.x+=p.vx; p.y+=p.vy; p.t--;
     const ch=tileAt(p.x|0,p.y|0); if(ch!==undefined&&isSolid(ch)&&!WATER.has(ch)) p.t=0;
     if(p.t>0&&player.inv===0&&jumpT===0&&Math.hypot(p.x-(player.x+8),p.y-(player.y+12))<8){
       if(shieldBlocks(p.x,p.y)){ SFX.block(); sparkle(p.x,p.y,'#c8d8ff'); p.t=0; }
-      else { hurt(1,p.x,p.y); p.t=0; } }
+      else { hurt(p.dmg||1,p.x,p.y); p.t=0; } }
     if(p.t>0&&meleeActive()&&rectsHit(meleeBox(),[p.x-3,p.y-3,6,6])){ p.t=0; SFX.block(); puff(p.x,p.y,'#e8e8d8',5,1); }
   }
   projs=projs.filter(p=>p.t>0);
@@ -231,7 +237,7 @@ function updWind(){
     for(const e of enemies){ if(e.flash===0&&!w.hits.has(e)&&Math.hypot(e.x+8-w.x,e.y+8-w.y)<11){ if(e.type==='ghost'&&e.phase>=110) continue;
       w.hits.add(e); damageEnemy(e,bladeLvl,w.x,w.y); if(e.type==='wisp') e.hp=0; } }
     if(boss&&boss.flash===0&&Math.hypot(boss.x+16-w.x,boss.y+16-w.y)<18){
-      const vul=(boss.type==='topo'&&boss.st==='up')||(boss.type==='avispa'&&boss.st==='tired')||(boss.type==='viento'&&boss.st==='rest');
+      const vul=(boss.type==='topo'&&boss.st==='dazed')||(boss.type==='avispa'&&boss.st==='pinned')||(boss.type==='viento'&&boss.st==='rest');
       if(vul){ bossHit(boss,bladeLvl); w.t=0; puff(w.x,w.y,'#a8ec78',8,1.3); } }
   }
   windProjs=windProjs.filter(w=>w.t>0&&w.x>-8&&w.x<168&&w.y>-8&&w.y<136);
@@ -248,7 +254,7 @@ function updBoomer(){
   if((tick&1)===0) parts.push({x:b.x,y:b.y,vx:0,vy:0,life:6,col:'#d09040',nog:true});
   for(const e of enemies){ if(!b.hits.has(e)&&Math.hypot(e.x+8-b.x,e.y+8-b.y)<11){ b.hits.add(e); e.stun=90; damageEnemy(e,1,b.x,b.y); SFX.stun(); if(!b.ret) b.ret=true; } }
   if(midboss&&!b.hits.has(midboss)&&Math.hypot(midboss.x+12-b.x,midboss.y+12-b.y)<14){ b.hits.add(midboss); SFX.block(); b.ret=true; }
-  pickups=pickups.filter(p=>{ if(['berry','heart','seed','key','piece'].includes(p.kind)&&Math.hypot(p.x+4-b.x,p.y+4-b.y)<10){ (b.carry=b.carry||[]).push(p); b.ret=true; SFX.blip(); return false; } return true; });
+  pickups=pickups.filter(p=>{ if(['berry','heart','seed','key','piece','bombs'].includes(p.kind)&&Math.hypot(p.x+4-b.x,p.y+4-b.y)<10){ (b.carry=b.carry||[]).push(p); b.ret=true; SFX.blip(); return false; } return true; });
 }
 function updPickups(){
   const magnet=hasAmulet('savia');
@@ -265,6 +271,7 @@ function updPickups(){
         showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
       else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
+      else if(p.kind==='bombs'){ bombAmmo=Math.min(bombMax,bombAmmo+(p.n||3)); SFX.blip(); collectBurst(p.x+4,p.y+4,'#e8a040'); flyText.push({x:p.x+4,y:p.y-2,txt:'+'+(p.n||3),t:22,col:'#ffd890'}); }
       else if(p.kind==='berry'){ berries=Math.min(999,berries+1); hudBerryT=14; SFX.blip(); collectBurst(p.x+4,p.y+4,'#ff7aa8'); flyText.push({x:p.x+4,y:p.y-2,txt:'+1',t:22,col:'#ffd0e0'}); }
       else if(p.kind==='container'){ player.maxHp+=2; player.hp=player.maxHp; collected.add(p.id); SFX.fanfare(); puff(p.x+4,p.y+4,PAL.R,12,1.5); say(TXT.containerGet); save(); }
       else if(p.kind==='piece'){ collected.add(p.id); puff(p.x+4,p.y+4,PAL.R,10,1.3); addPiece(); }

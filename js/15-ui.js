@@ -37,7 +37,8 @@ function drawUI(){
   hudWell(29,Y+2,26,13); badge('X',30,Y+4);
   if(xItem){ const pop=xFlash>0?Math.sin((10-xFlash)/10*Math.PI)*2:0;
     if(xFlash>0&&(tick&2)){ ctx.fillStyle='#fffbe8'; ctx.fillRect(40,Y+3,14,11); }
-    ctx.drawImage(X_ICON[xItem],1,1,14,14,(39-pop/2)|0,(Y+2-pop/2)|0,(14+pop)|0,(12+pop)|0); }
+    ctx.drawImage(X_ICON[xItem],1,1,14,14,(39-pop/2)|0,(Y+2-pop/2)|0,(14+pop)|0,(12+pop)|0);
+    if(xItem==='bomb'){ const n=''+bombAmmo, col=bombAmmo===0?'#ff6050':bombAmmo<=2?'#ffd060':'#fff6d8', w=textW(n,FONT_S)+4; roundBox(56-w,Y+8,w,7,HUD.ink); drawText(ctx,n,58-w,Y+9,col,'left',FONT_S); } }
   // bayas
   const by=hudBerryT>8?-1:0; ctx.drawImage(BERRY_SPR,58,Y+4+by);
   hudNum(String(berries).padStart(3,'0'),67,Y+5,hudBerryT>0?'#c8205a':HUD.text);
@@ -279,7 +280,7 @@ function drawBag(){
   const items=ownedX(), am=[...amulets];
   label('OBJETOS · X',6,24); ctx.drawImage(LEAF_SWING,0,0,16,7,122,22,16,7); txtS('NV'+bladeLvl,152,24,MENU.gold,'right');
   for(let i=0;i<5;i++){ const x=6+i*30, y=31, it=items[i], eq=it&&xItem===it; slot(x,y,26,22,eq);
-    if(it){ const bob=pauseSel===i?Math.round(Math.sin(tick*.2)):0; ctx.drawImage(X_ICON[it],x+5,y+3+bob); if(eq) badge('X',x+18,y+14); }
+    if(it){ const bob=pauseSel===i?Math.round(Math.sin(tick*.2)):0; ctx.drawImage(X_ICON[it],x+5,y+3+bob); if(eq) badge('X',x+18,y+14); if(it==='bomb') txtSO(bombAmmo+'/'+bombMax,x+2,y+15,'#fff6d8','left','#081610'); }
     if(pauseSel===i&&i<items.length) selFrame(x,y,26,22); }
   label('AMULETOS',6,59); for(let r=0;r<2;r++){ const id=equipped[r]; slot(118+r*16,55,14,13,!!id); if(id) ctx.drawImage(AMULET_SPR[id],0,0,12,12,119+r*16,56,12,11); }
   for(let i=0;i<10;i++){ const x=6+(i%5)*30, y=70+((i/5)|0)*17, id=am[i], eq=id&&equipped.includes(id); slot(x,y,26,15,eq);
@@ -296,6 +297,7 @@ function drawBag(){
   wrapPx(desc,114,FONT_S).slice(0,2).forEach((ln,i)=>txtS(ln,38,119+i*7,'#b8dcc0'));
 }
 function drawMap(){
+  const dk=dungeonOf(sx,sy); if(dk){ drawDungeonMap(dk); return; }
   const cw=18,chh=14,ox=80-(5*cw)/2-1,oy=24;
   roundBox(ox-4,oy-4,5*cw+8,7*chh+8,PAL.k); ctx.fillStyle='#0e2016'; ctx.fillRect(ox-3,oy-3,5*cw+6,7*chh+6);
   ctx.strokeStyle=MENU.line; ctx.strokeRect(ox-2.5,oy-2.5,5*cw+5,7*chh+5);
@@ -313,6 +315,39 @@ function drawMap(){
     if(here){ selFrame(px,py,cw,chh); const b=Math.round(Math.abs(Math.sin(tick*.15))*2); ctx.drawImage(P_SPRITES[0][0],0,0,16,16,px+4,py+1-b,11,11); }
   }
   const where=PLACE_NAMES[sx+','+sy]||'?'; txtO(where,80,126,'#dff0d0','center','#081610');
+}
+/* el mapa de la mazmorra: salas pisadas; con el MAPA, todas; con la BRÚJULA, el guardián y los cofres */
+function dungeonRooms(dk){ return Object.keys(MAPS).filter(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dk; }); }
+function roomsJoin(a,b,dx,dy){ const A=MAPS[a], B=MAPS[b], open=c=>!SOLID.has(c)||c===')'||c==='Ł'||c==='C'||c==='=';
+  if(dx){ for(let i=0;i<8;i++) if(open(A[i][dx>0?9:0])&&open(B[i][dx>0?0:9])) return true; } else { for(let i=0;i<10;i++) if(open(A[dy>0?7:0][i])&&open(B[dy>0?0:7][i])) return true; } return false; }
+function drawDungeonMap(dk){
+  const rooms=dungeonRooms(dk), xs=rooms.map(k=>+k.split(',')[0]), ys=rooms.map(k=>+k.split(',')[1]);
+  const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys), cols=x1-x0+1, rows=y1-y0+1;
+  const cw=24, ch=17, gap=4, W=cols*cw+(cols-1)*gap, H=rows*ch+(rows-1)*gap, ox=80-(W>>1), oy=26+Math.max(0,(90-H)>>1);
+  const hasMap=dmaps.has(dk), hasComp=dcomp.has(dk);
+  txtO(DUNGEON_NAMES[dk],80,23-(H>84?2:0),MENU.gold,'center','#081610');
+  const pos=k=>{ const [x,y]=k.split(',').map(Number); return [ox+(x-x0)*(cw+gap),oy+(y-y0)*(ch+gap)]; };
+  // pasillos entre salas conocidas
+  for(const k of rooms){ const [x,y]=k.split(',').map(Number), [px,py]=pos(k);
+    for(const [dx,dy] of [[1,0],[0,1]]){ const n=(x+dx)+','+(y+dy); if(!MAPS[n]||dungeonOf(x+dx,y+dy)!==dk) continue;
+      const known=(visited.has(k)||hasMap)&&(visited.has(n)||hasMap); if(!known||!roomsJoin(k,n,dx,dy)) continue;
+      ctx.fillStyle=visited.has(k)&&visited.has(n)?'#8fc39a':'#3e6a4a'; if(dx) ctx.fillRect(px+cw,py+(ch>>1)-1,gap,3); else ctx.fillRect(px+(cw>>1)-1,py+ch,3,gap); } }
+  for(const k of rooms){ const [px,py]=pos(k), seen=visited.has(k), here=k===sx+','+sy;
+    if(!seen&&!hasMap) continue;
+    roundBox(px,py,cw,ch,PAL.k);
+    if(seen){ ctx.fillStyle=here?'#4a8a58':'#2e5a3a'; ctx.fillRect(px+1,py+1,cw-2,ch-2); ctx.fillStyle=here?'#6aaa70':'#3e7048'; ctx.fillRect(px+1,py+1,cw-2,1); }
+    else { ctx.fillStyle='#15281c'; ctx.fillRect(px+1,py+1,cw-2,ch-2); ctx.fillStyle='#2a4a34'; for(let i=px+2;i<px+cw-2;i+=3) ctx.fillRect(i,py+(ch>>1),1,1); }
+    if(hasComp){ // el guardián y los cofres que faltan
+      if(DUNGEON_BOSS[dk]===k){ const done=(dk==='cueva'&&bossDone)||(dk==='tronco'&&boss2Done)||(dk==='templo'&&boss3Done); const bx=px+(cw>>1)-3, by=py+(ch>>1)-3;
+        ctx.fillStyle=PAL.k; ctx.fillRect(bx-1,by-1,8,8); ctx.fillStyle=done?'#a8ec78':((tick&31)<20?'#ff5050':'#a82020'); ctx.fillRect(bx,by,6,5); ctx.fillStyle=PAL.k; ctx.fillRect(bx+1,by+2,1,1); ctx.fillRect(bx+4,by+2,1,1); ctx.fillRect(bx+2,by+5,2,1); }
+      const M=MAPS[k]; let n=0; for(let yy=0;yy<SH;yy++) for(let xx=0;xx<SW;xx++){ const c=M[yy][xx], id='CH'+k+':'+xx+','+yy; if((c==='¤'||CHESTS[k+':'+xx+','+yy])&&!opened.has(id)){ ctx.fillStyle=(tick&15)<9?'#ffd060':'#b08020'; ctx.fillRect(px+3+n*4,py+ch-5,2,2); n++; } } }
+    if(here&&(tick&15)<11) ctx.drawImage(P_SPRITES[0][0],0,0,16,16,px+(cw>>1)-5,py+2,10,10); }
+  // lo que llevas de esta mazmorra
+  const by=128; ctx.save(); if(!hasMap) ctx.globalAlpha=.25; ctx.drawImage(MAP_SPR,0,0,16,16,8,by-3,11,11); ctx.restore();
+  ctx.save(); if(!hasComp) ctx.globalAlpha=.25; ctx.drawImage(COMPASS_SPR,0,0,16,16,22,by-3,11,11); ctx.restore();
+  ctx.drawImage(KEY_SPR,40,by-2); txtS('×'+(dungeonKeys[dk]||0),49,by,'#dff0d0');
+  ctx.save(); if(!bigKeys[dk]) ctx.globalAlpha=.25; ctx.drawImage(BIGKEY_SPR,0,0,12,10,64,by-2,12,10); ctx.restore();
+  const where=PLACE_NAMES[sx+','+sy]||'?'; txtS(where,154,by,'#9ec7aa','right');
 }
 function drawValle(){
   txtO(CHAPTER_NAMES[chapterIdx()],80,25,MENU.gold,'center','#081610');

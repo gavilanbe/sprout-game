@@ -28,6 +28,7 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/10-progress.js` | Guardado (3 slots), `newGame()`, `questList()` (derivada del estado), entregas visibles, `bloom()` |
 | `js/11-enemies.js` | IA de las 16 criaturas (`updEnemies`), daño (`damageEnemy`), escudo |
 | `js/12-bosses.js` | Los tres guardianes (Topo, Reina, Viento) y los tres minijefes (Rey, Zángano, Guardián de Hielo) |
+| `js/12a-dungeon.js` | Mazmorras: emboscadas (`ROOM_RULES`: las puertas se cierran hasta vencer; recompensa llave/cofre), cofres con contenido (`openChestContent`: mapa, brújula, llave, cuarto, bayas, zurrón de bellotas), belloteros que rebrotan, sprites de mapa/brújula/zurrón |
 | `js/13-update.js` | Máquina de estados (`update()`): boot/título/archivos/cine/juego/diálogo/pausa/tienda/gancho/caída/créditos; bombas, proyectiles, tornaditos, vaina, recogibles, salidas |
 | `js/14-render.js` | Escena: fondo cacheado, Gran Roble, actores ordenados por profundidad, jefes, gancho, partículas, oscuridad con luz, barra de jefe |
 | `js/15-ui.js` | HUD, diálogo con retrato, cartel de jefe, avisos, tiendas, **zurrón** (objetos/amuletos, mapa, tareas), cinemática, título, archivos, encendido, créditos, `draw()` |

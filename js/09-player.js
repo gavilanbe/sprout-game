@@ -94,13 +94,17 @@ function cutAt(sb){
       const P=BIOMES[screenBiome(sx,sy)].grass; bladeBits(x*16+8,y*16+10,[P[0],P[1],P[2],P[3]],10);
       dropLoot(x*16+4,y*16+4,.06,.14);
     } else if(ch==='¢'){ toggleCrystal(); any=true; }
+    else if(ch==='♣'){ cutBellotero(x,y); any=true; }
   }
   if(any) markDirty();
 }
 function dropLoot(x,y,pHeart,pBerry){
-  const r=Math.random(); const mult=hasAmulet('savia')?2:1; if(player.hp<=2) pHeart=Math.min(.6,pHeart*2.5); // piedad: a punto de marchitarse llueven corazones
+  const r=Math.random(); const mult=hasAmulet('savia')?2:1;
+  pHeart*=dungeonOf(sx,sy)?.7:.85; if(player.hp<=2) pHeart=Math.min(.4,pHeart*1.8); // piedad, pero menos
+  const pBomb=hasBomb&&bombAmmo<bombMax?(bombAmmo<3?.2:.1):0;
   if(r<pHeart) pickups.push({kind:'heart',x,y,t:0,drop:14});
-  else if(r<pHeart+pBerry*mult) pickups.push({kind:'berry',x,y,t:0,drop:14});
+  else if(r<pHeart+pBomb) pickups.push({kind:'bombs',n:2,x,y,t:0,drop:14});
+  else if(r<pHeart+pBomb+pBerry*mult) pickups.push({kind:'berry',x,y,t:0,drop:14});
 }
 function toggleCrystal(){
   crystalOn=!crystalOn; if(crystalOn) opened.add('CR'+sx+','+sy); else opened.delete('CR'+sx+','+sy);
@@ -109,7 +113,9 @@ function toggleCrystal(){
   const [ptx,pty]=playerTile(); if(grid[pty]&&isSolid(grid[pty][ptx])){ [player.x,player.y]=findFree(player.x,player.y,'x'); }
   SFX.crystal(); shake=3; markDirty(); save();
 }
-function lightTorch(tx,ty){ grid[ty][tx]=';'; opened.add('T'+sx+','+sy+':'+tx+','+ty); SFX.torch(); puff(tx*16+8,ty*16+4,'#f8a030',8,1.2); markDirty();
+function lightTorch(tx,ty){ grid[ty][tx]=';'; SFX.torch(); puff(tx*16+8,ty*16+4,'#f8a030',8,1.2); markDirty();
+  if(boss&&boss.type==='viento'){ vientoBrazierLit(); return; }
+  opened.add('T'+sx+','+sy+':'+tx+','+ty);
   let all=true; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') all=false;
   if(all){ opened.add('G'+sx+','+sy); SFX.puzzle(); shake=4; openGates(); showToast('¡LAS ANTORCHAS ARDEN!','la verja se abre'); }
   save();
@@ -199,9 +205,7 @@ function interact([tx,ty,ch]){
   if(ch==='¤'){ const id='CH'+sx+','+sy+':'+tx+','+ty;
     if(opened.has(id)){ SFX.bump(); return true; }
     const c=CHESTS[sx+','+sy+':'+tx+','+ty]; opened.add(id); markDirty(); SFX.secret(); save();
-    if(c&&c.kind==='amulet') giveAmulet(c.id);
-    else if(c&&c.kind==='berries'){ berries=Math.min(999,berries+c.n); say(["¡"+c.n+" BAYAS!"]); }
-    else say(["El cofre está\nvacío. Alguien\nllegó antes."]);
+    openChestContent(c);
     return true; }
   if(ch==='E'){ elderTalk(); return true; }
   if(ch===':'&&xItem!=='lantern'&&hasLantern){ say(["Una antorcha\napagada. Equipa\nel FAROL y úsalo\ncon X."]); return true; }
@@ -238,6 +242,8 @@ function useItem(){
   if(!xItem) { if(hasBomb||hasHook||hasBoomer||hasLantern||hasFeather){ showToast('SIN OBJETO EN X','equípalo en el zurrón'); } return; }
   if(xItem==='bomb'){
     if(bombs.length>=2) return;
+    if(bombAmmo<=0){ SFX.bump(); showToast('SIN BELLOTAS','corta un bellotero ♣'); return; }
+    bombAmmo--;
     const bx=((player.x+8)>>4)*16, by=((player.y+12)>>4)*16;
     bombs.push({x:bx,y:by,t:80}); SFX.blip();
   } else if(xItem==='hook'){ throwHook(); }
@@ -250,6 +256,7 @@ function useItem(){
 }
 function throwHook(){
   const D=DIRV[player.dir], [ptx,pty]=playerTile();
+  if(hookBoss(D)) return;
   const isWater=c=>c==='W'||c==='~';
   for(let i=1;i<=5;i++){
     const tx=ptx+D[0]*i, ty=pty+D[1]*i; const ch=grid[ty]&&grid[ty][tx];
@@ -310,6 +317,7 @@ function shopList(){
   if(bladeLvl===1)      L.push({id:'b2',name:'AFILAR HOJA',cost:15,d:'La Hoja hará\ndaño DOBLE.'});
   else if(bladeLvl===2) L.push({id:'b3',name:'TEMPLAR HOJA',cost:40,d:'La Hoja hará\ndaño TRIPLE.',off:!thawed,dOff:'El temple necesita\nel deshielo.'});
   else                  L.push({id:'bmax',name:'HOJA SUPREMA',cost:0,d:'Tu filo está\nal máximo.',off:true});
+  if(hasBomb) L.push({id:'bombs',name:'5 BELLOTAS',cost:10,d:bombAmmo>=bombMax?'Tu zurrón de bellotas está lleno.':'Cinco bellotas-bomba para el zurrón.',off:bombAmmo>=bombMax,dOff:'Tu zurrón de bellotas está lleno.'});
   if(!hasSpin) L.push({id:'spin',name:'REMOLINO',cost:25,d:'Carga Z y suelta:\n¡giro+tornadito!'});
   if(!hasShield) L.push({id:'shield',name:'ESCUDO',cost:20,d:'Rebota rocas y\nesporas de frente.'});
   if(thawed&&!hasLantern) L.push({id:'lantern',name:'FAROL BRASA',cost:35,d:'Luz para cuevas.\nEnciende antorchas.'});
@@ -333,7 +341,8 @@ function buyShop(){
   if(berries<it.cost){ SFX.bump(); showToast('FALTAN '+(it.cost-berries)+' BAYAS',it.name); return; }
   berries-=it.cost; SFX.fanfare(); save();
   const who=shopKind==='corteza'?'CORTEZA':'TILO';
-  if(it.id==='b2'){ bladeLvl=2; say(["¡Chas! Filo como\nel rocío. Tu Hoja\nhace daño DOBLE."],null,who); }
+  if(it.id==='bombs'){ bombAmmo=Math.min(bombMax,bombAmmo+5); say(["Cinco bellotas del fondo del saco. Que no te estallen en el bolsillo."],null,who); }
+  else if(it.id==='b2'){ bladeLvl=2; say(["¡Chas! Filo como\nel rocío. Tu Hoja\nhace daño DOBLE."],null,who); }
   else if(it.id==='b3'){ bladeLvl=3; say(["¡Mi obra maestra!\nDaño TRIPLE.\nTiembla, valle."],null,who); }
   else if(it.id==='spin'){ hasSpin=true; say(["¡El REMOLINO!\nMantén pulsado Z:\nla Hoja se carga...","...y al soltar,\n¡giras y LANZAS\nun TORNADITO!","Hasta rompe la\nguardia de los\nacorazados."],null,who); }
   else if(it.id==='shield'){ hasShield=true; say(["Corteza del Roble\ncurtida. Se lleva\nsola: lo que te\nvenga de frente\nrebota."],()=>getItem('shield'),who); }
@@ -348,7 +357,7 @@ function addPiece(){ pieces++; SFX.piece(); if(pieces>=4){ pieces=0; player.maxH
 /* recibir un objeto grande: Sprout lo alza */
 function getItem(kind){
   const M={blade:[BLADE_SPR,TXT.bladeGet],bomb:[BOMB_SPR,TXT.bombGet],ember:[EMBER_SPR,TXT.emberGet],hook:[HOOK_SPR,TXT.hookGet],tear:[TEAR_SPR,TXT.tearGet],flake:[FLAKE_SPR,TXT.flakeGet],boomer:[BOOMER_SPR,TXT.boomerGet],lantern:[LANTERN_SPR,TXT.lanternGet],feather:[FEATHER_SPR,TXT.featherGet],shield:[SHIELD_SPR,TXT.shieldGet]};
-  if(kind==='blade') hasBlade=true; if(kind==='bomb') hasBomb=true; if(kind==='ember') hasEmber=true; if(kind==='hook') hasHook=true;
+  if(kind==='blade') hasBlade=true; if(kind==='bomb'){ hasBomb=true; bombAmmo=bombMax; } if(kind==='ember') hasEmber=true; if(kind==='hook') hasHook=true;
   if(kind==='tear') hasTear=true; if(kind==='flake') hasFlake=true; if(kind==='boomer') hasBoomer=true; if(kind==='lantern') hasLantern=true;
   if(kind==='feather') hasFeather=true; if(kind==='shield') hasShield=true;
   if(!xItem&&['bomb','hook','boomer','lantern','feather'].includes(kind)) xItem=kind;

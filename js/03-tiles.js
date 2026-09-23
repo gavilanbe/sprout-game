@@ -274,6 +274,12 @@ function rockTile(v,bio){ return cached('rock'+v+bio,g=>{
   if(bio==='snow'){ R(g,5,3,5,1,'#ffffff'); R(g,4,4,7,1,'#e8f0f8'); }
   else if(v===0&&bio!=='autumn'){ PX(g,4,11,'#5a9a3a'); PX(g,3,12,'#3e7a2e'); }
 });}
+/* el bellotero: un arbusto bajo cargado de bellotas-bomba (se corta y vuelve a brotar) */
+function belloteroTile(bio){ const B=BIOMES[bio]||BIOMES.valley; return cached('bellotero'+bio,g=>{
+  shadowBlob(g,8,14,6,1.5,.3);
+  blobArt(g,1,2,14,12,[{x:7,y:6,r:5},{x:3.5,y:8,r:3.6},{x:10.5,y:8,r:3.6}],['#1a3a14','#2e6a24','#4a9030','#6cb840','#a8e070'],{grad:.4});
+  for(const [x,y] of [[4,5],[9,4],[7,9]]){ g.fillStyle=PAL.k; g.fillRect(x-1,y-1,5,5); g.fillStyle='#6a3a14'; g.fillRect(x,y,3,1); g.fillStyle='#d89a50'; g.fillRect(x,y+1,3,2); g.fillStyle='#fbe0a8'; g.fillRect(x,y+1,1,1); g.fillStyle='#e84030'; g.fillRect(x+1,y-1,1,1); }
+});}
 function crackedTile(v){ return cached('cracked'+v,g=>{
   g.drawImage(rockTile(v,'valley'),0,0);
   R(g,7,3,1,3,PAL.k); R(g,8,6,1,3,PAL.k); R(g,6,9,1,2,PAL.k); R(g,7,11,1,2,PAL.k);
@@ -881,7 +887,7 @@ function pillarTile(){ return cached('pillar',g=>{ // columna con capitel y basa
    ============================================================ */
 const GROUND=new Set(['.',',','f','t','p','s','n','i','·','q','o','m','w','@','x','_','ç','%','&','º','æ','°','>','ʘ']);
 const WATER=new Set(['W','~','w','@']);
-const SOLID=new Set(['W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö','Ω','Ⓑ','ø']);
+const SOLID=new Set(['♣','W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö','Ω','Ⓑ','ø']);
 const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '∞':'gust', '$':'squirrel', '¡':'icicle', '¿':'seton', c:'crab', 'Φ':'wisp', 'β':'bee', 'Γ':'golem', 'Σ':'snail', 'π':'topillo', 'λ':'lirio', 'Ψ':'rodahoja' };
 const MIDBOSS_MARK={ 'ℜ':'king', 'Δ':'drone', 'Θ':'iceguard' };
 const BOSS_MARK={ J:'topo', '!':'avispa', '^':'viento' };
@@ -949,6 +955,7 @@ function drawObject(g,rows,x,y,ch,opts,f,fg){
     case 'ʘ': g.drawImage(moundTile(v%2),px,py); return;
     case 'r': g.drawImage(rockTile(v%2,bio),px,py); return;
     case 'C': g.drawImage(crackedTile(v%2),px,py); return;
+    case '♣': g.drawImage(belloteroTile(opts.style==='cave'||opts.style==='wood'||opts.style==='ice'?'valley':bio),px,py); return;
     case 'M': { const e=edgesOf(rows,x,y,c=>!CLIFF_LIKE(c)); g.drawImage(cliffTile(e,v%3,bio),px,py); return; }
     case 'v': { const e=edgesOf(rows,x,y,c=>!WALL_LIKE(c)); g.drawImage(wallTile(e&15,v%2,style),px,py); return; }
     case 'I': { const e=edgesOf(rows,x,y,c=>c!=='I'); g.drawImage(interiorWall(),px,py); if(e&4){ R(g,px,py+14,16,2,PAL.k); } return; }

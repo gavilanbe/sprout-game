@@ -127,6 +127,8 @@ function loadScreen(nx,ny){
       if((r==='norte'||r==='marisma')&&(en.type==='blob'||en.type==='bat')) en.hp+=1; // bichos curtidos
       if(r==='norte'&&en.type==='roller') en.dmg=2;
       if(r==='templo'&&en.type!=='golem') en.hp+=1;
+      if(r==='tronco'&&en.type!=='bee') en.hp+=1;                       // cada mazmorra, más dura que la anterior
+      if((r==='tronco'&&['beetle','snail','thorn','seton'].includes(en.type))||(r==='templo'&&en.type!=='bat'&&en.type!=='bee')) en.dmg=Math.max(en.dmg,2);
       if(en.type==='icicle'&&thawed&&sy===-1) continue; // sin invierno no hay carámbanos
       if(en.type==='thorn'&&dng) en.hp=4;
       enemies.push(en);
@@ -203,7 +205,8 @@ function loadScreen(nx,ny){
   if(midboss&&!hinted.has('mid'+midboss.type)){ hinted.add('mid'+midboss.type); pendingSay=MID_INTRO[midboss.type].slice(); }
   const reg=regionOf(sx,sy);
   if(reg!=='casa'&&respawnPoint.reg!==reg&&REGION_ANCHOR[reg]) respawnPoint={...REGION_ANCHOR[reg],reg};
-  markDirty();
+  if(sx===1&&sy===-3&&boss3Done) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') grid[y][x]=';'; // los braseros de la cima arden en paz
+  initRoomRules(); markDirty();
   if(state!=='title'&&state!=='boot'&&state!=='file') save();
 }
 function hasGate(){ for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='=') return true; return false; }

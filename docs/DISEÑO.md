@@ -72,8 +72,21 @@ El pozo del barrio concede un cuarto de corazón por 20 bayas, una sola vez.
 
 Se empieza con 3. Corazones enteros: pradera (bomba), lago (gancho), jardín sumergido
 (gancho), tienda de Tilo. Cuartos (4 = 1 corazón): juncal (gancho), mirador (bomba),
-pista de hielo del templo, marisma oeste, madriguera del camino, pozo del barrio y
-tienda de Tilo. Máximo: 10.
+pista de hielo del templo, marisma oeste, madriguera del camino, Cámara del Eco
+(cueva, tras la grieta), Estanque del Panal (tronco, con el gancho), Puente Roto
+(templo, con el vilano), pozo del barrio y tienda de Tilo.
+
+## Bellotas-bomba, cofres y emboscadas
+
+- Las bombas se gastan: caben 10 (20 con el **Zurrón de bellotas**, en el Estanque
+  del Panal). Se recargan cortando **belloteros** (♣), que vuelven a brotar a los
+  pocos segundos, con el botín de los bichos cuando te quedan pocas, o en Tilo
+  (5 por 10 bayas). Toda sala que pide bombas tiene belloteros: nunca te quedas
+  atascado.
+- **Emboscadas**: al entrar se cierran las puertas y no se abren hasta vencer a
+  todos. Dan una llave, un cofre o simplemente el paso.
+- Cada mazmorra tiene su **mapa** (todas las salas en el zurrón) y su **brújula**
+  (señala al guardián y los cofres pendientes).
 
 ## Amuletos (dos a la vez)
 
@@ -91,55 +104,53 @@ tienda de Tilo. Máximo: 10.
 
 ## Las mazmorras
 
-### Cueva del Topo (6-8, 0-2)
+Las llaves pequeñas de cada mazmorra se pueden gastar en cualquier orden: todas
+están fuera de los cerrojos, así que no hay manera de quedarse sin salida.
+
+### Cueva del Topo (6-8, -1..2) · 12 salas
 
 ```
-[6,0 vestíbulo] — [7,0 raíces: 2 bloques → 2 placas → verja S]
-[6,1 taller]  =  [7,1 pulsador] — [8,1 rodapúas: llave] → cerrojo N → [8,0 REY: bomba]
-   Ł                                     C (bomba) → [8,2 cripta: llave grande + Púa de erizo]
-[6,2 TOPO REAL]
+[6,-1 GUARDIAS: emboscada → llave] — [7,-1 galería oscura: llave; grieta E] ═C═ [8,-1 eco: BRÚJULA + cuarto]
+[6,0 vestíbulo]                    — [7,0 raíces: 2 bloques → 2 placas]        [8,0 REY: bomba]
+[6,1 taller: emboscada]  = verja =   [7,1 pulsador]  —  [8,1 rodapúas] ─) cerrojo al Rey
+   Ł                                    ) cerrojo              C (bomba)
+[6,2 TOPO REAL]                      [7,2 nido: emboscada → MAPA]  [8,2 cripta: llave grande + Púa]
 ```
 
-- Placas: empuja cada bloque dos veces hacia el norte (colócate al sur, encarado).
-- Pulsador (7,1): abre la verja oeste hacia el taller.
-- Escarabajo Rey: su morro rebota la Hoja; golpéalo por detrás o cuando se
-  atasca tras embestir. Las bombas también le duelen.
-- Topo Real: solo es vulnerable al salir del agujero; esquiva sus rocas (la Hoja
-  las rompe, el escudo las rebota). A 2 PV se rinde: Z a su lado.
+- Topo Real (18 PV): cava y sale donde estás. Fuera lleva un **casco de roca**: la
+  Hoja rebota. Una bomba que estalle sobre su montículo (o a su lado) lo saca
+  **aturdido**: entonces sí sufre. Herido cava más rápido, suelta anillos de rocas y
+  topillos, y al final hace llover piedras (mira las sombras).
 
-### Tronco Hueco (10-12, 0-2)
+### Tronco Hueco (10-12, -1..2) · 11 salas
 
 ```
-[10,0 umbral] — [11,0 enjambre: llave] → cerrojo E → [12,0 ZÁNGANO: gancho]
-[10,1 canal]  — [11,1 cristal] — [12,1 llave grande]
-   Ł
+[10,-1 agujeros: gancho → BRÚJULA] — [11,-1 COLMENA: emboscada → llave] — [12,-1 despensa: MAPA]
+[10,0 umbral] — [11,0 enjambre: llave] ─) [12,0 ZÁNGANO: gancho]
+[10,1 canal]  — [11,1 cristal] ─) cerrojo ─ [12,1 llave grande]
+   Ł                                          [12,2 estanque: gancho → ZURRÓN DE BELLOTAS + cuarto]
 [10,2 REINA]
 ```
 
-- Sala del cristal: al entrar, la columna roja cierra el oeste y la azul está
-  bajada. Golpea el cristal (Hoja, vaina o bomba) para cambiarlas. El estado se
-  guarda por sala.
-- Canal: desde el norte, gancho hacia el sur (cinco baldosas de alcance).
-- Zángano: se lanza en picado; cuando choca queda aturdido: ataca entonces.
-- Reina: vulnerable cuando cae al suelo tras el picado.
+- Reina Avispa (20 PV): vuela demasiado alto para la Hoja y en el suelo sus alas la
+  protegen. **Engánchala con la raíz-gancho** (en vuelo o posada): la arrastras al
+  suelo y queda aturdida. Herida dispara abanicos de aguijones, trae abejas y encadena
+  picados.
 
-### Templo de la Cima (14-16, 0-2)
+### Templo de la Cima (14-16, -1..2) · 10 salas
 
 ```
-[14,0 hielo: cuarto] — [15,0 antorchas: verja + Ł → cima] — [16,0 GUARDIÁN: vilano]
-[14,1 bloques: llave] — [15,1 vacío] → cerrojo E → [16,1 llave grande] ↑
-                        [15,2 atrio]
+                                         [16,-1 puente roto: vilano → cuarto]
+[14,0 pista de hielo: cuarto] — [15,0 antorchas → Ł cima] — [16,0 GUARDIÁN: vilano]
+[14,1 bloques: llave]  —  [15,1 vacío] ─) [16,1 llave grande]
+[14,2 HIELO: emboscada (bombas) → MAPA] — [15,2 atrio] — [16,2 capilla: 2 antorchas → BRÚJULA]
 ```
 
-- Bloques (14,1): el de arriba va al este y luego al sur; el de abajo, al este y
-  al sur. Con los dos sobre las placas cae la llave en el centro.
-- Guardián de Hielo: la Hoja rebota; una bomba lo ablanda unos segundos (y le
-  quita 1). Entonces la Hoja hiere.
-- Antorchas (15,0): se entra saltando los agujeros con el vilano. Enciende las
-  cuatro con el farol (X frente a cada una): la verja se abre. La puerta del
-  guardián necesita la llave grande y lleva a la cima.
-- Viento del Norte: te empuja y barre la pantalla a tu altura (la línea roja
-  avisa). Cuando descansa en el suelo, golpea. A 2 PV se encoge: háblale.
+- Viento del Norte (24 PV): flota fuera de alcance y te empuja. El frío lo sostiene:
+  enciende con el **farol** los **cuatro braseros** de la cima y caerá al suelo; ahí
+  la Hoja le alcanza. Al levantarse apaga braseros (más cuanto más herido). Su barrido
+  horizontal se esquiva **saltando con el vilano**. Herido hace caer carámbanos y barre
+  dos veces seguidas. A 2 PV se encoge: háblale.
 
 ## Combate
 
@@ -149,7 +160,7 @@ frente salvo con el remolino. Los caracoles se esconden al ser golpeados. Los
 golemitos de hielo solo caen con bombas. Los fuegos fatuos se apagan con el
 tornadito. La vaina aturde 90 fotogramas y hace 1 de daño.
 
-Ningún guardián baja de 2 PV. Guardianes: 10, 10 y 14 PV. Minijefes: 8, 8 y 6.
+Ningún guardián baja de 2 PV. Guardianes: 18, 20 y 24 PV (tres, tres y cuatro golpes por cada vez que quedan vulnerables), en tres fases (al 64 % y al 34 % de vida). Minijefes: 10, 10 y 8, con una segunda fase a media vida (el Rey embiste dos veces, el Zángano pica más rápido, el Guardián pisa más a menudo). Cada guardián exige el objeto de su mazmorra.
 
 ## Equilibrio
 
