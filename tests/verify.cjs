@@ -573,6 +573,26 @@ const server=http.createServer((req,res)=>{
       return [Number.isInteger(N),same,down,up,low,t1,saved,OPT_ROWS.includes('consola')]; }),
       [true,true,[true,true,'l'],true,'low','salvia',1,true]);
   });
+  await check('La Hoja es una hoja: tres filos, doblada y de tres caras; el tajo corta y golpea en los mismos fotogramas; su «fsss» y su «chas» sin picos',async()=>{
+    const r=await ev(async()=>{
+      const art=[1,2,3].every(t=>LEAF_BENT[t].length===3&&LEAF_BENT[t].every(F=>F.length===9&&F.every(c=>c.width===21&&c.height===19)))&&[1,2,3].every(t=>LEAF_TIER[t].width===21&&BLADE_HUD[t].height<=9&&BLADE_SHOP[t].width<=12);
+      // la mata de hierba delante cae en el 4.º fotograma del tajo; el bicho recibe en el 3.º (como siempre)
+      hasBlade=true; bladeLvl=1; __go(2,1,70,76); npcs=[]; enemies=[]; parts=[]; grid[5][5]='t'; player.x=70; player.y=76; player.dir=3; player.atk=0; hitStop=0;
+      player.atk=14; let cut=0; for(let i=1;i<=8&&!cut;i++){ hitStop=0; __step(1); if(grid[5][5]!=='t') cut=i; }
+      __go(2,1,70,76); npcs=[]; parts=[]; enemies=[]; const e=spawnEnemy('blob',5,5,0); enemies.push(e); e.x=86; e.y=76; e.hp=9; e.flash=0; player.x=70; player.y=76; player.dir=3; player.atk=14;
+      let hit=0; for(let i=1;i<=10&&!hit;i++){ hitStop=0; e.x=86; e.y=76; __step(1); if(e.hp<9) hit=i; }
+      const leafy=parts.some(p=>p.k==='blade'||p.k==='shard');
+      // los sonidos, renderizados sin tiempo real
+      const SR=48000, keep={AC,AudioContext:window.AudioContext,curTrack,master,musicBus,sfxBus,delaySend,delayWet,musicOn,mIntTarget,musicLP,VOICE:{...VOICE},WAVES:{...WAVES}}, off=new OfflineAudioContext(1,SR,SR); off.resume=()=>Promise.resolve(); let now=0; Object.defineProperty(off,'currentTime',{get:()=>now});
+      let pk=[];
+      try{ window.AudioContext=function(){ return off; }; clearInterval(musicTimer); musicTimer=null; AC=null; musicOn=false; audio(); master.disconnect(); sfxBus.connect(off.destination);
+        now=.02; SFX.sword(); now=.35; SFX.leafHit(); now=.65; SFX.cut(); const d=(await off.startRendering()).getChannelData(0);
+        for(const [a,b] of [[0,.33],[.33,.63],[.63,1]]){ let m=0; for(let i=Math.floor(a*SR);i<Math.floor(b*SR);i++) m=Math.max(m,Math.abs(d[i])); pk.push(m); }
+      } finally { clearInterval(musicTimer); musicTimer=null; OUT=null; ({AC,curTrack,master,musicBus,sfxBus,delaySend,delayWet,musicOn,mIntTarget,musicLP}=keep); window.AudioContext=keep.AudioContext;
+        Object.assign(VOICE,keep.VOICE); for(const k in WAVES) delete WAVES[k]; Object.assign(WAVES,keep.WAVES); if(AC) startMusic(); }
+      return [art,cut,hit,leafy,pk.every(v=>v>.005&&v<.2)]; });
+    eq(r,[true,4,3,true,true]);
+  });
   await check('Móvil: consola a pantalla completa; la cruceta se desliza entre direcciones y los botones no se sueltan al desviar el dedo',async()=>{
     const {devices}=require('playwright'), ctx=await browser.newContext({...devices['iPhone 13']}), m=await ctx.newPage(); m.on('pageerror',e=>errors.push('móvil: '+e.message));
     await m.goto(`http://127.0.0.1:${server.address().port}/index.html`); await m.waitForFunction(()=>typeof __sprout==='object');

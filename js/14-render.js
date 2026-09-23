@@ -8,26 +8,27 @@ function shadowSpr(r){ r=Math.max(2,Math.round(r)); let c=SHADOW_CACHE[r]; if(c)
   g.fillStyle='rgba(12,20,12,.14)'; g.fillRect(r-Math.round(r*.55),h-1,Math.round(r*1.1)+1,3);
   return SHADOW_CACHE[r]=c; }
 function drawShadow(x,y,r){ const s=shadowSpr(r); ctx.drawImage(s,Math.round(x-s.width/2),Math.round(y-s.height/2)); }
-function drawSword(){
+function drawSword(){ // la Hoja: coge impulso, barre doblándose y girándose, latiguea (el guion en LEAF_SWING_FR, 12b)
   if(player.atk<=0) return;
-  const ph=14-player.atk;
-  const base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir];
-  const sweep=[-2.0,-1.15,-0.25,0.4,0.62,0.56,0.46][Math.min(6,ph>>1)];
-  ctx.save(); ctx.translate(player.x+8,player.y+10); ctx.rotate(base+sweep);
-  ctx.drawImage(bladeSpr(),3,-4); ctx.restore();
-  bladeGlow(player.x+8+Math.cos(base+sweep)*14,player.y+10+Math.sin(base+sweep)*14);
-  if(ph>=1&&ph<=8) drawSmear(player.x+8,player.y+10,base-2.15,base+sweep+.3,ph);
+  const ph=Math.min(13,14-player.atk), base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir], S=leafSwingAt(ph), a=base+S[0], cx=player.x+8, cy=player.y+10;
+  if(ph>=1&&ph<=8) drawSmear(cx,cy,base-2.15,a+.25,ph);                                   // el aire que corta, detrás
+  if(ph>=2&&ph<=6) for(let k=2;k>=1;k--){ const P=leafSwingAt(ph-k); drawLeafBlade(cx,cy,base+P[0],P[2],P[1],.17*(3-k),'#eaffd8'); } // su estela
+  drawLeafBlade(cx,cy,a,S[2],S[1]);
+  bladeGlow(cx+Math.cos(a)*14,cy+Math.sin(a)*14);
 }
-/* media luna del tajo, en píxeles: filo blanco por dentro, verde por fuera; se come desde la cola */
+/* la estela del tajo: no una media luna de acero sino aire que se abre (una raya blanca con huecos por
+   fuera, una verde por dentro y un velo tramado entre las dos) que se deshace desde la cola */
 function drawSmear(cx,cy,a0,a1,ph){
   cx=Math.round(cx); cy=Math.round(cy); const fade=ph/8, tail=a0+(a1-a0)*Math.max(0,(ph-3)/5);
   const norm=a=>{ while(a<-Math.PI) a+=6.283; while(a>Math.PI) a-=6.283; return a; };
-  const span=norm(a1-tail), rIn=8+Math.round(fade*4), rOut=19-Math.round(fade*2);
-  for(let y=-rOut;y<=rOut;y++) for(let x=-rOut;x<=rOut;x++){ const d=Math.sqrt(x*x+y*y); if(d<rIn||d>rOut) continue;
+  const span=norm(a1-tail), rOut=21-Math.round(fade*2), r1=rOut-.6, r2=rOut-4.6, SM=bladeTier().smear;
+  for(let y=-rOut;y<=rOut;y++) for(let x=-rOut;x<=rOut;x++){ const d=Math.sqrt(x*x+y*y); if(d<r2-1||d>rOut) continue;
     const t=norm(Math.atan2(y,x)-tail); if(t<0||t>span) continue; const along=t/span; // 0 cola → 1 punta
-    const edge=d>rOut-1.2, inner=d>rOut-4&&!edge&&along>.3;
-    if(along<.18&&((x+y)&1)) continue; // la cola se deshace en tramado
-    const SM=bladeTier().smear; ctx.fillStyle=inner?SM[3]:edge?SM[0]:along>.55?SM[2]:SM[1]; ctx.globalAlpha=(d<rIn+2?.55:1)*(1-fade*.5); ctx.fillRect(cx+x,cy+y,1,1); }
+    if(Math.abs(d-r1)<.62){ if(along<.75&&((x*3+y*5)&3)===0) continue; ctx.fillStyle=along>.45?'#ffffff':SM[3]; ctx.globalAlpha=(.35+.65*along)*(1-fade*.55); }
+    else if(Math.abs(d-r2)<.58){ if(along<.3) continue; ctx.fillStyle=SM[2]; ctx.globalAlpha=.85*along*(1-fade*.6); }
+    else if(d>r2&&d<r1&&((x+y)&1)===0&&along>.2){ ctx.fillStyle=along>.7?SM[3]:SM[1]; ctx.globalAlpha=.32*along*(1-fade*.7); }
+    else continue;
+    ctx.fillRect(cx+x,cy+y,1,1); }
   ctx.globalAlpha=1;
 }
 function drawPlayer(){

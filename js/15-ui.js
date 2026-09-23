@@ -32,7 +32,7 @@ function drawUI(){
   for(let x=3;x<VW;x+=11){ ctx.fillRect(x,Y+4+((x*7)%9),2,1); }
   // Z: la Hoja (con sus muescas de nivel)
   hudWell(1,Y+2,26,13); badge('Z',2,Y+4);
-  if(hasBlade){ ctx.drawImage(bladeSpr(),0,0,16,7,11,Y+4,15,7); hudBladeMeter(Y); }
+  if(hasBlade){ ctx.drawImage(BLADE_HUD[Math.max(1,Math.min(3,bladeLvl))],11,Y+4); hudBladeMeter(Y); } // la Hoja de su filo (12b)
   // X: el objeto equipado
   hudWell(29,Y+2,26,13); badge('X',30,Y+4);
   if(xItem){ const pop=xFlash>0?Math.sin((10-xFlash)/10*Math.PI)*2:0;
@@ -231,7 +231,7 @@ function drawShop(){
   txtO(shopKind==='corteza'?'CABAÑA DE CORTEZA':'TIENDA DE TILO',80,10,dark?'#fff0c0':F.key,'center',dark?'#5a2410':'#12121e');
   ctx.fillStyle=F.inner; ctx.fillRect(12,21,136,1);
   ctx.drawImage(BERRY_SPR,122,24); txt(''+berries,146,25,F.text,'right');
-  const L=shopList(); const SI={b2:LEAF_TIER[2],b3:LEAF_TIER[3],bmax:LEAF_TIER[3],spin:SPIN_ICON,bigspin:BIGSPIN_ICON,oakshield:OAKSHIELD_ICON,shield:SHIELD_SPR,lantern:LANTERN_SPR,hp:HEART_FULL,piece:PIECE_SPR,am_savia:AMULET_SPR.savia,am_musgo:AMULET_SPR.musgo,ok:AMULET_SPR.savia,ok2:AMULET_SPR.musgo};
+  const L=shopList(); const SI={b2:BLADE_SHOP[2],b3:BLADE_SHOP[3],bmax:BLADE_SHOP[3],spin:SPIN_ICON,bigspin:BIGSPIN_ICON,oakshield:OAKSHIELD_ICON,shield:SHIELD_SPR,lantern:LANTERN_SPR,hp:HEART_FULL,piece:PIECE_SPR,am_savia:AMULET_SPR.savia,am_musgo:AMULET_SPR.musgo,ok:AMULET_SPR.savia,ok2:AMULET_SPR.musgo};
   SI.bombs=ACORN;
   const step=11, rows=5, top=Math.max(0,Math.min(shopSel-2,L.length-rows)); // lista con desplazamiento: 5 filas a la vista
   if(top>0){ ctx.fillStyle=F.text; const bx=76, by=28+((tick>>3)&1); ctx.fillRect(bx+3,by,1,1); ctx.fillRect(bx+2,by+1,3,1); ctx.fillRect(bx+1,by+2,5,1); }

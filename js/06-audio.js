@@ -95,6 +95,16 @@ function noise(dur,vol,hp,when,freq){
   g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   s.connect(fl).connect(g).connect(OUT||sfxBus); s.start(t); s.stop(t+dur);
 }
+/* ráfaga de aire filtrada que sube y baja: el «fsss» de una hoja que corta el aire (y el roce de la hierba).
+   bandpass (o highpass) de f0 → f1 → f2; la envolvente arranca en cero para que no chasquee */
+function swish(dur,vol,f0,f1,f2,when,q,hp){
+  const a=audio(), t=when||a.currentTime;
+  if(!noiseBuf){ noiseBuf=a.createBuffer(1,a.sampleRate*0.5,a.sampleRate); const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  const s=a.createBufferSource(); s.buffer=noiseBuf; const fl=a.createBiquadFilter(), g=a.createGain();
+  fl.type=hp?'highpass':'bandpass'; fl.Q.value=q||1.2; fl.frequency.setValueAtTime(f0,t); fl.frequency.exponentialRampToValueAtTime(f1,t+dur*.45); fl.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.value=0; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+dur*.3); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(fl).connect(g).connect(OUT||sfxBus); s.start(t); s.stop(t+dur+.02);
+}
 /* batería del canal de ruido: bombo, caja, charles, abierto, tom, platillo */
 const DRUMS={
   k(t,v){ beep('triangle',160,36,.14,v*1.35,t); noise(.03,v*.55,false,t,500); },
@@ -106,8 +116,9 @@ const DRUMS={
 };
 /* ---------- efectos ---------- */
 const SFX = {
-  sword(){ beep('square',620,180,.09,.05); noise(.05,.02,true); },
-  cut(){ noise(.12,.05,false); },
+  sword(){ const t=audio().currentTime; swish(.16,.13,700,3200,1300,t,1.1); swish(.05,.035,5200,6200,4600,t+.02,.8,true); }, // la Hoja corta el aire
+  cut(){ const t=audio().currentTime; swish(.09,.1,2600,3600,1800,t,1.4); swish(.12,.08,1800,2400,900,t+.05,1.1); }, // «chas-chas» de hojas
+  leafHit(){ const t=audio().currentTime; swish(.05,.06,4200,5200,3000,t,.9,true); swish(.09,.055,2600,1400,900,t+.01,1.3); beep('triangle',200,110,.07,.03,t); }, // la Hoja da: un «chas» fresco
   hurt(){ beep('square',180,70,.25,.07); },
   wilt(){ const a=audio(),t=a.currentTime; [62,59,55,50,43].forEach((m,i)=>beep('triangle',f(m),0,.32,.06,t+i*.16)); },
   regrow(){ const a=audio(),t=a.currentTime; [55,60,64,67,72].forEach((m,i)=>beep('square',f(m),0,.14,.05,t+i*.09)); },
@@ -153,7 +164,7 @@ const SFX = {
   momentFreeze(){ const a=audio(),t=a.currentTime; noise(.04,.05,true,t,6500); beep('square',1900,950,.03,.02,t); beep('triangle',112,40,.34,.1,t+.012); noise(.24,.035,false,t+.02,700); beep('p125',f(84),f(96),.2,.022,t+.05); },
   block(){ beep('square',240,240,.05,.04); noise(.04,.03,true); },
   charge(){ beep('square',440,880,.2,.03); },
-  grass(){ noise(.07,.03,false); },
+  grass(){ const t=audio().currentTime; swish(.08,.07,3200,4200,2200,t,1.6); }, // el roce de la hierba
   piece(){ const a=audio(),t=a.currentTime; [72,76,79,76,84].forEach((m,i)=>beep('square',f(m),0,.09,.05,t+i*.07)); },
   puzzle(){ const a=audio(),t=a.currentTime; [67,72,76,79,84].forEach((m,i)=>beep('p25',f(m),0,.12,.05,t+i*.08)); beep('triangle',f(48),0,.6,.06,t); },
   /* --- las mecánicas nuevas --- */

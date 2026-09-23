@@ -130,7 +130,7 @@ function update(){
     else { jumpT--; jumpZ=Math.sin((26-jumpT)/26*Math.PI)*14; tryMove(jumpDir[0]*2.1,jumpDir[1]*2.1); if(jumpT===13&&keys.altHeld&&!glideUsed&&xItem==='feather') glideStart(); }
     player.anim=0;
     if(jumpT===0){ SFX.land(); player.squash=-.45; stepDust(); stepDust(); } }
-  else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); }
+  else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); leafSwingTick(); } // briznas, rocío y el tintineo del temple (12b)
   else {
     let dx=0,dy=0;
     if(keys.left)dx=-1; else if(keys.right)dx=1;

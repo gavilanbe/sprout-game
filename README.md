@@ -57,6 +57,9 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
   líneas de velocidad, el arma en grande con su nombre) y una frase del valle,
   como «Dentro de cada bellota duerme un roble con prisa». Dos segundos y medio;
   Z lo acelera.
+- **La Hoja es una hoja**: nervios, borde dentado y peciolo; se dobla al coger
+  impulso, enseña el envés al girar y da un latigazo al final, suelta hojitas y
+  rocío, suena a hojas y salpica savia al golpear.
 - Mejoras que se notan: la Hoja en tres temples (la última lanza un rayo de hoja),
   el Remolino y el **Gran Remolino**, el **Escudo de Roble** que devuelve disparos,
   bellotas-bomba contadas con **belloteros** que rebrotan y el zurrón de bellotas.
