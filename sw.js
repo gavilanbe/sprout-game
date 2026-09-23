@@ -25,6 +25,7 @@ const CODE = [
   './js/15-ui.js',
   './js/15a-intro.js',
   './js/15b-zurron.js',
+  './js/15c-marchitar.js',
   './js/16-input.js',
   './js/17-boot.js',
 ];

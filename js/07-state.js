@@ -60,7 +60,7 @@ function hasAmulet(id){ return equipped.includes(id); }
 function playerSpeed(){ return hasAmulet('viento')?1.5:1.2; }
 function die(){ if(state==='dying'||state==='over') return;
   state='dying'; deathT=120; wilts++; player.atk=0; player.spin=0; player.charge=0; bombs=[]; projs=[]; windProjs=[]; boomer=null; jumpT=0; overSel=0;
-  SFX.hurt(); shake=8; hitStop=6; }
+  SFX.hurt(); shake=8; hitStop=6; wiltBegin(); } // la escena de marchitarse (15c)
 let overSel=0;
 function hurt(n,fromX,fromY,force){ // daño al jugador, con amuleto de raíz y escudo
   if(player.inv>0&&!force) return false;

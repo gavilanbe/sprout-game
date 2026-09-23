@@ -524,6 +524,31 @@ const server=http.createServer((req,res)=>{
       return log; });
     eq(r,[[['dialog','MOSS',true],'fish','aim'],['lance','cast','wait',true],['pronto','aim','¡Muy pronto!'],['clava','reel'],['carpín','caught',0],['cuaderno',1,1,true,'aim'],['trucha a lo loco','aim','¡Se rompió el sedal!'],['bigotes','caught',3],['dialog','fish',true,1,2],['fin','play',null],['guardado',15,true,2,true]]);
   });
+  await check('Marchitarse: se seca, baja a las raíces y el Roble habla; SÍ rebrota con el vigor lleno, NO guarda y va al título; Z lo acelera',async()=>{
+    const r=await ev(()=>{ const log=[]; showToast=()=>{};
+      newGame(); state='play'; introDone=true; elderMet=true; hasBlade=true; hitStop=0; wakeT=0; inBed=false; wilts=0;
+      const run=(mash,pick)=>{ let n=0, m=0;
+        while(state==='dying'&&n<600){ if(mash) keys.fire=true; __step(1); n++; }
+        const lines=mDream?mDream.pages.slice():[];
+        while(mDream&&mDream.phase!=='ask'&&m<900){ if(mash||(mDream.phase==='talk'&&mDream.chars>=mDream.pages[mDream.pg].length)) keys.fire=true; __step(1); m++; }
+        __step(8); if(pick==='no'){ keys.right=true; __step(1); keys.right=false; } keys.fire=true; __step(1);
+        return {toOver:n,lines}; };
+      // 1) la primera vez, sin prisa, en el valle: cuatro frases, SÍ, y rebrote en la entrada de la pantalla
+      __go(0,1,60,70); lastEntry={sx:0,sy:1,x:60,y:70}; player.hp=0; die(); const a=run(false,'yes');
+      let n=0; while(state!=='play'&&n<300){ __step(1); n++; } const rb=[state,sproutT>0,!!rebrote,player.hp<player.maxHp];
+      n=0; while(sproutT>0&&n<300){ __step(1); n++; }
+      log.push(['valle',a.toOver>=180,a.lines.length,a.lines[0],rb,sx+','+sy,player.x+','+player.y,player.hp===player.maxHp,player.inv>60,state,curTrack!=='silencio',wilts]);
+      // 2) en la Cueva del Topo, con Z: más corto, frase de la mazmorra, rebrote en su entrada y el rebrote se salta
+      __go(7,0,72,70); const rp={...respawnPoint}; player.hp=0; die(); const b=run(true,'yes');
+      n=0; while((state!=='play'||sproutT>0)&&n<400){ keys.fire=true; __step(1); n++; }
+      log.push(['cueva',b.toOver<80,b.lines.length,b.lines[0].includes('Cueva'),sx+','+sy===rp.sx+','+rp.sy,player.x===rp.x&&player.y===rp.y,player.hp===player.maxHp,state,n<110]);
+      // 3) NO: el Roble se despide, se guarda y al título
+      __go(0,1,60,70); player.hp=0; die(); run(true,'no'); const said=mDream&&mDream.phase;
+      n=0; while(state==='over'&&n<400){ keys.fire=true; __step(1); n++; }
+      log.push(['no',said,state,wilts]); keys.fire=false; state='play';
+      return log; });
+    eq(r,[['valle',true,4,'...¿Sprout? ¿Me oyes?',['play',true,true,true],'0,1','60,70',true,true,'play',true,1],['cueva',true,2,true,true,true,true,'play',true],['no','no','title',3]]);
+  });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }
   console.log(`\n${passed} pruebas pasan, ${failed} fallan`);
