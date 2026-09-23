@@ -43,7 +43,8 @@ let pausePage=0, pauseSel=0, pauseUD=0, pauseLR=0;
 let regen=0;                   // contador del Corazón de Musgo
 let titleT=0, fontsReady=false, bootT=0, bootGo=0, creditsT=0;
 let curSlot=0, fileSel=0, fileConfirm=false, fileUD=0, slotCache=[null,null,null];
-const TITLE_PAN_D=110, TITLE_T0=TITLE_PAN_D+16, TITLE_STAG=9, TITLE_DUR=20;
+const TITLE_INTRO=490; // la intro por planos (15a) dura esto; luego el paneo al Roble y el logo
+const TITLE_PAN_D=110, TITLE_T0=TITLE_INTRO+TITLE_PAN_D+16, TITLE_STAG=9, TITLE_DUR=20;
 const TITLE_LAND=TITLE_T0+5*TITLE_STAG+TITLE_DUR, TITLE_LEAF0=TITLE_LAND+8, TITLE_LEAFD=104;
 const TITLE_SHINE=TITLE_LEAF0+TITLE_LEAFD+6, TITLE_MENU=TITLE_SHINE+18;
 if(document.fonts&&document.fonts.load){

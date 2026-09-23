@@ -317,7 +317,7 @@ function drawCinePanel(page,x,y){
   else { ctx.fillStyle='#c89858'; ctx.fillRect(0,0,84,40); ctx.fillStyle='#a87840'; for(let yy=7;yy<40;yy+=8) ctx.fillRect(0,yy,84,1); ctx.drawImage(bedTile(),34,8); ctx.drawImage(((tick>>4)&1)?H_WAKE:H_SLEEP,34,4); ctx.fillStyle='#fffbe8'; if((tick>>3)&1) ctx.fillRect(50,6,2,2); }
   ctx.restore(); ctx.strokeStyle='#8a7a40'; ctx.strokeRect(x-.5,y-.5,85,41);
 }
-function titlePanOff(){ const travel=Math.max(0,(titleBgOk?TITLE_BG.height:VH)-VH); const k=Math.min(1,titleT/TITLE_PAN_D), e=1-(1-k)*(1-k)*(1-k); return -travel*(1-e); }
+function titlePanOff(){ const travel=Math.max(0,(titleBgOk?TITLE_BG.height:VH)-VH); const k=clamp((titleT-TITLE_INTRO)/TITLE_PAN_D,0,1), e=1-(1-k)*(1-k)*(1-k); return -travel*(1-e); }
 function drawTitleBg(){
   if(titleBgOk){ ctx.drawImage(TITLE_BG,0,titlePanOff()|0); return; }
   ctx.fillStyle='#5088dc'; ctx.fillRect(0,0,160,60); ctx.fillStyle='#86c0f0'; ctx.fillRect(0,30,160,50);
@@ -332,7 +332,8 @@ function drawBoot(){
   if(bootGo>0&&bootGo<22){ ctx.fillStyle='rgba(8,20,8,'+((1-bootGo/22).toFixed(2))+')'; ctx.fillRect(0,0,VW,VH); }
 }
 function drawTitle(){
-  drawTitleBg();
+  if(drawIntro()) return;
+  drawTitleBg(); drawSeedsHome(); drawSeasonTint();
   drawParts();
   const eachGlyph=(fn)=>{ LOGO_GLYPHS.forEach((gl,i)=>{ const k=(titleT-(TITLE_T0+i*TITLE_STAG))/TITLE_DUR; if(k<0) return; const y=LOGO_Y+gl.dy+(k>=1?0:-(1-easeOutBack(k))*52); fn(gl,i,LOGO_POS[i],y|0); }); };
   if(titleT>=TITLE_LEAF0){ const FX=24, FY=1, lk=Math.min(1,(titleT-TITLE_LEAF0)/TITLE_LEAFD);
@@ -344,6 +345,7 @@ function drawTitle(){
     else if(cyc<54){ const s=cyc<44?(cyc-34)>>1:(54-cyc)>>1; if(s>0){ const cx=LOGO_POS[3]+15, cy=LOGO_Y+3; ctx.fillStyle='#fff'; ctx.fillRect(cx-s,cy,s*2+1,1); ctx.fillRect(cx,cy-s,1,s*2+1); } } }
   const a=Math.max(0,Math.min(1,(titleT-TITLE_LAND)/26));
   if(a>0){ ctx.globalAlpha=a; const sub='Y LAS 8 SEMILLAS'; drawText(ctx,sub,81,62,PAL.k,'center'); txtOL(sub,80,60,'#ffe9a0','center','#3a1c08'); ctx.globalAlpha=1; }
+  if(titleT<TITLE_INTRO+16){ ctx.globalAlpha=1-(titleT-TITLE_INTRO)/16; ctx.fillStyle='#fff'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
   if(titleT>=TITLE_MENU){ const k=Math.min(1,(titleT-TITLE_MENU)/20), bob=Math.round(Math.sin(tick*.08)*1.5);
     ctx.globalAlpha=k; if((tick&47)<34) txtOL('PULSA Z',80,111+bob,'#fffbe8','center','#1a2a10'); txtSO('M: MÚSICA',80,131,'#dff0d8','center','#0c1a08'); ctx.globalAlpha=1; }
 }
