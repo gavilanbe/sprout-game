@@ -11,14 +11,19 @@ dolido, una noche el Viento arrancó al Roble sus **ocho semillas doradas** y el
 año se atascó: el Roble dejó de respirar y cada estación quedó presa en un rincón
 (la primavera bajo tierra con el Topo Real, el verano en la Lágrima que guarda la
 Reina Avispa, el invierno en el pico, con el propio Viento; el otoño, sin verano
-que lo releve, se pudre en las marismas).
+que lo releve, se pudre en las marismas). Cuando vuelve el verano, ese otoño viejo
+se refugia en el **Molino de la Hojarasca**, en la Ciénaga, guardado por el
+**Ciervo de Ámbar**: el Viento le pidió que dejara caer las hojas cuando nadie las
+quería.
 
 El Roble había escondido una **novena semilla**. Raíz, su voz, la plantó en una
 maceta del pueblo; tres primaveras después abre los ojos: es **Sprout**.
 
 - Capítulo 0: las 8 semillas devuelven la respiración al Roble.
-- Capítulos 1–3: con el Roble vivo, cada reliquia (Brasa, Lágrima, Copo) vuelve a
-  su altar y su estación regresa al valle.
+- Capítulos 1–4: con el Roble vivo, cada reliquia (Brasa, Lágrima, Hoja de Ámbar,
+  Copo) vuelve a su altar y su estación regresa al valle, con su cinemática. Los
+  altares del otoño y del invierno están juntos, al sur de la plaza: el Viento
+  trae los dos.
 - Final: al Viento no se le vence, se le **dice su nombre**. Raíz revela a Sprout
   que es la novena semilla, «la que nadie robó», y las cuatro estaciones giran.
 
@@ -34,7 +39,8 @@ el diario de Raíz y las Cartas del Viento la amplían.
  [Riscos 0,0]  [Bosque 1,0] [Claro 2,0]  [Juncal 3,0]  [Cascada 4,0]
  [Barrio 0,1]  [PLAZA 1,1]  [Pradera 2,1][Orilla 3,1]  [Orilla E 4,1]
  [Playa 0,2]   [Camino 1,2] [Dunas 2,2]  [Lago 3,2]    [Cabo 4,2]
-               [Tronco 1,3] [Marisma 2,3][Jardín 3,3]  → Tronco Hueco (10-12, 0-2)
+               [Tronco 1,3] [Marisma 2,3][Jardín 3,3] [Ciénaga 4,3] → Tronco Hueco (10-12, 0-2)
+                                                        └→ Molino de la Hojarasca (18-20, -1..2)
 ```
 
 Interiores: casa de Sprout (9,9), tienda de Tilo (8,9), cabaña de Corteza (7,9,
@@ -51,8 +57,9 @@ Jardín).
 | 0 | Hablar con Raíz, alzar la **Hoja** (playa SO), reunir las **8 semillas** (5 a la vista, 3 en arbustos que brillan) | Al entregarlas, la zarza del NO se seca: se abre el norte |
 | 1 | Cueva del Topo → Escarabajo Rey → **Bellota-bomba** → Topo Real → **Brasa** | Las bombas abren grietas: playa E (marismas), corazón (pradera), cofre (cascada), cuarto (mirador) |
 | 2 | Tronco Hueco → Zángano Capitán → **Raíz-gancho** → Reina Avispa → **Lágrima** | El gancho cruza el agua: islas del juncal, del lago y del jardín; el verano seca el barro |
-| 3 | Tilo vende el **Farol** (tras el deshielo). Sendero (bomba + gancho) → Templo → Guardián de Hielo → **Vilano** → antorchas → cima → **Viento** → **Copo** | El vilano salta agujeros: cofre del Cabo, sala del vacío |
-| Fin | Entregar el Copo: créditos y el ciclo de las estaciones | Post-final: las estaciones giran en el valle |
+| 3 | Con el verano se secan las hojas podridas de la puerta del molino (Ciénaga). Molino → Espantapájaros → **Molinillo** → Ciervo de Ámbar → **Hoja de Ámbar** | El molinillo barre hojarasca y nieve: el **ventisquero** del Sendero |
+| 4 | Tilo vende el **Farol** (tras el deshielo). Sendero (molinillo + bomba + gancho) → Templo → Guardián de Hielo → **Vilano** → antorchas → cima → **Viento** → **Copo** | El vilano salta agujeros: cofre del Cabo, sala del vacío |
+| Fin | Entregar el Copo (Raíz pide antes el otoño): cinemática del invierno, el final en cuatro planos, créditos | Post-final: las estaciones giran en el valle |
 
 Extras en cualquier momento: Lupa (10 bayas → **Vaina voladora**), Moss (5 bayas →
 sopa; tras el verano regala la **Piel de rana**), Tilo (filo ×2, ×3 tras el
@@ -74,7 +81,8 @@ Se empieza con 3. Corazones enteros: pradera (bomba), lago (gancho), jardín sum
 (gancho), tienda de Tilo. Cuartos (4 = 1 corazón): juncal (gancho), mirador (bomba),
 pista de hielo del templo, marisma oeste, madriguera del camino, Cámara del Eco
 (cueva, tras la grieta), Estanque del Panal (tronco, con el gancho), Puente Roto
-(templo, con el vilano), pozo del barrio y tienda de Tilo.
+(templo, con el vilano), Sala de las Aspas (molino, bajo la hojarasca: molinillo),
+pozo del barrio y tienda de Tilo.
 
 ## Bellotas-bomba, cofres y emboscadas
 
@@ -152,6 +160,40 @@ están fuera de los cerrojos, así que no hay manera de quedarse sin salida.
   horizontal se esquiva **saltando con el vilano**. Herido hace caer carámbanos y barre
   dos veces seguidas. A 2 PV se encoge: háblale.
 
+### Molino de la Hojarasca (18-20, -1..2) · 11 salas
+
+La puerta está en la Ciénaga de las Cartas (4,3), tapada por hojas podridas hasta el
+verano. Dentro: **molinetes** (ψ) que giran con la ráfaga del molinillo y
+**hojarasca** (ξ) que tapa bayas, un cuarto de corazón… o agujeros.
+
+```
+                             [19,-1 CIERVO DE ÁMBAR]        [20,-1 llave grande: 3 molinetes en fila, hojarasca en medio]
+                                   Ł                                   │
+[18,0 laberinto de hojarasca: BRÚJULA] — [19,0 aspas: cuarto bajo las hojas]   [20,0 viento: molinete → verja mientras gira]
+                                   │ verja (2 molinetes a la vez)       ) cerrojo
+[18,1 ESPANTAPÁJAROS: molinillo] (─ [19,1 engranajes] ─ [20,1 despensa: emboscada → MAPA]
+                                   │                                    │
+[18,2 granero: emboscada → llave] ─ [19,2 zaguán (entrada)] ─ [20,2 sacos: grieta → llave; bellotero]
+```
+
+- Llaves en cualquier orden: la del granero (emboscada) y la de los sacos (bomba en la
+  grieta, con bellotero al lado) abren el cerrojo del Espantapájaros y el de la
+  despensa. Sin molinillo no se pasa de la Sala del Viento ni de los Engranajes.
+- Laberinto (18,0): nueve columnas de hojarasca; el camino bueno es (5,4)→(4,4)→(4,5)→
+  (3,5)→(3,6). La ráfaga pasa por encima de los agujeros y barre la siguiente pila.
+- Cámara de la Llave (20,-1): la primera ráfaga se come la hojarasca; la segunda
+  atraviesa los tres molinetes a la vez y abre la verja de la llave grande.
+- El Espantapájaros (12 PV): salta hacia ti, **clava el palo** (aviso: «!» y un anillo
+  rojo) y gira con los brazos abiertos soltando paja; al acabar se **marea** y entonces
+  la Hoja le entra (cuatro golpes por mareo). Suelta cuervos. Deja el **molinillo**.
+- El Ciervo de Ámbar (22 PV): lleva un **manto de hojarasca** en el que la Hoja resbala;
+  una ráfaga del molinillo se lo arranca (150 fotogramas, 110 herido; cuatro golpes
+  y vuelve a cubrirse). Ronda a distancia, **escarba y marca la embestida con huellas
+  en el suelo** (va a donde estabas al empezar) y, si choca contra la pared, se queda
+  **enganchado** un momento. Herido suelta dardos de hoja al chocar, pisotea para que
+  lluevan bellotas y llama cuervos; al final embiste dos veces. A 2 PV se tumba:
+  háblale. Tras la tregua se queda de huésped en su lecho.
+
 ## Combate
 
 La Hoja hace `bladeLvl` de daño (+1 con la Púa, +1 girando). Remolino: mantén Z
@@ -160,7 +202,17 @@ frente salvo con el remolino. Los caracoles se esconden al ser golpeados. Los
 golemitos de hielo solo caen con bombas. Los fuegos fatuos se apagan con el
 tornadito. La vaina aturde 90 fotogramas y hace 1 de daño.
 
-Ningún guardián baja de 2 PV. Guardianes: 18, 20 y 24 PV (tres, tres y cuatro golpes por cada vez que quedan vulnerables), en tres fases (al 64 % y al 34 % de vida). Minijefes: 10, 10 y 8, con una segunda fase a media vida (el Rey embiste dos veces, el Zángano pica más rápido, el Guardián pisa más a menudo). Cada guardián exige el objeto de su mazmorra.
+El **molinillo** (X) lanza una ráfaga (una a la vez): barre hojarasca (ξ) y
+ventisqueros (∩), hace girar molinetes (ψ) y los atraviesa, tumba cuervos (100
+fotogramas), deja sin escudo a los caballeros de hoja (240), arranca del suelo a las
+raíces trampa, apaga fuegos fatuos y empuja al resto. Bichos del molino: el
+**cuervo** (2 PV) se posa, grazna y se lanza en picado a donde estabas; al remontar la
+Hoja no lo alcanza. El **caballero de hoja** (4 PV, 1 corazón por toque) para la Hoja
+de frente: por la espalda, tras su embestida o con el remolino. La **raíz trampa** (3
+PV) duerme bajo tierra; si la pisas te agarra y aprieta medio corazón cada medio
+segundo hasta que le das un tajo.
+
+Ningún guardián baja de 2 PV. Guardianes: 18, 20, 22 y 24 PV (tres, tres, cuatro y cuatro golpes por cada vez que quedan vulnerables), en tres fases (al 64 % y al 34 % de vida). Minijefes: 10, 10, 12 y 8, con una segunda fase a media vida (el Rey embiste dos veces, el Zángano pica más rápido, el Espantapájaros salta más y suelta más paja, el Guardián pisa más a menudo). Cada guardián exige el objeto de su mazmorra. Comprobado con un bot que solo pulsa teclas: el Ciervo cae 6 de 8 veces con 6 corazones y la Hoja afilada; el Espantapájaros, siempre.
 
 ## Equilibrio
 

@@ -68,14 +68,27 @@ const TXT = {
          "Tus bombas abrirán las grietas de la playa del este. En las marismas se alza el TRONCO HUECO.",
          "CAPÍTULO 2: LA LÁGRIMA DE VERANO" ],
   summer:[ "¡La Lágrima! El sol dormido despierta en ella.",
-           "Brillará en el ALTAR DEL VERANO, frente a su hermana. Y el otoño de las marismas, por fin, puede irse a dormir.",
+           "Brillará en el ALTAR DEL VERANO, frente a su hermana. Mira las marismas: por fin les llega el verano.",
+           "Pero el otoño viejo no se ha ido a dormir. Se ha escondido en el MOLINO de la Ciénaga, al este de las marismas.",
+           "Lo guarda el CIERVO DE ÁMBAR, un viejo amigo de mi hermano. Deja caer las hojas desde hace mil años, aunque nadie se lo agradezca.",
+           "Las hojas podridas que tapaban la puerta del molino ya se habrán secado al sol. Ve, brote. Y no le guardes rencor.",
+           "CAPÍTULO 3: LA HOJA DE ÁMBAR" ],
+  autumn:[ "¡La Hoja de Ámbar! Huele a castañas y a lluvia.",
+           "Caerá despacio en el ALTAR DEL OTOÑO. Mira el valle: las hojas se doran sin pudrirse. Así debe ser.",
            "Queda una sola estación: el INVIERNO. Esa no la robó nadie... mi hermano se la llevó consigo al PICO.",
-           "Allí sopla, solo, desde hace mil inviernos. Sube a verle, brote. No a vencerle.",
+           "Un VENTISQUERO tapa el Sendero del Último Invierno. El viento de tu MOLINILLO lo barrerá.",
+           "Allí arriba sopla, solo, desde hace mil inviernos. Sube a verle, brote. No a vencerle.",
            "Un TEMPLO guarda el paso a la cima. Necesitarás bomba, gancho y luz.",
-           "CAPÍTULO 3: EL COPO ETERNO" ],
+           "CAPÍTULO 4: EL COPO ETERNO" ],
+  molinilloGet:[ "¡El MOLINILLO!",
+                 "Un molinete de papel de colores. Equípalo (ENTER) y pulsa X: ¡sopla una ráfaga!",
+                 "Barre la HOJARASCA, hace girar los MOLINETES y aparta a los bichos. Hasta la nieve se rinde ante él." ],
+  amberGet:[ "¡La HOJA DE ÁMBAR!",
+             "Dorada y tibia. Aunque la sueltes, cae despacio.",
+             "El otoño entero cabe en ella. Llévasela a Raíz." ],
   cycle:[ "¡El Copo de mi hermano! Por fin dejó de aullar.",
           "No le vencimos, brote. Le recordamos. Es lo único que pedía.",
-          "Su altar le espera al sur, algo apartado. Él era así.",
+          "Su altar le espera al sur, junto al del otoño. Siempre llegaron juntos, el otoño y él.",
           "Y ahora... las CUATRO ESTACIONES vuelven a girar. Primavera, verano, otoño e invierno.",
           "Sprout... ¿nunca te extrañó que todos hablen de OCHO semillas?",
           "El Roble tuvo NUEVE. La novena la escondió en su savia, lejos de su hermano. Yo la planté en una maceta del pueblo.",
@@ -122,6 +135,7 @@ const DIARY={
 };
 /* piedras rúnicas: la historia de los dos hermanos */
 const RUNAS={
+  '0,12':[ "PIEDRA RÚNICA:\n«Aquí resuenan los que guardaron el año.","No son ellos: son su eco. No hablan ni ceden...","...pero se desvanecen cuando alguien les recuerda que ya no hace falta pelear.»" ],
   '1,0':[ "PIEDRA RÚNICA:\n«Dos hermanos\nplantó la Tierra:",
           "el Roble, señor\ndel verdor...",
           "...y el Viento,\nguardián del sueño\ninvernal.»" ],
@@ -150,6 +164,7 @@ const NPC_TALK={
     else if(!won) pg=["Truco de Lupa:\nlos arbustos que\nBRILLAN esconden","cosas. Córtalos\ncon tu hoja.","Y al ESCARABAJO\nACORAZADO písale\nla cola: el morro\nno hay quien lo\ncorte."];
     else if(!thawed) pg=["Mis flores tiritan.\nEse invierno del\nnorte no es normal.","Dicen que el TOPO\nREAL guarda una\nbrasa que arde."];
     else if(!summered) pg=["El sur huele a\nhojas viejas.\nMis dalias se\nagobian, brote."];
+    else if(!autumned) pg=["Las hojas que caen no son basura, brote: son la manta del jardín.","Sin otoño la tierra no descansa. Tráelo de vuelta."];
     else if(!cycled) pg=["¿Verano eterno?\nNo, brote: el\nsuelo también\nnecesita dormir.","Que vuelva el\ninvierno. Las\nraíces sueñan\nbajo la nieve."];
     else pg=["¡Las cuatro\nestaciones!\nJardín perfecto.","Hasta el aire\nhuele a verde."];
     if(hasBlade&&!hasBoomer) pg=pg.concat(["Si me traes 10\nBAYAS te preparo\nalgo que VUELA."]);
@@ -161,6 +176,7 @@ const NPC_TALK={
     if(!won) pg=["Vi brillar algo en\nla lengua de arena.\nUn bicho lo vigila."];
     else if(!thawed) pg=["El agua baja\nhelada del norte.","Los peces tiemblan\nbajo el hielo."];
     else if(!summered) pg=["La marisma baja\nparda y amarga.","Otoño podrido,\ndice mi caña.\nY mi caña sabe."];
+    else if(!autumned) pg=["El verano ha vuelto al agua. ¡Hasta los renacuajos sonríen!","Pero en la Ciénaga las hojas ya no caen: se amontonan en el viejo molino. Raro, raro."];
     else if(!cycled) pg=["¡Pican otra vez!\nTe debo una,\nbrote.","Los peces esperan\nel hielo para\ndormir. Cosas\nsuyas."];
     else pg=["Pesqué bajo la\nprimera nieve.","Hermoso, brote.\nTodo en su sitio."];
     return pg.concat(["Tráeme 5 BAYAS y\nte hago mi sopa.\nCura del todo."]);
@@ -226,7 +242,7 @@ const WIND_PEACE=[
 const CREDITS=[
   'SPROUT','y las 8 semillas','',
   'una aventura de','NAHUELGABE','',
-  'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Viento del Norte','',
+  'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Ciervo de Ámbar','El Viento del Norte','',
   'LOS VECINOS','Petra · Lupa · Moss','Tilo · Corteza','',
   'LA VOZ DEL ROBLE','Raíz','',
   'Ocho semillas.','Cuatro estaciones.','Ningún guardián','ha muerto.','',
@@ -278,7 +294,7 @@ const PETRA_WAKE=[
 ];
 const PETRA_WAKE2=["(Petra sale\ncorriendo. La\npuerta queda\nabierta.)"];
 /* señales nuevas */
-TXT.signs['1,1']=["PLAZA DE LAS\nESTACIONES.","Aquí vive Raíz,\nla voz del Roble.\nTres altares\nvacíos lo rodean."];
+TXT.signs['1,1']=["PLAZA DE LAS\nESTACIONES.","Aquí vive Raíz,\nla voz del Roble.\nCuatro altares\nvacíos lo rodean."];
 TXT.signs['2,1']=["PRADERA DEL\nRECUERDO. Este:\nla orilla de Moss.","Norte: el claro\ndel bosque."];
 TXT.signs['1,2']=["CAMINO DE LOS\nDIENTES DE LEÓN.","Oeste: la playa.\nEste: las dunas."];
 TXT.signs['3,0']=["JUNCAL DEL NORTE.\nCuidado con los\nmurciélagos."];
@@ -332,6 +348,10 @@ const GUEST_TALK={
   viento(){
     if(!cycled) return ["(El Viento no dice\nnada. Canturrea\nbajito.)"];
     return ["—...gracias por\ndecir mi nombre,\nbrote.","—Bajaré cada\ninvierno. Y me iré\ncada primavera.\nEs lo justo."]; },
+  ciervo(){
+    if(!autumned) return ["—Lleva la HOJA DE ÁMBAR al Roble, brote. Que caiga despacio en su altar.","—Yo me quedo aquí, entre las hojas. Por fin puedo tumbarme."];
+    if(!cycled) return ["—El otoño ya está en casa. Ahora le toca al Viento del Norte.","—Si subes al pico, dile que el Ciervo sigue dejando caer las hojas. Él entenderá."];
+    return ["—Las hojas caen y nadie se enfada. Qué cosa más rara.","—Gracias, brote. El molino vuelve a moler."]; },
 };
 /* el pozo de los deseos */
 const WELL_TALK=["Un pozo viejo.\nEl agua brilla al\nfondo, muy abajo."];
@@ -340,8 +360,9 @@ const WELL_DONE=["(Chof.)","(Silencio.)","(...y algo sube\nflotando desde el\nfo
 /* nombres de objeto para la tarjeta de «¡nuevo!» */
 const ITEM_NAMES={blade:'HOJA ANCESTRAL',bomb:'BELLOTA-BOMBA',hook:'RAÍZ-GANCHO',boomer:'VAINA VOLADORA',lantern:'FAROL DE BRASA',feather:'VILANO DE PETRA',shield:'ESCUDO DE CORTEZA',ember:'BRASA DE PRIMAVERA',tear:'LÁGRIMA DE VERANO',flake:'COPO ETERNO'};
 AMULETS.susurro={name:'SUSURRO DEL VIENTO',desc:'El Remolino se\ncarga al instante\ny el tornadito\nvuela más lejos.'};
-const CHAPTER_NAMES=['Prólogo · El brote','Cap. 1 · La Brasa','Cap. 2 · La Lágrima','Cap. 3 · El Copo','Epílogo · El ciclo'];
-const CHAPTER_SHORT=['Prólogo','La Brasa','La Lágrima','El Copo','Epílogo'];
+AMULETS.trebol={name:'TRÉBOL DE CUATRO',desc:'Trae suerte: más corazones y bayas de bichos y hierba.'}; // final de los trueques (12c)
+const CHAPTER_NAMES=['Prólogo · El brote','Cap. 1 · La Brasa','Cap. 2 · La Lágrima','Cap. 3 · El Ámbar','Cap. 4 · El Copo','Epílogo · El ciclo'];
+const CHAPTER_SHORT=['Prólogo','La Brasa','La Lágrima','El Ámbar','El Copo','Epílogo'];
 /* más voces en el pueblo */
 NPC_TALK.h=function(){
   if(!elderMet) return ["¡Corre a la PLAZA!\nEl abuelo Raíz te\nespera. Al ESTE,\nbajo el árbol."];
@@ -349,6 +370,7 @@ NPC_TALK.h=function(){
   if(!won) return ["¿Una hoja gigante?\n¡QUÉ ENVIDIA!","Yo solo tengo este\ndiente de león.\nNo corta nada.","Si alguna vez\nencuentras un\nVILANO grande...\n¡es mío, eh!"];
   if(!thawed) return ["¿Has visto el\nespino seco del\nnorte? Da repelús.","Mamá llama\nRODAPÚAS a los\nerizos de allí.","Si se hacen bola,\n¡ni los toques\nde frente!"];
   if(!summered) return ["¡Ha vuelto la\nprimavera!\n¡Eres mi héroe!","Oye... el abuelo\nRaíz te mira raro.","Como se mira a un\nnieto. Cosas mías,\nseguro."];
+  if(!autumned) return ["¿Has visto el MOLINO de la Ciénaga? ¡Las aspas giran otra vez!","Dicen que dentro duerme un CIERVO con cuernos de ámbar...","...y un ESPANTAPÁJAROS que se mueve cuando no lo miras. ¡Brrr!"];
   if(!cycled) return ["El abuelo dice\nque aún falta el\nINVIERNO.","¿Y quién quiere\nfrío?... ¿O sí?\nYa no sé.",hasFeather?"¡Ese vilano es\nMÍO! ...Bueno,\nquédatelo. Vuela\nmejor contigo.":"En el pico hay un\nTEMPLO viejo. Dicen\nque guarda un\nVILANO enorme."];
   return ["¡Está nevando y\nNO da miedo!","Es como azúcar.\n¡El invierno\ntambién es bonito!"];
 };

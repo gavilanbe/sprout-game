@@ -31,14 +31,17 @@ Resolución real de Game Boy (160×144), tiles de 16 px, paleta GBC y banda sono
 *chiptune* generada en vivo con WebAudio. **Cero dependencias, cero paso de build**:
 HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
 
-- **55 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
-  un glaciar, una cala escondida, cuevas secretas bajo los arbustos y **tres
-  mazmorras** con llaves, puertas de guardián y puzles.
-- **Tres guardianes que no mueren** (el Topo Real, la Reina Avispa y el Viento del
-  Norte) y **tres minijefes** (el Escarabajo Rey, el Zángano Capitán y el Guardián
-  de Hielo), cada uno con su truco.
-- **Seis herramientas** — la Hoja Ancestral, la Bellota-bomba, la Raíz-gancho, la
-  Vaina voladora, el Farol de brasa y el Vilano — y **nueve amuletos** equipables
+- **87 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
+  un glaciar, una cala escondida, nueve secretos (cuevas tras grietas, un manantial,
+  una madriguera helada, un tesoro enterrado…) y **cuatro mazmorras** largas, con
+  emboscadas que cierran las puertas, llaves en cualquier orden, mapa y brújula.
+- **Cuatro guardianes que no mueren** (el Topo Real, la Reina Avispa, el Ciervo de
+  Ámbar y el Viento del Norte), por fases y cada uno exige la herramienta de su
+  mazmorra, y **cuatro minijefes** (el Escarabajo Rey, el Zángano Capitán, el
+  Espantapájaros y el Guardián de Hielo). Tras el final, **el Eco de los
+  Guardianes**: sus ecos, uno detrás de otro.
+- **Siete herramientas** — la Hoja Ancestral, la Bellota-bomba, la Raíz-gancho, la
+  Vaina voladora, el Farol de brasa, el Molinillo y el Vilano — y **nueve amuletos** equipables
   (dos a la vez) que cambian cómo juegas.
 - **Backtracking de verdad**: cada herramienta reabre el valle (rocas agrietadas,
   islas, agujeros, cuevas oscuras) con corazones, cuartos de corazón y amuletos.
@@ -49,9 +52,14 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
   rúnicas, libros en las estanterías, las cinco **Cartas del Viento** que nadie
   abrió y guardianes que siguen hablando después de la tregua. Todo se relee en
   la pestaña de Recuerdos.
-- Tienda de Tilo, cabaña de Corteza, el pozo de los deseos, trueques con los
-  vecinos, 19 tipos de bicho, clima por región y las cuatro estaciones girando
-  al final.
+- Mejoras que se notan: la Hoja en tres temples (la última lanza un rayo de hoja),
+  el Remolino y el **Gran Remolino**, el **Escudo de Roble** que devuelve disparos,
+  bellotas-bomba contadas con **belloteros** que rebrotan y el zurrón de bellotas.
+- Tienda de Tilo, cabaña de Corteza, el pozo de los deseos, una **cadena de
+  trueques** de ocho pasos, **pesca** con Moss, 22 tipos de bicho, clima por región,
+  cinemáticas de estación, un final en cuatro planos y las estaciones girando.
+- Opciones: volumen de música y efectos, dificultad, teclas reasignables,
+  vibración del mando y mandos táctiles con el estilo del juego.
 - HUD con paneles biselados: corazones que palpitan cuando quedan pocos, ranura
   Z con la Hoja y su nivel, ranura X con el objeto (destella al usarlo),
   contadores que rebotan, burbuja «Z» sobre lo que puedes usar y cartel con el
@@ -114,8 +122,9 @@ templo, cima, guardián, minijefe, gruta, marchitarse y créditos.
 El Viento del Norte robó las **8 semillas doradas** del Gran Roble y las esparció
 por el valle. Sin ellas, todo el verdor se apaga. Eres **Sprout**, un brote recién
 despierto en una maceta. Raíz, el anciano de la plaza, te manda a por la **Hoja
-Ancestral**… y de ahí, a tres mazmorras donde duermen las reliquias de las
-estaciones: la **Brasa de Primavera**, la **Lágrima de Verano** y el **Copo Eterno**.
+Ancestral**… y de ahí, a cuatro mazmorras donde duermen las reliquias de las
+estaciones: la **Brasa de Primavera**, la **Lágrima de Verano**, la **Hoja de Ámbar**
+y el **Copo Eterno**.
 
 **Ningún guardián muere.** Cuando se rinden, acércate y habla con Z. Y si vuelves
 a visitarlos, tendrán algo que decirte.

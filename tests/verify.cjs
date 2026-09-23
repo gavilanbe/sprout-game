@@ -26,10 +26,10 @@ const server=http.createServer((req,res)=>{
     window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } };
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
   });
-  await check('Todos los mapas miden 10×8; hay 8 semillas, 3 corazones, 8 cuartos y 10 diarios',async()=>{
+  await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:3,pieces:8,diaries:10,maps:66});
+      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:87});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -177,8 +177,9 @@ const server=http.createServer((req,res)=>{
   });
   await check('Camino crítico: el Templo de la Cima (bloques, cerrojo, llave grande, Guardián, vilano, antorchas, cima, Viento)',async()=>{
     const r=await ev(()=>{ const log=[];
-      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; hasBomb=true; hasHook=true; hasLantern=true; xItem='bomb'; announced8=true; bloomDone=true;
-      __go(1,-2,72,90); enemies=[]; player.x=4*16; player.y=5*16-4; keys.alt=true; __step(1); __step(90); log.push(['grieta',grid[4][4]]);
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; autumned=true; hasPinwheel=true; hasBomb=true; hasHook=true; hasLantern=true; xItem='bomb'; announced8=true; bloomDone=true;
+      __go(1,-2,72,90); enemies=[]; const drift=grid[5][4]; xItem='molinillo'; player.x=4*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(30); log.push(['ventisquero',drift,grid[5][4]]);
+      xItem='bomb'; player.x=4*16; player.y=5*16-4; keys.alt=true; __step(1); __step(90); log.push(['grieta',grid[4][4]]);
       xItem='hook'; player.x=4*16; player.y=4*16-4; player.dir=1; keys.alt=true; __step(1); __step(70); log.push(['canal',(player.y+12)>>4]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['templo',sx,sy]);
       __go(14,1,72,90); enemies=[]; __skipDialog();
@@ -195,9 +196,115 @@ const server=http.createServer((req,res)=>{
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['puerta',grid[0][4]]); player.y=-6; __step(1); log.push(['cima',sx,sy]);
       __skipDialog(); boss.hp=2; __step(3); __skipDialog(); boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
       const fl=pickups.find(p=>p.kind==='flake'); if(fl){ player.x=fl.x; player.y=fl.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['copo',boss3Done,hasFlake]);
-      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['final',cycled,state]);
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); for(let i=0;i<30&&state!=='credits';i++){ if(state==='dialog') __skipDialog(); else { __step(45); keys.fire=true; __step(1); } } log.push(['final',cycled,state]);
       return log; });
-    eq(r,[['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],['copo',true,true],['final',true,'credits']]);
+    eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],['copo',true,true],['final',true,'credits']]);
+  });
+  await check('Camino crítico: el Molino de la Hojarasca (emboscadas, grieta, Espantapájaros, molinillo, molinetes, mapa, brújula, llave grande, Ciervo, otoño)',async()=>{
+    const r=await ev(()=>{ const log=[];
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; hasBomb=true; bombAmmo=10; hasHook=true; xItem='bomb'; announced8=true; bloomDone=true;
+      // la Ciénaga: con el verano, la hojarasca podrida ya no tapa la puerta del molino
+      __go(4,3,72,90); enemies=[]; log.push(['ciénaga',grid[2][7],grid[1][7]]);
+      player.x=7*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDialog(); log.push(['molino',sx,sy]);
+      // Granero: emboscada → llave
+      __go(18,2,130,60); const shut=grid[3][9]; enemies=[]; __step(2); const k1=pickups.find(p=>p.kind==='key'); if(k1){ player.x=k1.x; player.y=k1.y-4; __step(20); __skipDialog(); } log.push(['granero',shut,grid[3][9],dungeonKeys.molino]);
+      // Sala de los Sacos: la bomba abre la pared agrietada → llave
+      __go(20,2,20,60); enemies=[]; player.x=5*16; player.y=3*16-4; keys.alt=true; __step(1); player.x=2*16; player.y=5*16-4; __step(90); const c=grid[3][6];
+      const k2=pickups.find(p=>p.kind==='key'); if(k2){ player.x=k2.x; player.y=k2.y-4; __step(3); __skipDialog(); } log.push(['sacos',c,dungeonKeys.molino]);
+      // Engranajes: cerrojo del oeste (las llaves valen en cualquier orden)
+      __go(19,1,72,88); enemies=[]; player.x=1*16; player.y=3*16-4; player.dir=2; keys.fire=true; __step(2); log.push(['cerrojo oeste',grid[3][0],grid[4][0],dungeonKeys.molino]);
+      // el Espantapájaros: mareado, la Hoja le arranca paja; suelta el molinillo
+      __go(18,1,130,60); __skipDialog(); enemies=[]; const mb=!!midboss&&midboss.type; let n=0;
+      while(midboss&&n++<300){ midboss.st='dizzy'; midboss.t=60; midboss.hits=0; midboss.flash=0; midboss.hz=0; player.x=midboss.x+4; player.y=midboss.y+22; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); }
+      __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['espantapájaros',mb,midScare,hasPinwheel]);
+      // Engranajes: dos molinetes girando a la vez abren el norte para siempre
+      xItem='molinillo'; __go(19,1,72,88); enemies=[]; player.x=2*16; player.y=3*16-4; player.dir=1; keys.alt=true; __step(1); __step(14);
+      player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(12); log.push(['engranajes',grid[0][4],grid[0][5],opened.has('G19,1')]);
+      // Despensa: emboscada → cofre del mapa; y el cerrojo del norte
+      __go(20,1,20,60); enemies=[]; __step(2); const chest=grid[4][4]; player.x=4*16; player.y=5*16-4; player.dir=1; keys.fire=true; __step(1); const s1=state; itemT=0; __step(2); __skipDialog();
+      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['despensa',chest,s1,dmaps.has('molino'),grid[0][4],dungeonKeys.molino]);
+      // Sala del Viento: mientras gira un molinete la verja se abre; luego se cierra
+      __go(20,0,72,100); enemies=[]; const g0=grid[3][4]; player.x=2*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(10); const g1=grid[3][4]; __step(160); log.push(['viento',g0,g1,grid[3][4]]);
+      // Cámara de la Llave: la hojarasca frena la ráfaga; con el paso libre, una sola ráfaga gira los tres
+      __go(20,-1,72,100); enemies=[]; player.x=1*16; player.y=2*16-4; player.dir=3; keys.alt=true; __step(1); __step(14); const leaf=grid[2][3], gA=grid[5][6];
+      keys.alt=true; __step(1); __step(30); log.push(['molinetes',leaf,gA,grid[5][6]]);
+      const bk=pickups.find(p=>p.kind==='bigkey'); if(bk){ player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); } log.push(['llave grande',!!bigKeys.molino]);
+      // Sala de las Aspas: un cuarto de corazón bajo las hojas; la puerta del guardián
+      __go(19,0,72,100); enemies=[]; player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(14); const pc=pickups.find(p=>p.kind==='piece'), p0=pieces; if(pc){ player.x=pc.x; player.y=pc.y-4; __step(20); __skipDialog(); }
+      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['aspas',pieces-p0,grid[0][4]]);
+      // Laberinto de Hojarasca: bajo las hojas, suelo o agujero; la brújula al otro lado
+      __go(18,0,120,60); enemies=[]; const gust=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); __step(12); };
+      gust(6,4,2); gust(5,4,2); gust(4,4,2); gust(4,4,0); gust(4,5,2); gust(3,5,0);
+      player.x=1*16; player.y=2*16-4; player.dir=1; keys.fire=true; __step(1); itemT=0; __step(2); __skipDialog();
+      log.push(['laberinto',grid[4][5],grid[4][4],grid[4][3],grid[5][4],grid[5][3],grid[6][3],dcomp.has('molino')]);
+      // el Ciervo de Ámbar: se rinde y cede la Hoja de Ámbar
+      __go(19,-1,72,100); __skipDialog(); enemies=[]; projs=[]; boss.hp=2; hitStop=0; __step(3); __skipDialog(); const y=boss.st; player.atk=0; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
+      const am=pickups.find(p=>p.kind==='amber'); if(am){ player.x=am.x; player.y=am.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['ciervo',y,boss4Done,hasAmber]);
+      // la estera del zaguán devuelve a la Ciénaga, bajo la puerta
+      __go(19,2,72,80); enemies=[]; player.y=100; __step(2); log.push(['salida',sx,sy,(player.x+8)>>4,(player.y+12)>>4]);
+      // a Raíz: vuelve el otoño (cinemática de estación) y empieza el capítulo 4
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); const st=state; for(let i=0;i<20&&state!=='play';i++){ if(state==='dialog') __skipDialog(); else { __step(45); keys.fire=true; __step(1); __step(25); } }
+      log.push(['otoño',autumned,st,state,chapterIdx(),grid[6][6],questList().some(q=>q.id==='templo')]);
+      return log; });
+    eq(r,[['ciénaga','.','G'],['molino',19,2],['granero','=','q',1],['sacos','q',2],['cerrojo oeste','q','q',1],['espantapájaros','scare',true,true],['engranajes','q','q',true],['despensa','¤','itemget',true,'q',0],
+      ['viento','=','q','='],['molinetes','q','=','q'],['llave grande',true],['aspas',1,'q'],['laberinto','q','q','°','q','q','q',true],['ciervo','yield',true,true],['salida',4,3,7,2],['otoño',true,'seasoncine','play',4,'{',true]]);
+  });
+  await check('Molinillo: barre hojarasca (con bayas debajo, y se recuerda), tumba cuervos y desarma caballeros; la hojarasca podrida resiste hasta el verano',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; hasPinwheel=true; xItem='molinillo'; hitStop=0;
+      summered=false; __go(4,3,72,90); enemies=[]; player.x=8*16; player.y=2*16-4; player.dir=2; keys.alt=true; __step(1); __step(12); const rotten=grid[2][7];
+      summered=true; __go(4,3,72,90); const dry=grid[2][7];
+      __go(19,2,72,88); enemies=[]; pickups=[]; player.x=3*16; player.y=2*16-4; player.dir=2; keys.alt=true; __step(1); __step(12); const berriesOut=pickups.filter(p=>p.kind==='berry').length, blown=grid[2][2];
+      __go(19,2,72,88); const kept=grid[2][2];
+      enemies=[spawnEnemy('crow',6,4,1),spawnEnemy('knight',2,4,1)]; enemies[0].hp=2; enemies[1].hp=4; hitStop=0;
+      player.x=4*16; player.y=4*16-4; player.dir=3; player.inv=60; keys.alt=true; __step(1); __step(12); const crowDown=enemies[0].stun>0; __step(24);
+      const kn=enemies.find(e=>e.type==='knight'); kn.x=2*16; kn.y=4*16; kn.st='rest'; kn.t=0; player.x=4*16; player.y=4*16-4; player.dir=2; player.inv=60; keys.alt=true; __step(1); __step(12); const bare=kn.bare>0;
+      __step(30); const bl=spawnEnemy('blob',6,4,0); bl.hp=9; enemies=[bl]; const bx0=bl.x; player.x=4*16; player.y=4*16-4; player.dir=3; player.inv=60; keys.alt=true; __step(1); __step(8); const pushed=bl.x-bx0>6;
+      // el ventisquero del Sendero: sin viento es un muro; la ráfaga lo deshace entero y se recuerda
+      __go(1,-2,72,100); enemies=[]; const drift=[grid[5][3],grid[5][4],grid[5][5]].join(''), wall=isSolid('∩'); player.x=4*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(20);
+      const cleared=[grid[5][3],grid[5][4],grid[5][5]].join(''); __go(1,-2,72,100); const still=grid[5][4];
+      return [rotten,dry,berriesOut,blown,kept,crowDown,bare,pushed,drift,wall,cleared,still]; }),['ξ','.',5,'q','q',true,true,true,'∩∩∩',true,'nnn','n']);
+  });
+  await check('Bichos del molino: el cuervo grazna y se lanza en picado (al remontar la Hoja no llega); el caballero para la Hoja de frente y cae por la espalda; la raíz te agarra, aprieta y un tajo te suelta',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; hitStop=0; player.maxHp=player.hp=12;
+      __go(19,2,72,88); enemies=[]; pickups=[];
+      const c=spawnEnemy('crow',4,1,1); c.hp=2; enemies=[c]; player.x=4*16; player.y=5*16-4; player.inv=60;
+      let caw=false; for(let i=0;i<90&&c.st!=='swoop';i++){ __step(1); if(c.st==='caw') caw=true; } const swoop=c.st==='swoop', y0=c.y; __step(6); const dove=c.y>y0;
+      c.st='back'; c.p=[16,16]; c.t=0; c.flash=0; player.x=c.x; player.y=c.y+10; player.dir=1; player.atk=11; hitStop=0; __step(1); const untouched=c.hp===2;
+      player.atk=0; const k=spawnEnemy('knight',4,3,1); k.hp=4; enemies=[k]; __step(1); __step(8);
+      k.face=-1; k.st='walk'; k.t=1; k.flash=0; player.x=k.x-14; player.y=k.y; player.dir=3; player.atk=11; player.inv=60; hitStop=0; __step(1); const blocked=k.hp===4;
+      player.atk=0; __step(2); k.face=-1; k.st='walk'; k.t=1; k.flash=0; player.x=k.x+14; player.y=k.y; player.dir=2; player.atk=11; player.inv=60; hitStop=0; __step(1); const back=k.hp<4;
+      player.atk=0; const rt=spawnEnemy('root',4,4,1); rt.hp=3; enemies=[rt]; player.x=4*16; player.y=4*16-8; player.inv=0; hitStop=0; __step(2); const grabbed=rt.st==='grab';
+      const hp0=player.hp, x0=player.x; keys.left=true; for(let i=0;i<24;i++){ hitStop=0; __step(1); } keys.left=false; const held=player.x===x0, squeezed=player.hp<hp0;
+      player.atk=11; hitStop=0; __step(2); const freed=rt.st==='up'; player.atk=0; keys.left=true; for(let i=0;i<10;i++){ hitStop=0; __step(1); } keys.left=false; const moved=player.x<x0;
+      return [caw,swoop,dove,untouched,blocked,back,grabbed,held,squeezed,freed,moved]; }),[true,true,true,true,true,true,true,true,true,true,true]);
+  });
+  await check('El Espantapájaros: salta hacia ti, clava el palo (aviso) y gira sin que la Hoja le entre; mareado sí; suelta el MOLINILLO',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; thawed=summered=true; hitStop=0; midScare=false;
+      __go(18,1,130,60); __skipDialog(); enemies=[]; const m=midboss, hp0=m.hp;
+      m.st='hop'; m.t=1; m.hops=9; __step(1); const plant=m.st; for(let i=0;i<40&&m.st==='plant';i++) __step(1); const spin=m.st;
+      player.x=m.x+4; player.y=m.y+22; player.dir=1; player.atk=11; m.flash=0; player.inv=60; hitStop=0; __step(1); const clang=m.hp===hp0;
+      let n=0; while(midboss&&n++<300){ midboss.st='dizzy'; midboss.t=60; midboss.hits=0; midboss.flash=0; player.x=midboss.x+4; player.y=midboss.y+22; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); }
+      __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
+      return [plant,spin,clang,midScare,hasPinwheel,xItem]; }),['plant','spin',true,true,true,'molinillo']);
+  });
+  await check('El Ciervo de Ámbar: la Hoja resbala en su manto; el molinillo se lo arranca; marca la embestida en el suelo y al chocar se engancha; se rinde y se queda de huésped',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; thawed=summered=true; hasPinwheel=true; xItem='molinillo'; hitStop=0;
+      boss4Done=false; __go(19,-1,72,100); __skipDialog(); enemies=[]; projs=[]; const b=boss, hp0=b.hp;
+      b.st='idle'; b.t=999; b.x=56; b.y=30; player.x=b.x+8; player.y=b.y+36; player.dir=1; player.atk=11; b.flash=0; b.clangT=0; player.inv=60; hitStop=0; __step(1); const clang=b.hp===hp0;
+      player.atk=0; __step(16); keys.alt=true; __step(1); __step(12); const bare=b.mantle===0;
+      b.t=999; b.flash=0; player.x=b.x+8; player.y=b.y+36; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); const hurtB=b.hp<hp0;
+      b.mantle=1; b.st='idle'; b.t=1; b.cyc=0; player.atk=0; player.x=20; player.y=b.y+4; hitStop=0; __step(1); const wind=b.st, ax=Math.sign(b.ax);
+      player.y=b.y+60; for(let i=0;i<120&&b.st!=='stuck';i++){ hitStop=0; player.inv=60; __step(1); } const stuck=b.st;
+      b.hp=2; hitStop=0; __step(3); __skipDialog(); const yl=b.st; player.atk=0; player.x=b.x+8; player.y=b.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
+      const am=pickups.find(p=>p.kind==='amber'); if(am){ player.x=am.x; player.y=am.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
+      __go(19,-1,72,100); return [clang,bare,hurtB,wind,ax,stuck,yl,boss4Done,hasAmber,npcs.some(n=>n.guest==='ciervo'),boss===null]; }),[true,true,true,'windup',-1,'stuck','yield',true,true,true,true]);
+  });
+  await check('El otoño se guarda (molinillo, Ciervo, Hoja de Ámbar); misiones del molino; sin otoño, Raíz no acepta el Copo',async()=>{
+    eq(await ev(()=>{ newGame(); curSlot=2; state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=true; hasPinwheel=true; midScare=true; hasAmber=true; boss4Done=true; save();
+      const d=readSlot(2); hasPinwheel=midScare=hasAmber=boss4Done=false; loadGame(d); const q=questList();
+      const saved=[hasPinwheel,midScare,hasAmber,boss4Done,autumned,chapterIdx(),q.find(x=>x.id==='molino').done,q.find(x=>x.id==='ambar2').done];
+      hasAmber=false; hasFlake=true; __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); const talk=state; __skipDialog();
+      return [saved,talk,cycled,state]; }),[[true,true,true,true,false,3,true,false],'dialog',false,'play']);
   });
   await check('Emboscada: al entrar se cierran las puertas; al vencer se abren y cae la llave',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true;
@@ -235,12 +342,93 @@ const server=http.createServer((req,res)=>{
       boss.st='sweep'; boss.x=player.x-8; boss.y=player.y-8; boss.vx=.1; player.inv=0; jumpT=10; const hpP=player.hp; __step(1);
       return [s1,s2,hit,player.hp===hpP]; }),['drop','rest',true,true]);
   });
+  await check('Cinemática de estación y final: se ven, se saltan con Z y devuelven el control',async()=>{
+    eq(await ev(()=>{ let done=0; newGame(); state='play'; inBed=false; introDone=true; hitStop=0;
+      playSeasonCinematic('verano',()=>{ done++; }); const s1=state; __step(45); keys.fire=true; __step(1); __step(25); const s2=state;
+      playEnding(()=>{ done++; state='credits'; creditsT=0; }); const s3=state; for(let i=0;i<4;i++){ __step(35); keys.fire=true; __step(1); } __step(2);
+      return [s1,s2,s3,state,done]; }),['seasoncine','play','ending','credits',2]);
+  });
+  await check('Los créditos avanzan y Z devuelve al valle al terminar',async()=>{
+    eq(await ev(()=>{ newGame(); state='credits'; creditsT=0; hitStop=0; __step(10); const t=creditsT; creditsT=CREDITS.length*22+100; keys.fire=true; __step(1); return [t>0,state]; }),[true,'play']);
+  });
+  await check('El Eco de los Guardianes: tras el final la Gruta baja al Eco; cada eco se disuelve y abre la verja',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=cycled=true; hasBomb=true; bombAmmo=20; hasHook=true; hasLantern=true; hitStop=0;
+      __go(5,9,72,60); const st=grid[1][8]; player.x=8*16; player.y=1*16-4; __step(3); const at=[sx,sy];
+      __go(1,12,20,60); const e=!!(boss&&boss.echo), g0=grid[3][9]; boss.hp=2; __step(2); const g1=grid[3][9];
+      __go(1,12,20,60); const t1=boss===null; hasPinwheel=true; __go(3,12,20,60); const c=boss&&boss.echo&&boss.type; boss.hp=2; __step(2); return [st,at,e,g0,g1,t1,c,grid[3][9]]; }),['>',[0,12],true,'=','q',true,'ciervo','q']);
+  });
+  await check('Ajustes: volúmenes, dificultad y vibración se guardan; la dificultad cambia el daño',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; __go(0,1,60,70);
+      keys.menu=true; __step(1); pausePage=4; pauseLR=0; optSel=OPT_ROWS.indexOf('musica'); keys.left=true; __step(1); keys.left=false; __step(1); const mv=opts.musVol;
+      optSel=OPT_ROWS.indexOf('efectos'); keys.right=true; __step(1); keys.right=false; __step(1); const sv=opts.sfxVol;
+      optSel=OPT_ROWS.indexOf('dificultad'); keys.fire=true; __step(1); const d1=opts.diff;
+      optSel=OPT_ROWS.indexOf('vibracion'); keys.fire=true; __step(1); const vb=opts.vib;
+      const saved=JSON.parse(localStorage.getItem('sprout.opts')); keys.menu=true; __step(1); const st=state;
+      opts.diff=2; player.hp=10; player.inv=0; hurt(2); const hard=10-player.hp; opts.diff=0; player.hp=10; player.inv=0; hurt(2); const easy=10-player.hp;
+      opts.diff=1; opts.musVol=7; opts.sfxVol=8; opts.vib=1; saveOpts(); player.inv=0;
+      return [mv,sv,d1,vb,saved.musVol,saved.diff,st,hard,easy]; }),[6,9,2,0,6,2,'play',3,1]);
+  });
+  await check('Controles: reasignar una tecla (se intercambia si choca) y volver a los de fábrica',async()=>{
+    eq(await ev(()=>{ assignKey('fire','k'); const a=KEYMAP.k, b=KEYMAP.z; assignKey('fire','x'); const c=KEYMAP.x, d=keysNow().alt; resetKeys(); return [a,b===undefined,c,d,KEYMAP.z,KEYMAP.x]; }),['fire',true,'fire','k','fire','alt']);
+  });
+  await check('Música: pistas nuevas, intensidad adaptativa, emboscada y pista desconocida sin errores',async()=>{
+    eq(await ev(()=>{ const names=['emboscada','molino','desafio','final','estacion'].filter(n=>TRACKS[n]&&TRACKS[n].len>0).length;
+      setTrack('jefe'); musicIntensity(1); const a=mIntTarget; musicIntensity(2); const b=mIntTarget; setTrack('valle'); musicIntensity(2); const c=mIntTarget;
+      setTrack('cueva'); musicAmbush(true); const amb=curTrack; musicAmbush(false); const back=curTrack; setTrack('no-existe'); const still=curTrack;
+      return [names,a,b,c,amb,back,still]; }),[5,1,2,0,'emboscada','cueva','cueva']);
+  });
+  await check('Audio sin chasquidos: el jefe a intensidad 2 y el efecto «block» (render offline, sin compresor)',async()=>{
+    // antes: una muestra de 2,4 en el vibrato del jefe y de 6,4 en «block»; lo normal ronda 0,2
+    const r=await ev(async()=>{
+      const SR=48000, keep={AC,AudioContext:window.AudioContext,curTrack,master,musicBus,sfxBus,delaySend,delayWet,musicOn,mIntTarget,VOICE:{...VOICE},WAVES:{...WAVES}};
+      const peak=d=>{ let p=0; for(const v of d) p=Math.max(p,Math.abs(v)); return +p.toFixed(3); };
+      const fresh=off=>{ window.AudioContext=function(){ return off; }; clearInterval(musicTimer); musicTimer=null; AC=null; audio(); master.disconnect(); };
+      try{
+        // música: el reloj avanza a mano y el programador llena 12 s por adelantado
+        const a=new OfflineAudioContext(1,SR*12,SR); let now=0; a.resume=()=>Promise.resolve(); Object.defineProperty(a,'currentTime',{get:()=>now});
+        musicOn=true; curTrack=null; fresh(a); musicBus.connect(a.destination); setTrack('jefe'); musicIntensity(2);
+        while(now<12){ now+=.1; await new Promise(res=>setTimeout(res,28)); } clearInterval(musicTimer); musicTimer=null;
+        const boss=peak((await a.startRendering()).getChannelData(0));
+        // el efecto suena «ahora», a mitad de render, como en tiempo real
+        const b=new OfflineAudioContext(1,SR/2,SR), resume=b.resume.bind(b); b.resume=()=>Promise.resolve(); musicOn=false; fresh(b); sfxBus.connect(b.destination);
+        b.suspend(.1).then(()=>{ SFX.block(); resume(); });
+        const block=peak((await b.startRendering()).getChannelData(0));
+        return [boss<.5,block<.5,boss,block];
+      }finally{ clearInterval(musicTimer); musicTimer=null; OUT=null; ({AC,curTrack,master,musicBus,sfxBus,delaySend,delayWet,musicOn,mIntTarget}=keep); window.AudioContext=keep.AudioContext;
+        Object.assign(VOICE,keep.VOICE); for(const k in WAVES) delete WAVES[k]; Object.assign(WAVES,keep.WAVES); if(AC) startMusic(); }
+    });
+    eq(r.slice(0,2),[true,true]);
+  });
   await check('Zurrón y tiendas por teclado: equipar objeto y amuleto, comprar en Tilo',async()=>{
     eq(await ev(()=>{ hasBomb=true; hasHook=true; amulets.add('raiz'); amulets.add('buho'); equipped=[null,null]; xItem='bomb'; __go(0,1,60,70);
       keys.menu=true; __step(1); const p=state; keys.right=true; __step(1); keys.right=false; __step(1); keys.fire=true; __step(1); const x1=xItem;
       keys.down=true; __step(1); keys.down=false; __step(1); keys.fire=true; __step(1); keys.right=true; __step(1); keys.right=false; __step(1); keys.fire=true; __step(1); const eq1=equipped.slice();
       keys.menu=true; __step(1); const back=state;
       berries=100; __sprout.shopUI('tilo'); keys.fire=true; __step(1); __skipDialog(); return [p,x1,eq1,back,bladeLvl,berries]; }),['pause','hook',['raiz','buho'],'play',2,85]);
+  });
+  await check('Gran Remolino: Tilo lo enseña tras el deshielo; carga antes, gira dos vueltas y barre más',async()=>{
+    eq(await ev(()=>{ hasBlade=true; hasSpin=true; hasBigSpin=false; bladeLvl=1; equipped=[null,null]; const th=thawed; thawed=false; __go(0,1,60,70); enemies=[]; npcs=[];
+      shopKind='tilo'; const locked=shopList().find(i=>i.id==='bigspin').off;
+      thawed=true; berries=100; __sprout.shopUI('tilo'); shopSel=shopList().findIndex(i=>i.id==='bigspin'); keys.fire=true; __step(1); __skipDialog(); if(state==='itemget'){ itemT=1; __step(1); __skipDialog(); }
+      const got=[hasBigSpin,berries]; state='play'; player.x=60; player.y=70; player.charge=0; hitStop=0; windProjs=[];
+      keys.fireHeld=true; __step(23); const ready=player.charge>=spinNeed(); keys.fireHeld=false; __step(1);
+      const r=[locked,got,ready,player.spin>20,meleeBox()[2],windProjs.some(w=>w.big)]; thawed=th; return r; }),[true,[true,40],true,true,60,true]);
+  });
+  await check('Rayo de Hoja: templada y con el vigor lleno, el tajo hiere de lejos; herido, no',async()=>{
+    eq(await ev(()=>{ hasBlade=true; bladeLvl=3; __go(1,2,40,40); const e=spawnEnemy('blob',7,2,0); e.hp=5; enemies=[e]; player.x=2*16; player.y=2*16-4; player.dir=3; player.hp=player.maxHp; hitStop=0;
+      keys.fire=true; __step(1); const shot=leafBeams.length; for(let i=0;i<40;i++){ hitStop=0; __step(1); } const dmg=5-e.hp;
+      leafBeams=[]; player.hp=player.maxHp-1; player.atk=0; keys.fire=true; __step(1); const hurtShot=leafBeams.length; player.hp=player.maxHp; bladeLvl=1;
+      return [shot,dmg,hurtShot]; }),[1,3,0]);
+  });
+  await check('Raíz-gancho: agarra un bicho pequeño (aturdido) y lo trae; también bayas lejanas',async()=>{
+    eq(await ev(()=>{ hasHook=true; xItem='hook'; equipped=[null,null]; __go(1,2,40,40); const e=spawnEnemy('blob',6,2,0); e.hp=9; enemies=[e]; const x0=e.x; player.x=2*16; player.y=2*16-4; player.dir=3; hitStop=0;
+      keys.alt=true; __step(1); const grabbed=!!grabRope&&e.stun>0; __step(14); const pulled=x0-e.x;
+      enemies=[]; pickups=[{kind:'berry',x:6*16+4,y:2*16+4,t:0}]; const b0=berries; keys.alt=true; __step(1); __step(16); return [grabbed,pulled>40,berries-b0,state]; }),[true,true,1,'play']);
+  });
+  await check('Escudo de Roble: lo que bloqueas justo al girarte rebota y hiere a quien lo lanzó',async()=>{
+    eq(await ev(()=>{ hasShield=true; shieldLvl=2; __go(1,2,40,40); const s=spawnEnemy('seton',7,2,0); enemies=[s]; projs=[]; const hp0=s.hp; player.x=3*16; player.y=2*16-4; player.inv=0; player.kx=player.ky=0; player.dir=2; hitStop=0; __step(1); player.dir=3; hitStop=0;
+      projs=[{x:5*16,y:2*16+8,vx:-1.3,vy:0,t:70,kind:'spore'}]; const hpP=player.hp; __step(16); const refl=projs.some(p=>p.reflected);
+      for(let i=0;i<40;i++){ hitStop=0; __step(1); } const r=[refl,s.hp<hp0,player.hp===hpP]; shieldLvl=1; return r; }),[true,true,true]);
   });
   await check('Segunda pasada: Petra despierta, escalera secreta, cartas y Susurro, pozo, libros y recuerdos, ajustes',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -255,6 +443,72 @@ const server=http.createServer((req,res)=>{
       keys.alt=true; __step(1); keys.fire=true; __step(1); log.push(['ajustes',pausePage,opts.textSpeed]); opts.textSpeed=1; saveOpts(); keys.menu=true; __step(1); log.push(['cerrar',state]);
       return log; });
     eq(r,[['petra','dialog','PETRA',true],['petra se va',true,0],['escalera','>',true],['bodega',4,9],['carta',1],['vuelta',1,0],['susurro',true,true],['pozo',true,5,1],['libro','dialog',true,6],['recuerdos',3,'dialog','pause'],['ajustes',4,2],['cerrar','play']]);
+  });
+  await check('Secretos del valle: grieta del risco (bomba), corro de las hadas y Manantial que cura, isla (gancho), madriguera (farol), refugio y cebo (vaina)',async()=>{
+    const r=await ev(()=>{ const log=[]; const settle=()=>{ for(let i=0;i<10&&state!=='play';i++){ if(state==='itemget') itemT=0; __step(2); __skipDialog(); } };
+      newGame(); state='play'; introDone=true; elderMet=true; hasBlade=true; hitStop=0; wakeT=0; inBed=false; showToast=()=>{};
+      // la grieta de los Riscos: solo una bomba la abre; dentro, la Cueva del Eco Dormido
+      hasBomb=true; xItem='bomb'; bombAmmo=10; amulets.add('topo'); equipped=['topo',null]; __go(0,0,128,40); enemies=[]; player.x=8*16; player.y=2*16-4; player.dir=1;
+      const g0=grid[1][8]; keys.alt=true; __step(1); __step(90); enemies=[]; hitStop=0; log.push(['grieta',g0,grid[1][8],secretsFound()]);
+      player.x=8*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; settle(); log.push(['eco',sx,sy,regionOf(sx,sy),pickups.some(p=>p.kind==='piece')]);
+      player.x=5*16; player.y=6*16-4; __step(3); log.push(['fuera',sx,sy,(player.x+8)>>4,(player.y+13)>>4]);
+      // el corro de las hadas: la Hoja descubre la escalera del Manantial
+      __go(2,0,112,90); enemies=[]; player.x=7*16; player.y=5*16-4; player.dir=1; keys.fire=true; __step(16); log.push(['corro',grid[4][7],opened.has('HS2,0')]);
+      player.x=7*16; player.y=4*16-4; __step(3); settle(); log.push(['manantial',sx,sy]);
+      player.hp=2; player.x=3*16; player.y=5*16-4; __step(80); log.push(['cura',player.hp===player.maxHp]);
+      hasHook=true; xItem='hook'; const mhp=player.maxHp; player.x=5*16; player.y=5*16-4; player.dir=1; keys.alt=true; __step(1); __step(60); settle(); log.push(['isla',(player.x+8)>>4,(player.y+12)>>4,player.maxHp-mhp]);
+      player.x=5*16; player.y=3*16-4; player.dir=0; keys.alt=true; __step(1); __step(60); player.x=5*16; player.y=6*16-4; __step(3); log.push(['vuelta',sx,sy]);
+      // la boca helada de la Ladera: tres braseros abren la verja del cofre
+      hasLantern=true; xItem='lantern'; __go(0,-1,128,20); enemies=[]; player.x=8*16; player.y=1*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; settle(); enemies=[]; const gate0=grid[3][5];
+      for(const [x,y,d] of [[2,1,2],[7,4,3],[2,6,2]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); }
+      const b0=berries; player.x=5*16; player.y=3*16-4; player.dir=1; keys.fire=true; __step(1); settle(); log.push(['madriguera',sx,sy,gate0,grid[3][5],berries-b0]);
+      // bajo el arbusto de la Marisma: el Refugio de la Ciénaga
+      __go(2,3,112,40); enemies=[]; player.x=7*16; player.y=2*16-4; player.dir=1; keys.fire=true; __step(16); player.x=7*16; player.y=1*16-4; __step(3); settle(); log.push(['refugio',sx,sy,(player.x+8)>>4,(player.y+13)>>4]);
+      // el cebo dorado: en mitad de la cascada, solo la vaina llega
+      hasBoomer=true; xItem='boomer'; __go(4,0,80,90); enemies=[]; const lure=pickups.some(p=>p.kind==='lure'); player.x=5*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(80); settle();
+      log.push(['cebo',lure,hasLure,grid[2][5]]);
+      return [log,secretsFound()]; });
+    eq(r,[[['grieta','⊂','G',1],['eco',0,10,'secreto',true],['fuera',0,0,8,2],['corro','>',true],['manantial',1,10],['cura',true],['isla',5,3,2],['vuelta',2,0],['madriguera',2,10,'=','q',100],['refugio',3,10,5,5],['cebo',true,true,'W']],5]);
+  });
+  await check('Trueques: de la canica de Petra al Trébol de Lupa (el mapa lleva al tesoro de las dunas)',async()=>{
+    const r=await ev(()=>{ const log=[]; const settle=()=>{ for(let i=0;i<10&&state!=='play';i++){ if(state==='itemget') itemT=0; __step(2); __skipDialog(); } };
+      const talk=(nx,ny,tx,ty,above)=>{ const py=above?(ty-1)*16-4:(ty+1)*16-4; __go(nx,ny,tx*16,py); enemies=[]; player.x=tx*16; player.y=py; player.dir=above?0:1; keys.fire=true; __step(1); settle(); return tradeStep; };
+      newGame(); state='play'; introDone=true; elderMet=true; hasBlade=true; hitStop=0; wakeT=0; inBed=false; bossDone=true; boss2Done=true; hasEmber=true; hasTear=true; showToast=()=>{};
+      log.push(talk(0,1,2,5));                      // Petra: la canica
+      log.push(questList().some(q=>q.id==='tq1'));
+      log.push(talk(7,9,5,3));                      // Corteza (mostrador): la pluma
+      log.push(talk(3,1,2,6,true));                 // Moss (desde arriba): la perla
+      log.push(talk(10,2,5,2));                     // la Reina en tregua: la jalea
+      log.push(talk(8,9,4,3));                      // Tilo (mostrador): el calcetín
+      log.push(talk(6,2,5,2));                      // el Topo en tregua: el mapa
+      __go(2,2,112,70); enemies=[]; log.push(grid[3][7]);
+      hasBomb=true; xItem='bomb'; bombAmmo=10; amulets.add('topo'); equipped=['topo',null]; player.x=7*16; player.y=4*16-4; keys.alt=true; __step(1); __step(90); enemies=[]; hitStop=0; log.push(grid[3][7]);
+      player.x=7*16; player.y=4*16-4; player.dir=1; keys.fire=true; __step(1); settle(); log.push(tradeStep);
+      log.push(talk(1,1,7,6,true));                 // Lupa (desde arriba): el trébol
+      log.push(amulets.has('trebol'),questList().some(q=>q.id==='tq8'&&q.done));
+      curSlot=2; save(); const d=readSlot(2); sideLoad(null); loadGame(d); log.push(tradeStep,opened.has('TES'));
+      __go(1,1,64,72); log.push(grid[5][8]);
+      return log; });
+    eq(r,[1,true,2,3,4,5,6,'✕','¤',7,8,true,true,8,true,'f']);
+  });
+  await check('Pesca con Moss: lanzar, esperar, clavar, recoger (el sedal se rompe si tiras sin parar) y el Viejo Bigotes',async()=>{
+    const r=await ev(()=>{ const log=[]; const R=Math.random;
+      newGame(); state='play'; introDone=true; elderMet=true; hasBlade=true; hitStop=0; wakeT=0; inBed=false; berries=0; showToast=()=>{};
+      __go(3,1,40,60); enemies=[]; player.x=2*16; player.y=5*16-4; player.dir=0; keys.fire=true; __step(1); const q=[state,dlg&&dlg.who,!!(dlg&&dlg.ask)];
+      __skipDialog(); log.push([q,state,!!fishS&&fishS.phase]);
+      keys.right=true; __step(10); keys.right=false; keys.fire=true; __step(1); const c=fishS.phase; __step(30); log.push(['lance',c,fishS.phase,Math.round(fishS.lure.x)>80]);
+      const L=fishS.lure; const hookIt=(t)=>{ fishS.phase='wait'; fishS.fish=[{t,x:L.x,y:L.y,vx:0,vy:0,st:'bite',tm:20,nib:0}]; keys.fire=true; __step(1); return fishS.phase; };
+      fishS.fish=[{t:0,x:L.x,y:L.y,vx:0,vy:0,st:'nibble',tm:30,nib:1}]; keys.fire=true; __step(1); log.push(['pronto',fishS.phase,fishS.msg]);
+      log.push(['clava',hookIt(0)]); Math.random=()=>.99;
+      keys.fireHeld=true; let n=0; while(fishS.phase==='reel'&&n++<900) __step(1); keys.fireHeld=false; log.push(['carpín',fishS.phase,fishS.card&&fishS.card.t]);
+      __step(25); keys.fire=true; __step(1); log.push(['cuaderno',fishDex,fishCount,berries>0,fishS.phase]);
+      hookIt(2); keys.fireHeld=true; n=0; while(fishS.phase==='reel'&&n++<900) __step(1); keys.fireHeld=false; log.push(['trucha a lo loco',fishS.phase,fishS.msg]);
+      hasLure=true; fishDex=7; hookIt(3); n=0; while(fishS.phase==='reel'&&n++<3000){ keys.fireHeld=fishS.tension<70; __step(1); } keys.fireHeld=false; Math.random=R;
+      log.push(['bigotes',fishS.phase,fishS.card&&fishS.card.t]); __step(25); const p0=pieces; keys.fire=true; __step(1); const d=state; __skipDialog(); log.push([d,state,fishPiece,pieces-p0,secretsFound()]);
+      keys.alt=true; __step(1); __skipDialog(); log.push(['fin',state,fishS]);
+      curSlot=2; save(); const sv=readSlot(2); sideLoad(null); loadGame(sv); log.push(['guardado',fishDex,fishPiece,fishCount,!!fishBest.bigotes]);
+      return log; });
+    eq(r,[[['dialog','MOSS',true],'fish','aim'],['lance','cast','wait',true],['pronto','aim','¡Muy pronto!'],['clava','reel'],['carpín','caught',0],['cuaderno',1,1,true,'aim'],['trucha a lo loco','aim','¡Se rompió el sedal!'],['bigotes','caught',3],['dialog','fish',true,1,2],['fin','play',null],['guardado',15,true,2,true]]);
   });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }

@@ -32,14 +32,14 @@ function playerTile(){ return [(player.x+8)>>4,(player.y+12)>>4]; }
 /* la Hoja: caja de golpe según dirección (barrido amplio) */
 function swordBox(){ const px=player.x, py=player.y;
   return [[px-2,py+10,20,14],[px-2,py-9,20,14],[px-11,py+1,16,16],[px+11,py+1,16,16]][player.dir]; }
-function meleeBox(){ return player.spin>0?[player.x-14,player.y-12,44,44]:swordBox(); }
+function meleeBox(){ return player.spin>0?(hasBigSpin?[player.x-22,player.y-20,60,60]:[player.x-14,player.y-12,44,44]):swordBox(); }
 function meleeActive(){ return (player.atk>3&&player.atk<12)||player.spin>6; }
 function meleeDmg(){ return bladeLvl+(hasAmulet('erizo')?1:0)+(player.spin>0?1:0); }
 function doSpin(){
-  player.spin=18; player.charge=0; SFX.sword(); noise(.16,.06,true); shake=2;
+  player.spin=spinMax(); player.charge=0; SFX.sword(); noise(.16,.06,true); shake=hasBigSpin?4:2; spinFx();
   for(let i=0;i<10;i++){ const a=i/10*6.283; parts.push({x:player.x+8+Math.cos(a)*8,y:player.y+9+Math.sin(a)*8,vx:Math.cos(a)*1.4,vy:Math.sin(a)*1.4,life:14,col:i%2?PAL.l:'#a8ec78'}); }
   const D=DIRV[player.dir]; const far=hasAmulet('susurro');
-  windProjs.push({x:player.x+8,y:player.y+10,vx:D[0]*(far?2.6:2.1),vy:D[1]*(far?2.6:2.1),t:far?110:70,ang:0,hits:new Set()});
+  windProjs.push({x:player.x+8,y:player.y+10,vx:D[0]*(far?2.6:2.1),vy:D[1]*(far?2.6:2.1),t:(far?110:70)+(hasBigSpin?30:0),ang:0,hits:new Set(),big:hasBigSpin});
 }
 /* empuje de rocas-raíz: encarado y avanzando un instante */
 let pushHold=0, pushLatch=false; // un empujón por pulsación: hay que soltar la cruceta para volver a empujar
@@ -100,7 +100,8 @@ function cutAt(sb){
 }
 function dropLoot(x,y,pHeart,pBerry){
   const r=Math.random(); const mult=hasAmulet('savia')?2:1;
-  pHeart*=dungeonOf(sx,sy)?.7:.85; if(player.hp<=2) pHeart=Math.min(.4,pHeart*1.8); // piedad, pero menos
+  if(hasAmulet('trebol')){ pHeart*=1.35; pBerry*=1.5; } // el Trébol de cuatro hojas: la suerte de verdad
+  pHeart*=dungeonOf(sx,sy)?.7:.85; if((opts.diff??1)===0) pHeart*=1.6; if(player.hp<=2) pHeart=Math.min(.4,pHeart*1.8); // piedad, pero menos
   const pBomb=hasBomb&&bombAmmo<bombMax?(bombAmmo<3?.2:.1):0;
   if(r<pHeart) pickups.push({kind:'heart',x,y,t:0,drop:14});
   else if(r<pHeart+pBomb) pickups.push({kind:'bombs',n:2,x,y,t:0,drop:14});
@@ -131,6 +132,7 @@ function attack(){
       boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima'); },'EL VIENTO');
     return;
   }
+  if(boss&&boss.type==='ciervo'&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<40){ ciervoPeace(); return; } // el Ciervo de Ámbar (12b)
   if(boss&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<36){
     const isTopo=boss.type==='topo', bx=boss.x, by=boss.y;
     say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>{ SFX.fanfare(); shake=10;
@@ -146,13 +148,15 @@ function attack(){
     if(noBladeMsg<2){ noBladeMsg++; say(["Manoteas el aire\nsin mucho efecto...","Necesitas la HOJA\nANCESTRAL.\n(playa suroeste)"]); }
     else SFX.bump(); return;
   }
-  player.atk=14; SFX.sword(); player.squash=.28;
+  player.atk=14; SFX.sword(); player.squash=.28; leafBeamTry();
 }
 function interact([tx,ty,ch]){
+  if(tradeInteract(tx,ty,ch)) return true; // trueques, el tesoro de las dunas y la pesca (12c)
   const guest=npcs.find(n=>n.guest&&n.x===tx&&n.y===ty);
   if(guest){ SFX.blip();
     if(guest.guest==='topo'){ if(!topoGift){ topoGift=true; say(TOPO_AFTER,()=>giveAmulet('topo'),'EL TOPO REAL'); } else say(GUEST_TALK.topo(),null,'EL TOPO REAL'); }
     else if(guest.guest==='avispa') say(GUEST_TALK.avispa(),null,'LA REINA');
+    else if(guest.guest==='ciervo') say(GUEST_TALK.ciervo(),null,'EL CIERVO');
     else say(GUEST_TALK.viento(),null,'EL VIENTO');
     return true; }
   if(ch==='S'){ SFX.blip(); say(TXT.signs[sx+','+sy]||TXT.sign,null,null,'wood'); return true; }
@@ -167,7 +171,11 @@ function interact([tx,ty,ch]){
       say(WELL_DONE,()=>{ pickups.push({kind:'piece',id:'♥pozo',x:player.x+4,y:player.y+4,t:0,drop:20}); SFX.secret(); }); }); return true; }
   if(ch==='['){ SFX.blip(); say(thawed?["ALTAR DE LA\nPRIMAVERA.","La BRASA late aquí\nsu calor de\ndeshielo. El valle\nlo siente."]:["ALTAR DE LA\nPRIMAVERA.","El cuenco está\nfrío. Espera algo\nque lata como un\ncorazón."]); return true; }
   if(ch===']'){ SFX.blip(); say(summered?["ALTAR DEL\nVERANO.","La LÁGRIMA brilla\nfresca y tibia.\nEl sol dormido\ndespertó en ella."]:["ALTAR DEL\nVERANO.","El cuenco está\nseco. Espera un\nllanto que el sol\nquiera habitar."]); return true; }
-  if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está apartado de\nlos otros dos,\ncomo esperando a\nalguien que no\nvuelve."]); return true; }
+  if(ch==='{'){ SFX.blip(); say(autumned?["ALTAR DEL OTOÑO.","La HOJA DE ÁMBAR arde quieta, sin quemarse. Huele a castañas y a lluvia."]:["ALTAR DEL OTOÑO.","Hojas secas en el cuenco. Espera algo dorado que sepa caer despacio."]); return true; }
+  if(ch==='ξ'){ SFX.blip(); say(sx===4&&sy===3&&!summered?["Un montón de hojas podridas, empapadas de ciénaga.","Tapan una puerta. Quizá el calor del VERANO las seque."]:hasPinwheel?["Hojarasca apilada. Un buen soplo de MOLINILLO (X) la barrería."]:["Hojarasca apilada, alta como tú. La Hoja la atraviesa sin moverla.","Haría falta VIENTO para barrerla."]); return true; }
+  if(ch==='∩'){ SFX.blip(); say(hasPinwheel?["Un ventisquero de nieve dura. Sopla con el MOLINILLO (X) para abrir paso."]:["Un ventisquero de nieve dura cierra el sendero.","Ni la Hoja ni las bombas lo mueven: se necesita VIENTO."]); return true; }
+  if(ch==='ψ'){ SFX.blip(); say(["Una rueda de aspas de madera clavada en el suelo.","Gira con el viento. Algo en la sala escucha su chirrido."]); return true; }
+  if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está junto al del otoño, apartado de los del Roble, como esperando a alguien que no vuelve."]); return true; }
   if(ch==='g'||(ch==='ñ'&&sx===8)){ openShop('tilo'); return true; }
   if(ch==='ö'||(ch==='ñ'&&sx===7)){ openShop('corteza'); return true; }
   if(ch==='j'&&hasBlade&&!hasBoomer&&berries>=10){ SFX.blip();
@@ -219,12 +227,18 @@ function elderTalk(){
   if(!elderMet){ elderMet=true; save(); sayR(TXT.elderIntro); return; }
   if(lettersCount()>=5&&!lettersGiven){ lettersGiven=true; save(); sayR(RAIZ_LETTERS,()=>giveAmulet('susurro')); return; }
   if(seeds>=8&&!won){ giveItem(ACORN_GOLD,8,()=>sayR(TXT.elderWin,()=>{ won=true; SFX.fanfare(); bloom(); markDirty(); save(); })); return; }
-  if(hasEmber&&!thawed){ giveItem(EMBER_SPR,1,()=>sayR(TXT.thaw,()=>{ thawed=true; SFX.fanfare(); bloom(); save(); })); return; }
-  if(hasTear&&!summered){ giveItem(TEAR_SPR,1,()=>sayR(TXT.summer,()=>{ summered=true; SFX.fanfare(); bloom(); save(); })); return; }
-  if(hasFlake&&!cycled){ giveItem(FLAKE_SPR,1,()=>sayR(TXT.cycle,()=>{ cycled=true; SFX.fanfare(); bloom(); markDirty(); save(); state='credits'; creditsT=0; parts=[]; setTrack('creditos'); })); return; }
-  if(cycled) sayR(["Las cuatro\nestaciones giran.\nEl valle respira.","¿Aún no lo ves,\nbrote? Mírame\nbien. Mira el árbol.","Yo SOY el Roble.\nViejo y plantado,\nsoñando este valle.","Y tú creciste de\nmi última bellota,\nla novena...","...la única que mi\nhermano Viento\nnunca encontró.","Gracias por traer\na casa a tus\nhermanas. ♥"]);
-  else if(summered&&boss3Done) sayR(["¿Ese frío azul en\ntu zurrón...?\n¡El Copo! Tráelo."]);
-  else if(summered) sayR(["Solo queda el\nINVIERNO, en el\npico del norte.","Sube por el campo\nhelado. Necesitarás\nbomba, gancho y\nel farol de Tilo","para cruzar el\nTEMPLO DE LA CIMA.\nNo subas a luchar:\nsube a recordar."]);
+  const seasonCine=(k,cb)=>{ if(typeof playSeasonCinematic==='function') playSeasonCinematic(k,cb); else cb(); };
+  if(hasEmber&&!thawed){ giveItem(EMBER_SPR,1,()=>{ thawed=true; bloom(); save(); seasonCine('primavera',()=>sayR(TXT.thaw,()=>{ SFX.fanfare(); save(); })); }); return; }
+  if(hasTear&&!summered){ giveItem(TEAR_SPR,1,()=>{ summered=true; bloom(); save(); seasonCine('verano',()=>sayR(TXT.summer,()=>{ SFX.fanfare(); save(); })); }); return; }
+  if(hasAmber&&!autumned){ giveItem(AMBER_SPR,1,()=>{ autumned=true; bloom(); markDirty(); save(); seasonCine('otono',()=>sayR(TXT.autumn,()=>{ SFX.fanfare(); save(); })); }); return; }
+  if(hasFlake&&!cycled&&!autumned){ sayR(["¿El Copo...? Aún no, brote. El OTOÑO sigue preso en el MOLINO de la Ciénaga.","Sin otoño, el invierno no tiene dónde posarse. Tráeme primero la HOJA DE ÁMBAR."]); return; }
+  if(hasFlake&&!cycled){ giveItem(FLAKE_SPR,1,()=>{ cycled=true; bloom(); markDirty(); save(); seasonCine('invierno',()=>sayR(TXT.cycle,()=>{ SFX.fanfare(); save();
+      const toCredits=()=>{ state='credits'; creditsT=0; parts=[]; setTrack('creditos'); }; if(typeof playEnding==='function') playEnding(toCredits); else toCredits(); })); }); return; }
+  if(cycled) sayR(["Las cuatro\nestaciones giran.\nEl valle respira.","¿Aún no lo ves,\nbrote? Mírame\nbien. Mira el árbol.","Yo SOY el Roble.\nViejo y plantado,\nsoñando este valle.","Y tú creciste de\nmi última bellota,\nla novena...","...la única que mi\nhermano Viento\nnunca encontró.","Gracias por traer\na casa a tus\nhermanas. ♥"].concat(opened.has('ECO4,12')?[]:["Una cosa más, brote. Desde que el año gira, algo resuena en la GRUTA DE LOS ECOS, bajo los riscos del noroeste.","Son los ecos de quienes guardaron las estaciones. No hablan ni ceden. Si buscas un desafío... baja a verlos."]));
+  else if(autumned&&boss3Done) sayR(["¿Ese frío azul en\ntu zurrón...?\n¡El Copo! Tráelo."]);
+  else if(autumned) sayR(["Solo queda el INVIERNO, en el pico del norte.","Un VENTISQUERO tapa el Sendero del Último Invierno: tu MOLINILLO lo barrerá.","Necesitarás también bomba, gancho y el farol de Tilo para cruzar el TEMPLO DE LA CIMA. No subas a luchar: sube a recordar."]);
+  else if(summered&&boss4Done) sayR(["¿Ese brillo dorado en tu zurrón...? ¡La HOJA DE ÁMBAR! Tráemela, brote."]);
+  else if(summered) sayR(["El otoño se ha refugiado en el viejo MOLINO de la Ciénaga, al este de las marismas.","Lo guarda el CIERVO DE ÁMBAR, un viejo amigo de mi hermano. No es malo, brote: está cansado.","Las hojas podridas que tapaban la puerta ya se han secado con el verano."]);
   else if(thawed&&boss2Done) sayR(["¿Un brillo azul en\ntu zurrón? ¡Corre,\ntráemelo!"]);
   else if(thawed) sayR(["El sur huele a\notoño viejo...","Hay rocas agrieta-\ndas en la playa\neste. Tus bombas","saben qué hacer.\nBusca el TRONCO\nHUECO, brote."]);
   else if(won&&bossDone) sayR(["¿Esa luz en tu\nzurrón...?\n¡Corre, tráela!"]);
@@ -239,24 +253,26 @@ function giveAmulet(id){ amulets.add(id); const a=AMULETS[id]; SFX.fanfare(); sh
 /* ---------- X: el objeto equipado ---------- */
 function useItem(){
   if(xItem) xFlash=10;
-  if(!xItem) { if(hasBomb||hasHook||hasBoomer||hasLantern||hasFeather){ showToast('SIN OBJETO EN X','equípalo en el zurrón'); } return; }
+  if(!xItem) { if(hasBomb||hasHook||hasBoomer||hasLantern||hasFeather||hasPinwheel){ showToast('SIN OBJETO EN X','equípalo en el zurrón'); } return; }
   if(xItem==='bomb'){
     if(bombs.length>=2) return;
-    if(bombAmmo<=0){ SFX.bump(); showToast('SIN BELLOTAS','corta un bellotero ♣'); return; }
+    if(bombAmmo<=0){ SFX.empty(); showToast('SIN BELLOTAS','corta un bellotero ♣'); return; }
     bombAmmo--;
     const bx=((player.x+8)>>4)*16, by=((player.y+12)>>4)*16;
     bombs.push({x:bx,y:by,t:80}); SFX.blip();
   } else if(xItem==='hook'){ throwHook(); }
-  else if(xItem==='boomer'){ throwBoomer(); }
+  else if(xItem==='boomer'){ if(keys.altHeld&&!boomer) boomerCharge=1; else throwBoomer(); } // mantén X para cargarla
   else if(xItem==='lantern'){
     const ft=facingTile();
     if(ft&&ft[2]===':'){ lightTorch(ft[0],ft[1]); }
-    else { puff(player.x+8+DIRV[player.dir][0]*10,player.y+8+DIRV[player.dir][1]*10,'#f8a030',4,.8); SFX.blip(); }
+    else lanternFlame();
   } else if(xItem==='feather'){ startJump(); }
+  else if(xItem==='molinillo'){ usePinwheel(); }
 }
 function throwHook(){
   const D=DIRV[player.dir], [ptx,pty]=playerTile();
   if(hookBoss(D)) return;
+  if(hookGrab(D)) return;
   const isWater=c=>c==='W'||c==='~';
   for(let i=1;i<=5;i++){
     const tx=ptx+D[0]*i, ty=pty+D[1]*i; const ch=grid[ty]&&grid[ty][tx];
@@ -269,16 +285,17 @@ function throwHook(){
   }
   SFX.bump(); hook={fx:player.x,fy:player.y,tx:player.x+D[0]*30,ty:player.y+D[1]*30,t:0,fail:true,dir:player.dir}; state='hook';
 }
-function throwBoomer(){
+function throwBoomer(pow){
   if(boomer) return;
-  const D=DIRV[player.dir]; SFX.boomer();
-  boomer={x:player.x+8,y:player.y+10,vx:D[0]*2.6,vy:D[1]*2.6,t:0,ret:false,hits:new Set(),carry:null,ang:0};
+  const D=DIRV[player.dir], sp=pow?3.3:2.6; SFX.boomer();
+  boomer={x:player.x+8,y:player.y+10,vx:D[0]*sp,vy:D[1]*sp,t:0,ret:false,hits:new Set(),carry:null,ang:0,pow:!!pow};
+  if(pow){ shake=2; beep('square',600,1400,.12,.04); }
 }
 function startJump(){
   if(jumpT>0) return;
   let dx=(keys.right?1:0)-(keys.left?1:0), dy=(keys.down?1:0)-(keys.up?1:0);
   if(!dx&&!dy){ const D=DIRV[player.dir]; dx=D[0]; dy=D[1]; }
-  const d=Math.hypot(dx,dy); jumpDir=[dx/d,dy/d]; jumpT=26; SFX.jump(); player.atk=0; player.charge=0;
+  const d=Math.hypot(dx,dy); jumpDir=[dx/d,dy/d]; jumpT=26; SFX.jump(); player.atk=0; player.charge=0; glideT=0; glideUsed=false;
   puff(player.x+8,player.y+14,'#e8e8d8',5,.8);
 }
 function placeAt(nx,ny,px,py,dir){
@@ -289,16 +306,22 @@ function exitHouse(){ placeAt(0,1,44,42,0); }
 function enterShop(){ placeAt(8,9,76,90,1); }
 function exitShop(){ placeAt(0,1,108,42,0); }
 function enterDungeon(){
+  const hz=hideoutDoor(); if(hz){ placeAt(hz[0],hz[1],hz[2],hz[3],hz[4]); return; } // escondites (12c)
   if(sx===2&&sy===-1) placeAt(6,0,72,72,1);
   else if(sx===1&&sy===3) placeAt(10,0,72,72,1);
   else if(sx===1&&sy===-2) placeAt(15,2,72,88,1);
+  else if(sx===4&&sy===3) placeAt(19,2,72,88,1); // el Molino de la Hojarasca
   else if(sx===0&&sy===0) placeAt(5,9,72,80,1);
 }
-function enterSecret(){ if(sx===1&&sy===0) placeAt(4,9,80,70,1); else if(sx===1&&sy===2) placeAt(3,9,80,70,1); }
+function enterSecret(){ const hs=HIDEOUT_STAIRS[sx+','+sy]; if(hs){ placeAt(hs[0],hs[1],hs[2],hs[3],hs[4]); return; }
+  if(sx===1&&sy===0) placeAt(4,9,80,70,1); else if(sx===1&&sy===2) placeAt(3,9,80,70,1); }
 function exitDungeon(){
+  if(hideoutExit()) return; // escondites (12c)
+  if(sy===12){ placeAt(5,9,8*16,2*16-4,0); return; } // del Eco se vuelve a la Gruta, junto a la escalera
   if(sx===4&&sy===9){ placeAt(1,0,96,92,0); return; }
   if(sx===3&&sy===9){ placeAt(1,2,32,92,0); return; }
   if(sx===5) placeAt(0,0,20,30,0);
+  else if(sx>=18&&sx<=20) placeAt(4,3,112,28,0); // del Molino a la Ciénaga, bajo la puerta
   else if(sx>=14) placeAt(1,-2,64,26,0);
   else if(sx>=10) placeAt(1,3,68,34,0);
   else placeAt(2,-1,76,34,0);
@@ -315,11 +338,13 @@ function shopList(){
     return L;
   }
   if(bladeLvl===1)      L.push({id:'b2',name:'AFILAR HOJA',cost:15,d:'La Hoja hará\ndaño DOBLE.'});
-  else if(bladeLvl===2) L.push({id:'b3',name:'TEMPLAR HOJA',cost:40,d:'La Hoja hará\ndaño TRIPLE.',off:!thawed,dOff:'El temple necesita\nel deshielo.'});
+  else if(bladeLvl===2) L.push({id:'b3',name:'TEMPLAR HOJA',cost:40,d:'Daño TRIPLE. Con el vigor lleno lanza un RAYO DE HOJA.',off:!thawed,dOff:'El temple necesita\nel deshielo.'});
   else                  L.push({id:'bmax',name:'HOJA SUPREMA',cost:0,d:'Tu filo está\nal máximo.',off:true});
   if(hasBomb) L.push({id:'bombs',name:'5 BELLOTAS',cost:10,d:bombAmmo>=bombMax?'Tu zurrón de bellotas está lleno.':'Cinco bellotas-bomba para el zurrón.',off:bombAmmo>=bombMax,dOff:'Tu zurrón de bellotas está lleno.'});
   if(!hasSpin) L.push({id:'spin',name:'REMOLINO',cost:25,d:'Carga Z y suelta:\n¡giro+tornadito!'});
+  else if(!hasBigSpin) L.push({id:'bigspin',name:'GRAN REMOLINO',cost:60,d:'Dos vueltas, más alcance, carga rápida y un tornado grande.',off:!thawed,dOff:'Te lo enseño cuando se vaya el invierno.'});
   if(!hasShield) L.push({id:'shield',name:'ESCUDO',cost:20,d:'Rebota rocas y\nesporas de frente.'});
+  else if(shieldLvl<2) L.push({id:'oakshield',name:'ESCUDO ROBLE',cost:45,d:'Gírate o golpea justo a tiempo y lo que te lancen REBOTA.',off:!summered,dOff:'La corteza vieja solo se cura en verano.'});
   if(thawed&&!hasLantern) L.push({id:'lantern',name:'FAROL BRASA',cost:35,d:'Luz para cuevas.\nEnciende antorchas.'});
   if(!shopHeart) L.push({id:'hp',name:'CORAZÓN SAVIA',cost:50,d:'+1 corazón de\nvigor máximo.'});
   if(!shopPiece) L.push({id:'piece',name:'TROZO CORAZÓN',cost:30,d:'Un cuarto de\ncorazón.'});
@@ -345,6 +370,8 @@ function buyShop(){
   else if(it.id==='b2'){ bladeLvl=2; say(["¡Chas! Filo como\nel rocío. Tu Hoja\nhace daño DOBLE."],null,who); }
   else if(it.id==='b3'){ bladeLvl=3; say(["¡Mi obra maestra!\nDaño TRIPLE.\nTiembla, valle."],null,who); }
   else if(it.id==='spin'){ hasSpin=true; say(["¡El REMOLINO!\nMantén pulsado Z:\nla Hoja se carga...","...y al soltar,\n¡giras y LANZAS\nun TORNADITO!","Hasta rompe la\nguardia de los\nacorazados."],null,who); }
+  else if(it.id==='bigspin'){ hasBigSpin=true; say(["El GRAN REMOLINO: carga antes, da dos vueltas y el tornado sale enorme.","Cuidado con los muebles."],()=>giveThing(BIGSPIN_ICON,'GRAN REMOLINO',["¡El GRAN REMOLINO!","Mantén Z: carga en un suspiro. Suelta: dos vueltas y un tornado grande."]),who); }
+  else if(it.id==='oakshield'){ shieldLvl=2; say(["Corteza del corazón del Roble, curada al sol. Aguanta lo que le eches."],()=>giveThing(OAKSHIELD_ICON,'ESCUDO DE ROBLE',["¡El ESCUDO DE ROBLE!","Gírate justo cuando algo te llega (o golpéalo con la Hoja) y lo DEVUELVES a quien lo lanzó."]),who); }
   else if(it.id==='shield'){ hasShield=true; say(["Corteza del Roble\ncurtida. Se lleva\nsola: lo que te\nvenga de frente\nrebota."],()=>getItem('shield'),who); }
   else if(it.id==='lantern'){ hasLantern=true; say(["Lo encendí con una\nchispa de la Brasa.\nNo se apaga\nnunca."],()=>getItem('lantern'),who); }
   else if(it.id==='hp'){ shopHeart=true; player.maxHp+=2; player.hp=player.maxHp; say(["Savia espesa del\nGran Roble...\n¡Tu vigor aumenta!"],null,who); }
@@ -356,11 +383,12 @@ function buyShop(){
 function addPiece(){ pieces++; SFX.piece(); if(pieces>=4){ pieces=0; player.maxHp+=2; player.hp=player.maxHp; SFX.fanfare(); say(TXT.pieceGet(4)); } else say(TXT.pieceGet(pieces)); save(); }
 /* recibir un objeto grande: Sprout lo alza */
 function getItem(kind){
-  const M={blade:[BLADE_SPR,TXT.bladeGet],bomb:[BOMB_SPR,TXT.bombGet],ember:[EMBER_SPR,TXT.emberGet],hook:[HOOK_SPR,TXT.hookGet],tear:[TEAR_SPR,TXT.tearGet],flake:[FLAKE_SPR,TXT.flakeGet],boomer:[BOOMER_SPR,TXT.boomerGet],lantern:[LANTERN_SPR,TXT.lanternGet],feather:[FEATHER_SPR,TXT.featherGet],shield:[SHIELD_SPR,TXT.shieldGet]};
+  const M={blade:[BLADE_SPR,TXT.bladeGet],bomb:[BOMB_SPR,TXT.bombGet],ember:[EMBER_SPR,TXT.emberGet],hook:[HOOK_SPR,TXT.hookGet],tear:[TEAR_SPR,TXT.tearGet],flake:[FLAKE_SPR,TXT.flakeGet],boomer:[BOOMER_SPR,TXT.boomerGet],lantern:[LANTERN_SPR,TXT.lanternGet],feather:[FEATHER_SPR,TXT.featherGet],shield:[SHIELD_SPR,TXT.shieldGet],molinillo:[PINWHEEL_SPR,TXT.molinilloGet],amber:[AMBER_SPR,TXT.amberGet]};
   if(kind==='blade') hasBlade=true; if(kind==='bomb'){ hasBomb=true; bombAmmo=bombMax; } if(kind==='ember') hasEmber=true; if(kind==='hook') hasHook=true;
   if(kind==='tear') hasTear=true; if(kind==='flake') hasFlake=true; if(kind==='boomer') hasBoomer=true; if(kind==='lantern') hasLantern=true;
   if(kind==='feather') hasFeather=true; if(kind==='shield') hasShield=true;
-  if(!xItem&&['bomb','hook','boomer','lantern','feather'].includes(kind)) xItem=kind;
+  if(kind==='molinillo') hasPinwheel=true; if(kind==='amber') hasAmber=true;
+  if(!xItem&&['bomb','hook','boomer','lantern','feather','molinillo'].includes(kind)) xItem=kind;
   [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; screenFlash(8,'#fff6c0'); player.squash=.4; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
   puff(player.x+8,player.y+8,C.flowerC,14,1.6); puff(player.x+8,player.y+8,PAL.l,10,1.2);
 }

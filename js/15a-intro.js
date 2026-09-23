@@ -370,14 +370,15 @@ function drawFileCard(y){
     txtS('Z SÍ · X NO',80,y+24,(tick&31)<22?'#8a1808':F.inner,'center'); return; }
   badge(''+(i+1),10,y+2);
   if(!d){ txt('NUEVO BROTE',22,y+3,F.key); txt('Una semilla espera.',10,y+13,F.text); txt('¡Pulsa Z y plántala!',10,y+22,F.text); return; }
-  const ch=d.cycled?4:d.summered?3:d.thawed?2:d.won?1:0;
+  const ch=d.cycled?5:d.autumned?4:d.summered?3:d.thawed?2:d.won?1:0;
   txt(CHAPTER_NAMES[ch],22,y+3,F.key); clockIcon(116,y+3,'#8a1808'); txt(timeStr(d.playTime||0).slice(0,-3),150,y+3,F.text,'right');
   const mh=Math.min(10,((d.maxHp||6)/2)|0); for(let h=0;h<mh;h++) ctx.drawImage(HEART_FULL,10+h*7,y+13,7,7);
   ctx.drawImage(ACORN_GOLD,116,y+12); txt(Math.min(8,d.seeds||0)+'/8',150,y+13,F.text,'right');
-  [[EMBER_SPR,d.thawed],[TEAR_SPR,d.summered],[FLAKE_SPR,d.cycled]].forEach(([sp,on],k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.25; ctx.drawImage(sp,0,0,16,16,10+k*12,y+21,10,10); ctx.restore(); });
+  [[EMBER_SPR,d.thawed],[TEAR_SPR,d.summered],[AMBER_SPR,d.autumned||d.cycled],[FLAKE_SPR,d.cycled]].forEach(([sp,on],k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.25; ctx.drawImage(sp,0,0,16,16,10+k*11,y+21,10,10); ctx.restore(); });
   const am=(d.amulets||[]).length, lt=(d.collected||[]).filter(c=>c[0]==='✉').length;
-  ctx.drawImage(AMULET_SPR.raiz,0,0,12,12,52,y+21,10,10); txt(am+'/9',64,y+22,F.text);
-  ctx.drawImage(LETTER_SPR,0,0,LETTER_SPR.width,LETTER_SPR.height,88,y+22,10,8); txt(lt+'/5',100,y+22,F.text);
+  const amT=am+'/'+Object.keys(AMULETS).length, lx=Math.max(92,70+textW(amT)+5);
+  ctx.drawImage(AMULET_SPR.raiz,0,0,12,12,58,y+21,10,10); txt(amT,70,y+22,F.text);
+  ctx.drawImage(LETTER_SPR,0,0,LETTER_SPR.width,LETTER_SPR.height,lx,y+22,10,8); txt(lt+'/5',lx+12,y+22,F.text);
 }
 function drawFileSelect(){
   const cam=titleCam;
@@ -393,4 +394,99 @@ function fileParts(){
   const si=menuSeason(), S=SEASONS[si];
   if((tick%(si===3?5:11))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si===2?.4:.1)+(Math.random()-.5)*.3,vy:.3+Math.random()*.35,life:260,max:260,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
   if((tick%14)===0) parts.push({k:'mote',x:fileSpotX-10+Math.random()*20,y:20+Math.random()*60,vx:0,vy:.12,life:90,max:90,sway:Math.random()*6,col:'#fff6c0',nog:true});
+}
+/* ============================================================
+   CINEMÁTICA DE ESTACIÓN: al devolver cada reliquia, el valle
+   cambia ante tus ojos. Primavera y verano llegan floreciendo
+   desde la copa del Roble; otoño e invierno, con el Viento.
+   playSeasonCinematic('primavera'|'verano'|'otono'|'invierno', cb)
+   ============================================================ */
+let seasonCine=null;
+const SEASON_KIND={primavera:0,verano:1,otono:2,invierno:3};
+const SEASON_TITLE={primavera:'VUELVE LA PRIMAVERA',verano:'VUELVE EL VERANO',otono:'VUELVE EL OTOÑO',invierno:'VUELVE EL INVIERNO'};
+const SEASON_SUB={primavera:'la Brasa late en su altar',verano:'la Lágrima brilla en su altar',otono:'la Hoja de Ámbar cae en su altar',invierno:'el Copo no se derrite'};
+const SEASON_DUR=330;
+function relicSprite(kind){ return kind==='primavera'?EMBER_SPR:kind==='verano'?TEAR_SPR:kind==='otono'?(typeof AMBER_SPR!=='undefined'?AMBER_SPR:ACORN_GOLD):FLAKE_SPR; }
+function playSeasonCinematic(kind,cb){
+  seasonCine={kind:kind in SEASON_KIND?kind:'primavera',t:0,cb:cb||null}; state='seasoncine'; parts=[]; toast=null;
+  if(AC){ if(typeof TRACKS!=='undefined'&&TRACKS.estacion) setTrack('estacion'); SFX.chime(); }
+}
+function updSeasonCine(){
+  const c=seasonCine; if(!c){ state='play'; return; } c.t++;
+  const si=SEASON_KIND[c.kind], S=SEASONS[si];
+  if(c.t>70&&(tick%(si===3?3:5))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si>=2?-.6:.1)+(Math.random()-.5)*.3,vy:.35+Math.random()*.35,life:220,max:220,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
+  if(c.t===64){ for(let i=0;i<24;i++){ const a=i/24*6.283; parts.push({k:'shard',x:80,y:44,vx:Math.cos(a)*2.2,vy:Math.sin(a)*2.2,life:26,max:26,col:i&1?'#ffffff':'#fff6c0',nog:true}); } if(AC) SFX.fanfare(); }
+  updParts();
+  if(keys.fire&&c.t>40){ keys.fire=false; c.t=Math.max(c.t,SEASON_DUR-20); }
+  if(c.t>=SEASON_DUR){ const cb=c.cb; seasonCine=null; state='play'; parts=[]; fadeIn=24; if(cb) cb(); }
+}
+function drawSeasonCine(){
+  const c=seasonCine; if(!c) return; const si=SEASON_KIND[c.kind], prev=(si+3)%4, t=c.t;
+  // el valle: antes, la estación que se va; desde t=70, la nueva entra como la trae su dueño
+  const k=clamp((t-70)/40,0,1);
+  if(k<=0) drawTitleScene(prev,1,0,false);
+  else if(k>=1) drawTitleScene(si,1,0,false);
+  else { drawTitleScene(prev,1,0,false);
+    if(si<=1){ const r=Math.round(k*k*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.strokeStyle='rgba(255,255,240,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.stroke(); }
+    else { const wx=Math.round(166-k*190); ctx.save(); ctx.beginPath(); ctx.rect(wx,0,200,144); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.fillStyle='rgba(235,245,255,.8)'; ctx.fillRect(wx,0,1,144);
+      ctx.save(); ctx.translate(wx+6,40+Math.sin(tick*.12)*4); ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore(); } }
+  // la reliquia sube desde la plaza y estalla en luz
+  if(t<70){ const e=easeOutBack(clamp(t/50,0,1)), y=Math.round(110-e*66); glowAt(80,y+8,18+Math.sin(tick*.2)*3,'rgba(255,240,180,.55)'); ctx.drawImage(relicSprite(c.kind),72,y); }
+  else if(t<90){ const a=1-(t-70)/20; ctx.globalAlpha=a; ctx.fillStyle='#fffbe8'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
+  drawParts();
+  // Sprout y Raíz lo miran desde abajo
+  const bob=((tick>>4)&1); drawShadow(52,132,7); ctx.drawImage(P_SPRITES[1][0],0,0,16,16,36,100+bob,32,32);
+  // franjas y rótulo
+  const lb=Math.min(1,t/20,(SEASON_DUR-t)/20), h=Math.round(12*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
+  if(t>96){ const a=Math.min(1,(t-96)/16,(SEASON_DUR-t)/16), y=Math.round(20-(1-easeOutBack(Math.min(1,(t-96)/18)))*12);
+    ctx.globalAlpha=a; ribbon(80,y,textW(SEASON_TITLE[c.kind])+14,SEASON_TITLE[c.kind]); txtSO(SEASON_SUB[c.kind].toUpperCase(),80,137,'#fff6d0','center','#1a1408'); ctx.globalAlpha=1; }
+  if(t<24){ ctx.globalAlpha=1-t/24; ctx.fillStyle='#000'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
+}
+/* ============================================================
+   EL FINAL: cuatro planos antes de los créditos.
+   playEnding(cb) — Z pasa de plano; cb al terminar (créditos)
+   ============================================================ */
+let ending=null;
+const END_SHOTS=[
+  {len:300,txt:['Las cuatro estaciones','volvieron a su sitio.']},
+  {len:300,txt:['Y el Viento del Norte','bajó a ver a su hermano.']},
+  {len:300,txt:['El valle volvió a girar,','y todos salieron a verlo.']},
+  {len:330,txt:['La novena semilla','ya no duerme.']},
+];
+function playEnding(cb){ ending={shot:0,t:0,cb:cb||null}; state='ending'; parts=[]; toast=null; if(AC){ setTrack(typeof TRACKS!=='undefined'&&TRACKS.final?'final':'creditos'); } }
+function updEnding(){
+  const e=ending; if(!e){ state='credits'; return; } e.t++; const S=END_SHOTS[e.shot];
+  const si=e.shot===2?((e.t/75)|0)%4:e.shot===1?3:1, SS=SEASONS[si];
+  if((tick%6)===0) parts.push({k:SS.part,x:Math.random()*170-5,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:240,max:240,sway:Math.random()*6,r:(tick&8)?1:0,col:SS.partCol[(tick>>3)&1],nog:true});
+  if(e.shot===1&&(tick%9)===0) parts.push({k:'petal',x:Math.random()*160,y:-4,vx:.2,vy:.4,life:220,max:220,sway:Math.random()*6,col:'#f8c8e0',nog:true});
+  updParts();
+  if(keys.fire&&e.t>30){ keys.fire=false; e.t=S.len; }
+  if(e.t>=S.len){ e.shot++; e.t=0; parts=[]; if(AC) SFX.chime();
+    if(e.shot>=END_SHOTS.length){ const cb=e.cb; ending=null; if(cb) cb(); else { state='credits'; creditsT=0; } } }
+}
+function drawEnding(){
+  const e=ending; if(!e) return; const S=END_SHOTS[e.shot], t=e.t;
+  if(e.shot===0){ // la plaza: el Roble y sus cuatro altares encendidos
+    drawTitleScene(1,1,0,false);
+    const alt=[[EMBER_SPR,30,98],[TEAR_SPR,114,98],[relicSprite('otono'),50,110],[FLAKE_SPR,96,110]];
+    alt.forEach(([sp,x,y],i)=>{ const k=clamp((t-30-i*30)/20,0,1); if(k<=0) return; glowAt(x+8,y+8,10+k*6,'rgba(255,240,180,.5)'); ctx.save(); ctx.globalAlpha=k; ctx.drawImage(sp,x,y-Math.round(Math.sin(tick*.08+i)*2)); ctx.restore(); });
+  } else if(e.shot===1){ // los hermanos: el Viento baja y rodea al Roble, manso
+    drawTitleScene(3,1,0,false); const k=clamp(t/160,0,1), a=t*.02;
+    const wx=80+Math.cos(a)*44*(1-k*.3), wy=18+k*22+Math.sin(a)*8;
+    ctx.save(); ctx.globalAlpha=.95; ctx.translate(Math.round(wx),Math.round(wy)); if(Math.cos(a)<0) ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore();
+    if(t>150&&(tick&7)<4) sparkle(80+(Math.random()-.5)*60,40+(Math.random()-.5)*30,'#fff6d0');
+  } else if(e.shot===2){ // el año gira, con todos mirando
+    const si=((t/75)|0)%4, w=t%75; drawTitleScene((si+3)%4,1,0,false);
+    const r=Math.round(Math.min(1,w/30)*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore();
+    const crowd=[PETRA_SPR,LUPA_SPR,MOSS_SPR,TILO_SPR,CORTEZA_SPR,ELDER]; crowd.forEach((sp,i)=>{ const x=6+i*26, hop=((tick>>3)+i*3)%12===0?2:0; drawShadow(x+8,131,6); ctx.drawImage(sp,x,115-hop); });
+  } else { // la novena semilla, de cerca
+    drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.18)'; ctx.fillRect(0,0,160,144);
+    const hop=t>120&&((t>>4)&3)===0?Math.round(Math.sin(((t&15)/16)*Math.PI)*6):0; drawShadow(80,126,12);
+    ctx.drawImage(t>200?H_LIFT:P_SPRITES[0][0],0,0,16,16,56,78-hop,48,48); ctx.drawImage(ELDER,0,0,16,16,112,90,32,32);
+    if(t>200&&(tick&3)===0) sparkle(64+Math.random()*32,70+Math.random()*10,'#fff6c0');
+  }
+  drawParts();
+  const lb=Math.min(1,t/16,(S.len-t)/16), h=Math.round(14*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
+  const a=Math.min(1,Math.max(0,(t-30)/20),(S.len-t)/20); if(a>0){ ctx.globalAlpha=a*.55; const bw=Math.max(...S.txt.map(l=>textW(l)))+14; roundBox(80-(bw>>1),10,bw,S.txt.length*11+5,'#0a120c'); ctx.globalAlpha=a; S.txt.forEach((ln,i)=>{ txtO(ln,80,13+i*11,'#fffbe8','center','#1a1408'); }); ctx.globalAlpha=1; }
+  if(t<16){ ctx.globalAlpha=1-t/16; ctx.fillStyle=e.shot===0?'#fff':'#000'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
 }

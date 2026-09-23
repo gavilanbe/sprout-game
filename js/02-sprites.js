@@ -1395,3 +1395,99 @@ const H_DROOP=spr([ // se dobla: hojas caídas hacia un lado, ojos medio cerrado
 ]);
 const SEED_FALL=sprN(["..kkkk..",".kAAAAk.","kAAAAAAk","kaaawaak",".kaaaak.","..kaak..","...kk..."]);
 const LEAF_BIT=sprN(["kk.","klk",".kk"]);
+/* secretos del valle (12c): el Trébol de cuatro hojas y el cebo dorado */
+AMULET_SPR.trebol=amuletArt(['#1a4a1a','#2e7a2a','#4aa844','#8ad866','#d8ffb0'],["......",".LL.L.","LLlLL.",".LlLL.","..l...","..l..."],{L:'#d8ffb0',l:'#1a5a1a'});
+const LURE_SPR=mkTile(g=>{ // el cebo dorado: una cucharilla que brilla
+  blobArt(g,2,1,8,9,[{x:4,y:4.5,r:3.6,ry:4.2}],GOLD5,{dither:.4,grad:.3});
+  g.fillStyle='#fffbe0'; g.fillRect(4,2,1,2);
+  g.fillStyle=PAL.k; g.fillRect(6,9,1,2); g.fillRect(7,11,2,1); g.fillRect(9,10,1,1);
+  g.fillStyle='#c8c8d8'; g.fillRect(5,0,2,1); g.fillStyle='#d84848'; g.fillRect(3,10,2,1);
+},12,12);
+/* ============================================================
+   EL MOLINO DE LA HOJARASCA: cuervos, caballeros de hoja, raíces
+   agarradoras, el Espantapájaros, el Ciervo de Ámbar, el molinillo
+   y la Hoja de Ámbar
+   ============================================================ */
+function mkArt(w,h,fn){ const c=mkCanvas(w,h); fn(c.getContext('2d')); return c; }
+const CROW5=['#0e0c16','#1c1828','#302a44','#4a4266','#7a72a0'];
+const AUT5B=['#4a1c0c','#8a3a14','#c86424','#eaa040','#fcd878'];
+const BARK5=['#2a1808','#4a2c14','#6a4020','#8a5a30','#b07840'];
+const DIRT5=['#2a1c10','#4a3420','#6a4a2c','#8a6a44','#a88a5e'];
+function crowArt(pose){ return mkArt(16,16,g=>{
+  if(pose===1){ artPix(g,["..kk......","..kwk.....","..kwwk....","...kwwkk..","....kwwwk."],{w:'#302a44'},3,2); }
+  blobArt(g,0,0,16,16,[{x:3.2,y:11.4,r:2.8,ry:1.6},{x:7.2,y:10,r:4.6,ry:3.6},{x:10.8,y:6.6,r:3}],CROW5,{grad:.5});
+  g.fillStyle=PAL.k; g.fillRect(13,5,2,3); g.fillRect(15,6,1,1); g.fillStyle='#f8b030'; g.fillRect(13,6,2,1); g.fillStyle='#c06810'; g.fillRect(13,7,1,1);
+  g.fillStyle='#ffffff'; g.fillRect(11,5,1,1); g.fillStyle='#e83030'; g.fillRect(12,5,1,1);
+  if(pose===0){ g.fillStyle='#0e0c16'; g.fillRect(4,9,5,1); g.fillRect(5,10,4,1); g.fillStyle='#7a72a0'; g.fillRect(6,8,2,1);
+    g.fillStyle=PAL.k; g.fillRect(5,13,1,3); g.fillRect(8,13,1,3); g.fillStyle='#f8b030'; g.fillRect(4,15,2,1); g.fillRect(7,15,2,1); }
+  if(pose===2){ artPix(g,["kwwwwk","kwwwk.","kwwk..",".kk..."],{w:'#302a44'},3,11); } });}
+const CROW_A=crowArt(0), CROW_B=crowArt(1), CROW_C=crowArt(2);
+function knightArt(step){ return mkArt(16,16,g=>{
+  const lx=step?[4,10]:[5,9];
+  for(const x of lx){ g.fillStyle=PAL.k; g.fillRect(x-1,11,4,5); g.fillStyle=BARK5[1]; g.fillRect(x,12,2,3); g.fillStyle=BARK5[0]; g.fillRect(x,14,3,1); }
+  blobArt(g,0,0,16,16,[{x:8,y:10,r:4.2,ry:3.4}],BARK5,{grad:.4});
+  blobArt(g,0,0,16,16,[{x:8,y:5.4,r:4,ry:3.6}],AUT5B,{grad:.5});
+  g.fillStyle='#1a0c04'; g.fillRect(6,5,6,2); g.fillStyle='#ffe070'; g.fillRect(8,5,1,1); g.fillRect(10,5,1,1);
+  g.fillStyle=PAL.k; g.fillRect(8,0,2,2); g.fillStyle='#c86424'; g.fillRect(8,1,1,1); g.fillStyle='#fcd878'; g.fillRect(9,1,1,1);
+  g.fillStyle=BARK5[3]; g.fillRect(6,9,1,2); });}
+const KNIGHT_A=knightArt(0), KNIGHT_B=knightArt(1);
+const SHIELD_LEAF=mkArt(9,12,g=>{ blobArt(g,1,1,7,10,[{x:3.5,y:5,r:3.3,ry:4.8}],AUT5B,{grad:.3,dither:.6});
+  g.fillStyle='#8a3a14'; g.fillRect(4,2,1,8); g.fillRect(3,4,1,1); g.fillRect(5,6,1,1); g.fillRect(3,7,1,1); g.fillStyle='#fff0c0'; g.fillRect(2,3,1,2); });
+const ROOT_HIDE=mkArt(16,16,g=>{ blobArt(g,2,10,12,6,[{x:6,y:3,r:5.4,ry:2.4}],DIRT5,{grad:.4});
+  g.fillStyle=PAL.k; g.fillRect(7,7,2,5); g.fillRect(5,6,3,3); g.fillRect(9,6,3,3); g.fillStyle='#2e8a34'; g.fillRect(7,8,1,4); g.fillStyle='#78d838'; g.fillRect(6,7,1,1); g.fillRect(10,7,1,1); g.fillStyle='#b0f068'; g.fillRect(5,7,1,1); g.fillRect(9,7,1,1); });
+function rootArt(grab){ return mkArt(16,16,g=>{
+  blobArt(g,1,11,14,5,[{x:7,y:2.5,r:6.4,ry:2.2}],DIRT5,{grad:.4});
+  blobArt(g,0,0,16,16,[{x:8,y:10,r:3.2,ry:4.6},{x:8,y:5.5,r:3.6,ry:3}],BARK5,{grad:.5});
+  const F=grab?[[4,4],[5,2],[8,1],[11,2],[12,4]]:[[3,2],[5,0],[8,0],[11,0],[13,2]];
+  for(const [x,y] of F){ g.fillStyle=PAL.k; g.fillRect(x-1,y-1,3,4); g.fillStyle=BARK5[3]; g.fillRect(x,y,1,2); }
+  g.fillStyle='#1a0c04'; g.fillRect(6,6,5,2); g.fillStyle='#b8ff60'; g.fillRect(6,6,1,1); g.fillRect(9,6,1,1);
+  g.fillStyle=BARK5[1]; g.fillRect(7,9,1,3); g.fillRect(9,11,1,2); });}
+const ROOT_UP=rootArt(false), ROOT_GRAB=rootArt(true);
+/* EL ESPANTAPÁJAROS (24×24): sombrero de paja, saco cosido, abrigo remendado */
+const SACK5=['#5a3a18','#8a6030','#b08850','#d0a868','#ecd098'];
+const COAT5=['#1a2438','#2a3a5a','#44587e','#6a80a8','#98acd0'];
+const SCARE_SPR=mkArt(24,24,g=>{
+  g.fillStyle=PAL.k; g.fillRect(10,14,4,10); g.fillStyle='#6a4020'; g.fillRect(11,15,2,9); g.fillStyle='#8a5a30'; g.fillRect(11,15,1,9);
+  g.fillStyle=PAL.k; g.fillRect(0,11,24,5); g.fillStyle=COAT5[2]; g.fillRect(1,12,22,3); g.fillStyle=COAT5[3]; g.fillRect(1,12,22,1); g.fillStyle=COAT5[1]; g.fillRect(1,14,22,1);
+  g.fillStyle='#f0d870'; g.fillRect(0,12,1,3); g.fillRect(23,12,1,3); g.fillRect(0,15,2,1); g.fillRect(22,15,2,1);
+  blobArt(g,0,0,24,24,[{x:12,y:16.5,r:6,ry:4.4}],COAT5,{grad:.4});
+  g.fillStyle='#a04040'; g.fillRect(8,15,3,3); g.fillStyle='#d06060'; g.fillRect(8,15,3,1); g.fillStyle='#ecd098'; g.fillRect(9,16,1,1); g.fillRect(15,18,1,1); g.fillRect(16,17,1,1);
+  g.fillStyle='#f0d870'; g.fillRect(11,12,2,2); g.fillRect(10,13,1,1); g.fillRect(13,13,1,1);
+  blobArt(g,0,0,24,24,[{x:12,y:8.4,r:4.8,ry:4.2}],SACK5,{grad:.4,dither:.7});
+  g.fillStyle='#1a0c04'; g.fillRect(9,8,2,2); g.fillRect(13,8,2,2); g.fillStyle='#ffffff'; g.fillRect(10,8,1,1); g.fillRect(14,8,1,1);
+  g.fillStyle='#3a2410'; for(let x=9;x<=15;x+=2) g.fillRect(x,11,1,1); g.fillRect(9,10,7,1);
+  g.fillStyle=PAL.k; g.fillRect(4,3,16,3); g.fillStyle='#e0c060'; g.fillRect(5,4,14,1); g.fillStyle='#b08830'; g.fillRect(5,5,14,1);
+  blobArt(g,0,0,24,24,[{x:12,y:2.6,r:3.6,ry:2.4}],['#6a4a10','#a07820','#d0a838','#e8c860','#fff0a0'],{grad:.3});
+  g.fillStyle='#a04040'; g.fillRect(9,3,7,1); g.fillStyle='#2a2438'; g.fillRect(17,0,1,4); g.fillRect(18,1,1,2); });
+/* EL CIERVO DE ÁMBAR (32×32), de perfil hacia la derecha; con y sin manto de hojarasca */
+const DEER5=['#4a2410','#7a4020','#a86a38','#d0985a','#f0c890'];
+const AMBER5=['#6a3a08','#b86a10','#e89a20','#f8c848','#fff0a0'];
+function ciervoArt(mantle){ return mkArt(32,32,g=>{
+  for(const [x,off] of [[9,1],[13,0],[20,0],[24,1]]){ g.fillStyle=PAL.k; g.fillRect(x-1,21+off,4,11-off); g.fillStyle=DEER5[1]; g.fillRect(x,22+off,2,8-off); g.fillStyle='#2a1408'; g.fillRect(x,30,2,1); }
+  blobArt(g,0,0,32,32,[{x:5.5,y:15.5,r:2.2,ry:1.8},{x:15,y:19,r:10,ry:5.6},{x:23,y:14.5,r:4.4,ry:6},{x:26.2,y:9.2,r:3.8,ry:3.4},{x:29.2,y:11.2,r:2.2,ry:1.8}],DEER5,{grad:.5});
+  g.fillStyle=DEER5[4]; g.fillRect(12,22,9,1); g.fillRect(22,17,3,2); g.fillStyle='#ffffff'; g.fillRect(4,14,2,2);
+  g.fillStyle='#1a0c04'; g.fillRect(27,8,2,1); g.fillStyle='#ffffff'; g.fillRect(28,8,1,1); g.fillStyle=PAL.k; g.fillRect(31,11,1,1);
+  g.fillStyle=PAL.k; g.fillRect(22,5,3,3); g.fillStyle=DEER5[2]; g.fillRect(23,6,1,1);
+  const A=[[25,5,23,2],[23,2,21,0],[23,2,25,0],[27,5,29,2],[29,2,31,1],[29,2,28,0],[24,4,20,3],[28,4,31,4]];
+  for(const [x0,y0,x1,y1] of A){ const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0)); for(let i=0;i<=n;i++){ const x=Math.round(x0+(x1-x0)*i/n), y=Math.round(y0+(y1-y0)*i/n); g.fillStyle=PAL.k; g.fillRect(x-1,y-1,3,3); } }
+  for(const [x0,y0,x1,y1] of A){ const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0)); for(let i=0;i<=n;i++){ const x=Math.round(x0+(x1-x0)*i/n), y=Math.round(y0+(y1-y0)*i/n); g.fillStyle='#6a4a2a'; g.fillRect(x,y,1,1); } }
+  for(const [x,y] of [[21,0],[25,0],[31,1],[28,0],[20,3]]){ g.fillStyle=mantle?'#c86424':'#f8c848'; g.fillRect(x,y,1,1); g.fillStyle=mantle?'#eaa040':'#fff0a0'; if(x+1<32) g.fillRect(x+1,y,1,1); }
+  if(mantle){ blobArt(g,0,0,32,32,[{x:10,y:15.5,r:5.2,ry:4.4},{x:16,y:13.6,r:5.6,ry:4.6},{x:21,y:13.2,r:4.2,ry:3.8},{x:13,y:18.6,r:4.4,ry:3.2}],AUT5B,{grad:.5,dither:.8});
+    for(let i=0;i<10;i++){ const h=hash(i*7+3,31), x=6+(h%18), y=10+((h>>5)%10); g.fillStyle=AUT5B[2+((h>>9)%3)]; g.fillRect(x,y,2,1); g.fillStyle=AUT5B[0]; g.fillRect(x,y+1,1,1); } }
+  else { g.fillStyle='rgba(252,216,120,.5)'; g.fillRect(21,1,2,2); g.fillRect(28,1,2,2); } });}
+const CIERVO_SPR=ciervoArt(true), CIERVO_BARE=ciervoArt(false), CIERVO_BARE_W=whiten(ciervoArt(false));
+BOSS_SPR.scare=SCARE_SPR; BOSS_WHITE.scare=whiten(SCARE_SPR); BOSS_SPR.ciervo=CIERVO_SPR; BOSS_WHITE.ciervo=whiten(CIERVO_SPR);
+PORTRAITS['EL CIERVO']=CIERVO_BARE;
+/* el MOLINILLO (objeto X) y la HOJA DE ÁMBAR (reliquia del Otoño) */
+const PINWHEEL_SPR=mkArt(16,16,g=>{
+  g.fillStyle=PAL.k; g.fillRect(6,7,3,9); g.fillStyle='#8a5a2c'; g.fillRect(7,8,1,8); g.fillStyle='#b07840'; g.fillRect(7,8,1,3);
+  const cx=7.5, cy=6, cols=['#f04848','#f8c848','#e88030','#fff0c8'];
+  for(let i=0;i<4;i++){ const t=i*Math.PI/2+.3;
+    g.fillStyle=PAL.k; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(t)*6.8,cy+Math.sin(t)*6.8); g.lineTo(cx+Math.cos(t+.9)*4.6,cy+Math.sin(t+.9)*4.6); g.closePath(); g.fill();
+    g.fillStyle=cols[i]; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(t)*5.6,cy+Math.sin(t)*5.6); g.lineTo(cx+Math.cos(t+.85)*3.6,cy+Math.sin(t+.85)*3.6); g.closePath(); g.fill(); }
+  g.fillStyle=PAL.k; g.fillRect(6,5,3,3); g.fillStyle='#fcd878'; g.fillRect(7,6,1,1); });
+const AMBER_SPR=mkArt(16,16,g=>{
+  g.fillStyle=PAL.k; g.fillRect(7,11,3,5); g.fillStyle=AMBER5[0]; g.fillRect(8,12,1,4);
+  blobArt(g,0,0,16,16,[{x:8,y:5.6,r:3.8,ry:4},{x:4,y:7.8,r:3,ry:2.6},{x:12,y:7.8,r:3,ry:2.6},{x:8,y:9.6,r:3.2,ry:2.4}],AMBER5,{grad:.5,dither:.6});
+  g.fillStyle=AMBER5[1]; g.fillRect(8,3,1,8); g.fillRect(5,7,3,1); g.fillRect(9,7,3,1); g.fillRect(6,9,2,1); g.fillRect(9,9,2,1);
+  g.fillStyle='#ffffff'; g.fillRect(6,4,1,2); g.fillRect(5,6,1,1); });

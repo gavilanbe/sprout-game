@@ -23,6 +23,7 @@ let hasBlade=false, noBladeMsg=0, introDone=false;
 let hasBomb=false, hasEmber=false, bossDone=false, thawed=false, midKing=false;
 let hasHook=false, hasTear=false, boss2Done=false, summered=false, midDrone=false;
 let hasFlake=false, boss3Done=false, cycled=false, midIce=false;
+let hasPinwheel=false, midScare=false, hasAmber=false, boss4Done=false, autumned=false; // el Molino: molinillo, Espantapájaros, Hoja de Ámbar, Ciervo, otoño entregado
 let hasBoomer=false, hasLantern=false, hasFeather=false, hasShield=false;
 let pieces=0, dungeonKeys={}, bigKeys={};  // llaves pequeñas por mazmorra, llaves grandes
 let bombAmmo=10, bombMax=10;                // bellotas-bomba: se gastan y se recogen
@@ -63,7 +64,8 @@ function die(){ if(state==='dying'||state==='over') return;
 let overSel=0;
 function hurt(n,fromX,fromY,force){ // daño al jugador, con amuleto de raíz y escudo
   if(player.inv>0&&!force) return false;
-  if(hasAmulet('raiz')) n=Math.max(1,Math.ceil(n/2));
+  if(hasAmulet('raiz')){ n=Math.max(1,Math.ceil(n/2)); amuletFx('raiz'); }
+  n=diffDamage(n); if(typeof rumble==='function') rumble(170,.55,.45);
   player.hp-=n; player.inv=60; shake=8; SFX.hurt(); hitStop=3; hurtVig=24; player.squash=-.35; hitSpark(player.x+8,player.y+8,'#ffb0b0');
   if(fromX!==undefined){ const d=Math.hypot(player.x-fromX,player.y-fromY)||1; player.kx=(player.x-fromX)/d*2.5; player.ky=(player.y-fromY)/d*2.5; }
   flyText.push({x:player.x+8,y:player.y-4,txt:'-'+n,t:30,col:'#f89090'});
@@ -90,12 +92,14 @@ function ask(pages,who,cb,style){ dlg={pages:paginate(pages,who),page:0,chars:0,
 let trans=null;
 function showToast(t1,t2){ toastQ.push({t1,t2,t:140}); }
 /* ---------- segunda pasada: ajustes, tiempo de juego, intro y lore ---------- */
-let opts={textSpeed:1,shake:1};
+let opts={textSpeed:1,shake:1,musVol:7,sfxVol:8,diff:1,vib:1,keys:null};
 try{ Object.assign(opts,JSON.parse(localStorage.getItem('sprout.opts')||'{}')); }catch(e){}
 function saveOpts(){ try{ localStorage.setItem('sprout.opts',JSON.stringify(opts)); }catch(e){} }
+/* dificultad: relajada (0) la mitad del daño, normal (1), difícil (2) una vez y media */
+function diffDamage(n){ const d=opts.diff??1; return d===0?Math.max(1,Math.floor(n/2)):d===2?Math.ceil(n*1.5):n; }
 let playTime=0, petraWoke=false, saveFlash=0, wellDone=false, lettersGiven=false, loreSel=0, optSel=0, itemCardT=0, itemCardName='';
 function lettersCount(){ let n=0; for(const id of collected) if(id[0]==='✉') n++; return n; }
-function chapterIdx(){ return cycled?4:summered?3:thawed?2:won?1:0; }
+function chapterIdx(){ return cycled?5:autumned?4:summered?3:thawed?2:won?1:0; }
 function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)%60).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 /* ---------- HUD y menú elevados ---------- */
 const THUMBS={};                 // miniaturas del mapa por pantalla ('x,y' → canvas 18×14)

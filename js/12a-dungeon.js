@@ -24,7 +24,8 @@ const ROOM_RULES={
 };
 let roomShut=null, shutArm=false, regrow=[];
 function initRoomRules(){
-  roomShut=null; shutArm=false; regrow=[];
+  roomShut=null; shutArm=false; regrow=[]; initEcho();
+  if(sx===5&&sy===9&&cycled&&grid[1][8]!=='>') grid[1][8]='>'; // tras el final, la Gruta baja al Eco
   const key=sx+','+sy, R=ROOM_RULES[key]; if(!R||!R.clear) return;
   if(opened.has('RC'+key)){ placeRoomReward(R,true); return; }
   if(enemies.length>0) shutArm=true;
@@ -39,27 +40,28 @@ function closeRoom(){
   const cells=[];
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(x!==0&&x!==SW-1&&y!==0&&y!==SH-1) continue;
     const ch=grid[y][x]; if(!isSolid(ch)){ cells.push([x,y,ch]); grid[y][x]='='; puff(x*16+8,y*16+8,'#6a6458',4,.8); } }
-  roomShut={cells}; markDirty(); SFX.bump(); noise(.25,.08,false); shake=8;
+  roomShut={cells}; markDirty(); SFX.ambushClose(); musicAmbush(true); shake=8;
   showToast('¡EMBOSCADA!','vence a todos para salir');
 }
 function openRoom(){
   for(const [x,y,ch] of roomShut.cells){ grid[y][x]=ch; puff(x*16+8,y*16+8,'#8a7048',5,1); }
-  roomShut=null; const key=sx+','+sy; opened.add('RC'+key); SFX.puzzle(); shake=4; markDirty();
+  roomShut=null; const key=sx+','+sy; opened.add('RC'+key); SFX.ambushOpen(); musicAmbush(false); shake=4; markDirty();
   placeRoomReward(ROOM_RULES[key],false); save();
 }
 function updRoomRules(){
+  updEcho();
   if(shutArm&&!roomShut){ const [tx,ty]=playerTile(); if(tx>=1&&tx<=SW-2&&ty>=1&&ty<=SH-2){ shutArm=false; closeRoom(); } }
   else if(roomShut&&enemies.length===0&&!midboss) openRoom();
   // los belloteros vuelven a brotar
   for(const r of regrow){ r.t--;
     if(r.t<=0){ const ch=grid[r.y][r.x];
-      if(!isSolid(ch)&&Math.hypot(player.x+8-(r.x*16+8),player.y+12-(r.y*16+8))>14){ grid[r.y][r.x]='♣'; markDirty(); puff(r.x*16+8,r.y*16+10,'#78d838',6,.8); SFX.blip(); }
+      if(!isSolid(ch)&&Math.hypot(player.x+8-(r.x*16+8),player.y+12-(r.y*16+8))>14){ grid[r.y][r.x]='♣'; markDirty(); puff(r.x*16+8,r.y*16+10,'#78d838',6,.8); SFX.sprout(); }
       else r.t=30; } }
   regrow=regrow.filter(r=>r.t>0);
 }
 /* un bellotero cortado: suelta bellotas-bomba (o bayas si aún no tienes el zurrón) y rebrota */
 function cutBellotero(x,y){
-  grid[y][x]=regionFloor(); markDirty(); SFX.cut(); leaves(x*16+8,y*16+8);
+  grid[y][x]=regionFloor(); markDirty(); SFX.cut(); SFX.bellotero(); leaves(x*16+8,y*16+8);
   if(hasBomb) pickups.push({kind:'bombs',n:3,x:x*16+4,y:y*16+4,t:0,drop:14});
   else pickups.push({kind:'berry',x:x*16+4,y:y*16+4,t:0,drop:14});
   regrow.push({x,y,t:480});
@@ -73,6 +75,7 @@ const CHEST_EXTRA={
   '12,2:7,5':{kind:'bombbag'},
   '14,2:4,4':{kind:'map',dk:'templo'},
   '16,2:5,2':{kind:'compass',dk:'templo'},
+  '5,12:4,3':{kind:'berries',n:100},
 };
 for(const k in CHEST_EXTRA) CHESTS[k]=CHEST_EXTRA[k];
 function giveThing(spr,name,pages){
@@ -83,8 +86,8 @@ function openChestContent(c){
   if(!c){ say(["El cofre está vacío. Alguien llegó antes."]); return; }
   if(c.kind==='amulet') giveAmulet(c.id);
   else if(c.kind==='berries'){ berries=Math.min(999,berries+c.n); hudBerryT=14; say(["¡"+c.n+" BAYAS!"]); }
-  else if(c.kind==='map'){ dmaps.add(c.dk); giveThing(MAP_SPR,'MAPA · '+DUNGEON_SHORT[c.dk],["¡El MAPA de "+DUNGEON_NAMES[c.dk].toLowerCase()+"!","Ábrelo en el ZURRÓN (ENTER): verás todas las salas, también las que aún no pisaste."]); }
-  else if(c.kind==='compass'){ dcomp.add(c.dk); giveThing(COMPASS_SPR,'BRÚJULA · '+DUNGEON_SHORT[c.dk],["¡La BRÚJULA!","En el mapa del zurrón señala al GUARDIÁN y los COFRES que te quedan por abrir."]); }
+  else if(c.kind==='map'){ dmaps.add(c.dk); SFX.mapGet(); giveThing(MAP_SPR,'MAPA · '+DUNGEON_SHORT[c.dk],["¡El MAPA de "+DUNGEON_NAMES[c.dk].toLowerCase()+"!","Ábrelo en el ZURRÓN (ENTER): verás todas las salas, también las que aún no pisaste."]); }
+  else if(c.kind==='compass'){ dcomp.add(c.dk); SFX.compassGet(); giveThing(COMPASS_SPR,'BRÚJULA · '+DUNGEON_SHORT[c.dk],["¡La BRÚJULA!","En el mapa del zurrón señala al GUARDIÁN y los COFRES que te quedan por abrir."]); }
   else if(c.kind==='key'){ const dk=dungeonOf(sx,sy)||'x'; dungeonKeys[dk]=(dungeonKeys[dk]||0)+1; SFX.key(); say(TXT.keyGet); save(); }
   else if(c.kind==='piece'){ addPiece(); }
   else if(c.kind==='bombbag'){ bombMax=20; bombAmmo=20; giveThing(BOMBBAG_SPR,'ZURRÓN DE BELLOTAS',["¡El ZURRÓN DE BELLOTAS!","Ahora caben 20 bellotas-bomba. Y viene lleno."]); }
@@ -104,3 +107,26 @@ const BOMBBAG_SPR=(()=>{ const c=mkCanvas(16,16), g=c.getContext('2d');
   blobArt(g,1,4,14,12,[{x:7,y:6,r:6.5,ry:5.5}],['#3a2410','#5a3a1c','#7a5228','#a07040','#c89868'],{grad:.4});
   g.fillStyle=PAL.k; g.fillRect(4,2,8,3); g.fillStyle='#8a5a2c'; g.fillRect(5,3,6,1); g.fillStyle='#c02828'; g.fillRect(3,5,10,1);
   g.drawImage(ACORN,0,0,8,8,4,7,8,8); return c; })();
+/* ============================================================
+   EL ECO DE LOS GUARDIANES (post-juego): bajo la Gruta de los
+   Ecos, una galería donde esperan los ecos de los guardianes, uno
+   tras otro. No ceden ni hablan: al quedar a 2 PV se disuelven y
+   la verja del este se abre. Al final, el Alba.
+   ============================================================ */
+const ECO_BOSS={'1,12':'topo','2,12':'avispa','3,12':'ciervo','4,12':'viento'};
+const ECO_NAME={topo:'ECO DEL TOPO REAL',avispa:'ECO DE LA REINA',ciervo:'ECO DEL CIERVO',viento:'ECO DEL VIENTO'};
+function enterEcho(){ placeAt(0,12,72,62,1); showToast('EL ECO DE LOS GUARDIANES','vence a sus ecos'); }
+function initEcho(){
+  const key=sx+','+sy, t=ECO_BOSS[key]; if(!t||opened.has('ECO'+key)) return;
+  boss=t==='ciervo'?makeCiervo(5,3):makeBoss(t,4,3); boss.echo=true; boss.hp=boss.maxHp=Math.round(boss.maxHp*.8);
+  if(t==='avispa'){ boss.y=16; } bossCard={txt:ECO_NAME[t],t:130}; if(AC) SFX.boss();
+  setTrack(typeof TRACKS!=='undefined'&&TRACKS.desafio?'desafio':'jefe');
+}
+function updEcho(){
+  if(!boss||!boss.echo||boss.hp>2) return;
+  const key=sx+','+sy, b=boss; pendingSay=null;
+  for(let i=0;i<3;i++) puff(b.x+16,b.y+16,['#c8b0ff','#fffbe8','#8a78d8'][i],12,1.6);
+  deathPoof(b.x+16,b.y+16,'#c8b0ff'); boss=null; enemies=[]; projs=[]; shake=10; screenFlash(10,'#e8e0ff');
+  opened.add('ECO'+key); opened.add('G'+key); openGates(); player.hp=Math.min(player.maxHp,player.hp+4);
+  if(AC){ SFX.fanfare(); setTrack('gruta'); } showToast('EL ECO SE DESVANECE','la verja se abre'); save();
+}

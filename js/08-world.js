@@ -4,17 +4,20 @@ const inTown=(x,y)=>(x===1&&y===1)||(x===0&&y===1);
 const inValleyScr=(x,y)=>x>=0&&x<=4&&y>=0&&y<=2;
 function seasonPhase(){ return cycled?(((tick/3000)|0)%4):-1; } // post-final: las estaciones giran (~50s cada una)
 function regionOf(nx,ny){
+  if(ny===12) return 'eco';   // post-juego: el Eco de los Guardianes
   if(ny===9&&nx>=7&&nx<=9) return 'casa';
   if(ny===9&&nx===5) return 'gruta';
   if(ny===9&&(nx===3||nx===4)) return 'secreto';
+  if(ny===10&&nx>=0&&nx<=6) return 'secreto'; // los escondites del mundo (12c)
   if(nx>=6&&nx<=8) return 'cueva';
   if(nx>=10&&nx<=12) return 'tronco';
   if(nx>=14&&nx<=16) return 'templo';
+  if(nx>=18&&nx<=20) return 'molino';
   if(ny<=-1) return 'norte';
   if(ny===3) return 'marisma';
   return 'valle';
 }
-function dungeonOf(nx,ny){ const r=regionOf(nx,ny); return (r==='cueva'||r==='tronco'||r==='templo')?r:null; }
+function dungeonOf(nx,ny){ const r=regionOf(nx,ny); return (r==='cueva'||r==='tronco'||r==='templo'||r==='molino')?r:null; }
 function screenBiome(nx,ny){ // qué estación se VE en una pantalla
   const r=regionOf(nx,ny);
   if(r==='norte') return (thawed&&ny===-1)?'valley':'snow';
@@ -28,10 +31,10 @@ function screenBiome(nx,ny){ // qué estación se VE en una pantalla
 }
 function screenStyle(nx,ny){ const r=regionOf(nx,ny);
   if(r==='tronco') return (nx===10&&ny===2)?'hive':'wood';
-  if(r==='templo') return 'ice'; return 'cave'; }
+  if(r==='templo') return 'ice'; if(r==='molino') return 'mill'; return 'cave'; }
 function regionFloor(){ const r=regionOf(sx,sy);
   if(r==='norte') return (thawed&&sy===-1)?'.':'n';
-  if(r==='cueva'||r==='tronco'||r==='templo'||r==='gruta'||r==='secreto') return 'q';
+  if(r==='cueva'||r==='tronco'||r==='templo'||r==='molino'||r==='gruta'||r==='secreto') return 'q';
   if(r==='casa') return 'o';
   if(r==='marisma') return summered?'.':'·';
   return '.';
@@ -131,14 +134,16 @@ function loadScreen(nx,ny){
       if((r==='tronco'&&['beetle','snail','thorn','seton'].includes(en.type))||(r==='templo'&&en.type!=='bat'&&en.type!=='bee')) en.dmg=Math.max(en.dmg,2);
       if(en.type==='icicle'&&thawed&&sy===-1) continue; // sin invierno no hay carámbanos
       if(en.type==='thorn'&&dng) en.hp=4;
+      if((opts.diff??1)===2) en.hp+=1;                                   // difícil: un golpe más para todos
       enemies.push(en);
     } else if(MIDBOSS_MARK[ch]){
       grid[y][x]=regionFloor();
-      const t=MIDBOSS_MARK[ch], done=(t==='king'&&midKing)||(t==='drone'&&midDrone)||(t==='iceguard'&&midIce);
+      const t=MIDBOSS_MARK[ch], done=(t==='king'&&midKing)||(t==='drone'&&midDrone)||(t==='iceguard'&&midIce)||(t==='scare'&&midScare);
       if(!done) midboss=makeMidboss(t,x,y);
       else if(t==='king'&&!hasBomb) pickups.push({kind:'bomb',x:x*16,y:y*16,t:0});
       else if(t==='drone'&&!hasHook) pickups.push({kind:'hook',x:x*16,y:y*16,t:0});
       else if(t==='iceguard'&&!hasFeather) pickups.push({kind:'feather',x:x*16,y:y*16,t:0});
+      else if(t==='scare'&&!hasPinwheel) pickups.push({kind:'molinillo',x:x*16,y:y*16,t:0});
     } else if(/[1-8]/.test(ch)){
       grid[y][x]=under(grid,x,y);
       if(!collected.has(id)) pickups.push({kind:'seed',id,x:x*16+4,y:y*16+4,t:0});
@@ -165,6 +170,7 @@ function loadScreen(nx,ny){
     else if(ch==='J'){ grid[y][x]='q'; if(!bossDone) boss=makeBoss('topo',x,y); else if(!hasEmber) pickups.push({kind:'ember',x:x*16,y:y*16,t:0}); }
     else if(ch==='!'){ grid[y][x]='q'; if(!boss2Done) boss=makeBoss('avispa',x,y); else if(!hasTear) pickups.push({kind:'tear',x:x*16,y:y*16,t:0}); }
     else if(ch==='^'){ grid[y][x]='n'; if(!boss3Done) boss=makeBoss('viento',x,y); else if(!hasFlake) pickups.push({kind:'flake',x:x*16,y:y*16,t:0}); }
+    else if(ch==='Λ'){ grid[y][x]='q'; if(!boss4Done) boss=makeCiervo(x,y); else if(!hasAmber) pickups.push({kind:'amber',x:x*16,y:y*16,t:0}); }
     else if(ch==='C'){ if(opened.has('C:'+sx+','+sy+':'+x+','+y)) grid[y][x]=regionFloor(); }
     else if(ch==='='){ if(opened.has('G'+sx+','+sy)||opened.has('PZ'+sx+','+sy)) grid[y][x]='q'; }
     else if(ch==='%'){ if(opened.has('G'+sx+','+sy)) grid[y][x]='&'; }
@@ -197,16 +203,16 @@ function loadScreen(nx,ny){
   if(sx===10&&sy===2&&boss2Done) npcs.push({ch:'reina',x:5,y:2,guest:'avispa'});
   if(sx===1&&sy===-3&&boss3Done) npcs.push({ch:'viento',x:4,y:2,guest:'viento'});
   const r2=regionOf(sx,sy);
-  setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?((sx===8||sx===7)?'tienda':'casa'):sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':(r2==='gruta'||r2==='secreto')?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='marisma'?'pantano':'valle'));
+  setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?((sx===8||sx===7)?'tienda':'casa'):sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':(r2==='gruta'||r2==='secreto')?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='molino'?(TRACKS.molino?'molino':'cueva'):r2==='marisma'?'pantano':'valle'));
   const firstVisit=!visited.has(key); visited.add(key);
   if(firstVisit&&PLACE_NAMES[key]&&introDone&&!boss&&!midboss) placeBanner={txt:PLACE_NAMES[key],t:110};
   if((boss||midboss)&&AC) SFX.boss();
-  bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':'EL VIENTO DEL NORTE',t:130}:midboss?{txt:MID_CARD[midboss.type],t:130}:null;
+  bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':boss.type==='ciervo'?'EL CIERVO DE ÁMBAR':'EL VIENTO DEL NORTE',t:130}:midboss?{txt:MID_CARD[midboss.type],t:130}:null;
   if(midboss&&!hinted.has('mid'+midboss.type)){ hinted.add('mid'+midboss.type); pendingSay=MID_INTRO[midboss.type].slice(); }
   const reg=regionOf(sx,sy);
   if(reg!=='casa'&&respawnPoint.reg!==reg&&REGION_ANCHOR[reg]) respawnPoint={...REGION_ANCHOR[reg],reg};
   if(sx===1&&sy===-3&&boss3Done) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') grid[y][x]=';'; // los braseros de la cima arden en paz
-  initRoomRules(); markDirty();
+  initRoomRules(); initSecrets(); initMill(); markDirty();
   if(state!=='title'&&state!=='boot'&&state!=='file') save();
 }
 function hasGate(){ for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='=') return true; return false; }

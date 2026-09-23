@@ -94,7 +94,8 @@ function hurt(){
 }
 function motionEvents(){
   for(const event of p.events.splice(0)){
-    if(event==='attack'){attackSerial=p.attackId;tone(270,.11,'triangle',.045,90);}
+    // Each swing gets a fresh serial, even if the motion state was recreated (p.attackId restarts at 0).
+    if(event==='attack'){attackSerial++;tone(270,.11,'triangle',.045,90);}
     if(event==='dash')tone(180,.12,'triangle',.035,450);
     if(event==='end:wilt'){room=0;p.x=p.prevX=144;p.y=p.prevY=184;p.hp=5;p.hurt=0;p.inv=1.5;transition=0;roomSlide=null;poseMotion(p,'rebloom',.55);syncUI();}
     if(event==='end:rebloom')notice('Un nuevo brote. El camino sigue abierto.');

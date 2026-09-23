@@ -54,6 +54,13 @@ function update(){
   }
   if(state==='title'){ updTitle(); return; }
   if(state==='file'){ updFile(); return; }
+  if(state==='fish'){ updFishing(); return; } // la pesca con Moss (12c)
+  if(state==='credits'){ creditsT++; // los créditos avanzan; al final, Z vuelve al valle (post-juego)
+    const si=((creditsT/420)|0)%4; if((tick%7)===0) parts.push({k:SEASONS[si].part,x:Math.random()*170-5,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:240,max:240,sway:Math.random()*6,r:(tick&8)?1:0,col:SEASONS[si].partCol[(tick>>3)&1],nog:true});
+    updParts(); const end=creditsT>CREDITS.length*22+80;
+    if(keys.fire&&end){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } else if(keys.fire){ keys.fire=false; creditsT+=40; } return; }
+  if(state==='seasoncine'){ updSeasonCine(); return; }
+  if(state==='ending'){ updEnding(); return; }
   if(state==='cine'){
     cineT++; cineParts();
     if(cineFold>0){ cineFold--;
@@ -126,12 +133,14 @@ function update(){
       else say(["(¡Brote! ¡Brote!\nUna voz te llama\ndesde fuera.)"]); }
     updParts(); return; }
   if(player.inv>0)player.inv--;
-  if(hasAmulet('musgo')&&player.hp<player.maxHp&&++regen>=900){ regen=0; player.hp++; SFX.heart(); sparkle(player.x+8,player.y-2,'#a8e878'); }
+  if(hasAmulet('musgo')&&player.hp<player.maxHp&&++regen>=900){ regen=0; player.hp++; SFX.heart(); amuletFx('musgo'); }
   player.kx*=.75; player.ky*=.75;
   if(Math.abs(player.kx)>.1||Math.abs(player.ky)>.1) tryMove(player.kx,player.ky);
   const onTile=playerOnTile();
   // salto con el Vilano
-  if(jumpT>0){ jumpT--; jumpZ=Math.sin((26-jumpT)/26*Math.PI)*14; tryMove(jumpDir[0]*2.1,jumpDir[1]*2.1); player.anim=0;
+  if(jumpT>0){ if(glideT>0) glideStep(); // el vilano planea mientras mantengas X
+    else { jumpT--; jumpZ=Math.sin((26-jumpT)/26*Math.PI)*14; tryMove(jumpDir[0]*2.1,jumpDir[1]*2.1); if(jumpT===13&&keys.altHeld&&!glideUsed&&xItem==='feather') glideStart(); }
+    player.anim=0;
     if(jumpT===0){ SFX.land(); player.squash=-.45; stepDust(); stepDust(); } }
   else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); }
   else {
@@ -165,17 +174,17 @@ function update(){
   if(jumpT===0&&onTile==='°'&&state==='play'){ state='fall'; deathT=40; SFX.fall(); player.atk=0; }
   // REMOLINO
   if(hasSpin&&hasBlade&&player.spin===0&&jumpT===0){
-    if(keys.fireHeld&&player.atk===0){ player.charge++;
-      const need=hasAmulet('susurro')?12:36; if(player.charge===need){ SFX.charge(); puff(player.x+8,player.y+8,'#a8ec78',8,1.2); }
+    if(keys.fireHeld&&player.atk===0){ player.charge++; spinChargeTick();
+      const need=spinNeed(); if(player.charge===need){ SFX.charge(); puff(player.x+8,player.y+8,'#a8ec78',8,1.2); }
       if(player.charge>=need&&(tick&3)===0){ const a=tick*.5; parts.push({x:player.x+8+Math.cos(a)*11,y:player.y+9+Math.sin(a)*11,vx:0,vy:0,life:8,col:PAL.l,nog:true}); }
-    } else if(player.charge>0){ if(player.charge>=(hasAmulet('susurro')?12:36)) doSpin(); player.charge=0; }
+    } else if(player.charge>0){ if(player.charge>=spinNeed()) doSpin(); player.charge=0; }
   } else if(!keys.fireHeld) player.charge=0;
   if(player.spin>0){ player.spin--; if((tick&1)===0){ const a=(18-player.spin)*.7; parts.push({x:player.x+8+Math.cos(a)*14,y:player.y+9+Math.sin(a)*14,vx:Math.cos(a)*.8,vy:Math.sin(a)*.8,life:10,col:'#a8ec78',nog:true}); }
-    if(player.spin===9) cutAt(meleeBox()); }
-  updBombs(); updProjs(); updWind(); updBoomer();
-  updBoss(); updMidboss();
+    if(player.spin===9||(hasBigSpin&&player.spin===24)) cutAt(meleeBox()); }
+  updBombs(); updProjs(); updWind(); updBoomer(); updGear();
+  updBoss(); updMidboss(); musicIntensity(boss&&boss.maxHp?bossPhase(boss)-1:midboss&&midboss.maxHp?(midboss.hp<=midboss.maxHp/2?1:0):0);
   updPickups();
-  updEnemies(); updRoomRules(); updParts();
+  updEnemies(); updRoomRules(); updMill(); updSecrets(); updParts();
   updExits();
 }
 function weather(){
@@ -189,19 +198,20 @@ function weather(){
   if(ph===3&&(tick&5)===0) parts.push({k:'flake',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.4,life:110,max:110,r:(tick&8)?1:0,col:'#ffffff',nog:true});
   if(r==='valle'&&won&&ph<0&&(tick&63)===0) parts.push({x:Math.random()*160,y:30+Math.random()*80,vx:.3+Math.random()*.3,vy:-.1,life:120,col:(tick&64)?'#fffbe8':'#f0a0d0',nog:true,fly:true});
   if((tick%45)===0) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const ch=grid[y][x];
-    if(ch==='Q'||(hasAmulet('buho')&&(ch==='C'||(ch==='¤'&&!opened.has('CH'+sx+','+sy+':'+x+','+y))))) sparkle(x*16+5+Math.random()*6,y*16+3,C.flowerC); }
+    if(ch==='Q'||(hasAmulet('buho')&&(ch==='C'||ch==='⊂'||ch==='✕'||(ch==='¤'&&!opened.has('CH'+sx+','+sy+':'+x+','+y))))) sparkle(x*16+5+Math.random()*6,y*16+3,C.flowerC); }
 }
 function updBombs(){
   for(const b of bombs){ b.t--;
     if((b.t&7)===0) parts.push({x:b.x+9,y:b.y+2,vx:(Math.random()-.5)*.4,vy:-.5,life:8,col:'#f8e060',nog:true});
-    if(b.t<=0){ SFX.edie(); noise(.35,.12,false); beep('square',90,30,.3,.1); shake=10;
+    if(b.t<=0){ SFX.edie(); noise(.35,.12,false); beep('square',90,30,.3,.1); shake=10; if(typeof rumble==='function') rumble(220,.85,.5);
       const big=hasAmulet('topo'), R0=big?46:38;
       puff(b.x+8,b.y+8,'#f8e060',12,2); puff(b.x+8,b.y+8,'#f8a030',10,1.6); puff(b.x+8,b.y+8,'#9088a0',8,1.2);
-      parts.push({x:b.x+8,y:b.y+8,vx:0,vy:0,life:12,col:'#fff',ring:true,r:big?22:16,nog:true});
+      parts.push({x:b.x+8,y:b.y+8,vx:0,vy:0,life:12,col:'#fff',ring:true,r:big?22:16,nog:true}); bombFx(b.x+8,b.y+8,big);
       let brokeC=false;
       for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const ch=grid[y][x];
         if(Math.hypot(x*16+8-(b.x+8),y*16+8-(b.y+8))<R0){
           if(ch==='C'){ grid[y][x]=regionFloor(); opened.add('C:'+sx+','+sy+':'+x+','+y); puff(x*16+8,y*16+8,'#a89078',8,1.4); brokeC=true; }
+          else if(ch==='⊂'||ch==='✕'){ blastSecret(x,y,ch); } // grieta del risco, tesoro enterrado (12c)
           else if(ch==='b'||ch==='t'||ch==='♣'){ cutAt([x*16,y*16,16,16]); }
           else if(ch==='¢'){ toggleCrystal(); }
         } }
@@ -217,15 +227,15 @@ function updProjs(){
   for(const p of projs){
     if(p.kind==='fall'){ // algo cae del techo: primero la sombra, luego el golpe
       p.delay--; if(p.delay>0) continue; p.t=0;
-      puff(p.x,p.y,p.ice?'#dff0ff':'#8a7460',8,1.3); SFX.cut(); shake=Math.max(shake,3);
+      puff(p.x,p.y,p.ice?'#dff0ff':'#8a7460',8,1.3); SFX.fallImpact(); shake=Math.max(shake,3);
       if(player.inv===0&&jumpT===0&&Math.hypot(p.x-(player.x+8),p.y-(player.y+12))<11) hurt(p.dmg||2,p.x,p.y-10);
       continue; }
     p.x+=p.vx; p.y+=p.vy; p.t--;
     const ch=tileAt(p.x|0,p.y|0); if(ch!==undefined&&isSolid(ch)&&!WATER.has(ch)) p.t=0;
-    if(p.t>0&&player.inv===0&&jumpT===0&&Math.hypot(p.x-(player.x+8),p.y-(player.y+12))<8){
-      if(shieldBlocks(p.x,p.y)){ SFX.block(); sparkle(p.x,p.y,'#c8d8ff'); p.t=0; }
+    if(p.t>0&&!p.reflected&&player.inv===0&&jumpT===0&&Math.hypot(p.x-(player.x+8),p.y-(player.y+12))<8){
+      if(shieldBlocks(p.x,p.y)) shieldBlock(p);
       else { hurt(p.dmg||1,p.x,p.y); p.t=0; } }
-    if(p.t>0&&meleeActive()&&rectsHit(meleeBox(),[p.x-3,p.y-3,6,6])){ p.t=0; SFX.block(); puff(p.x,p.y,'#e8e8d8',5,1); }
+    if(p.t>0&&!p.reflected&&meleeActive()&&rectsHit(meleeBox(),[p.x-3,p.y-3,6,6])){ if(hasShield&&shieldLvl>=2) reflectProj(p); else { p.t=0; SFX.block(); puff(p.x,p.y,'#e8e8d8',5,1); } }
   }
   projs=projs.filter(p=>p.t>0);
 }
@@ -234,10 +244,10 @@ function updWind(){
     const tch=tileAt(w.x|0,w.y|0);
     if(tch!==undefined&&isSolid(tch)&&!WATER.has(tch)){ cutAt([w.x-7,w.y-7,14,14]); const t2=tileAt(w.x|0,w.y|0); if(isSolid(t2)){ w.t=0; puff(w.x,w.y,'#a8ec78',6,1.1); } }
     if((tick&1)===0) parts.push({x:w.x+(Math.random()-.5)*8,y:w.y+4,vx:-w.vx*.3,vy:-.3,life:10,col:(tick&2)?PAL.l:'#a8ec78',nog:true});
-    for(const e of enemies){ if(e.flash===0&&!w.hits.has(e)&&Math.hypot(e.x+8-w.x,e.y+8-w.y)<11){ if(e.type==='ghost'&&e.phase>=110) continue;
-      w.hits.add(e); damageEnemy(e,bladeLvl,w.x,w.y); if(e.type==='wisp') e.hp=0; } }
-    if(boss&&boss.flash===0&&Math.hypot(boss.x+16-w.x,boss.y+16-w.y)<18){
-      const vul=(boss.type==='topo'&&boss.st==='dazed')||(boss.type==='avispa'&&boss.st==='pinned')||(boss.type==='viento'&&boss.st==='rest');
+    for(const e of enemies){ if(e.flash===0&&!w.hits.has(e)&&Math.hypot(e.x+8-w.x,e.y+8-w.y)<(w.big?17:11)){ if(e.type==='ghost'&&e.phase>=110) continue;
+      w.hits.add(e); damageEnemy(e,bladeLvl+(w.big?1:0),w.x,w.y); if(e.type==='wisp') e.hp=0; } }
+    if(boss&&boss.flash===0&&Math.hypot(boss.x+16-w.x,boss.y+16-w.y)<(w.big?24:18)){
+      const vul=(boss.type==='topo'&&boss.st==='dazed')||(boss.type==='avispa'&&boss.st==='pinned')||(boss.type==='viento'&&boss.st==='rest')||(boss.type==='ciervo'&&boss.mantle===0&&boss.st!=='yield');
       if(vul){ bossHit(boss,bladeLvl); w.t=0; puff(w.x,w.y,'#a8ec78',8,1.3); } }
   }
   windProjs=windProjs.filter(w=>w.t>0&&w.x>-8&&w.x<168&&w.y>-8&&w.y<136);
@@ -246,22 +256,22 @@ function updBoomer(){
   const b=boomer; if(!b) return; b.t++; b.ang+=.6;
   if(!b.ret){ b.x+=b.vx; b.y+=b.vy;
     const ch=tileAt(b.x|0,b.y|0);
-    if(ch===undefined||b.x<0||b.x>160||b.y<0||b.y>128||b.t>30||(isSolid(ch)&&!WATER.has(ch)&&ch!=='b'&&ch!=='Q'&&ch!=='¢')) b.ret=true;
+    if(ch===undefined||b.x<0||b.x>160||b.y<0||b.y>128||b.t>(b.pow?54:30)||(isSolid(ch)&&!WATER.has(ch)&&ch!=='b'&&ch!=='Q'&&ch!=='¢')) b.ret=true;
     if(ch==='b'||ch==='Q'||ch==='t'||ch==='¢') cutAt([b.x-4,b.y-4,8,8]);
   } else { const dx=player.x+8-b.x, dy=player.y+10-b.y, d=Math.hypot(dx,dy);
-    if(d<6){ boomer=null; if(b.carry){ for(const p of b.carry) pickups.push({...p,x:player.x+4,y:player.y+4,drop:0}); } return; }
-    b.x+=dx/d*3; b.y+=dy/d*3; }
-  if((tick&1)===0) parts.push({x:b.x,y:b.y,vx:0,vy:0,life:6,col:'#d09040',nog:true});
-  for(const e of enemies){ if(!b.hits.has(e)&&Math.hypot(e.x+8-b.x,e.y+8-b.y)<11){ b.hits.add(e); e.stun=90; damageEnemy(e,1,b.x,b.y); SFX.stun(); if(!b.ret) b.ret=true; } }
+    if(d<6){ boomer=null; boomerCatch(b); if(b.carry){ for(const p of b.carry) pickups.push({...p,x:player.x+4,y:player.y+4,drop:0}); } return; }
+    b.x+=dx/d*(b.pow?3.4:3); b.y+=dy/d*(b.pow?3.4:3); }
+  if((tick&1)===0) parts.push({x:b.x,y:b.y,vx:0,vy:0,life:b.pow?9:6,col:b.pow?((tick&2)?'#ffe070':'#fff6c0'):'#d09040',nog:true});
+  for(const e of enemies){ if(!b.hits.has(e)&&Math.hypot(e.x+8-b.x,e.y+8-b.y)<(b.pow?13:11)){ b.hits.add(e); e.stun=90; damageEnemy(e,b.pow?2:1,b.x,b.y); SFX.stun(); if(!b.ret&&!b.pow) b.ret=true; } }
   if(midboss&&!b.hits.has(midboss)&&Math.hypot(midboss.x+12-b.x,midboss.y+12-b.y)<14){ b.hits.add(midboss); SFX.block(); b.ret=true; }
-  pickups=pickups.filter(p=>{ if(['berry','heart','seed','key','piece','bombs'].includes(p.kind)&&Math.hypot(p.x+4-b.x,p.y+4-b.y)<10){ (b.carry=b.carry||[]).push(p); b.ret=true; SFX.blip(); return false; } return true; });
+  pickups=pickups.filter(p=>{ if(['berry','heart','seed','key','piece','bombs','lure'].includes(p.kind)&&Math.hypot(p.x+4-b.x,p.y+4-b.y)<10){ (b.carry=b.carry||[]).push(p); b.ret=true; SFX.blip(); return false; } return true; });
 }
 function updPickups(){
   const magnet=hasAmulet('savia');
   for(const p of pickups){ p.t++; if(p.drop>0){ p.drop--; p.y-=Math.sin(p.drop/14*Math.PI)*.8; }
     if(magnet&&(p.kind==='berry'||p.kind==='heart')){ const dx=player.x+8-p.x-4, dy=player.y+10-p.y-4, d=Math.hypot(dx,dy); if(d<48&&d>2){ p.x+=dx/d*1.6; p.y+=dy/d*1.6; } } }
   pickups=pickups.filter(p=>{
-    const big=['blade','bomb','ember','hook','tear','flake','boomer','lantern','feather'].includes(p.kind), cx=big?8:4;
+    const big=['blade','bomb','ember','hook','tear','flake','boomer','lantern','feather','molinillo','amber'].includes(p.kind), cx=big?8:4;
     const d=Math.hypot(p.x+cx-(player.x+8),p.y+cx-(player.y+12));
     if(d<(big?12:11)&&(!p.drop||p.drop<8)){
       if(p.kind==='seed'){ seeds++; hudSeedT=30; collected.add(p.id); SFX.seed(); collectBurst(p.x+4,p.y+4,'#ffe070',1); screenFlash(5,'#fff6c0'); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
@@ -271,6 +281,7 @@ function updPickups(){
         showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
       else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
+      else if(p.kind==='lure'){ hasLure=true; collected.add('lure'); giveThing(LURE_SPR,'CEBO DORADO',["¡El CEBO DORADO!","Moss dice que el VIEJO BIGOTES no se resiste a nada que brille así."]); }
       else if(p.kind==='bombs'){ bombAmmo=Math.min(bombMax,bombAmmo+(p.n||3)); SFX.blip(); collectBurst(p.x+4,p.y+4,'#e8a040'); flyText.push({x:p.x+4,y:p.y-2,txt:'+'+(p.n||3),t:22,col:'#ffd890'}); }
       else if(p.kind==='berry'){ berries=Math.min(999,berries+1); hudBerryT=14; SFX.blip(); collectBurst(p.x+4,p.y+4,'#ff7aa8'); flyText.push({x:p.x+4,y:p.y-2,txt:'+1',t:22,col:'#ffd0e0'}); }
       else if(p.kind==='container'){ player.maxHp+=2; player.hp=player.maxHp; collected.add(p.id); SFX.fanfare(); puff(p.x+4,p.y+4,PAL.R,12,1.5); say(TXT.containerGet); save(); }
@@ -281,7 +292,8 @@ function updPickups(){
 function updExits(){
   const htx=(player.x+8)>>4, hty=(player.y+13)>>4, ch=grid[hty]&&grid[hty][htx];
   if(ch==='x'){ if(sx===9) exitHouse(); else if(sx===8) exitShop(); else if(sx===7) placeAt(2,0,68,34,0); else if(sx===10&&sy===2) placeAt(10,1,68,18,0); else exitDungeon(); return; }
-  if(ch==='>'){ if(sx===10&&sy===1) placeAt(10,2,72,24,0); else if(regionOf(sx,sy)==='valle') enterSecret(); return; }
+  if(ch==='>'&&sx===5&&sy===9){ enterEcho(); return; }
+  if(ch==='>'){ if(sx===10&&sy===1) placeAt(10,2,72,24,0); else if(['valle','norte','marisma'].includes(regionOf(sx,sy))) enterSecret(); return; }
   if(keys.up&&player.dir===1){ const ft=facingTile();
     if(ft&&ft[2]==='D'&&sx===0&&sy===1&&ft[0]===3){ enterHouse(); return; }
     if(ft&&ft[2]==='D'&&sx===0&&sy===1&&ft[0]===7){ enterShop(); return; }
@@ -326,9 +338,10 @@ function updFile(){
   if(keys.alt){ keys.alt=false; if(fileConfirm){ fileConfirm=false; SFX.blip(); } else if(slotCache[fileSel]){ fileConfirm=true; SFX.bump(); } }
 }
 /* ---------- EL ZURRÓN (pausa) ---------- */
-const X_ITEMS=['bomb','hook','boomer','lantern','feather'];
-function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather})[k]); }
+const X_ITEMS=['bomb','hook','boomer','lantern','feather','molinillo'];
+function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather,molinillo:hasPinwheel})[k]); }
 function updPause(){
+  if(pausePage===4&&optRemap){ updRemap(); return; }
   if(keys.menu){ keys.menu=false; state='play'; SFX.menu(); return; }
   if(keys.alt){ keys.alt=false; pausePage=(pausePage+1)%5; pauseSel=0; loreSel=0; optSel=0; tabSlide=8; SFX.menu(); return; }
   const lr=(keys.right?1:0)-(keys.left?1:0), ud=(keys.down?1:0)-(keys.up?1:0);
@@ -348,14 +361,6 @@ function updPause(){
     const L=loreList();
     if(ud!==pauseUD){ pauseUD=ud; if(ud&&L.length){ loreSel=(loreSel+ud+L.length)%L.length; SFX.blip(); } }
     if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); say(e.pages,()=>{ state='pause'; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':'paper'); } }
-  } else if(pausePage===4){
-    const N=4;
-    if(ud!==pauseUD){ pauseUD=ud; if(ud){ optSel=(optSel+ud+N)%N; SFX.blip(); } }
-    const act=keys.fire||lr!==0; if(lr!==pauseLR) pauseLR=lr;
-    if(act){ keys.fire=false;
-      if(optSel===0){ opts.textSpeed=opts.textSpeed===1?2:1; saveOpts(); SFX.blip(); }
-      else if(optSel===1){ opts.shake=opts.shake?0:1; saveOpts(); SFX.blip(); }
-      else if(optSel===2){ musicOn=!musicOn; try{ localStorage.setItem('sprout.music',musicOn?'1':'0'); }catch(_){} SFX.blip(); }
-      else if(optSel===3&&keys.fire===false&&lr===0){ save(); state='title'; titleT=TITLE_MENU; parts=[]; setTrack('titulo'); SFX.menu(); } }
+  } else if(pausePage===4){ updOptions(lr,ud);
   } else { if(lr!==pauseLR) pauseLR=lr; if(ud!==pauseUD) pauseUD=ud; if(keys.fire){ keys.fire=false; SFX.blip(); } }
 }

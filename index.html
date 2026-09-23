@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>SPROUT · y las 8 semillas</title>
-<meta name="description" content="Un Zelda-like estilo Game Boy Color: el Valle Raíz, tres mazmorras, guardianes que no mueren y las cuatro estaciones.">
+<meta name="description" content="Un Zelda-like estilo Game Boy Color: el Valle Raíz, cuatro mazmorras, guardianes que no mueren y las cuatro estaciones.">
 <meta name="theme-color" content="#0b1a10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -66,26 +66,47 @@
   .slice-link{display:inline-block;margin-top:12px;color:#b9d67d;font-size:8px;line-height:1.8;text-decoration:none;border-bottom:1px solid #4b6d36;padding-bottom:3px}
   .slice-link:hover,.slice-link:focus-visible{color:#f8e8c8}
   /* mandos táctiles */
-  #touch{display:none; position:fixed; inset:auto 0 0 0; height:190px; pointer-events:none;
-    padding-bottom:env(safe-area-inset-bottom,0)}
+  #touch{display:none; position:fixed; left:0; right:0; bottom:env(safe-area-inset-bottom,0px); height:190px; pointer-events:none}
   body.touch #touch{display:block}
   /* en móvil: fuera la decoración de escritorio, el juego agarra toda la pantalla */
   body.touch{padding:0; gap:0}
+  /* en vertical la pantalla se centra en el hueco que dejan los mandos (fit() reserva 200px), sin pisarlos */
+  @media (orientation:portrait){ body.touch{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))} }
   body.touch header, body.touch .keys, body.touch footer{display:none}
   body.touch .shell{padding:0; border:0; border-radius:0; box-shadow:none; background:transparent}
   body.touch .shell::before{display:none}
   body.touch .scan{inset:0}
   .tbtn{
-    position:absolute; pointer-events:auto; background:rgba(42,74,52,.55);
-    border:2px solid rgba(112,216,56,.4); border-radius:10px; width:54px; height:54px;
-    color:var(--cream); font-size:14px; display:flex; align-items:center; justify-content:center;
+    position:absolute; pointer-events:auto; display:flex; align-items:center; justify-content:center;
+    font-family:"Press Start 2P",monospace; line-height:1; color:var(--cream);
     touch-action:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none;
     -webkit-user-select:none; user-select:none;
   }
-  #tU{left:70px; bottom:122px} #tD{left:70px; bottom:12px} #tL{left:12px; bottom:67px} #tR{left:128px; bottom:67px}
-  #tA{right:22px; bottom:54px; width:70px; height:70px; border-radius:50%; background:rgba(232,176,80,.5); border-color:rgba(232,176,80,.6)}
-  #tB{right:104px; bottom:26px; width:56px; height:56px; border-radius:50%; background:rgba(200,106,56,.5); border-color:rgba(200,106,56,.6)}
-  #tM{right:26px; bottom:140px; width:44px; height:34px; font-size:15px}
+  /* la cruceta: una cruz de una pieza, contorno de tinta y bisel de luz arriba */
+  #dpad{position:absolute; left:14px; bottom:16px; width:156px; height:156px; pointer-events:none}
+  #dpad::before,#dpad::after{content:""; position:absolute; clip-path:polygon(33.3% 0,66.7% 0,66.7% 33.3%,100% 33.3%,100% 66.7%,66.7% 66.7%,66.7% 100%,33.3% 100%,33.3% 66.7%,0 66.7%,0 33.3%,33.3% 33.3%)}
+  #dpad::before{inset:0; background:#081408}
+  #dpad::after{inset:4px; background:linear-gradient(#3e7048 0 3px,#2a5a38 3px 30%,#1c3a26 70%,#12281a)}
+  #dcenter{position:absolute; left:61px; top:61px; width:34px; height:34px; border-radius:50%; background:#12281a; box-shadow:inset 0 3px 0 #081408, 0 1px 0 #3e7048; z-index:1}
+  #dpad .tbtn{width:52px; height:52px; z-index:2}
+  #dpad .tbtn::before{content:""; width:0; height:0; border:9px solid transparent; filter:drop-shadow(0 2px 0 #081408)}
+  #tU{left:52px; top:0} #tU::before{border-bottom:12px solid #cfe8b0!important; margin-top:-10px}
+  #tD{left:52px; top:104px} #tD::before{border-top:12px solid #cfe8b0!important; margin-top:10px}
+  #tL{left:0; top:52px} #tL::before{border-right:12px solid #cfe8b0!important; margin-left:-10px}
+  #tR{left:104px; top:52px} #tR::before{border-left:12px solid #cfe8b0!important; margin-left:10px}
+  #dpad .tbtn.down::before{filter:drop-shadow(0 0 0 #081408) brightness(1.35); transform:translateY(2px)}
+  /* Z y X: botones redondos con relieve, como los de la consola */
+  .rbtn{border-radius:50%; border:3px solid #2a1a0e; font-size:16px; color:#3a2410; text-shadow:0 1px 0 rgba(255,255,255,.4)}
+  .rbtn::after{content:attr(data-label); position:absolute; top:100%; margin-top:10px; font-size:8px; color:#cfe8b0; text-shadow:0 1px 0 #081408; white-space:nowrap}
+  #tA{right:20px; bottom:62px; width:74px; height:74px; background:radial-gradient(circle at 34% 28%,#fff0c0 0 14%,#f0b848 15% 58%,#c88a28 59%); box-shadow:0 6px 0 #7a4e14,0 9px 12px rgba(0,0,0,.45)}
+  #tB{right:108px; bottom:28px; width:60px; height:60px; background:radial-gradient(circle at 34% 28%,#ffd0b0 0 14%,#d8783c 15% 58%,#a8501e 59%); box-shadow:0 5px 0 #6a2e10,0 8px 10px rgba(0,0,0,.45); color:#3a1408}
+  #tA.down{transform:translateY(4px); box-shadow:0 2px 0 #7a4e14,0 3px 6px rgba(0,0,0,.4)}
+  #tB.down{transform:translateY(3px); box-shadow:0 2px 0 #6a2e10,0 3px 6px rgba(0,0,0,.4)}
+  #tM{right:22px; bottom:156px; height:24px; padding:0 10px; border-radius:12px; background:#2a4a34; border:3px solid #081408; box-shadow:inset 0 2px 0 #4a7a58,0 3px 0 #0c1c12; font-size:8px; color:#f8e8c8}
+  #tM.down{transform:translateY(2px); box-shadow:inset 0 2px 0 #4a7a58}
+  /* la Ó de la fuente sale encogida: O normal y una tilde de dos píxeles encima */
+  #tM .acc{font-weight:normal; position:relative}
+  #tM .acc::after{content:""; position:absolute; left:2px; top:-1px; width:2px; height:1px; background:currentColor; box-shadow:1px -1px 0 currentColor}
 </style>
 </head>
 <body>
@@ -110,11 +131,12 @@
 <footer>OCHO SEMILLAS · CUATRO ESTACIONES · NINGÚN GUARDIÁN MUERE</footer>
 
 <div id="touch">
-  <div class="tbtn" id="tU">▲</div><div class="tbtn" id="tD">▼</div>
-  <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
-  <div class="tbtn" id="tA">Z</div>
-  <div class="tbtn" id="tB">X</div>
-  <div class="tbtn" id="tM">≡</div>
+  <div id="dpad"><div id="dcenter"></div>
+    <div class="tbtn" id="tU"></div><div class="tbtn" id="tD"></div>
+    <div class="tbtn" id="tL"></div><div class="tbtn" id="tR"></div></div>
+  <div class="tbtn rbtn" id="tA" data-label="HOJA">Z</div>
+  <div class="tbtn rbtn" id="tB" data-label="OBJETO">X</div>
+  <div class="tbtn" id="tM">ZURR<b class="acc">O</b>N</div>
 </div>
 
 <!-- el juego, por módulos de dominio: el ORDEN importa (ámbito global compartido).
@@ -134,6 +156,9 @@
 <script src="js/11-enemies.js"></script>
 <script src="js/12-bosses.js"></script>
 <script src="js/12a-dungeon.js"></script>
+<script src="js/12b-molino.js"></script>
+<script src="js/12b-gear.js"></script>
+<script src="js/12c-secrets.js"></script>
 <script src="js/13-update.js"></script>
 <script src="js/14-render.js"></script>
 <script src="js/15-ui.js"></script>

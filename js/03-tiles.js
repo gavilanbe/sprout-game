@@ -134,7 +134,7 @@ function mudTile(v,edges,bio){ return cached('mud'+v+'_'+edges+bio,g=>{
   const G=bio==='autumn'?[C.leaf,C.leafD,C.leafDD,C.leafL]:(BIOMES[bio]||BIOMES.valley).grass;
   paintEdges(g,v,edges,G,C.mudD,C.mudL);
 });}
-function dfloorTile(v,style){ return cached('dfloor'+v+style,g=>{
+function dfloorTile(v,style){ if(style==='mill') return millFloorTile(v); return cached('dfloor'+v+style,g=>{
   if(style==='wood'){ const b='#8a6438', d='#6a4a28', l='#a8804c';
     R(g,0,0,16,16,b); for(let y=0;y<16;y+=4){ R(g,0,y+3,16,1,d); R(g,0,y,16,1,l); const off=((y/4+v)&1)?5:11; R(g,off,y,1,3,d); }
     PX(g,3+v*4,5,'#5a3a1c'); PX(g,12,13,'#5a3a1c'); return; }
@@ -190,6 +190,18 @@ function waterTile(kind,edges,f,bio){ // kind: 'W' profunda, '~' marisma, 'w' va
     if(marsh&&(edges&4)){ R(g,3,8,1,6,'#6a8a38'); R(g,4,7+(f>>1),1,2,'#c8a048'); R(g,11,9,1,5,'#6a8a38'); R(g,12,8-(f>>1),1,2,'#c8a048'); }
   });
 }
+/* ---------- secretos (12c): la grieta del risco y la X del tesoro ---------- */
+function cliffCrack(){ return cached('cliffCrack',g=>{
+  const path=[[8,1],[8,2],[7,3],[7,4],[8,5],[8,6],[7,7],[7,8],[8,9],[9,10],[9,11],[8,12],[8,13],[8,14]];
+  for(const [x,y] of path){ PX(g,x,y,PAL.k); PX(g,x+1,y,'#3a2e22'); PX(g,x-1,y,'#e0d0b0'); }
+  for(const [x,y] of [[6,8],[5,9],[4,9],[10,11],[11,11],[12,12]]){ PX(g,x,y,PAL.k); PX(g,x,y+1,'#3a2e22'); }
+  R(g,5,15,2,1,'#8a7a60'); R(g,10,14,2,1,'#8a7a60'); PX(g,11,15,'#5a4e3c'); PX(g,4,14,'#a89878');
+});}
+function treasureX(){ return cached('treasureX',g=>{
+  for(let i=0;i<7;i++){ R(g,4+i,4+i,2,2,PAL.k); R(g,10-i,4+i,2,2,PAL.k); }
+  for(let i=0;i<7;i++){ PX(g,5+i,4+i,'#d02828'); PX(g,4+i,5+i,'#e84848'); PX(g,10-i,4+i,'#d02828'); PX(g,11-i,5+i,'#e84848'); }
+  PX(g,2,13,'#b89868'); PX(g,13,3,'#b89868'); PX(g,13,13,'#c8a870');
+});}
 /* ---------- ACANTILADO / MONTAÑA (autotile) ---------- */
 function cliffTile(edges,v,bio){ // edges: bits de vecinos ABIERTOS (no-acantilado) N=1 E=2 S=4 W=8 + diagonales
   return cached('cliff'+edges+v+bio,g=>{
@@ -225,6 +237,7 @@ function cliffTile(edges,v,bio){ // edges: bits de vecinos ABIERTOS (no-acantila
 }
 /* ---------- MURO DE MAZMORRA (autotile) ---------- */
 function wallTile(edges,v,style){ // edges: vecinos abiertos N=1 E=2 S=4 W=8
+  if(style==='mill') return millWallTile(edges,v);
   return cached('wall'+edges+v+style,g=>{
     const pal=style==='wood'?['#5a3c22','#3e2814','#7a5430','#a07444']:style==='hive'?['#a87828','#7a5418','#d8a838','#f8d060']:style==='ice'?['#5a6a98','#3a4a78','#8a9ac8','#d0e0f8']:[C.dwall,C.dwallD,C.dwallL,C.dwallLL];
     const [b,d,l,ll]=pal;
@@ -887,12 +900,12 @@ function pillarTile(){ return cached('pillar',g=>{ // columna con capitel y basa
    ============================================================ */
 const GROUND=new Set(['.',',','f','t','p','s','n','i','·','q','o','m','w','@','x','_','ç','%','&','º','æ','°','>','ʘ']);
 const WATER=new Set(['W','~','w','@']);
-const SOLID=new Set(['♣','W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö','Ω','Ⓑ','ø']);
+const SOLID=new Set(['ξ','ψ','∩','{','♣','W','~','T','Y','¥','b','Q','r','M','v','I','H','"','D','R','G','C','k','#','=',')','Ł',':',';','¢','ª','Æ','S','O','[',']','}','E','u','P','ñ','⌐','¤','F','Ñ','¶','h','j','y','g','ö','Ω','Ⓑ','ø']);
 const ENEMY_MARK={ B:'blob', V:'bat', Z:'beetle', U:'roller', N:'ghost', X:'frog', '*':'thorn', '∞':'gust', '$':'squirrel', '¡':'icicle', '¿':'seton', c:'crab', 'Φ':'wisp', 'β':'bee', 'Γ':'golem', 'Σ':'snail', 'π':'topillo', 'λ':'lirio', 'Ψ':'rodahoja' };
 const MIDBOSS_MARK={ 'ℜ':'king', 'Δ':'drone', 'Θ':'iceguard' };
 const BOSS_MARK={ J:'topo', '!':'avispa', '^':'viento' };
 const ITEM_MARK={ L:'blade', K:'bomb', '+':'hook', '£':'boomer', '§':'lantern', '¬':'feather', '¦':'shield', 'ł':'bigkey', '(':'key', '9':'container', '♥':'piece', '0':'diary', '✉':'letter' };
-const CLIFF_LIKE=ch=>ch==='M';
+const CLIFF_LIKE=ch=>ch==='M'||ch==='⊂'; // la grieta del risco también es risco
 const WALL_LIKE=ch=>ch==='v'||ch==='I';
 function isGroundCh(ch){ return GROUND.has(ch); }
 /* qué suelo hay bajo un objeto: el de los vecinos, o el del bioma */
@@ -918,15 +931,15 @@ function drawGround(g,rows,x,y,ch,opts,f){
     case 'f': g.drawImage(bio==='snow'?snowTile(v%6):flowerTile(bio,v%4,f),px,py); return;
     case 't': g.drawImage(bio==='snow'?snowTile(v%6):tallGrassTile(bio,f),px,py); return;
     case 'p': { const e=edgesOf(rows,x,y,c=>c!=='p'&&!SOLID.has(c)&&c!=='s'); g.drawImage(pathTile(v%4,e,bio),px,py); return; }
-    case 's': { const e=edgesOf(rows,x,y,c=>c!=='s'&&!SOLID.has(c)&&!WATER.has(c)&&c!=='p'); g.drawImage(sandTile(v%3,e,bio),px,py); return; }
+    case 's': { const e=edgesOf(rows,x,y,c=>c!=='s'&&c!=='✕'&&!SOLID.has(c)&&!WATER.has(c)&&c!=='p'); g.drawImage(sandTile(v%3,e,bio),px,py); return; }
     case 'n': g.drawImage(snowTile(v%6),px,py); return;
     case 'i': g.drawImage(iceTile(v%2),px,py); return;
     case '·': g.drawImage(leafTile(v%3),px,py); return;
     case 'q': g.drawImage(dfloorTile(v%3,style),px,py); return;
     case 'o': case 'x': g.drawImage(woodFloorTile(v%2),px,py); if(ch==='x') g.drawImage(matTile(),px,py); return;
     case 'm': { const e=edgesOf(rows,x,y,c=>c!=='m'&&!WATER.has(c)&&!SOLID.has(c)); g.drawImage(mudTile(v%3,e,bio),px,py); return; }
-    case 'W': case '~': case 'w': case '@': {
-      const e=edgesOf(rows,x,y,c=>!WATER.has(c)); g.drawImage(waterTile(ch==='@'?'W':ch,e,f,bio),px,py);
+    case 'W': case '~': case 'w': case '@': case '◊': { // ◊: el cebo dorado en la cascada (12c), agua en la miniatura
+      const e=edgesOf(rows,x,y,c=>!WATER.has(c)); g.drawImage(waterTile(ch==='@'||ch==='◊'?'W':ch,e,f,bio),px,py);
       if(ch==='@') g.drawImage(lilyTile(v%2),px,py); return; }
     case '_': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(plateTile(0),px,py); return;
     case 'ç': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(plateTile(1),px,py); return;
@@ -937,6 +950,7 @@ function drawGround(g,rows,x,y,ch,opts,f){
     case '°': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(holeTile(style),px,py); return;
     case '>': g.drawImage(dfloorTile(v%3,style),px,py); g.drawImage(stairsTile(),px,py); return;
     case 'ʘ': { const under=groundUnder(rows,x,y,opts); drawGround(g,rows,x,y,under,opts,f); g.drawImage(moundTile(v%2),px,py); return; }
+    case '✕': { drawGround(g,rows,x,y,'s',opts,f); g.drawImage(treasureX(),px,py); return; } // el tesoro de las dunas (con el mapa)
   }
   // objeto: suelo de debajo
   const under=groundUnder(rows,x,y,opts);
@@ -955,6 +969,8 @@ function drawObject(g,rows,x,y,ch,opts,f,fg){
     case 'ʘ': g.drawImage(moundTile(v%2),px,py); return;
     case 'r': g.drawImage(rockTile(v%2,bio),px,py); return;
     case 'C': g.drawImage(crackedTile(v%2),px,py); return;
+    case 'ξ': case 'ψ': case '∩': case '{': drawMillTile(g,x,y,ch,opts,f); return;
+    case '⊂': { const e=edgesOf(rows,x,y,c=>!CLIFF_LIKE(c)); g.drawImage(cliffTile(e,v%3,bio),px,py); g.drawImage(cliffCrack(),px,py); return; } // grieta: una bomba abre una cueva
     case '♣': g.drawImage(belloteroTile(opts.style==='cave'||opts.style==='wood'||opts.style==='ice'?'valley':bio),px,py); return;
     case 'M': { const e=edgesOf(rows,x,y,c=>!CLIFF_LIKE(c)); g.drawImage(cliffTile(e,v%3,bio),px,py); return; }
     case 'v': { const e=edgesOf(rows,x,y,c=>!WALL_LIKE(c)); g.drawImage(wallTile(e&15,v%2,style),px,py); return; }

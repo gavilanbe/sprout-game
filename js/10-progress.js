@@ -7,10 +7,11 @@ function save(){
   try{ localStorage.setItem(slotKey(curSlot),JSON.stringify({ v:3,
     seeds,hasBlade,hasBomb,hasEmber,won,bossDone,thawed,midKing,beachIntro,
     hasHook,hasTear,boss2Done,summered,midDrone,hasFlake,boss3Done,cycled,midIce,
-    hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,bombAmmo,bombMax,dmaps:[...dmaps],dcomp:[...dcomp],
+    hasPinwheel,midScare,hasAmber,boss4Done,autumned,
+    hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,bombAmmo,bombMax,dmaps:[...dmaps],dcomp:[...dcomp],hasBigSpin,shieldLvl,
     amulets:[...amulets],equipped,xItem,topoGift,mossGift,wilts,windVisit,
     berries,bladeLvl,hasSpin,shopHeart,shopPiece,tiloMet,cortezaMet,elderMet,petraWoke,wellDone,lettersGiven,playTime,
-    respawn:respawnPoint,maxHp:player.maxHp,
+    respawn:respawnPoint,maxHp:player.maxHp,side:sideSave(),
     collected:[...collected],cutQ:[...cutQ],opened:[...opened],visited:[...visited],
   })); }catch(e){}
 }
@@ -23,14 +24,15 @@ function loadGame(d){
     won=!!d.won; bossDone=!!d.bossDone; thawed=!!d.thawed; midKing=!!d.midKing; beachIntro=!!d.beachIntro;
     hasHook=!!d.hasHook; hasTear=!!d.hasTear; boss2Done=!!d.boss2Done; summered=!!d.summered; midDrone=!!d.midDrone;
     hasFlake=!!d.hasFlake; boss3Done=!!d.boss3Done; cycled=!!d.cycled; midIce=!!d.midIce;
-    hasBoomer=!!d.hasBoomer; hasLantern=!!d.hasLantern; hasFeather=!!d.hasFeather; hasShield=!!d.hasShield;
+    hasPinwheel=!!d.hasPinwheel; midScare=!!d.midScare; hasAmber=!!d.hasAmber; boss4Done=!!d.boss4Done; autumned=!!d.autumned||!!d.cycled;
+    hasBoomer=!!d.hasBoomer; hasLantern=!!d.hasLantern; hasFeather=!!d.hasFeather; hasShield=!!d.hasShield; hasBigSpin=!!d.hasBigSpin; shieldLvl=d.shieldLvl||1;
     pieces=d.pieces||0; dungeonKeys={...(d.dungeonKeys||{})}; bigKeys={...(d.bigKeys||{})};
     bombMax=d.bombMax||10; bombAmmo=d.bombAmmo===undefined?(d.hasBomb?bombMax:10):d.bombAmmo; dmaps.clear(); dcomp.clear(); (d.dmaps||[]).forEach(k=>dmaps.add(k)); (d.dcomp||[]).forEach(k=>dcomp.add(k));
     (d.amulets||[]).forEach(a=>amulets.add(a)); equipped=[(d.equipped||[])[0]||null,(d.equipped||[])[1]||null]; xItem=d.xItem||null;
     topoGift=!!d.topoGift; mossGift=!!d.mossGift; wilts=d.wilts||0; windVisit=!!d.windVisit;
     berries=d.berries||0; bladeLvl=d.bladeLvl||1; hasSpin=!!d.hasSpin; shopHeart=!!d.shopHeart; shopPiece=!!d.shopPiece;
     tiloMet=!!d.tiloMet; cortezaMet=!!d.cortezaMet; elderMet=!!d.elderMet||!!d.hasBlade; petraWoke=!!d.petraWoke||!!d.elderMet; wellDone=!!d.wellDone; lettersGiven=!!d.lettersGiven; playTime=d.playTime||0;
-    player.maxHp=d.maxHp||6; player.hp=player.maxHp;
+    player.maxHp=d.maxHp||6; player.hp=player.maxHp; sideLoad(d.side);
     (d.collected||[]).forEach(i=>collected.add(i)); (d.cutQ||[]).forEach(i=>cutQ.add(i));
     (d.opened||[]).forEach(i=>opened.add(i)); (d.visited||[]).forEach(i=>visited.add(i));
     if(d.respawn&&MAPS[d.respawn.sx+','+d.respawn.sy]&&REGION_ANCHOR[d.respawn.reg]) respawnPoint={...d.respawn};
@@ -47,7 +49,8 @@ function newGame(){
   player.atk=player.inv=player.kx=player.ky=player.ivx=player.ivy=player.charge=player.spin=0;
   seeds=0; hasBlade=hasBomb=hasEmber=won=bossDone=thawed=midKing=beachIntro=false; announced8=bloomDone=false; noBladeMsg=0;
   hasHook=hasTear=boss2Done=summered=midDrone=false; hasFlake=boss3Done=cycled=midIce=false;
-  hasBoomer=hasLantern=hasFeather=hasShield=false; pieces=0; dungeonKeys={}; bigKeys={}; equipped=[null,null]; xItem=null;
+  hasPinwheel=midScare=hasAmber=boss4Done=autumned=false;
+  hasBoomer=hasLantern=hasFeather=hasShield=false; pieces=0; dungeonKeys={}; bigKeys={}; equipped=[null,null]; xItem=null; hasBigSpin=false; shieldLvl=1;
   bombAmmo=10; bombMax=10; dmaps.clear(); dcomp.clear();
   topoGift=mossGift=false; wilts=0; windVisit=false; berries=0;
   bladeLvl=1; hasSpin=shopHeart=shopPiece=tiloMet=cortezaMet=elderMet=false; petraWoke=wellDone=lettersGiven=false; playTime=0; npcs=[];
@@ -55,6 +58,7 @@ function newGame(){
   respawnPoint={...REGION_ANCHOR.valle,reg:'valle'};
   player.maxHp=6; player.hp=6; player.x=44; player.y=26; player.dir=0; inBed=true;
   loadScreen(9,9); setTrack('titulo');
+  sideLoad(null); fishS=null;
   introDone=true; state='cine'; cinePage=0; cineChars=0; cineFold=0; cineT=0; parts=[]; noise(.6,.025,false);
 }
 /* ---------- RECUERDOS: todo lo leído, en orden de descubrimiento ---------- */
@@ -79,11 +83,16 @@ function questList(){
   if(hasEmber) q.push({id:'brasa2',txt:'La BRASA a RAÍZ',done:thawed});
   if(thawed) q.push({id:'tronco',txt:'TRONCO HUECO',done:hasTear});
   if(hasTear) q.push({id:'lagrima2',txt:'LÁGRIMA a RAÍZ',done:summered});
-  if(summered) q.push({id:'templo',txt:'TEMPLO DEL PICO',done:hasFlake});
+  if(summered) q.push({id:'molino',txt:'MOLINO DE LA CIÉNAGA',done:hasAmber});
+  if(hasAmber) q.push({id:'ambar2',txt:'La HOJA DE ÁMBAR a RAÍZ',done:autumned});
+  if(autumned) q.push({id:'templo',txt:'TEMPLO DEL PICO',done:hasFlake});
   if(hasFlake) q.push({id:'copo2',txt:'El COPO a RAÍZ',done:cycled});
   if(cycled) q.push({id:'fin',txt:'Valle restaurado',done:true});
   if(hasBlade) q.push({id:'lupa',txt:'LUPA: 10 bayas',done:hasBoomer,side:true});
-  if(won) q.push({id:'amuletos',txt:'Amuletos '+amulets.size+'/9',done:amulets.size>=9,side:true});
+  const nAm=Object.keys(AMULETS).length;
+  if(won) q.push({id:'amuletos',txt:'Amuletos '+amulets.size+'/'+nAm,done:amulets.size>=nAm,side:true});
+  if(tradeStep>0&&tradeStep<8) q.push({id:'tq'+tradeStep,txt:TRADE[tradeStep].short,done:false,side:true});
+  if(tradeStep>=8) q.push({id:'tq8',txt:'Trueques completos',done:true,side:true,quiet:true});
   if(lettersCount()>0) q.push({id:'cartas',txt:'Cartas '+lettersCount()+'/5',done:lettersGiven,side:true});
   if(won) q.push({id:'corazones',txt:'Cuartos '+pieces+'/4',done:false,side:true,quiet:true});
   return q;

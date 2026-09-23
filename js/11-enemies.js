@@ -7,7 +7,7 @@ function hitPlayerBox(){ return [player.x+4,player.y+8,8,8]; }
 function shieldBlocks(fromX,fromY){ // el escudo de corteza rebota lo que llega de frente
   if(!hasShield||player.atk>0) return false;
   const dx=fromX-(player.x+8), dy=fromY-(player.y+10), D=DIRV[player.dir];
-  return (dx*D[0]+dy*D[1])>0&&Math.abs(dx*D[1]-dy*D[0])<14;
+  return (dx*D[0]+dy*D[1])>0&&Math.abs(dx*D[1]-dy*D[0])<(shieldLvl>=2?18:14);
 }
 function updEnemies(){
   for(const e of enemies){
@@ -101,7 +101,7 @@ function updEnemies(){
     } else if(e.type==='snail'){ // avanza; al golpearlo se mete en la concha (invulnerable)
       e.t++; if(e.st==='out'){ if(e.t%3===0) moveBlocked(e,e.x+Math.sign(dx)*.5+e.kx,e.y+Math.sign(dy)*.5+e.ky); else moveBlocked(e,e.x+e.kx,e.y+e.ky); }
       else { blindHit=true; if(--e.shellT<=0) e.st='out'; }
-    }
+    } else if(MILL_ENEMY[e.type]){ [noContact,blindHit]=updMillEnemy(e,dx,dy,d); } // cuervo, caballero de hoja, raíz trampa
     // ----- daño por contacto -----
     const eb=[e.x+3,e.y+4,10,9];
     if(!noContact&&!stunned&&player.inv===0&&state==='play'&&jumpT===0&&rectsHit(eb,hitPlayerBox())){
@@ -134,4 +134,53 @@ function damageEnemy(e,n,fx,fy){
   const d=Math.hypot(e.x-fx,e.y-fy)||1; e.kx=(e.x-fx)/d*3; e.ky=(e.y-fy)/d*3;
   flyText.push({x:e.x+8,y:e.y-2,txt:''+n,t:24,col:'#fffbe8'});
   hitSpark((e.x+8+fx+8)/2,(e.y+8+fy+8)/2); e.squash=.35; shake=Math.max(shake,2);
+}
+/* ---------- los bichos del Molino de la Hojarasca ----------
+   CUERVO: posado; si te acercas grazna y se lanza en picado a donde estabas;
+     luego remonta (ahí la Hoja no llega) y se posa lejos. El molinillo lo tumba.
+   CABALLERO DE HOJA: el escudo de hoja para la Hoja de frente; se gira despacio,
+     embiste y se queda con la guardia baja. El remolino o el molinillo lo dejan sin escudo.
+   RAÍZ TRAMPA: escondida; si la pisas te agarra y aprieta hasta que la golpeas;
+     entonces asoma un rato, vulnerable. El molinillo la arranca del suelo. */
+function millPerch(e){
+  for(let i=0;i<24;i++){ const tx=1+hash((e.x|0)+i*7,tick+i)%8, ty=1+hash(tick+i*3,(e.y|0)+i)%6, ch=grid[ty]&&grid[ty][tx];
+    if(ch!==undefined&&!isSolid(ch)&&ch!=='°'&&Math.hypot(tx*16-player.x,ty*16-player.y)>48) return [tx*16,ty*16]; }
+  return [e.x,e.y];
+}
+function updMillEnemy(e,dx,dy,d){
+  let noContact=false, blindHit=false; e.t++;
+  if(e.type==='crow'){
+    if(!e.st){ e.st='perch'; e.t=-(hash(e.x|0,e.y|0)%40); }
+    if(e.st==='perch'){ if(e.t>30&&d<76){ e.st='caw'; e.t=0; SFX.blip(); flyText.push({x:e.x+8,y:e.y-4,txt:'!',t:16,col:'#ff9040'}); } }
+    else if(e.st==='caw'){ if(e.t>=20){ e.st='swoop'; e.t=0; const sp=e.fast?2.7:2.4; e.vx=dx/d*sp; e.vy=(dy+4)/d*sp; noise(.06,.05,true); } }
+    else if(e.st==='swoop'){ e.x+=e.vx+e.kx; e.y+=e.vy+e.ky; e.vx*=.985; e.vy*=.985;
+      if(e.t>=38||e.x<1||e.x>143||e.y<1||e.y>107){ e.st='back'; e.t=0; e.p=millPerch(e); } }
+    else if(e.st==='back'){ noContact=true; e.flash=Math.max(e.flash,1); // remonta: la Hoja no llega
+      const p=e.p||(e.p=millPerch(e)), ex=p[0]-e.x, ey=p[1]-e.y, dd=Math.hypot(ex,ey)||1;
+      if(dd<2||e.t>150){ e.st='perch'; e.t=0; e.x=p[0]; e.y=p[1]; } else { const sp=Math.min(1.6,dd); e.vx=ex/dd*sp; e.vy=ey/dd*sp; e.x+=e.vx; e.y+=e.vy; } }
+    e.x=Math.max(0,Math.min(SW*16-16,e.x)); e.y=Math.max(0,Math.min(SH*16-16,e.y));
+  } else if(e.type==='knight'){
+    if(!e.st){ e.st='walk'; e.face=dx<0?-1:1; }
+    if(e.bare>0) e.bare--;
+    if(e.st==='walk'){ const sp=e.fast?.6:.5; if(e.t%3) moveBlocked(e,e.x+Math.sign(dx)*sp*1.4+e.kx,e.y+Math.sign(dy)*sp+e.ky); else moveBlocked(e,e.x+e.kx,e.y+e.ky);
+      if(e.t%48===0&&Math.sign(dx)!==e.face&&Math.abs(dx)>6){ e.st='turn'; e.t=0; }
+      else if(e.t>40&&d<46&&Math.abs(dy)<14&&Math.sign(dx)===e.face){ e.st='wind'; e.t=0; SFX.bump(); } }
+    else if(e.st==='turn'){ moveBlocked(e,e.x+e.kx,e.y+e.ky); if(e.t>=16){ e.face*=-1; e.st='walk'; e.t=0; } }
+    else if(e.st==='wind'){ moveBlocked(e,e.x-e.face*.25+e.kx,e.y+e.ky); if(e.t>=18){ e.st='lunge'; e.t=0; } }
+    else if(e.st==='lunge'){ const [bx]=moveBlocked(e,e.x+e.face*2.8+e.kx,e.y+e.ky); e.lx=e.face*2;
+      if(bx||e.t>=14){ e.st='rest'; e.t=0; e.lx=0; if(bx){ shake=Math.max(shake,2); SFX.bump(); puff(e.x+8+e.face*8,e.y+10,'#8a7048',5,.9); } } }
+    else if(e.st==='rest'){ moveBlocked(e,e.x+e.kx,e.y+e.ky); if(e.t>=44){ e.st='walk'; e.t=0; e.face=dx<0?-1:1; } }
+    // el escudo: de frente la Hoja rebota, salvo con la guardia baja, sin escudo o en pleno remolino
+    if(!e.bare&&e.st!=='rest'&&player.spin===0&&Math.sign(player.x-e.x)===e.face) blindHit=true;
+  } else if(e.type==='root'){
+    if(!e.st){ e.st='hide'; e.hx=e.x; e.hy=e.y; }
+    if(e.st==='hide'){ noContact=true; e.flash=Math.max(e.flash,1); e.x=e.hx; e.y=e.hy; // bajo tierra: ni la Hoja la toca
+      if(d<11&&jumpT===0&&state==='play'&&player.inv<30){ e.st='grab'; e.t=0; e.gx=player.x; e.gy=player.y; SFX.bump(); shake=3; puff(e.x+8,e.y+12,'#5a4630',8,1.2); flyText.push({x:player.x+8,y:player.y-6,txt:'¡ATRAPADO!',t:30,col:'#ff9040'}); } }
+    else if(e.st==='grab'){ noContact=true; player.x=e.gx; player.y=e.gy; player.kx=player.ky=0;
+      if(e.t%30===16){ hurt(1,e.x+8,e.y+8,true); player.x=e.gx; player.y=e.gy; player.kx=player.ky=0; }
+      if(e.flash===0&&meleeActive()) damageEnemy(e,meleeDmg(),player.x,player.y+8); // sujeto por los pies: cualquier tajo la alcanza
+      if(e.flash>0||e.t>=110){ e.st='up'; e.t=0; } }
+    else if(e.st==='up'){ if(e.t>=90){ e.st='hide'; e.t=0; e.x=e.hx; e.y=e.hy; puff(e.x+8,e.y+12,'#5a4630',6,.8); } }
+  }
+  return [noContact,blindHit];
 }

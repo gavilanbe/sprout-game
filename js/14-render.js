@@ -14,7 +14,8 @@ function drawSword(){
   const base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir];
   const sweep=[-2.0,-1.15,-0.25,0.4,0.62,0.56,0.46][Math.min(6,ph>>1)];
   ctx.save(); ctx.translate(player.x+8,player.y+10); ctx.rotate(base+sweep);
-  ctx.drawImage(LEAF_SWING,3,-4); ctx.restore();
+  ctx.drawImage(bladeSpr(),3,-4); ctx.restore();
+  bladeGlow(player.x+8+Math.cos(base+sweep)*14,player.y+10+Math.sin(base+sweep)*14);
   if(ph>=1&&ph<=8) drawSmear(player.x+8,player.y+10,base-2.15,base+sweep+.3,ph);
 }
 /* media luna del tajo, en píxeles: filo blanco por dentro, verde por fuera; se come desde la cola */
@@ -26,7 +27,7 @@ function drawSmear(cx,cy,a0,a1,ph){
     const t=norm(Math.atan2(y,x)-tail); if(t<0||t>span) continue; const along=t/span; // 0 cola → 1 punta
     const edge=d>rOut-1.2, inner=d>rOut-4&&!edge&&along>.3;
     if(along<.18&&((x+y)&1)) continue; // la cola se deshace en tramado
-    ctx.fillStyle=inner?'#ffffe8':edge?'#2e8a34':along>.55?'#b8f070':'#78d838'; ctx.globalAlpha=(d<rIn+2?.55:1)*(1-fade*.5); ctx.fillRect(cx+x,cy+y,1,1); }
+    const SM=bladeTier().smear; ctx.fillStyle=inner?SM[3]:edge?SM[0]:along>.55?SM[2]:SM[1]; ctx.globalAlpha=(d<rIn+2?.55:1)*(1-fade*.5); ctx.fillRect(cx+x,cy+y,1,1); }
   ctx.globalAlpha=1;
 }
 function drawPlayer(){
@@ -48,10 +49,10 @@ function drawPlayer(){
     else { const j=1-sproutT/24; ctx.save(); ctx.translate(player.x+8,player.y+16); ctx.scale(1,.5+.5*j); ctx.drawImage(j<.5?H_WAKE:P_SPRITES[0][0],-8,-16+(j<.5?2:0)); ctx.restore(); }
     return; }
   const inv=player.inv>0&&(tick&3)<2&&state==='play';
-  drawShadow(player.x+8,player.y+15,jumpT>0?4:6);
+  drawShadow(player.x+8,player.y+15,jumpT>0?Math.max(2,6-jumpZ/4):6);
   if(inv) return;
   const py=player.y-jumpZ;
-  if(player.charge>=36){ ctx.fillStyle='rgba(112,216,56,'+(0.22+0.14*Math.sin(tick*.4)).toFixed(2)+')'; ctx.beginPath(); ctx.arc(player.x+8,py+10,12,0,6.28); ctx.fill(); }
+  drawSpinCharge(py);
   if(player.dir===1&&player.atk>0) drawSword();
   let s=P_SPRITES[player.dir][player.frame];
   const idle=player.frame===0&&player.atk===0&&state==='play';
@@ -67,11 +68,12 @@ function drawPlayer(){
   if(Math.abs(sq)>.01){ ctx.save(); ctx.translate((player.x+8+lunge[0])|0,(py+16+lunge[1])|0); ctx.scale(1-sq*.55,1+sq); ctx.drawImage(s,-8,-16); ctx.restore(); }
   else ctx.drawImage(s,(player.x+lunge[0])|0,(py+lunge[1])|0);
   if(wade){ ctx.restore(); const wx=player.x|0, wy=(py+13)|0, f=(tick>>3)&1; ctx.fillStyle='#e8f8ff'; ctx.fillRect(wx+3+f,wy,4,1); ctx.fillRect(wx+9-f,wy,4,1); ctx.fillStyle='#a0d8f8'; ctx.fillRect(wx+2,wy+1,12,1); }
+  drawShieldOn(player.x,py);
   if(player.dir!==1&&player.atk>0) drawSword();
-  if(player.spin>0){ const a=(1-player.spin/18)*6.283+[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir];
-    ctx.save(); ctx.translate(player.x+8,py+10); ctx.rotate(a); ctx.drawImage(LEAF_SWING,3,-4); ctx.restore(); }
+  if(player.spin>0) drawSpinBlade(py);
 }
 function drawEnemy(e){
+  if(MILL_ENEMY[e.type]){ drawMillEnemy(e); return; } // cuervo, caballero de hoja y raíz (12b)
   const S=E_SPR[e.type]; if(!S) return;
   const flash=e.flash>4, fl=e.type==='bat'||e.type==='bee'||e.type==='ghost'||e.type==='wisp';
   if(fl) drawShadow(e.x+8,e.y+15,4); else if(e.type!=='icicle'&&e.type!=='thorn') drawShadow(e.x+8,e.y+15,5);
@@ -118,12 +120,12 @@ function drawGreatOak(ox,oy){
   if(cycled){ ctx.fillStyle='rgba(168,236,120,'+(0.07+0.05*Math.sin(tick*.06)).toFixed(2)+')'; ctx.beginPath(); ctx.arc(ox+42,oy+24,40,0,6.29); ctx.fill(); }
   if((tick%70)===0) parts.push({x:ox+10+Math.random()*64,y:oy+30+Math.random()*10,vx:(Math.random()-.5)*.3,vy:.3,life:46,col:(tick&1)?C.canopyL:PAL.l});
 }
-const ITEM_SPRS={blade:BLADE_SPR,bomb:BOMB_SPR,ember:EMBER_SPR,hook:HOOK_SPR,tear:TEAR_SPR,flake:FLAKE_SPR,boomer:BOOMER_SPR,lantern:LANTERN_SPR,feather:FEATHER_SPR};
+const ITEM_SPRS={blade:BLADE_SPR,bomb:BOMB_SPR,ember:EMBER_SPR,hook:HOOK_SPR,tear:TEAR_SPR,flake:FLAKE_SPR,boomer:BOOMER_SPR,lantern:LANTERN_SPR,feather:FEATHER_SPR,molinillo:PINWHEEL_SPR,amber:AMBER_SPR};
 /* destello que barre un sprite en diagonal (brillo de objeto valioso) */
 function drawGlint(img,x,y,ph){ if(ph<0||ph>1) return; const w=img.width, h=img.height, gx=-h+ph*(w+h*2);
   ctx.save(); ctx.beginPath(); ctx.moveTo(x+gx,y+h); ctx.lineTo(x+gx+3,y+h); ctx.lineTo(x+gx+3+h,y); ctx.lineTo(x+gx+h,y); ctx.closePath(); ctx.clip();
   ctx.drawImage(tintCached(img,'#ffffff'),x,y); ctx.restore(); }
-function pickupImg(p){ return {bombs:ACORN,container:HEART_FULL,piece:PIECE_SPR,diary:DIARY_SPR,letter:LETTER_SPR,key:KEY_SPR,bigkey:BIGKEY_SPR,seed:ACORN_GOLD,berry:BERRY_SPR,heart:HEART_FULL}[p.kind]||ITEM_SPRS[p.kind]; }
+function pickupImg(p){ return {lure:LURE_SPR,bombs:ACORN,container:HEART_FULL,piece:PIECE_SPR,diary:DIARY_SPR,letter:LETTER_SPR,key:KEY_SPR,bigkey:BIGKEY_SPR,seed:ACORN_GOLD,berry:BERRY_SPR,heart:HEART_FULL}[p.kind]||ITEM_SPRS[p.kind]; }
 function drawPickup(p){
   const img=pickupImg(p); if(!img) return;
   const big=!!ITEM_SPRS[p.kind], pop=p.t<12?easeOutBack(Math.min(1,p.t/12)):1;
@@ -164,6 +166,7 @@ function drawBoss(){
     const img=b.flash>5?BOSS_WHITE.avispa:BOSS_SPR.avispa, flap=grounded?0:Math.sin(tick*.6)*.1;
     ctx.save(); ctx.translate(b.x+16,b.y+16); if(grounded) ctx.rotate(b.st==='yield'?.15:b.st==='pinned'?.5+Math.sin(tick*.2)*.05:.3); ctx.scale(1+flap,1-flap); ctx.drawImage(img,-16,-16); ctx.restore();
     if(bossRope){ const x0=player.x+8, y0=player.y+10, x1=b.x+16, y1=b.y+18, n=Math.max(2,(Math.hypot(x1-x0,y1-y0)/4)|0); for(let i=0;i<=n;i++){ ctx.fillStyle=i%2?PAL.l:PAL.d; ctx.fillRect((x0+(x1-x0)*i/n-1)|0,(y0+(y1-y0)*i/n-1+Math.sin(i*.8+tick*.5))|0,2,2); } }
+  } else if(b.type==='ciervo'){ drawCiervo(b); // el Ciervo de Ámbar (12b)
   } else {
     const resting=b.st==='rest';
     if(resting) glowAt(b.x+16,b.y+16,26,'rgba(120,232,120,'+(0.28+0.18*Math.sin(tick*.3))+')');
@@ -177,7 +180,8 @@ function drawBoss(){
   if(b.st==='yield'&&(tick&31)<20) txtO('Z',(b.x+14)|0,(b.y-16)|0);
 }
 function drawMidboss(){
-  const m=midboss; drawShadow(m.x+12,m.y+23,10);
+  const m=midboss; if(m.type==='scare'){ drawScare(m); return; }
+  drawShadow(m.x+12,m.y+23,10);
   let img=BOSS_SPR[m.type]; if(m.type==='king'&&m.dir<0) img=BOSS_SPR.kingL;
   if(m.flash>4) img=m.type==='king'&&m.dir<0?BOSS_WHITE.kingL:BOSS_WHITE[m.type];
   ctx.save(); ctx.translate(m.x+12,m.y+24);
@@ -190,7 +194,7 @@ function drawMidboss(){
 }
 function drawScene(){
   if(bgDirty) rebuildBg();
-  ctx.drawImage(bgCanvas[bgFrame()],0,0);
+  ctx.drawImage(bgCanvas[bgFrame()],0,0); drawScorches();
   if(sx===1&&sy===1){
     drawGreatOak(37,-2);
     if(thawed){ ctx.drawImage(EMBER_SPR,32,38); if((tick&15)===0) parts.push({x:40,y:44,vx:0,vy:-.3,life:12,col:'#f8a030',nog:true}); }
@@ -200,17 +204,18 @@ function drawScene(){
   }
   // fuego de las antorchas encendidas (parpadeo y luz cálida)
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';'){ glowAt(x*16+8,y*16+4,16,'rgba(248,160,48,.22)'); if((tick&7)===0) parts.push({x:x*16+7+Math.random()*3,y:y*16+2,vx:0,vy:-.4,life:10,col:(tick&8)?'#f8e060':'#f8a030',nog:true}); } }
+  drawMillBack(); // el molino de la Ciénaga, el ámbar en su altar y los molinetes (12b)
   // capa de actores, ordenada por profundidad (pies)
   const L=[];
   for(const p of pickups) L.push({y:p.y+8,f:()=>drawPickup(p)});
-  for(const b of bombs) L.push({y:b.y+12,f:()=>{ const pulse=b.t<25&&(tick&3)<2; drawShadow(b.x+8,b.y+13,4); ctx.drawImage(ACORN,b.x+4,b.y+4+(pulse?-1:0)); }});
+  for(const b of bombs) L.push({y:b.y+12,f:()=>drawBomb(b)});
   if(elderPos) L.push({y:elderPos[1]*16+16,f:()=>{ const sway=Math.sin(tick*.04)>0?0:1; drawShadow(elderPos[0]*16+7,elderPos[1]*16+15,6); ctx.drawImage(ELDER,elderPos[0]*16,elderPos[1]*16+sway+1);
     if((tick%85)===0) parts.push({x:elderPos[0]*16+14,y:elderPos[1]*16+4,vx:(Math.random()-.5)*.2,vy:-.25,life:22,col:PAL.l}); }});
   for(const n of npcs) L.push({y:n.y*16+16,f:()=>{ const sway=Math.sin(tick*.05+n.x)>0?0:1;
     if(n.guest){ const img=BOSS_SPR[n.guest]; drawShadow(n.x*16+8,n.y*16+16,10); ctx.drawImage(img,n.x*16-8,n.y*16-14+sway); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-24); }
     else { drawShadow(n.x*16+8,n.y*16+15,5); ctx.drawImage(NPCS[n.ch].img,n.x*16,n.y*16+sway); } }});
   for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
-  if(boss) L.push({y:boss.y+32,f:drawBoss});
+  if(boss) L.push({y:boss.y+32,f:()=>{ if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});
   if(midboss) L.push({y:midboss.y+24,f:drawMidboss});
   L.push({y:player.y+16+(jumpT>0?40:0),f:drawPlayer});
   L.sort((a,b)=>a.y-b.y); for(const o of L) o.f();
@@ -229,10 +234,10 @@ function drawScene(){
       continue; }
     if(p.kind==='sting'){ const a=Math.atan2(p.vy,p.vx), ex=Math.cos(a)*3, ey=Math.sin(a)*3; ctx.fillStyle=PAL.k; ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4); ctx.fillStyle='#f8d030'; ctx.fillRect((p.x-ex*.5)|0,(p.y-ey*.5)|0,2,2); ctx.fillStyle='#ffffff'; ctx.fillRect((p.x+ex*.5)|0,(p.y+ey*.5)|0,1,1); continue; }
     if(p.kind==='spore') ctx.drawImage(SPORE_SPR,(p.x-3)|0,(p.y-3)|0); else if(p.kind==='ice'){ ctx.fillStyle=PAL.k; ctx.fillRect((p.x-3)|0,(p.y-3)|0,6,6); ctx.fillStyle='#a8d8f0'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4); ctx.fillStyle='#fff'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,2,1); } else ctx.drawImage(ROCK_PROJ,(p.x-3)|0,(p.y-3)|0); }
-  for(const w of windProjs){ const px=w.x|0, py=w.y|0; const rows=[[5,'#70d838'],[8,'#dff0ff'],[11,'#a8ec78']];
-    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*4; ctx.fillStyle=PAL.k; ctx.fillRect(px-(wd>>1)+off-1,y-1,wd+2,5); });
-    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*4; ctx.fillStyle=col; ctx.fillRect(px-(wd>>1)+off,y,wd,3); ctx.fillStyle='#ffffff'; ctx.fillRect(px-(wd>>1)+off+1+((w.ang*4|0)%Math.max(1,wd-3)),y+1,2,1); }); }
-  if(boomer){ ctx.save(); ctx.translate(boomer.x|0,boomer.y|0); ctx.rotate(boomer.ang); ctx.drawImage(BOOMER_SPR,-8,-8); ctx.restore(); }
+  for(const w of windProjs){ const px=w.x|0, py=w.y|0, gap=w.big?5:4; const rows=w.big?[[8,'#e8c040'],[12,'#fffbe0'],[16,'#b8f070'],[19,'#dff0ff']]:[[5,'#70d838'],[8,'#dff0ff'],[11,'#a8ec78']];
+    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*gap; ctx.fillStyle=PAL.k; ctx.fillRect(px-(wd>>1)+off-1,y-1,wd+2,5); });
+    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*gap; ctx.fillStyle=col; ctx.fillRect(px-(wd>>1)+off,y,wd,3); ctx.fillStyle='#ffffff'; ctx.fillRect(px-(wd>>1)+off+1+((w.ang*4|0)%Math.max(1,wd-3)),y+1,2,1); }); }
+  drawGearFx(); drawBoomer(); drawMillFront();
   drawParts();
   for(const f of flyText){ const age=(f.max||(f.max=f.t))-f.t, hop=age<8?Math.round(Math.sin(age/8*Math.PI)*3):0; if(f.t<8&&(f.t&1)) continue; txtOL(f.txt,(f.x+6)|0,(f.y-10-hop)|0,f.col,'center',PAL.k,FONT_S); }
   drawDark(); drawScreenFx();
@@ -266,14 +271,14 @@ function drawClouds(){
 let darkCv=null;
 function drawDark(){
   const r=regionOf(sx,sy);
-  if(!(r==='cueva'||r==='tronco'||r==='templo'||r==='gruta'||r==='secreto')) return;
+  if(!(r==='cueva'||r==='tronco'||r==='templo'||r==='gruta'||r==='secreto')||LIT_SCREENS.has(sx+','+sy)) return;
   if(!darkCv){ darkCv=mkCanvas(160,128); }
   const g=darkCv.getContext('2d'); g.globalCompositeOperation='source-over'; g.clearRect(0,0,160,128);
-  const deep=r==='gruta'&&!hasLantern;
+  const deep=(r==='gruta'||DEEP_SCREENS.has(sx+','+sy))&&!hasLantern;
   g.fillStyle=deep?'rgba(4,4,12,0.96)':'rgba(4,4,12,0.86)'; g.fillRect(0,0,160,128);
   g.globalCompositeOperation='destination-out';
   const hole=(cx,cy,rad)=>{ const gr=g.createRadialGradient(cx,cy,rad*.3,cx,cy,rad); gr.addColorStop(0,'rgba(0,0,0,1)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(cx-rad,cy-rad,rad*2,rad*2); };
-  hole(player.x+8,player.y+8,(hasLantern?92:(deep?30:58))+Math.sin(tick*.2)*2);
+  hole(player.x+8,player.y+8,lightRadius(deep));
   if(boss) hole(boss.x+16,boss.y+16,40); if(midboss) hole(midboss.x+12,midboss.y+12,34);
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';') hole(x*16+8,y*16+6,30); }
   for(const b of bombs) hole(b.x+8,b.y+8,18+(tick&3));
