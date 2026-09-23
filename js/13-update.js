@@ -49,7 +49,7 @@ function update(){
   if(state==='boot'){
     bootT++;
     if(bootGo>0){ bootGo--; if(bootGo===0){ state='title'; titleT=0; parts=[]; } return; }
-    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(); musicStep=0; nextNoteT=AC.currentTime+1.3; SFX.gbDing(); bootGo=66; if(bootT<46) bootT=46; }
+    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(); musicStep=0; nextNoteT=AC.currentTime+1.3; SFX.gbDing(); bootGo=66; if(bootT<BOOT_LAND) bootT=BOOT_LAND; }
     return;
   }
   if(state==='title'){ updTitle(); return; }

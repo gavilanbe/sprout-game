@@ -326,10 +326,12 @@ function drawOptions(){
     if(sel){ ctx.fillStyle='#1f4029'; ctx.fillRect(9,y-2,142,9); ctx.drawImage(CURSOR_SPR,10+((tick&15)<8?0:1),y-1); }
     txt(OPT_NAMES[id],20,y-1,sel?'#fffbe8':'#9ec7aa');
     if(id==='musica'||id==='efectos') drawSlider(97,y-2,id==='musica'?(opts.musVol??7):(opts.sfxVol??8),id==='musica'&&!musicOn,sel);
+    else if(id==='consola'&&typeof SHELL_THEMES!=='undefined'){ const t=SHELL_THEMES[((opts.shell|0)%SHELL_THEMES.length+SHELL_THEMES.length)%SHELL_THEMES.length], w=textW(t[1]);
+      txtO(t[1],148,y-1,MENU.gold,'right','#081610'); roundBox(148-w-13,y-1,10,8,PAL.k); ctx.fillStyle=t[2]; ctx.fillRect(148-w-12,y,8,6); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(148-w-12,y,8,1); } // el color de la carcasa, con su muestra
     else { const v=id==='texto'?(opts.textSpeed===2?'RÁPIDO':'NORMAL'):id==='temblor'?(opts.shake?'SÍ':'NO'):id==='dificultad'?DIFF_NAMES[opts.diff??1]:id==='vibracion'?(opts.vib===0?'NO':'SÍ'):id==='controles'?'>':'';
       if(v) txtO(v,148,y-1,id==='dificultad'?['#8ad860',MENU.gold,'#ff7050'][opts.diff??1]:MENU.gold,'right','#081610'); } });
   zSel(8,26+optSel*11-3,144,11);
-  txtS('GUARDADO AUTOMÁTICO',80,117,MENU.dim,'center'); txtS('RANURA '+(curSlot+1)+' · '+visited.size+' LUGARES',80,124,MENU.dim,'center');
+  txtS('GUARDADO AUTOMÁTICO · RANURA '+(curSlot+1),80,125,MENU.dim,'center');
 }
 /* barra de volumen de 10 muescas que crecen, verde → oro → rojo */
 function drawSlider(x,y,v,muted,sel){

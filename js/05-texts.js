@@ -241,7 +241,7 @@ const WIND_PEACE=[
 /* los créditos: el valle respira */
 const CREDITS=[
   'SPROUT','y las 8 semillas','',
-  'una aventura de','NAHUELGABE','',
+  'una aventura de','GAVILANBE','',
   'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Ciervo de Ámbar','El Viento del Norte','',
   'LOS VECINOS','Petra · Lupa · Moss','Tilo · Corteza','',
   'LA VOZ DEL ROBLE','Raíz','',

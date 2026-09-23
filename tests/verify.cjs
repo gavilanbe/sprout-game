@@ -549,6 +549,32 @@ const server=http.createServer((req,res)=>{
       return log; });
     eq(r,[['valle',true,4,'...¿Sprout? ¿Me oyes?',['play',true,true,true],'0,1','60,70',true,true,'play',true,1],['cueva',true,2,true,true,true,true,'play',true],['no','no','title',3]]);
   });
+  await check('La consola: la pantalla copia el juego a píxeles exactos, los botones se hunden con el teclado, el LED avisa y el color de carcasa se guarda',async()=>{
+    eq(await ev(()=>{ __go(1,1,64,76); draw(); present();
+      const s=document.getElementById('screen'), N=s.width/160, g=s.getContext('2d'), c=cv.getContext('2d');
+      const px=(G,x,y)=>[...G.getImageData(x,y,1,1).data].slice(0,3).join();
+      const same=[[10,10],[80,72],[151,133],[33,121]].every(([x,y])=>px(c,x,y)===px(g,Math.floor(x*N+N/2),Math.floor(y*N+N/2)));
+      keys.fireHeld=true; keys.left=true; present(); const down=[document.getElementById('tA').classList.contains('down'),document.getElementById('tL').classList.contains('down'),document.getElementById('dpad').dataset.t];
+      keys.fireHeld=false; keys.left=false; present(); const up=!document.getElementById('tA').classList.contains('down');
+      const hp=player.hp; saveFlash=0; player.hp=2; present(); const low=document.getElementById('led').dataset.s; player.hp=hp; present();
+      const t0=opts.shell|0; optAction('consola',1); const t1=document.getElementById('console').dataset.color, saved=JSON.parse(localStorage.getItem('sprout.opts')).shell;
+      opts.shell=t0; applyShellTheme(); saveOpts();
+      return [Number.isInteger(N),same,down,up,low,t1,saved,OPT_ROWS.includes('consola')]; }),
+      [true,true,[true,true,'l'],true,'low','salvia',1,true]);
+  });
+  await check('Móvil: consola a pantalla completa; la cruceta se desliza entre direcciones y los botones no se sueltan al desviar el dedo',async()=>{
+    const {devices}=require('playwright'), ctx=await browser.newContext({...devices['iPhone 13']}), m=await ctx.newPage(); m.on('pageerror',e=>errors.push('móvil: '+e.message));
+    await m.goto(`http://127.0.0.1:${server.address().port}/index.html`); await m.waitForFunction(()=>typeof __sprout==='object');
+    await m.evaluate(()=>{ window.__manual=true; newGame(); state='play'; inBed=false; wakeT=0; elderMet=true; hasBlade=true; toast=null; toastQ=[]; __sprout.warp(2,1,70,60); npcs=[]; enemies=[]; });
+    const r=await m.evaluate(()=>{ const d=document.getElementById('dpad').getBoundingClientRect(), a=document.getElementById('tA').getBoundingClientRect(); return {x:d.left+d.width/2,y:d.top+d.height/2,w:d.width,ax:a.left+a.width/2,ay:a.top+a.height/2}; });
+    const K=()=>m.evaluate(()=>['up','down','left','right'].filter(k=>keys[k]).join('+')||'-'), log=[await m.evaluate(()=>[document.body.classList.contains('touch'),document.getElementById('console').classList.contains('tall')])];
+    await m.mouse.move(r.x,r.y-r.w*.36); await m.mouse.down(); log.push(await K(), await m.evaluate(()=>{ const y=player.y; for(let i=0;i<8;i++) update(); return player.y<y; }));
+    await m.mouse.move(r.x+r.w*.36,r.y,{steps:3}); log.push(await K()); await m.mouse.move(r.x+r.w*.3,r.y-r.w*.3,{steps:3}); log.push(await K());
+    await m.mouse.move(r.x+r.w,r.y,{steps:3}); log.push(await K()); await m.mouse.up(); log.push(await K());
+    await m.mouse.move(r.ax,r.ay); await m.mouse.down(); await m.mouse.move(r.ax+25,r.ay+18); log.push(await m.evaluate(()=>[keys.fire,keys.fireHeld])); await m.mouse.up(); log.push(await m.evaluate(()=>keys.fireHeld));
+    await ctx.close();
+    eq(log,[[true,true],'up',true,'right','up+right','right','-',[true,true],false]);
+  });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }
   console.log(`\n${passed} pruebas pasan, ${failed} fallan`);

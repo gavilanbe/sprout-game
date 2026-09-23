@@ -267,12 +267,47 @@ function drawTitleBg(){
   ctx.fillStyle='#5088dc'; ctx.fillRect(0,0,160,60); ctx.fillStyle='#86c0f0'; ctx.fillRect(0,30,160,50);
   ctx.fillStyle='#78c050'; ctx.fillRect(0,80,160,64); ctx.drawImage(OAK,80-(OAK.width>>1),50);
 }
+/* ---------- EL ARRANQUE: «gavilanbe®» baja como el logo de la Game Boy ----------
+   letras propias con el aire del logotipo de Nintendo: trazo de 2 px, hombros con muesca, la i con su
+   punto suelto y la ® pequeña a escala 1. Diez filas: 0-1 ascendentes, 2-7 cuerpo, 8-9 la cola de la g */
+const GAVI_GLYPHS={
+  g:['......','......','.XX.XX','XX.XXX','XX..XX','XX..XX','XX.XXX','.XX.XX','....XX','.XXXX.'],
+  a:['......','......','.XXXX.','....XX','.XXXXX','XX..XX','XX.XXX','.XX.XX','......','......'],
+  v:['......','......','XX..XX','XX..XX','XX..XX','XX..XX','.XXXX.','..XX..','......','......'],
+  i:['XX','..','XX','XX','XX','XX','XX','XX','..','..'],
+  l:['XX','XX','XX','XX','XX','XX','XX','XX','..','..'],
+  n:['......','......','XX.XX.','XXX.XX','XX..XX','XX..XX','XX..XX','XX..XX','......','......'],
+  b:['XX....','XX....','XX.XX.','XXX.XX','XX..XX','XX..XX','XXX.XX','XX.XX.','......','......'],
+  e:['......','......','.XXXX.','XX..XX','XXXXXX','XX....','XX..XX','.XXXX.','......','......'],
+};
+const GAVI_R=['.XXXXX.','X.....X','X.XX..X','X.X.X.X','X.XX..X','X.X.X.X','.XXXXX.'];
+function gaviLetter(ch,col){ const G=GAVI_GLYPHS[ch], w=G[0].length, c=mkCanvas(w,10), g=c.getContext('2d'); g.fillStyle=col;
+  G.forEach((row,y)=>{ for(let i=0;i<w;i++) if(row[i]==='X') g.fillRect(i,y,1,1); }); return c; }
+function gaviR(col){ const c=mkCanvas(7,7), g=c.getContext('2d'); g.fillStyle=col; GAVI_R.forEach((row,y)=>{ for(let i=0;i<7;i++) if(row[i]==='X') g.fillRect(i,y,1,1); }); return c; }
+function gaviMark(col){ // la palabra entera, 1 px por píxel del logo (la consola de la página la usa también)
+  const word='gavilanbe', L=[...word].map(ch=>gaviLetter(ch,col)), w=L.reduce((s,c)=>s+c.width+1,-1), c=mkCanvas(w,10), g=c.getContext('2d');
+  let x=0; for(const l of L){ g.drawImage(l,x,0); x+=l.width+1; } return c; }
+const BOOT_LAND=84, BOOT_COLS=['#e03c3c','#f08a28','#e2b818','#3ca83c','#22a0a8','#3868d8','#7048c8','#c03898','#e0487c'];
+let BOOT_ART=null;
+function bootArt(){ if(BOOT_ART) return BOOT_ART; let x=0;
+  const L=[...'gavilanbe'].map((ch,i)=>{ const dark=gaviLetter(ch,'#0f380f'), l={x,w:dark.width,dark,col:gaviLetter(ch,BOOT_COLS[i])}; x+=dark.width+1; return l; });
+  return BOOT_ART={L,w:x-1,R:gaviR('#0f380f'),R2:gaviR('#4a4a5a')}; }
 function drawBoot(){
-  ctx.fillStyle='#9bbc3f'; ctx.fillRect(0,0,VW,VH); ctx.fillStyle='rgba(255,255,255,.05)'; for(let y=0;y<VH;y+=2) ctx.fillRect(0,y,VW,1);
-  const k=Math.min(1,bootT/45), y=(-12+78*k)|0;
-  if(fontsReady){ txt('NAHUELGABE',80,y,'#0f380f','center');
-    if(k>=1){ txtS('TM',120,y-3,'#0f380f');
-      if(bootGo===0&&bootT>140&&(tick&63)<36) txt('Z',80,118,'#306230','center'); } }
+  const pressed=bootGo>0, pt=pressed?66-bootGo:0, mix=(a,b,k)=>a.map((v,i)=>Math.round(v+(b[i]-v)*k));
+  // la pantalla se enciende (del gris apagado al verde) y, al pulsar, se llena de color
+  let bg=mix([52,62,40],[155,188,15],Math.min(1,bootT/12)); if(pressed) bg=mix(bg,[250,246,228],clamp(pt/9,0,1));
+  ctx.fillStyle='rgb('+bg+')'; ctx.fillRect(0,0,VW,VH);
+  if(!pressed&&bootT<12){ ctx.fillStyle='rgba(255,255,255,'+(.25*(1-bootT/12)).toFixed(2)+')'; ctx.fillRect(0,71,VW,2); } // la raya de encendido
+  const A=bootArt(), S=2, W=A.w*S, x0=Math.round(80-(W+9)/2), y=Math.min(56,-22+bootT); // baja un píxel por fotograma, como el de verdad
+  A.L.forEach((l,i)=>{ let img=l.dark, dy=0;
+    if(pressed){ const k=pt-i*2.4; if(k>0){ img=l.col; if(k<11) dy=-Math.round(Math.sin(k/11*Math.PI)*5); } }
+    ctx.drawImage(img,0,0,l.w,10,x0+l.x*S,y+dy,l.w*S,10*S); });
+  ctx.drawImage(pressed&&pt>22?A.R2:A.R,x0+W+2,y);
+  if(pressed&&pt>=24&&pt<42){ const s=pt<33?(pt-24)>>1:(42-pt)>>1, cx=x0+W+5, cy=y+3; if(s>0){ ctx.fillStyle='#ffffff'; ctx.fillRect(cx-s,cy,s*2+1,1); ctx.fillRect(cx,cy-s,1,s*2+1); } } // un destello en la ®
+  if(pressed) for(let i=0;i<A.L.length;i++){ const k=pt-i*2.4-3; if(k>0&&k<14){ const l=A.L[i], px=x0+l.x*S+l.w, py=y-4-k*1.2; ctx.fillStyle=BOOT_COLS[i]; ctx.fillRect(px+(i&1?k*.4:-k*.4)|0,py|0,2,2); } } // chispas de color
+  if(!pressed&&bootT>=BOOT_LAND+18&&((bootT-BOOT_LAND)&63)<42){
+    const t=document.body.classList.contains('touch')?'TOCA PARA EMPEZAR':'PULSA '+(typeof keyName==='function'?keyName(keysNow().fire):'Z');
+    txtS(t,80,104,'#306230','center'); }
   if(bootGo>0&&bootGo<22){ ctx.fillStyle='rgba(8,20,8,'+((1-bootGo/22).toFixed(2))+')'; ctx.fillRect(0,0,VW,VH); }
 }
 function drawTitle(){

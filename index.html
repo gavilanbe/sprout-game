@@ -7,137 +7,206 @@
 <meta name="description" content="Un Zelda-like estilo Game Boy Color: el Valle Raíz, cuatro mazmorras, guardianes que no mueren y las cuatro estaciones.">
 <meta name="theme-color" content="#0b1a10">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --pine:#0b1a10; --pine2:#102416; --moss:#2a4a34; --leaf:#70d838;
-    --cream:#f8e8c8; --amber:#e8b050;
-  }
+  /* ============================================================
+     LA CONSOLA. Todas las medidas salen de variables que pone fit()
+     (js/16a-shell.js): --u es el tamaño de un píxel del juego; en
+     escritorio la carcasa entera escala con él (píxeles enteros) y en
+     móvil los mandos tienen tamaño de pulgar.
+     ============================================================ */
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%}
+  html{touch-action:none; overscroll-behavior:none; background:#07120b}
   body{
     background:
-      radial-gradient(ellipse at 50% -20%, #16301e 0%, transparent 60%),
-      repeating-conic-gradient(var(--pine2) 0% 25%, var(--pine) 0% 50%) 0 0/8px 8px,
-      var(--pine);
-    color:var(--cream);
-    font-family:"Press Start 2P", monospace;
+      radial-gradient(ellipse 70% 60% at 50% 45%, #1c3a26 0%, #0f2417 45%, #08140d 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:14px; padding:16px; overflow:hidden; user-select:none; -webkit-user-select:none;
+    min-height:100%; overflow:hidden; user-select:none; -webkit-user-select:none;
+    -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
     touch-action:none; overscroll-behavior:none;
   }
-  html{touch-action:none; overscroll-behavior:none}
-  header{text-align:center}
-  h1{
-    font-size:clamp(18px,4vw,30px); letter-spacing:4px;
-    color:var(--leaf);
-    text-shadow:0 3px 0 #1d4f22, 0 6px 0 #0d2a12, 0 0 24px rgba(112,216,56,.35);
+  #safe{position:fixed; visibility:hidden; pointer-events:none; left:0; top:0;
+    padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+  #cv{display:none}
+  canvas.px{image-rendering:pixelated; image-rendering:crisp-edges; display:block}
+
+  /* ---------- colores de carcasa (AJUSTES → Consola) ---------- */
+  .console{
+    --u:4px; --bt:32px; --bs:44px; --bb:52px; --bp:24px; --padw:184px; --brandh:72px; --ctrlh:248px;
+    --dp:136px; --ab:60px; --pw:48px; --ph:14px;
+    --body:#e6dcc5; --bodyL:#f8f1e0; --bodyD:#c6b792; --edge:#8a7c60; --bezel:#3b4549; --bezelL:#5b676d; --bezelD:#242b2f;
+    --ink:#34335e; --grille:#a09378; --pat:none;
   }
-  h1 .seed{color:var(--amber); text-shadow:0 3px 0 #6e4a14, 0 6px 0 #3a2708, 0 0 24px rgba(232,176,80,.35)}
-  .tag{font-size:8px; color:#7fae8c; margin-top:10px; letter-spacing:1px}
-  .shell{
-    position:relative; line-height:0;
-    padding:14px; background:linear-gradient(#16301e,#0e2014);
-    border:3px solid var(--moss); border-radius:10px;
-    box-shadow:0 0 0 3px #07120b, 0 14px 40px rgba(0,0,0,.6), 0 0 60px rgba(112,216,56,.12);
+  .console[data-color="salvia"]{ --body:#b5cca1; --bodyL:#d7e8c6; --bodyD:#8ea87b; --edge:#5a744d; --bezel:#2a3a31; --bezelL:#46594d; --bezelD:#18231d; --ink:#27462b; --grille:#7f9a70 }
+  .console[data-color="baya"]{ --body:#d2495f; --bodyL:#ee7f90; --bodyD:#a6304a; --edge:#6b182b; --bezel:#2b2a33; --bezelL:#474555; --bezelD:#18171d; --ink:#fff0f2; --grille:#9c2c42 }
+  .console[data-color="uva"]{ --body:#6f5bbd; --bodyL:#9c8ae0; --bodyD:#4d3e93; --edge:#312667; --bezel:#25212e; --bezelL:#403a51; --bezelD:#15121c; --ink:#f0ebff; --grille:#4a3c8c;
+    --pat:repeating-linear-gradient(90deg,transparent 0 calc(var(--u)*11),rgba(255,255,255,.06) calc(var(--u)*11) calc(var(--u)*11.4)),
+          repeating-linear-gradient(0deg,transparent 0 calc(var(--u)*17),rgba(255,255,255,.05) calc(var(--u)*17) calc(var(--u)*17.4)) }
+
+  /* ---------- la carcasa ---------- */
+  .console{
+    position:relative; display:grid; padding:var(--bp);
+    background:var(--pat), linear-gradient(165deg,var(--bodyL) 0%,var(--body) 38%,var(--bodyD) 100%);
+    border-radius:calc(var(--u)*9) calc(var(--u)*9) calc(var(--u)*26) calc(var(--u)*9);
+    box-shadow:
+      inset 0 calc(var(--u)*.7) 0 rgba(255,255,255,.55),
+      inset calc(var(--u)*.6) 0 0 rgba(255,255,255,.25),
+      inset 0 calc(var(--u)*-1.4) 0 rgba(0,0,0,.16),
+      0 calc(var(--u)*2.4) 0 var(--edge),
+      0 calc(var(--u)*6) calc(var(--u)*14) rgba(0,0,0,.55),
+      0 0 calc(var(--u)*40) rgba(112,216,56,.07);
+    opacity:0; transform:translateY(12px) scale(.985); transition:opacity .45s ease, transform .55s cubic-bezier(.2,1.4,.4,1);
   }
-  .shell::before{ /* power LED */
-    content:""; position:absolute; top:5px; left:8px; width:5px; height:5px; border-radius:50%;
-    background:var(--leaf); box-shadow:0 0 8px var(--leaf);
+  .console.ready{opacity:1; transform:none}
+  .console.wide{grid-template-columns:var(--padw) auto var(--padw); grid-template-rows:auto 1fr; grid-template-areas:"brand scr pr" "pl scr pr"}
+  .console.tall{grid-template-columns:1fr 1fr; grid-template-rows:auto var(--brandh) var(--ctrlh); grid-template-areas:"scr scr" "brand brand" "pl pr"}
+  .scr{grid-area:scr; display:flex; align-items:center; justify-content:center}
+  .brand{grid-area:brand; justify-self:center; align-self:center}
+  .console.wide .brand{align-self:start; margin-top:calc(var(--u)*8)}
+  .pl{grid-area:pl} .pr{grid-area:pr}
+  .pad{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--dp)*.2)}
+
+  /* ---------- la pantalla ---------- */
+  .bezel{
+    position:relative; padding:var(--bt) var(--bs) var(--bb);
+    background:linear-gradient(180deg,var(--bezelL) 0%,var(--bezel) 16%,var(--bezelD) 100%);
+    border-radius:calc(var(--u)*4) calc(var(--u)*4) calc(var(--u)*16) calc(var(--u)*4);
+    box-shadow:inset 0 calc(var(--u)*.5) 0 rgba(255,255,255,.14), inset 0 calc(var(--u)*-.8) 0 rgba(0,0,0,.4), 0 calc(var(--u)*.6) 0 rgba(255,255,255,.35);
   }
-  canvas{
-    image-rendering:pixelated; image-rendering:crisp-edges;
-    background:#081408; display:block; touch-action:none;
-  }
-  .scan{ /* sutiles scanlines sobre la pantalla */
-    position:absolute; inset:14px; pointer-events:none; border-radius:2px;
-    background:repeating-linear-gradient(transparent 0 2px, rgba(0,0,0,.10) 2px 3px);
-    mix-blend-mode:multiply;
-  }
-  .keys{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; font-size:8px; color:#9ec7aa}
-  .keys span{display:flex; align-items:center; gap:6px}
-  kbd{
-    font:inherit; background:#142a1b; border:2px solid var(--moss); border-bottom-width:4px;
-    border-radius:5px; padding:5px 7px; color:var(--cream);
-  }
-  footer{font-size:7px; color:#4c7259; letter-spacing:1px}
-  .slice-link{display:inline-block;margin-top:12px;color:#b9d67d;font-size:8px;line-height:1.8;text-decoration:none;border-bottom:1px solid #4b6d36;padding-bottom:3px}
-  .slice-link:hover,.slice-link:focus-visible{color:#f8e8c8}
-  /* mandos táctiles */
-  #touch{display:none; position:fixed; left:0; right:0; bottom:env(safe-area-inset-bottom,0px); height:190px; pointer-events:none}
-  body.touch #touch{display:block}
-  /* en móvil: fuera la decoración de escritorio, el juego agarra toda la pantalla */
-  body.touch{padding:0; gap:0}
-  /* en vertical la pantalla se centra en el hueco que dejan los mandos (fit() reserva 200px), sin pisarlos */
-  @media (orientation:portrait){ body.touch{padding-bottom:calc(200px + env(safe-area-inset-bottom,0px))} }
-  body.touch header, body.touch .keys, body.touch footer{display:none}
-  body.touch .shell{padding:0; border:0; border-radius:0; box-shadow:none; background:transparent}
-  body.touch .shell::before{display:none}
-  body.touch .scan{inset:0}
-  .tbtn{
-    position:absolute; pointer-events:auto; display:flex; align-items:center; justify-content:center;
-    font-family:"Press Start 2P",monospace; line-height:1; color:var(--cream);
-    touch-action:none; -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none;
-    -webkit-user-select:none; user-select:none;
-  }
-  /* la cruceta: una cruz de una pieza, contorno de tinta y bisel de luz arriba */
-  #dpad{position:absolute; left:14px; bottom:16px; width:156px; height:156px; pointer-events:none}
-  #dpad::before,#dpad::after{content:""; position:absolute; clip-path:polygon(33.3% 0,66.7% 0,66.7% 33.3%,100% 33.3%,100% 66.7%,66.7% 66.7%,66.7% 100%,33.3% 100%,33.3% 66.7%,0 66.7%,0 33.3%,33.3% 33.3%)}
-  #dpad::before{inset:0; background:#081408}
-  #dpad::after{inset:4px; background:linear-gradient(#3e7048 0 3px,#2a5a38 3px 30%,#1c3a26 70%,#12281a)}
-  #dcenter{position:absolute; left:61px; top:61px; width:34px; height:34px; border-radius:50%; background:#12281a; box-shadow:inset 0 3px 0 #081408, 0 1px 0 #3e7048; z-index:1}
-  #dpad .tbtn{width:52px; height:52px; z-index:2}
-  #dpad .tbtn::before{content:""; width:0; height:0; border:9px solid transparent; filter:drop-shadow(0 2px 0 #081408)}
-  #tU{left:52px; top:0} #tU::before{border-bottom:12px solid #cfe8b0!important; margin-top:-10px}
-  #tD{left:52px; top:104px} #tD::before{border-top:12px solid #cfe8b0!important; margin-top:10px}
-  #tL{left:0; top:52px} #tL::before{border-right:12px solid #cfe8b0!important; margin-left:-10px}
-  #tR{left:104px; top:52px} #tR::before{border-left:12px solid #cfe8b0!important; margin-left:10px}
-  #dpad .tbtn.down::before{filter:drop-shadow(0 0 0 #081408) brightness(1.35); transform:translateY(2px)}
-  /* Z y X: botones redondos con relieve, como los de la consola */
-  .rbtn{border-radius:50%; border:3px solid #2a1a0e; font-size:16px; color:#3a2410; text-shadow:0 1px 0 rgba(255,255,255,.4)}
-  .rbtn::after{content:attr(data-label); position:absolute; top:100%; margin-top:10px; font-size:8px; color:#cfe8b0; text-shadow:0 1px 0 #081408; white-space:nowrap}
-  #tA{right:20px; bottom:62px; width:74px; height:74px; background:radial-gradient(circle at 34% 28%,#fff0c0 0 14%,#f0b848 15% 58%,#c88a28 59%); box-shadow:0 6px 0 #7a4e14,0 9px 12px rgba(0,0,0,.45)}
-  #tB{right:108px; bottom:28px; width:60px; height:60px; background:radial-gradient(circle at 34% 28%,#ffd0b0 0 14%,#d8783c 15% 58%,#a8501e 59%); box-shadow:0 5px 0 #6a2e10,0 8px 10px rgba(0,0,0,.45); color:#3a1408}
-  #tA.down{transform:translateY(4px); box-shadow:0 2px 0 #7a4e14,0 3px 6px rgba(0,0,0,.4)}
-  #tB.down{transform:translateY(3px); box-shadow:0 2px 0 #6a2e10,0 3px 6px rgba(0,0,0,.4)}
-  #tM{right:22px; bottom:156px; height:24px; padding:0 10px; border-radius:12px; background:#2a4a34; border:3px solid #081408; box-shadow:inset 0 2px 0 #4a7a58,0 3px 0 #0c1c12; font-size:8px; color:#f8e8c8}
-  #tM.down{transform:translateY(2px); box-shadow:inset 0 2px 0 #4a7a58}
-  /* la Ó de la fuente sale encogida: O normal y una tilde de dos píxeles encima */
-  #tM .acc{font-weight:normal; position:relative}
-  #tM .acc::after{content:""; position:absolute; left:2px; top:-1px; width:2px; height:1px; background:currentColor; box-shadow:1px -1px 0 currentColor}
+  .bz-top{position:absolute; top:calc(var(--bt)*.3); left:calc(var(--bs)*.55); right:calc(var(--bs)*.55); display:flex; align-items:center; gap:calc(var(--u)*2)}
+  .bz-top i{flex:1; height:max(1px,calc(var(--u)*.45)); background:#a3304f; box-shadow:0 max(2px,calc(var(--u)*.9)) 0 #3c3f9a}
+  .led{position:absolute; left:calc(var(--bs)*.18); top:calc(var(--bt) + var(--u)*40); display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*1.6)}
+  .led b{width:calc(var(--u)*2.8); height:calc(var(--u)*2.8); min-width:5px; min-height:5px; border-radius:50%; background:#3a2622;
+    box-shadow:inset 0 calc(var(--u)*-.5) 0 rgba(0,0,0,.4); transition:background .5s, box-shadow .5s}
+  .led[data-s="on"] b{background:#7cf05a; box-shadow:0 0 calc(var(--u)*2.6) #7cf05a, 0 0 calc(var(--u)*7) rgba(124,240,90,.35), inset 0 calc(var(--u)*-.5) 0 rgba(0,0,0,.25)}
+  .led[data-s="save"] b{background:#eaffc0; box-shadow:0 0 calc(var(--u)*4) #c8ff80, 0 0 calc(var(--u)*10) rgba(200,255,128,.5); transition:none}
+  .led[data-s="low"] b{background:#ff5a3c; box-shadow:0 0 calc(var(--u)*3) #ff5a3c; animation:ledlow .55s ease-in-out infinite alternate}
+  @keyframes ledlow{to{background:#6a2218; box-shadow:0 0 0 transparent}}
+  .glass{position:relative; line-height:0; background:#0a140c;
+    box-shadow:0 0 0 max(1px,calc(var(--u)*.6)) #0c1012, 0 0 0 max(2px,calc(var(--u)*1.1)) rgba(255,255,255,.05)}
+  #screen{display:block; touch-action:none}
+  .glass::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:
+      linear-gradient(128deg,rgba(255,255,255,.075) 0%,rgba(255,255,255,.02) 26%,rgba(255,255,255,0) 40%),
+      radial-gradient(ellipse 80% 75% at 50% 50%,transparent 60%,rgba(0,0,0,.2) 100%)}
+  .bz-logo{position:absolute; left:50%; bottom:calc(var(--bb)*.16); transform:translateX(-50%)}
+
+  /* ---------- la cruceta ---------- */
+  .dpad{position:relative; width:var(--dp); height:var(--dp); touch-action:none; cursor:pointer; transition:transform .05s ease-out}
+  .dpad::before{content:""; position:absolute; inset:calc(var(--dp)*-.06); border-radius:50%;
+    background:radial-gradient(circle,rgba(0,0,0,.2) 0 55%,transparent 72%)}
+  .dpad .h,.dpad .v{position:absolute; background:linear-gradient(180deg,#4a4a53 0%,#2d2d34 38%,#1d1d22 100%);
+    border-radius:calc(var(--dp)*.055); box-shadow:0 calc(var(--dp)*.035) 0 #0f0f12, inset 0 calc(var(--dp)*.018) 0 rgba(255,255,255,.14)}
+  .dpad .h{left:0; right:0; top:33.3%; height:33.4%} .dpad .v{top:0; bottom:0; left:33.3%; width:33.4%}
+  .dpad .hub{position:absolute; left:39%; top:39%; width:22%; height:22%; border-radius:50%; background:radial-gradient(circle at 50% 35%,#18181c,#34343b)}
+  .dpad .arm{position:absolute; width:33.4%; height:33.4%; display:flex; align-items:center; justify-content:center; transition:background .05s}
+  .dpad .arm::before{content:""; width:0; height:0; border:calc(var(--dp)*.05) solid transparent; filter:drop-shadow(0 calc(var(--dp)*.012) 0 rgba(0,0,0,.6))}
+  #tU{left:33.3%; top:0} #tU::before{border-bottom:calc(var(--dp)*.07) solid #5c5c66; margin-top:calc(var(--dp)*-.06)}
+  #tD{left:33.3%; bottom:0} #tD::before{border-top:calc(var(--dp)*.07) solid #5c5c66; margin-top:calc(var(--dp)*.06)}
+  #tL{left:0; top:33.3%} #tL::before{border-right:calc(var(--dp)*.07) solid #5c5c66; margin-left:calc(var(--dp)*-.06)}
+  #tR{right:0; top:33.3%} #tR::before{border-left:calc(var(--dp)*.07) solid #5c5c66; margin-left:calc(var(--dp)*.06)}
+  .dpad .arm.down{background:rgba(0,0,0,.22); border-radius:calc(var(--dp)*.05)}
+  .dpad[data-t="u"]{transform:perspective(calc(var(--dp)*3)) rotateX(11deg)}
+  .dpad[data-t="d"]{transform:perspective(calc(var(--dp)*3)) rotateX(-11deg)}
+  .dpad[data-t="l"]{transform:perspective(calc(var(--dp)*3)) rotateY(-11deg)}
+  .dpad[data-t="r"]{transform:perspective(calc(var(--dp)*3)) rotateY(11deg)}
+  .dpad[data-t="ul"]{transform:perspective(calc(var(--dp)*3)) rotateX(8deg) rotateY(-8deg)}
+  .dpad[data-t="ur"]{transform:perspective(calc(var(--dp)*3)) rotateX(8deg) rotateY(8deg)}
+  .dpad[data-t="dl"]{transform:perspective(calc(var(--dp)*3)) rotateX(-8deg) rotateY(-8deg)}
+  .dpad[data-t="dr"]{transform:perspective(calc(var(--dp)*3)) rotateX(-8deg) rotateY(8deg)}
+
+  /* ---------- Z y X: botones redondos; ZURRÓN y MÚSICA: pastillas ---------- */
+  .ab{position:relative; width:calc(var(--ab)*2.55); height:calc(var(--ab)*1.75)}
+  .ab::before{content:""; position:absolute; left:calc(var(--ab)*-.12); right:calc(var(--ab)*-.12); top:calc(var(--ab)*.25); height:calc(var(--ab)*1.24);
+    border-radius:calc(var(--ab)*.62); background:rgba(0,0,0,.1); box-shadow:inset 0 calc(var(--ab)*.04) calc(var(--ab)*.06) rgba(0,0,0,.2); transform:rotate(-25deg)}
+  .btn{position:absolute; width:var(--ab); height:var(--ab); touch-action:none; cursor:pointer}
+  .btn .cap{position:absolute; inset:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 26% 22%,var(--hi) 0 6%,transparent 7%),radial-gradient(circle at 42% 34%,var(--mid) 0 56%,var(--lo) 60%);
+    box-shadow:0 calc(var(--ab)*.075) 0 var(--edg), 0 calc(var(--ab)*.14) calc(var(--ab)*.16) rgba(0,0,0,.35), inset 0 calc(var(--ab)*-.05) 0 rgba(0,0,0,.18);
+    transition:transform .04s, box-shadow .04s}
+  .btn.down .cap{transform:translateY(calc(var(--ab)*.06)); box-shadow:0 calc(var(--ab)*.015) 0 var(--edg), 0 calc(var(--ab)*.04) calc(var(--ab)*.06) rgba(0,0,0,.35), inset 0 calc(var(--ab)*.05) calc(var(--ab)*.08) rgba(0,0,0,.25)}
+  #tA{right:0; top:0; --hi:#fff2c4; --mid:#f0b848; --lo:#c68826; --edg:#7a4e14}
+  #tB{left:0; bottom:0; --hi:#ffd6b8; --mid:#dc7a3e; --lo:#a8501e; --edg:#6a2e10}
+  .btn .lab{position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:calc(var(--ab)*.14)}
+  .pillw{position:relative; display:flex; flex-direction:column; align-items:center; gap:calc(var(--ph)*.7); touch-action:none; cursor:pointer; padding:calc(var(--ph)*.5)}
+  .pill{width:var(--pw); height:var(--ph); border-radius:var(--ph); transform:rotate(-25deg);
+    background:linear-gradient(180deg,#a2a2aa,#77777f); box-shadow:0 0 0 max(1px,calc(var(--ph)*.2)) rgba(0,0,0,.22), 0 calc(var(--ph)*.22) 0 #4a4a52, inset 0 calc(var(--ph)*.14) 0 rgba(255,255,255,.3);
+    transition:transform .04s}
+  .pillw.down .pill{transform:rotate(-25deg) translateY(calc(var(--ph)*.18)); box-shadow:0 0 0 max(1px,calc(var(--ph)*.2)) rgba(0,0,0,.22), 0 calc(var(--ph)*.05) 0 #4a4a52}
+  .grille{display:flex; gap:calc(var(--u)*1.7); transform:rotate(-30deg)}
+  .grille i{display:block; width:max(3px,calc(var(--u)*1.35)); height:max(22px,calc(var(--u)*11)); border-radius:99px; background:var(--grille);
+    box-shadow:inset 0 max(1px,calc(var(--u)*.45)) max(1px,calc(var(--u)*.5)) rgba(0,0,0,.5), 0 max(1px,calc(var(--u)*.3)) 0 rgba(255,255,255,.32)}
+  .fs{grid-area:pr; align-self:start; justify-self:end; margin:calc(var(--u)*1.5) calc(var(--u)*1); width:max(26px,calc(var(--u)*7)); height:max(26px,calc(var(--u)*7));
+    border-radius:50%; border:0; cursor:pointer; background:rgba(0,0,0,.12); box-shadow:inset 0 1px 2px rgba(0,0,0,.3); display:flex; align-items:center; justify-content:center}
+  .fs:hover{background:rgba(0,0,0,.2)}
+  .fs canvas{pointer-events:none}
+
+  /* ---------- en escritorio: la cruceta a la izquierda, los botones a la derecha ---------- */
+  .console.tall .fs{grid-area:brand; align-self:center; margin:0 4px}
+  .console.wide .pl{gap:calc(var(--u)*9)}
+  .console.wide .pr{gap:calc(var(--u)*7); padding-top:calc(var(--u)*10)}
+  .console.wide .pr .grille{margin-top:calc(var(--u)*2)}
+  .console.tall .pr .grille{position:absolute; right:calc(var(--u)*4); bottom:calc(var(--u)*6)}
+
+  /* ---------- en el móvil: la consola es la pantalla entera ---------- */
+  body.touch{justify-content:flex-start}
+  .console.m{width:100vw; height:100vh; height:100dvh; border-radius:0;
+    padding:calc(env(safe-area-inset-top,0px) + var(--bp)) calc(env(safe-area-inset-right,0px) + var(--bp)) calc(env(safe-area-inset-bottom,0px) + var(--bp)) calc(env(safe-area-inset-left,0px) + var(--bp));
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.4)}
+  .console.m.tall{grid-template-rows:auto var(--brandh) 1fr}
+  .console.m .bezel{border-radius:calc(var(--u)*3) calc(var(--u)*3) calc(var(--u)*12) calc(var(--u)*3)}
+  .console.m .bz-top,.console.m .led span{display:none}
+  .console.m.wide .bz-logo,.console.m.wide .led{display:none}
+  .console.m.tall .pl{justify-content:center; gap:calc(var(--dp)*.18); padding-bottom:4px}
+  .console.m.tall .pr{justify-content:center; gap:calc(var(--dp)*.18); padding-bottom:4px}
+  .console.m.wide .pl,.console.m.wide .pr{gap:18px}
+  .console.m.wide .brand{margin-top:6px}
+  .console.m .grille{display:none}
+  .console.m.tall .pr .grille{display:flex; right:10px; bottom:6px}
+
+  /* ---------- debajo de la consola (solo si cabe) ---------- */
+  .foot{display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:22px; opacity:.85}
+  .foot a{display:block; border-bottom:1px solid rgba(185,214,125,.35); padding-bottom:4px}
+  .foot a:hover{border-color:rgba(248,232,200,.8)}
+  body.touch .foot,.foot.off{display:none}
 </style>
 </head>
 <body>
-<header>
-  <h1>SPR<span class="seed">O</span>UT</h1>
-  <div class="tag">y las 8 semillas · un Zelda-like hecho a mano</div>
-  <a class="slice-link" href="slice.html">NUEVO · La primera semilla — demo con sprites generados ↗</a>
-</header>
-
-<div class="shell">
-  <canvas id="cv" width="160" height="144" aria-label="SPROUT: aventura del Valle Raíz"></canvas>
-  <div class="scan"></div>
-</div>
-
-<div class="keys">
-  <span><kbd>←↑↓→</kbd> mover</span>
-  <span><kbd>Z</kbd> hoja / hablar</span>
-  <span><kbd>X</kbd> objeto</span>
-  <span><kbd>↵</kbd> zurrón</span>
-  <span><kbd>M</kbd> música</span>
-</div>
-<footer>OCHO SEMILLAS · CUATRO ESTACIONES · NINGÚN GUARDIÁN MUERE</footer>
-
-<div id="touch">
-  <div id="dpad"><div id="dcenter"></div>
-    <div class="tbtn" id="tU"></div><div class="tbtn" id="tD"></div>
-    <div class="tbtn" id="tL"></div><div class="tbtn" id="tR"></div></div>
-  <div class="tbtn rbtn" id="tA" data-label="HOJA">Z</div>
-  <div class="tbtn rbtn" id="tB" data-label="OBJETO">X</div>
-  <div class="tbtn" id="tM">ZURR<b class="acc">O</b>N</div>
-</div>
+<div id="safe"></div>
+<main class="console wide" id="console" data-color="marfil">
+  <div class="scr">
+    <div class="bezel">
+      <div class="bz-top"><i></i><canvas class="px lab" id="labTop"></canvas><i></i></div>
+      <div class="led" id="led" data-s="off"><b></b><canvas class="px lab" id="labLed"></canvas></div>
+      <div class="glass"><canvas id="screen" aria-label="SPROUT: aventura del Valle Raíz"></canvas></div>
+      <canvas class="px bz-logo" id="bzLogo" aria-label="SPROUT y las 8 semillas"></canvas>
+    </div>
+  </div>
+  <canvas class="px brand" id="brand" aria-label="gavilanbe"></canvas>
+  <div class="pad pl">
+    <div class="dpad" id="dpad" aria-label="cruceta">
+      <i class="h"></i><i class="v"></i><i class="hub"></i>
+      <i class="arm" id="tU"></i><i class="arm" id="tD"></i><i class="arm" id="tL"></i><i class="arm" id="tR"></i>
+    </div>
+    <div class="pillw" id="tS" aria-label="música"><i class="pill"></i><canvas class="px lab" id="labS"></canvas></div>
+  </div>
+  <div class="pad pr">
+    <div class="ab">
+      <div class="btn" id="tB" aria-label="objeto"><div class="cap"><canvas class="px" id="capB"></canvas></div><canvas class="px lab" id="labB"></canvas></div>
+      <div class="btn" id="tA" aria-label="hoja"><div class="cap"><canvas class="px" id="capA"></canvas></div><canvas class="px lab" id="labA"></canvas></div>
+    </div>
+    <div class="pillw" id="tM" aria-label="zurrón"><i class="pill"></i><canvas class="px lab" id="labM"></canvas></div>
+    <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <button class="fs" id="fsBtn" aria-label="pantalla completa"><canvas class="px" id="fsIco"></canvas></button>
+</main>
+<nav class="foot" id="foot">
+  <a href="slice.html" aria-label="La primera semilla: demo con sprites generados"><canvas class="px" id="footLink"></canvas></a>
+  <canvas class="px" id="footLine" aria-hidden="true"></canvas>
+</nav>
+<canvas id="cv" width="160" height="144"></canvas>
 
 <!-- el juego, por módulos de dominio: el ORDEN importa (ámbito global compartido).
      mapa completo y recetas para crecer: ARCHITECTURE.md -->
@@ -166,6 +235,7 @@
 <script src="js/15b-zurron.js"></script>
 <script src="js/15c-marchitar.js"></script>
 <script src="js/16-input.js"></script>
+<script src="js/16a-shell.js"></script>
 <script src="js/17-boot.js"></script>
 </body>
 </html>

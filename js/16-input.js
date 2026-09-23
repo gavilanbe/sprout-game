@@ -15,6 +15,7 @@ function buildKeymap(){
   KEYMAP={}; const K=keysNow(), used=new Set();
   for(const a of ACTIONS){ const k=normKey(K[a]); KEYMAP[k]=a; used.add(k); }
   for(const k in ALT_KEYS) if(!used.has(k)) KEYMAP[k]=ALT_KEYS[k];
+  if(typeof shellLabels==='function') shellLabels(); // las letras de los botones de la consola (16a)
 }
 buildKeymap();
 function keyName(k){ return ({' ':'ESPACIO',Enter:'ENTER',Escape:'ESC',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→',Shift:'MAYÚS',Control:'CTRL',Alt:'ALT',Tab:'TAB',Backspace:'BORRAR',CapsLock:'BLOQ'})[k]||String(k).toUpperCase(); }
@@ -29,12 +30,12 @@ window.addEventListener('keydown',e=>{
     if(e.key==='Escape'){ remapWait=null; SFX.bump(); return; }
     assignKey(remapWait,e.key); remapWait=null; SFX.equip(); return; }
   const nk=normKey(e.key);
-  if(nk==='m'&&KEYMAP.m===undefined){ musicOn=!musicOn; try{ localStorage.setItem('sprout.music',musicOn?'1':'0'); }catch(_){} return; }
+  if(nk==='m'&&KEYMAP.m===undefined){ if(!e.repeat) toggleMusic(); return; } // la tecla M = el botón MÚSICA de la consola (16a)
   const k=KEYMAP[nk]; if(!k) return; e.preventDefault();
   if(ONESHOT.has(k)){ if(!e.repeat) keys[k]=true; } else keys[k]=true;
-  if(k==='fire') keys.fireHeld=true; if(k==='alt') keys.altHeld=true; audio();
+  if(k==='fire') keys.fireHeld=true; if(k==='alt') keys.altHeld=true; if(k==='menu') keys.menuHeld=true; audio();
 });
-window.addEventListener('keyup',e=>{ const k=KEYMAP[normKey(e.key)]; if(!k) return; if(k==='fire') keys.fireHeld=false; if(k==='alt') keys.altHeld=false; if(!ONESHOT.has(k)) keys[k]=false; });
+window.addEventListener('keyup',e=>{ const k=KEYMAP[normKey(e.key)]; if(!k) return; if(k==='fire') keys.fireHeld=false; if(k==='alt') keys.altHeld=false; if(k==='menu') keys.menuHeld=false; if(!ONESHOT.has(k)) keys[k]=false; });
 window.addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; });
 /* la pantalla de controles (dentro de AJUSTES): acciones + restaurar + volver */
 function updRemap(){
@@ -52,21 +53,7 @@ function rumble(ms,strong,weak){
   try{ for(const g of navigator.getGamepads()){ const va=g&&g.connected&&g.vibrationActuator;
     if(va&&va.playEffect) va.playEffect(va.type||'dual-rumble',{duration:ms,strongMagnitude:strong??.5,weakMagnitude:weak??.5}).catch(()=>{}); } }catch(_){}
 }
-/* táctil */
-if(window.matchMedia('(pointer: coarse)').matches){
-  document.body.classList.add('touch');
-  const bind=(id,k)=>{ const el=document.getElementById(id); if(!el) return;
-    el.addEventListener('pointerdown',e=>{e.preventDefault(); keys[k]=true; if(k==='fire')keys.fireHeld=true; if(k==='alt')keys.altHeld=true; el.classList.add('down'); audio();});
-    el.addEventListener('pointerup',e=>{e.preventDefault(); if(k==='fire')keys.fireHeld=false; if(k==='alt')keys.altHeld=false; if(!ONESHOT.has(k))keys[k]=false; el.classList.remove('down');});
-    el.addEventListener('pointerleave',()=>{ if(k==='fire')keys.fireHeld=false; if(k==='alt')keys.altHeld=false; if(!ONESHOT.has(k))keys[k]=false; el.classList.remove('down');});
-    el.addEventListener('pointercancel',()=>{ if(k==='fire')keys.fireHeld=false; if(k==='alt')keys.altHeld=false; if(!ONESHOT.has(k))keys[k]=false; el.classList.remove('down');}); };
-  bind('tU','up');bind('tD','down');bind('tL','left');bind('tR','right');bind('tA','fire');bind('tB','alt');bind('tM','menu');
-  let lastTap=0;
-  document.addEventListener('touchend',e=>{ const t=e.timeStamp||performance.now(); if(t-lastTap<=350) e.preventDefault(); lastTap=t; },{passive:false});
-  document.addEventListener('touchmove',e=>{ if(e.touches.length>1||(e.scale&&e.scale!==1)) e.preventDefault(); },{passive:false});
-  ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
-  document.addEventListener('dblclick',e=>e.preventDefault());
-}
+/* táctil, escalado y la consola de la página: js/16a-shell.js */
 /* mando */
 const GP_ONESHOT={fire:[0],alt:[1,2],menu:[8,9,3]};
 const gpHeld={left:false,right:false,up:false,down:false}, gpPrev={fire:false,alt:false,menu:false};
@@ -77,19 +64,9 @@ function pollGamepad(){
   for(const k in dir){ if(dir[k]){ if(!gpHeld[k]){ gpHeld[k]=true; keys[k]=true; } } else if(gpHeld[k]){ gpHeld[k]=false; keys[k]=false; } }
   for(const k in GP_ONESHOT){ const p=GP_ONESHOT[k].some(btn); if(p&&!gpPrev[k]){ keys[k]=true; try{ audio(); }catch(_){} } if((k==='fire'||k==='alt')&&(p||gpPrev[k])) keys[k+'Held']=p; gpPrev[k]=p; }
 }
-/* escalado */
-function fit(){
-  if(document.body.classList.contains('touch')){
-    const controls=window.innerHeight>window.innerWidth?200:0, side=controls?0:320;
-    const s=Math.min((window.innerWidth-side)/VW,(window.innerHeight-controls)/VH); cv.style.width=VW*s+'px'; cv.style.height=VH*s+'px'; return; }
-  const headRoom=190;
-  const s=Math.max(1,Math.min(Math.floor((window.innerWidth-60)/VW),Math.floor((window.innerHeight-headRoom)/VH)));
-  cv.style.width=VW*s+'px'; cv.style.height=VH*s+'px';
-}
-window.addEventListener('resize',fit); window.addEventListener('orientationchange',()=>setTimeout(fit,100)); fit();
 /* ---------- AJUSTES (pestaña del zurrón) ---------- */
-const OPT_ROWS=['texto','temblor','musica','efectos','dificultad','vibracion','controles','titulo'];
-const OPT_NAMES={texto:'Texto',temblor:'Temblor',musica:'Música',efectos:'Efectos',dificultad:'Dificultad',vibracion:'Vibración',controles:'Controles',titulo:'Volver al título'};
+const OPT_ROWS=['texto','temblor','musica','efectos','dificultad','vibracion','consola','controles','titulo'];
+const OPT_NAMES={texto:'Texto',temblor:'Temblor',musica:'Música',efectos:'Efectos',dificultad:'Dificultad',vibracion:'Vibración',consola:'Consola',controles:'Controles',titulo:'Volver al título'};
 const DIFF_NAMES=['RELAJADA','NORMAL','DIFÍCIL'];
 function optAction(id,dir){ // dir: -1/+1 con ←→, 0 con Z
   if(id==='texto'){ opts.textSpeed=opts.textSpeed===1?2:1; SFX.blip(); }
@@ -99,6 +76,7 @@ function optAction(id,dir){ // dir: -1/+1 con ←→, 0 con Z
   else if(id==='efectos'){ opts.sfxVol=Math.max(0,Math.min(10,(opts.sfxVol??8)+(dir||1)*(dir?1:0))); applyVolumes(); SFX.chime(); }
   else if(id==='dificultad'){ const d=opts.diff??1; opts.diff=dir?Math.max(0,Math.min(2,d+dir)):(d+1)%3; SFX.blip(); }
   else if(id==='vibracion'){ opts.vib=opts.vib===0?1:0; if(opts.vib) rumble(160,.6,.6); SFX.blip(); }
+  else if(id==='consola'){ const n=SHELL_THEMES.length; opts.shell=(((opts.shell|0)+(dir<0?-1:1))%n+n)%n; applyShellTheme(); SFX.blip(); } // el color de la carcasa (16a)
   else if(id==='controles'){ if(!dir){ optRemap=true; remapSel=0; remapUD=0; remapWait=null; SFX.menu(); } return; }
   else if(id==='titulo'){ if(!dir){ save(); state='title'; titleT=TITLE_MENU; parts=[]; setTrack('titulo'); SFX.menu(); } return; }
   saveOpts();

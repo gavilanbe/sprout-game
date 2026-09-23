@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/screenshots/01-title.png" alt="SPROUT y las 8 semillas — pantalla de título" width="480">
+<img src="docs/screenshots/00-consola.png" alt="SPROUT y las 8 semillas en su consola de gavilanbe" width="640">
 
 # SPROUT · y las 8 semillas
 
@@ -58,8 +58,16 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
 - Tienda de Tilo, cabaña de Corteza, el pozo de los deseos, una **cadena de
   trueques** de ocho pasos, **pesca** con Moss, 22 tipos de bicho, clima por región,
   cinemáticas de estación, un final en cuatro planos y las estaciones girando.
+- **Se juega en una consola**: la página es una portátil de *gavilanbe* (arranca
+  con su logo bajando como el de la Game Boy y un «ding»), con la pantalla a
+  píxeles exactos y rejilla de LCD, el LED de la savia (late al guardar, se pone
+  rojo con poca vida), botones que se hunden al pulsar el teclado o el mando y
+  cuatro colores de carcasa (marfil, salvia, baya y uva).
+- **En el móvil** la consola ocupa toda la pantalla, en vertical (como una GBC) o
+  en horizontal: cruceta que se desliza entre direcciones, botones de pulgar que
+  no se sueltan si el dedo se desvía, vibración al pulsar y pantalla completa.
 - Opciones: volumen de música y efectos, dificultad, teclas reasignables,
-  vibración del mando y mandos táctiles con el estilo del juego.
+  vibración y color de la consola.
 - HUD con paneles biselados: corazones que palpitan cuando quedan pocos, ranura
   Z con la Hoja y su nivel, ranura X con el objeto (destella al usarlo),
   contadores que rebotan, burbuja «Z» sobre lo que puedes usar y cartel con el
@@ -152,7 +160,8 @@ a visitarlos, tendrán algo que decirte.
 
 En el zurrón, `Z` sobre un objeto lo equipa en `X`; `Z` sobre un amuleto lo pone o
 lo quita (dos ranuras); la fila de EQUIPO enseña lo que ya llevas siempre
-puesto y, con `?`, lo que aún te falta. En móvil aparecen mandos táctiles. En mando: A = Z, B = X,
+puesto y, con `?`, lo que aún te falta. Los botones de la consola también se pueden pulsar con el ratón. En el móvil,
+la consola entera es el mando. En mando: A = Z, B = X,
 Start = zurrón.
 
 ## 🛠 Desarrollo

@@ -24,7 +24,7 @@ window.__sprout={
   g.fillStyle='#0b1a10'; g.fillRect(0,0,192,192); g.drawImage(P_SPRITES[0][0],0,0,16,16,16,16,160,160);
   const url=icon.toDataURL('image/png');
   for(const rel of ['icon','apple-touch-icon']){ const l=document.createElement('link'); l.rel=rel; l.href=url; document.head.appendChild(l); }
-  try{ const man={name:'SPROUT y las 8 semillas',short_name:'SPROUT',display:'standalone',orientation:'landscape',background_color:'#0b1a10',theme_color:'#0b1a10',start_url:'.',icons:[{src:url,sizes:'192x192',type:'image/png'}]};
+  try{ const man={name:'SPROUT y las 8 semillas',short_name:'SPROUT',display:'standalone',orientation:'any',background_color:'#0b1a10',theme_color:'#0b1a10',start_url:'.',icons:[{src:url,sizes:'192x192',type:'image/png'}]};
     const ml=document.createElement('link'); ml.rel='manifest'; ml.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'})); document.head.appendChild(ml); }catch(e){}
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 })();
@@ -34,6 +34,6 @@ let lastT=null, acc=0; const STEP=1000/60;
 function loop(now){
   if(lastT===null) lastT=now; acc+=Math.min(now-lastT,100); lastT=now; pollGamepad();
   let n=0; while(acc>=STEP&&n<4){ if(!window.__manual) update(); acc-=STEP; n++; } if(acc>=STEP) acc=0;
-  draw(); requestAnimationFrame(loop);
+  draw(); present(); requestAnimationFrame(loop); // present(): de `cv` a la pantalla de la consola (16a)
 }
 requestAnimationFrame(loop);
