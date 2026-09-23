@@ -16,7 +16,7 @@
    cima en paz, en los créditos y en el final.
    ============================================================ */
 let AC=null, master=null, musicBus=null, sfxBus=null, OUT=null, musicOn=true, musicTimer=null, musicStep=0, nextNoteT=0;
-let delaySend=null, delayWet=null, mIntTarget=0, musicBeforeAmbush=null;
+let delaySend=null, delayWet=null, mIntTarget=0, musicBeforeAmbush=null, musicLP=null;
 const VOICE={};
 try{ if(localStorage.getItem('sprout.music')==='0') musicOn=false; }catch(e){}
 const WAVES={};
@@ -32,11 +32,14 @@ function audioOpts(){ return (typeof opts!=='undefined'&&opts)?opts:{}; }
    y los efectos igual que antes: quedan algo más por delante de la música */
 function applyVolumes(){ if(!AC) return; const o=audioOpts(), t=AC.currentTime;
   musicBus.gain.setTargetAtTime(volCurve(o.musVol??7)*2.1,t,.05); sfxBus.gain.setTargetAtTime(volCurve(o.sfxVol??8)*1.45,t,.03); }
+/* con el zurrón abierto la música suena amortiguada, como oída desde dentro de la bolsa */
+function musicMuffle(on){ if(!AC||!musicLP) return; const t=AC.currentTime; musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(on?1300:22000,t,on?.07:.12); }
 function audio(){
   if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)();
     master=AC.createDynamicsCompressor(); master.threshold.value=-14; master.knee.value=12; master.ratio.value=5; master.attack.value=.004; master.release.value=.12;
     const vol=AC.createGain(); vol.gain.value=.9; master.connect(vol).connect(AC.destination);
-    musicBus=AC.createGain(); sfxBus=AC.createGain(); musicBus.connect(master); sfxBus.connect(master);
+    musicBus=AC.createGain(); sfxBus=AC.createGain(); sfxBus.connect(master);
+    musicLP=AC.createBiquadFilter(); musicLP.type='lowpass'; musicLP.frequency.value=22000; musicLP.Q.value=.7; musicBus.connect(musicLP).connect(master); // el zurrón la amortigua
     // eco de la música: envío → retardo con realimentación filtrada → de vuelta a la mezcla
     delaySend=AC.createGain(); const dl=AC.createDelay(1), fb=AC.createGain(), lp=AC.createBiquadFilter();
     dl.delayTime.value=.27; fb.gain.value=.3; lp.type='lowpass'; lp.frequency.value=2300; delayWet=AC.createGain(); delayWet.gain.value=.16;

@@ -86,7 +86,7 @@ function zSil(img){ let c=zSilCache.get(img); if(!c){ c=mkCanvas(img.width,img.h
 
 /* ---------- estado de la función ---------- */
 let zOpenT=99, zCloseT=-1, zLore=false, zSnap=null, zDim=null, zSnapOk=false;
-let zTabT=99, zTabFrom=0, zSelT=99, zInfoT=99, zFx=[], zRow=[0,0,0], zJump={id:null,t:99}, zX0=null, zNoGlide=false;
+let zMuffled=false, zTabT=99, zTabFrom=0, zSelT=99, zInfoT=99, zFx=[], zRow=[0,0,0], zJump={id:null,t:99}, zX0=null, zNoGlide=false;
 const zCur={x:0,y:0,w:0,h:0,pg:-1,on:false};
 const zCv=mkCanvas(VW,VH), zCx=zCv.getContext('2d'); zCx.imageSmoothingEnabled=false;
 
@@ -110,6 +110,7 @@ function openZurron(page){
 function closeZurron(){ state='play'; zCloseT=0; zLore=false; SFX.bagClose(); if(xItem!==zX0) xFlash=Math.max(xFlash,14); }
 function zTabTo(p){ zTabFrom=pausePage; pausePage=p; pauseSel=0; loreSel=0; optSel=0; zTabT=0; zSelT=99; zInfoT=0; zCur.on=false; SFX.tab(); }
 function zTick(){ // una vez por fotograma, en cualquier estado
+  const muff=state==='pause'||zLore; if(muff!==zMuffled){ zMuffled=muff; musicMuffle(muff); } // la música, desde dentro de la bolsa
   if(state==='pause'&&zOpenT<999){ zOpenT++; if(zOpenT===Z_FALL) SFX.bagThud(); else if(zOpenT===Z_FLAP0-1) SFX.buckle(); else if(zOpenT===Z_FLAP0+1) SFX.flap(); }
   if(zCloseT>=0){ zCloseT++; if(zCloseT===Z_CFLAP) SFX.buckle(); else if(zCloseT===Z_CLIFT) SFX.bagAway(); if(zCloseT>Z_CEND) zCloseT=-1; }
   if(zTabT<99) zTabT++; if(zSelT<99) zSelT++; if(zInfoT<999) zInfoT++; if(zJump.t<99) zJump.t++;
