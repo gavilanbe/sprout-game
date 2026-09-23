@@ -240,15 +240,16 @@ function updProjs(){
   projs=projs.filter(p=>p.t>0);
 }
 function updWind(){
-  for(const w of windProjs){ w.x+=w.vx; w.y+=w.vy; w.t--; w.ang+=.5;
+  for(const w of windProjs){ w.x+=w.vx; w.y+=w.vy; w.t--; w.ang+=.5; w.age=(w.age||0)+1;
     const tch=tileAt(w.x|0,w.y|0);
-    if(tch!==undefined&&isSolid(tch)&&!WATER.has(tch)){ cutAt([w.x-7,w.y-7,14,14]); const t2=tileAt(w.x|0,w.y|0); if(isSolid(t2)){ w.t=0; puff(w.x,w.y,'#a8ec78',6,1.1); } }
-    if((tick&1)===0) parts.push({x:w.x+(Math.random()-.5)*8,y:w.y+4,vx:-w.vx*.3,vy:-.3,life:10,col:(tick&2)?PAL.l:'#a8ec78',nog:true});
+    if(tch!==undefined&&isSolid(tch)&&!WATER.has(tch)){ cutAt([w.x-7,w.y-7,14,14]); const t2=tileAt(w.x|0,w.y|0); if(isSolid(t2)) w.t=0; }
+    tornadoTrail(w);
     for(const e of enemies){ if(e.flash===0&&!w.hits.has(e)&&Math.hypot(e.x+8-w.x,e.y+8-w.y)<(w.big?17:11)){ if(e.type==='ghost'&&e.phase>=110) continue;
       w.hits.add(e); damageEnemy(e,bladeLvl+(w.big?1:0),w.x,w.y); if(e.type==='wisp') e.hp=0; } }
     if(boss&&boss.flash===0&&Math.hypot(boss.x+16-w.x,boss.y+16-w.y)<(w.big?24:18)){
       const vul=(boss.type==='topo'&&boss.st==='dazed')||(boss.type==='avispa'&&boss.st==='pinned')||(boss.type==='viento'&&boss.st==='rest')||(boss.type==='ciervo'&&boss.mantle===0&&boss.st!=='yield');
       if(vul){ bossHit(boss,bladeLvl); w.t=0; puff(w.x,w.y,'#a8ec78',8,1.3); } }
+    if(w.t<=0&&!w.poof){ w.poof=1; tornadoPoof(w); } // se deshace al acabar o al chocar
   }
   windProjs=windProjs.filter(w=>w.t>0&&w.x>-8&&w.x<168&&w.y>-8&&w.y<136);
 }

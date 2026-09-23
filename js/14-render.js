@@ -58,6 +58,7 @@ function drawPlayer(){
   const idle=player.frame===0&&player.atk===0&&state==='play';
   if(idle&&((tick+37)%210)<7) s=P_BLINK[player.dir];                 // parpadeo
   if(player.atk>0&&player.atk>4) s=P_ATK[player.dir];
+  if(player.spin>0) s=P_ATK[spinFacing()];                           // en el Remolino, Sprout gira con su Hoja
   if(state==='itemget') s=H_LIFT;
   if(player.inv>54&&state==='play') s=P_WHITE[player.dir]; // destello al recibir daño
   // estirar y encoger: el golpe estira, el aterrizaje y el daño aplastan; en reposo respira
@@ -234,9 +235,7 @@ function drawScene(){
       continue; }
     if(p.kind==='sting'){ const a=Math.atan2(p.vy,p.vx), ex=Math.cos(a)*3, ey=Math.sin(a)*3; ctx.fillStyle=PAL.k; ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4); ctx.fillStyle='#f8d030'; ctx.fillRect((p.x-ex*.5)|0,(p.y-ey*.5)|0,2,2); ctx.fillStyle='#ffffff'; ctx.fillRect((p.x+ex*.5)|0,(p.y+ey*.5)|0,1,1); continue; }
     if(p.kind==='spore') ctx.drawImage(SPORE_SPR,(p.x-3)|0,(p.y-3)|0); else if(p.kind==='ice'){ ctx.fillStyle=PAL.k; ctx.fillRect((p.x-3)|0,(p.y-3)|0,6,6); ctx.fillStyle='#a8d8f0'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4); ctx.fillStyle='#fff'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,2,1); } else ctx.drawImage(ROCK_PROJ,(p.x-3)|0,(p.y-3)|0); }
-  for(const w of windProjs){ const px=w.x|0, py=w.y|0, gap=w.big?5:4; const rows=w.big?[[8,'#e8c040'],[12,'#fffbe0'],[16,'#b8f070'],[19,'#dff0ff']]:[[5,'#70d838'],[8,'#dff0ff'],[11,'#a8ec78']];
-    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*gap; ctx.fillStyle=PAL.k; ctx.fillRect(px-(wd>>1)+off-1,y-1,wd+2,5); });
-    rows.forEach(([wd,col],i)=>{ const off=(Math.sin(w.ang*2+i*1.7)*2)|0, y=py+4-i*gap; ctx.fillStyle=col; ctx.fillRect(px-(wd>>1)+off,y,wd,3); ctx.fillStyle='#ffffff'; ctx.fillRect(px-(wd>>1)+off+1+((w.ang*4|0)%Math.max(1,wd-3)),y+1,2,1); }); }
+  for(const w of windProjs) drawTornado(w); // el tornadito del Remolino (12b)
   drawGearFx(); drawBoomer(); drawMillFront();
   drawParts();
   for(const f of flyText){ const age=(f.max||(f.max=f.t))-f.t, hop=age<8?Math.round(Math.sin(age/8*Math.PI)*3):0; if(f.t<8&&(f.t&1)) continue; txtOL(f.txt,(f.x+6)|0,(f.y-10-hop)|0,f.col,'center',PAL.k,FONT_S); }

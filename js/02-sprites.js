@@ -1050,11 +1050,26 @@ const PORTRAITS={
   'RAÍZ':ELDER,'PETRA':PETRA_SPR,'LUPA':LUPA_SPR,'MOSS':MOSS_SPR,'TILO':TILO_SPR,'CORTEZA':CORTEZA_SPR,
   'EL VIENTO':WIND_SPR,'EL TOPO REAL':TOPO_SPR,'LA REINA':WASP_SPR,'SPROUT':H_DOWN_A,
 };
-const SPIN_ICON=mkTile(g=>{ // remolino: anillo con flecha
-  for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const dx=x+.5-8, dy=y+.5-8, d=Math.hypot(dx,dy), a=Math.atan2(dy,dx);
-    if(d>=3.6&&d<6.2&&!(a>-1.25&&a<-.15)){ const lit=-(dx*.6+dy*.8)/d; g.fillStyle=lit>.35?'#d8ffa0':lit>-.3?'#70d838':'#2e8a38'; g.fillRect(x,y,1,1); } }
-  artPix(g,["YYYY","YYY.","YY..","Y..."],{Y:'#fff8c0'},9,1);
-  artOutline(g,16,16); });
+/* un remolino de viento en píxeles: embudo ancho arriba y fino abajo que se cimbrea, con franjas
+   en hélice que corren al girar (ph) y contorno. pal: [contorno, borde, medio, cuerpo, brillo] */
+function tornadoArt(W,H,topHW,botHW,ph,pal,sway){
+  const c=mkCanvas(W,H), g=c.getContext('2d'), im=g.createImageData(W,H), d=im.data, rgb=pal.map(hex2rgb), K=new Int8Array(W*H).fill(-1);
+  for(let y=1;y<H-1;y++){ const v=(y-.5)/(H-2), lump=1+.13*Math.sin(y*.95+ph*1.5)*(1-v*.5), hw=(botHW+(topHW-botHW)*Math.pow(1-v,1.45))*lump, cx=W/2+Math.sin(ph+v*3.4)*(sway||0)*(.25+.75*(1-v));
+    for(let x=1;x<W-1;x++){ const u=(x+.5-cx)/hw; if(Math.abs(u)>1) continue;
+      if(v>.86&&((x+y)&1)&&Math.abs(u)>.35) continue;                          // el pie se deshilacha
+      if(y<=2&&Math.abs(u)>.4&&((x*5+y*3+Math.round(ph*2))%4)<(3-y)*1.2){ K[y*W+x]=-2; continue; } // y la boca, en jirones
+      const band=Math.sin(Math.asin(u)*2.4+y*.55-ph*2.2);                      // franjas en hélice que dan la vuelta
+      K[y*W+x]=Math.abs(u)>.84?(u<0?2:1):band>.42?4:band>-.18?3:band>-.62?2:1; } }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ let k=K[y*W+x];
+    if(k===-2) continue;
+    if(k<0){ const side=(x>0&&K[y*W+x-1]>=0)||(x<W-1&&K[y*W+x+1]>=0), vert=(y>0&&K[(y-1)*W+x]>=0)||(y<H-1&&K[(y+1)*W+x]>=0&&y>3);
+      if(!(side||vert)) continue; k=0; }
+    const i=(y*W+x)*4, q=rgb[k]; d[i]=q[0]; d[i+1]=q[1]; d[i+2]=q[2]; d[i+3]=255; }
+  g.putImageData(im,0,0); return c; }
+const SPIN_ICON=mkTile(g=>{ // el Remolino: un tornadito con dos hojas que giran alrededor
+  g.drawImage(tornadoArt(14,15,5.6,1.2,.7,['#1a1410','#3a9a58','#8ad8a8','#dcf8e8','#ffffff'],.9),1,0);
+  g.fillStyle='#1a1410'; g.fillRect(0,5,3,3); g.fillRect(12,9,4,3); g.fillStyle='#78d838'; g.fillRect(1,6,1,1); g.fillRect(13,10,2,1); g.fillStyle='#b8f070'; g.fillRect(13,10,1,1);
+  g.fillStyle='#1a1410'; g.fillRect(4,14,8,2); g.fillStyle='#b8e8c8'; g.fillRect(5,14,6,1); });
 /* ---------- LOGO del título: letras propias con bisel, a lo Zelda ---------- */
 function silRects(w,h,rects,cuts){ // silueta por rectángulos + cortes diagonales
   const g=Array.from({length:h},()=>Array(w).fill(false));

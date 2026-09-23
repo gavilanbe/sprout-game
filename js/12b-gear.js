@@ -75,7 +75,8 @@ function spinFx(){ const cx=player.x+8, cy=player.y+13, col=groundDustCol();
   if(hasBigSpin){ parts.push({x:cx,y:cy-3,vx:0,vy:0,life:12,col:'#ffffff',ring:true,r:46,nog:true}); screenFlash(3,'#fff6c0'); beep('sawtooth',180,520,.25,.04); }
 }
 function drawSpinCharge(py){
-  if(!hasSpin||!hasBlade||player.charge<6||player.spin>0) return;
+  if(player.spin>0){ drawSpinPass(py,false); return; } // durante el giro: la mitad de atrás de la estela, antes que Sprout
+  if(!hasSpin||!hasBlade||player.charge<6) return;
   const need=spinNeed(), k=Math.min(1,player.charge/need), cx=player.x+8, cy=py+10, N=16, r=hasBigSpin?15:13, lit=Math.round(k*N), full=k>=1;
   const hi=hasBigSpin?'#fff0a0':'#d8ffa8', lo=hasBigSpin?'#e8b030':'#58c030';
   if(full){ ctx.save(); ctx.globalAlpha=.16+.1*Math.sin(tick*.5); ctx.fillStyle=hasBigSpin?'#ffe070':'#a8ec78'; ctx.beginPath(); ctx.ellipse(cx,cy,r,r*.8,0,0,6.283); ctx.fill(); ctx.restore(); }
@@ -85,13 +86,61 @@ function drawSpinCharge(py){
       ctx.fillStyle=full?(chase?hi:'#ffffff'):lead?'#ffffff':hi; ctx.fillRect(x,y,2,2); ctx.fillStyle=full?(chase?lo:hi):lo; ctx.fillRect(x+1,y+1,1,1); }
     else { ctx.fillStyle='rgba(10,30,14,.45)'; ctx.fillRect(x,y,2,2); } }
 }
-function drawSpinBlade(py){
-  const M=spinMax(), turns=hasBigSpin?2:1, base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir], img=bladeSpr(), cx=player.x+8, cy=py+10;
-  const a=(1-player.spin/M)*6.283*turns+base;
-  for(let k=3;k>=1;k--){ ctx.save(); ctx.globalAlpha=.42/k; ctx.translate(cx,cy); ctx.rotate(a-k*.45); ctx.drawImage(img,3,-4); ctx.restore(); }
-  ctx.save(); ctx.translate(cx,cy); ctx.rotate(a); ctx.drawImage(img,3,-4); ctx.restore();
-  bladeGlow(cx+Math.cos(a)*14,cy+Math.sin(a)*14);
-}
+function drawSpinBlade(py){ drawSpinPass(py,true); } // y la mitad de delante, después
+function spinAngle(){ const M=spinMax(), turns=hasBigSpin?2:1, base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir]; return (1-player.spin/M)*6.283*turns+base; }
+function spinFacing(){ const a=((spinAngle()%6.283)+6.283)%6.283; return a<.785||a>=5.498?3:a<2.356?0:a<3.927?2:1; } // Sprout mira hacia su Hoja
+/* la estela del giro: una media luna que da la vuelta entera detrás de la Hoja, con el filo de la
+   Hoja de su temple, el borde oscuro, la cabeza blanca y la cola deshecha en tramado */
+const SPIN_CV=mkCanvas(60,52), SPIN_G=SPIN_CV.getContext('2d'); let spinCvTick=-1;
+function renderSpinSmear(){ if(spinCvTick===tick) return; spinCvTick=tick;
+  const W=60, H=52, cx=30, cy=26, big=hasBigSpin, a=spinAngle(), prog=1-player.spin/spinMax(), rIn=big?12:10, rOut=big?22:19;
+  const trail=Math.min(big?3:2.6,prog*6.283*(big?2:1)+.35), fade=player.spin<6?player.spin/6:1, rgb=bladeTier().smear.map(hex2rgb), wh=[255,255,255];
+  const im=SPIN_G.createImageData(W,H), d=im.data;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const dx=x+.5-cx, dy=y+.5-cy, dist=Math.hypot(dx,dy); if(dist<rIn||dist>rOut) continue;
+    const back=(((a-Math.atan2(dy,dx))%6.283)+6.283)%6.283; if(back>trail) continue;   // cuánto va por detrás de la Hoja
+    const along=1-back/trail;                                                             // 1 = la Hoja, 0 = la cola
+    if(along<.34&&((x+y)&1)) continue; if(along<.14&&(((x>>1)+(y>>1))&1)) continue; if(fade<1&&((x*7+y*3)%10)/10>fade) continue;
+    const edge=dist>rOut-1.3, inner=dist>rOut-4.6&&!edge, col=back<.22?wh:edge?rgb[0]:inner?(along>.4?rgb[3]:rgb[2]):(along>.6?rgb[2]:rgb[1]);
+    const i=(y*W+x)*4; d[i]=col[0]; d[i+1]=col[1]; d[i+2]=col[2]; d[i+3]=dist<rIn+2.5?120:235; }
+  SPIN_G.putImageData(im,0,0); }
+function drawSpinPass(py,front){
+  renderSpinSmear(); const cx=Math.round(player.x+8), cy=Math.round(py+10), a=spinAngle(), h=26;
+  if(front) ctx.drawImage(SPIN_CV,0,h,60,52-h,cx-30,cy-26+h,60,52-h); else ctx.drawImage(SPIN_CV,0,0,60,h,cx-30,cy-26,60,h);
+  if((Math.sin(a)>=0)!==front) return;                                                  // la Hoja, en su mitad
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(a); ctx.drawImage(bladeSpr(),3,-4); ctx.restore();
+  bladeGlow(cx+Math.cos(a)*14,cy+Math.sin(a)*14); }
+/* ---------- el TORNADITO que sale del giro: un remolino de viento de verdad ---------- */
+const TORNADO={s:[],b:[]};
+for(let f=0;f<8;f++){ const ph=f/8*6.283;
+  TORNADO.s.push(tornadoArt(20,22,7.6,1.6,ph,['#1d4f3a','#5aa87a','#a8e0bc','#dcf6e6','#ffffff'],1.4));
+  TORNADO.b.push(tornadoArt(30,32,11.6,2.2,ph,['#4a3a10','#c8a040','#f0dc90','#fff6d8','#ffffff'],2)); }
+function tornadoFoot(w){ const age=w.age||0, wob=Math.sin(age*.22)*1.5; // dónde toca el suelo (se bambolea de lado a lado)
+  return [Math.round(w.x+(w.vx?0:wob)),Math.round(w.y+(w.big?9:7)+(w.vx?wob*.6:0))]; }
+function drawTornado(w){
+  const F=w.big?TORNADO.b:TORNADO.s, age=w.age||0, img=F[(age>>1)&7], W=img.width, H=img.height;
+  const grow=Math.min(1,age/7), k=Math.min(grow<1?easeOutBack(grow):1,Math.min(1,w.t/9)); if(k<=.05) return;
+  const [bx,by]=tornadoFoot(w), dw=Math.max(3,Math.round(W*(.55+.45*k))), dh=Math.max(2,Math.round(H*k)), top=by-dh+1;
+  drawShadow(bx,by,w.big?8:6);
+  const n=w.big?5:3, tH=w.big?11.6:7.6, bH=w.big?2.2:1.6, leaf=(front)=>{ // hojas y rayas de aire que giran alrededor, delante o detrás del embudo
+    for(let i=0;i<n+2;i++){ const air=i>=n, al=age*(air?.45:.33)+i*6.283/n+(air?1:0), hf=air?(i===n?.3:.66):.16+.62*((i*.37+.1)%1), r=(bH+(tH-bH)*Math.pow(hf,1.45))*(.55+.45*k)+(air?1.5:2.5);
+      if((Math.sin(al)>0)!==front) continue; const x=Math.round(bx+Math.cos(al)*r), y=Math.round(by-dh*hf+Math.sin(al)*1.5);
+      if(air){ ctx.fillStyle=front?'#ffffff':'#cfe8dc'; const sgn=Math.cos(al)>0?-1:1; ctx.fillRect(x-1,y,3,1); ctx.fillRect(x+sgn*2,y-1,1,1); continue; } // una raya de aire curvada
+      const L=w.big?(i&1?['#c89030','#ffe070','#fffbe0']:['#4a8a2a','#b8f070','#eaffc8']):['#2e8038',front?'#78d838':'#4aa040','#c8f890'], f=((age>>2)+i)&1;
+      ctx.fillStyle=L[0]; ctx.fillRect(x+(f?2:-1),y+1,1,1); ctx.fillStyle=L[1]; ctx.fillRect(x,y,2,1); ctx.fillRect(x+(f?1:0),y+1,1,1); if(front){ ctx.fillStyle=L[2]; ctx.fillRect(x+(f?1:0),y,1,1); } } }; // una hojita de 3 px que da vueltas
+  leaf(false);
+  ctx.drawImage(img,0,0,W,H,bx-(dw>>1),top,dw,dh);
+  ctx.fillStyle=w.big?'#fff6d8':'#e8f8ee'; for(let j=0;j<3;j++){ const b=age*.4+j*2.1, x=Math.round(bx+Math.cos(b)*(w.big?8:6)); ctx.globalAlpha=.75; ctx.fillRect(x-1,by+Math.round(Math.sin(b)),3,1); } ctx.globalAlpha=1; // remolino de polvo al pie
+  leaf(true);
+  if(w.big&&(age&7)<2){ ctx.fillStyle='#ffffff'; const s=(age>>3)%4; ctx.fillRect(bx-6+s*4,top+4+s*3,1,1); } }
+function tornadoTrail(w){ // polvo del suelo al pie y alguna hoja que sale despedida
+  const [bx,by]=tornadoFoot(w), age=w.age||0;
+  if((age&1)===0) parts.push({k:'dust',x:bx+(Math.random()-.5)*8,y:by,vx:-w.vx*.25+(Math.random()-.5)*.5,vy:-.15,life:12,max:12,r:1+(age&2?1:0),col:groundDustCol(),nog:true});
+  if((age%9)===4) bladeBits(bx,by-(w.big?18:12),w.big?['#ffe070','#b8f070']:['#78d838','#b8f070'],1); }
+function tornadoPoof(w){ // se deshace: polvo, hojas y un aro de aire
+  const [bx,by]=tornadoFoot(w), cy=by-(w.big?14:10);
+  for(let i=0;i<8;i++){ const a=i/8*6.283; parts.push({k:'smoke',x:bx+Math.cos(a)*4,y:cy+Math.sin(a)*5,vx:Math.cos(a)*.7,vy:Math.sin(a)*.5-.3,life:18,max:24,r:2+(i%2),col:i&1?'#f4fff8':'#d8f0e0',nog:true}); }
+  bladeBits(bx,cy,w.big?['#ffe070','#b8f070','#78d838']:['#78d838','#b8f070'],w.big?7:5);
+  parts.push({x:bx,y:cy,vx:0,vy:0,life:10,col:'#ffffff',ring:true,r:w.big?16:11,nog:true}); }
 /* ---------- ESCUDO: a la vista, y con el de Roble, parada ---------- */
 const SHIELD_MINI=(()=>{ const mk=(rows,rim)=>sprN(rows,{b:'#8a5a2c',B:'#b88048',L:'#8ae048',l:'#2e8a34',y:rim});
   const r1=["kkkkkk","kbBBbk","kbLlbk","kblLbk","kbBBbk","kbbbbk",".kbbk.","..kk.."], r2=["yyyyyy","ybBBby","ybLlby","yblLby","ybBBby","ybbbby",".ybby.","..yy.."];
@@ -276,11 +325,9 @@ function hudBladeMeter(Y){
   if(hasBigSpin){ ctx.fillStyle='#e8c040'; ctx.fillRect(25,Y+4,1,1); }
 }
 /* ---------- iconos de las mejoras nuevas ---------- */
-const BIGSPIN_ICON=(()=>{ const c=mkCanvas(16,16), g=c.getContext('2d'), pts=[];
-  for(let i=0;i<46;i++){ const t=i/46, a=t*6.283*1.7, r=1.5+t*5.8; pts.push([Math.round(8+Math.cos(a)*r),Math.round(8+Math.sin(a)*r),t]); }
-  g.fillStyle=PAL.k; for(const [x,y] of pts) g.fillRect(x-1,y-1,3,3);
-  for(const [x,y,t] of pts){ g.fillStyle=t>.72?'#ffe070':t>.4?'#b8f070':'#78d838'; g.fillRect(x,y,1,1); }
-  g.fillStyle='#ffffff'; g.fillRect(12,3,1,1); g.fillRect(3,11,1,1); return c; })();
+const BIGSPIN_ICON=(()=>{ const c=mkCanvas(16,16), g=c.getContext('2d'); // el Gran Remolino: el tornado dorado, más ancho, con chispas
+  g.drawImage(tornadoArt(16,16,7.4,1.4,2.2,['#1a1410','#c89030','#f0d880','#fff6d0','#ffffff'],1),0,0);
+  g.fillStyle='#fff6b0'; g.fillRect(1,2,1,3); g.fillRect(0,3,3,1); g.fillRect(14,10,1,1); g.fillStyle='#ffffff'; g.fillRect(1,3,1,1); return c; })();
 const OAKSHIELD_ICON=(()=>{ const c=mkCanvas(16,16), g=c.getContext('2d');
   g.fillStyle=PAL.k; g.fillRect(2,1,12,11); g.fillRect(3,12,10,2); g.fillRect(5,14,6,1);
   g.fillStyle='#e8b848'; g.fillRect(3,2,10,9); g.fillRect(4,11,8,2); g.fillRect(6,13,4,1);
