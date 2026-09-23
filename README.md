@@ -172,6 +172,22 @@ puesto y, con `?`, lo que aún te falta. Los botones de la consola también se p
 la consola entera es el mando. En mando: A = Z, B = X,
 Start = zurrón.
 
+## 📲 Instálalo
+
+SPROUT es una aplicación web (PWA): se instala y funciona sin conexión.
+
+- **Android / Chrome / Edge**: en el título aparece «Instalar SPROUT» (o usa el
+  menú del navegador → *Instalar aplicación*). Se abre a pantalla completa, en
+  vertical o en horizontal, con su icono y su pantalla de arranque.
+- **iPhone / iPad**: Safari → *Compartir* → *Añadir a pantalla de inicio*.
+- Arranca siempre al instante desde el propio dispositivo. Las versiones nuevas
+  se descargan solas: si estás en el título se aplican al momento; si estás
+  jugando, un aviso te deja actualizar cuando quieras (o al volver al título)
+  sin perder nada, y después te dice qué versión tienes (también sale en el
+  arranque).
+- En el móvil la pantalla no se apaga mientras juegas y, si sales de la app, el
+  juego se pausa en el zurrón, guarda y calla la música.
+
 ## 🛠 Desarrollo
 
 ```sh
@@ -188,6 +204,12 @@ Pruebas en navegador real (Playwright):
 ```sh
 npm install && npx playwright install chromium && npm test
 ```
+
+Antes de publicar, `npm run bump`: calcula la versión a partir del contenido
+(fecha y hash) y la escribe en `sw.js` (con la lista de precarga, sacada de los
+`<script>` de `index.html`) y en `js/00-version.js`. Las pruebas fallan si se te
+olvida. `npm run icons` vuelve a dibujar los iconos y las pantallas de arranque
+de iOS con los sprites del juego.
 
 ## 📜 Licencia
 

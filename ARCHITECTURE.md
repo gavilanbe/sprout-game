@@ -14,6 +14,7 @@ numerados — datos primero, lógica después, arranque al final.
 
 | Módulo | Qué vive aquí |
 |---|---|
+| `js/00-version.js` | `GAME_VERSION` (la escribe `scripts/version.cjs`; sale en el arranque) |
 | `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL` (sprites) y `C` (mundo), utilidades (`hash`, `mkCanvas`, `mix`, `shade`) |
 | `js/01a-font.js` | Tipografía de píxel propia: `FONT_M` (proporcional, mayúsculas de 7 px, tildes) y `FONT_S` (versalitas de 5 px). `drawText`, `textW`, `wrapPx`. Atlas en blanco + tintado cacheado |
 | `js/02-sprites.js` | `spr`/`sprN` (filas de texto → canvas), héroe (4 direcciones, 2 fotogramas, ataque, alzar objeto), vecinos, criaturas (`E_SPR`), minijefes 24 px y guardianes 32 px (`BOSS_SPR`), objetos, amuletos, iconos, logo y Gran Roble |
@@ -41,7 +42,8 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/15d-momento.js` | El momento del arma: `MOMENT_ARMS` (paleta y frase de cada arma y herramienta), `startMoment` (desde `getItem`), `updMoment`/`endMoment` (en el estado `itemget`; `itemT=0` lo corta como antes) y `drawMoment` (la atrapa, la pose con rayos y la viñeta congelada: `momentPosterize` en cuatro tonos con tramado, líneas de velocidad, empujón de cámara, el arma a 4×, cinta con el nombre, frase a máquina y fundido de vuelta). Sonidos `momentCatch` y `momentFreeze` en 06 |
 | `js/16-input.js` | Teclado reasignable (`opts.keys`, `assignKey` intercambia si choca, `resetKeys`; WASD/espacio/Esc como alternativas; `keys.menuHeld`), mando con vibración (`rumble`) y la lógica de la pestaña AJUSTES (`OPT_ROWS`, `updOptions`, `updRemap`); se dibuja en `drawOptions`/`drawRemap` de 15b |
 | `js/16a-shell.js` | La consola de la página: `present()` copia `cv` (160×144, oculto) a `#screen` con píxeles exactos (escala entera directa; si no, múltiplo entero y suavizado) más la rejilla LCD (`lcdGrid`); `fit()` elige consola horizontal o vertical y la escala (entera en escritorio; en móvil, a pantalla completa con mandos de pulgar); etiquetas, logotipo gavilanbe y logo de SPROUT pintados con la fuente del juego (`pixCanvas`, `textArt`, `shellLabels`); mandos por puntero (cruceta que se desliza en 8 sentidos, botones con captura, vibración), botones que se hunden con teclado o mando y el LED de la savia (`shellFeedback`), colores de carcasa (`SHELL_THEMES`, `applyShellTheme`), MÚSICA (`toggleMusic`) y pantalla completa. El arranque «gavilanbe®» (`GAVI_GLYPHS`, `drawBoot`) vive en 15-ui |
-| `js/17-boot.js` | API de debug `window.__sprout`, PWA, arranque y bucle a 60 Hz |
+| `js/16b-pwa.js` | La aplicación: registra `sw.js` (`updateViaCache:'none'`), avisos en píxeles (`showNotice`: versión nueva, actualizado, listo sin red, instalar, pista de iPhone), actualizaciones (`controllerchange` → se aplica sola en arranque/título/partidas; jugando, aviso y al volver al título; guarda antes con `pwaApply`), `beforeinstallprompt`, pantalla encendida (`wakeLock`), pausa + guardado + audio suspendido al ocultarse la app, almacenamiento persistente |
+| `js/17-boot.js` | API de debug `window.__sprout`, arranque y bucle a 60 Hz |
 
 Regla de oro: **los datos no llaman a la lógica**. Sprites, tiles, mapas y
 textos (02–05) son declarativos; la lógica (08–13) los consume. Si un texto
@@ -127,3 +129,11 @@ Las misiones NUNCA guardan estado propio: se calculan, así no mienten.
 `tests/verify.cjs` arranca el juego en Chromium (Playwright), pone
 `window.__manual=true` para conducir `update()` a mano y comprueba arranque,
 mapas, puzles, objetos, jefes y guardado.
+
+## La aplicación (PWA) y las versiones
+
+- `manifest.webmanifest`: nombre, iconos (`icons/`, normales y *maskable*), capturas, pantalla completa y cualquier orientación. Los iconos y las pantallas de arranque de iOS (`icons/splash-*.png`, enlazadas en `index.html`) se dibujan con los sprites del juego: `node scripts/icons.cjs`.
+- `sw.js`: precarga atómica por versión (`sprout-<versión>`), el juego arranca siempre de la caché, lo demás red primero con copia (`sprout-runtime`). Se activa al instalarse; la página decide cuándo recargar (16b).
+- `scripts/version.cjs`: la versión es la fecha del último cambio más un hash del contenido de todo lo precargado; reescribe `VERSION` y la lista `PRECACHE` de `sw.js` (desde los `<script>` de `index.html`) y `js/00-version.js`. **Ejecútalo antes de cada commit** (`npm run bump`); `--check` lo usa una prueba.
+- `.nojekyll`: GitHub Pages sirve los ficheros tal cual.
+

@@ -1,7 +1,31 @@
-/* SPROUT — service worker: código siempre fresco (network-first), recursos cache-first */
-const CACHE = 'sprout-v15';
-const CODE = [
-  './', './index.html', './assets/title-bg.png',
+/* ============================================================
+   SPROUT — service worker
+   · Arranca SIEMPRE de la caché: el juego abre al instante y sin red.
+   · Cada versión (la calcula scripts/version.cjs con un hash del contenido)
+     precarga todo lo que el juego necesita, de golpe y saltándose la caché
+     HTTP de GitHub Pages; así nunca se mezclan ficheros de dos versiones.
+   · Cuando hay una versión nueva se instala en segundo plano y se activa
+     enseguida (el juego ya abierto no pide nada más); la página se entera
+     por `controllerchange` y recarga cuando no se pierde nada: en el
+     título, al tocar el aviso o al volver al título (js/16b-pwa.js).
+   · Lo que no está en la precarga (la demo, las capturas): red primero y,
+     sin red, lo último que se vio.
+   ============================================================ */
+const VERSION = '2026.09.23-f53999f0';
+const CACHE = 'sprout-' + VERSION, RUNTIME = 'sprout-runtime';
+const PRECACHE = [
+  // PRECACHE:BEGIN
+  './index.html',
+  './manifest.webmanifest',
+  './assets/title-bg.png',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/maskable-192.png',
+  './icons/maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png',
+  './icons/favicon-16.png',
+  './js/00-version.js',
   './js/01-core.js',
   './js/01a-font.js',
   './js/02-sprites.js',
@@ -29,38 +53,53 @@ const CODE = [
   './js/15d-momento.js',
   './js/16-input.js',
   './js/16a-shell.js',
+  './js/16b-pwa.js',
   './js/17-boot.js',
+  // PRECACHE:END
 ];
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CODE)));
-  self.skipWaiting();
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' })));
+    await self.skipWaiting();
+  })());
 });
+
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('sprout-') && k !== CACHE).map(k => caches.delete(k)))));
-  self.clients.claim();
+  e.waitUntil((async () => {
+    for (const k of await caches.keys()) if (k.startsWith('sprout-') && k !== CACHE && k !== RUNTIME) await caches.delete(k);
+    await self.clients.claim();
+  })());
 });
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'version' && e.source) e.source.postMessage({ type: 'version', version: VERSION });
+});
+
 self.addEventListener('fetch', e => {
   const req = e.request;
+  if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  const isCode = req.mode === 'navigate' || url.pathname.endsWith('/index.html')
-    || url.pathname.endsWith('/') || url.pathname.includes('/js/') || url.pathname.endsWith('.css');
-  if (isCode) {
-    // network-first: las actualizaciones del juego llegan; sin red, cae a la caché
-    e.respondWith(
-      fetch(req).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => { try { c.put(req, clone); } catch (_) {} });
-        return res;
-      }).catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
-    );
-  } else {
-    // cache-first para fuente y demás recursos
-    e.respondWith(
-      caches.match(req).then(r => r || fetch(req).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => { try { c.put(req, clone); } catch (_) {} });
-        return res;
-      }).catch(() => caches.match('./index.html')))
-    );
-  }
+  if (url.origin !== self.location.origin) return;
+  const rel = url.pathname.slice(new URL(self.registration.scope).pathname.length);
+  if (req.mode === 'navigate' && (rel === '' || rel === 'index.html')) { e.respondWith(shell(req)); return; }
+  e.respondWith((async () => (await caches.match(req, { ignoreSearch: true, cacheName: CACHE })) || network(req))());
 });
+
+async function shell(req) { // el juego: de la precarga; si faltara (primera visita a medias), de la red
+  const hit = await caches.match('./index.html', { cacheName: CACHE });
+  return hit || network(req);
+}
+async function network(req) { // red primero, guardando una copia; sin red, la copia
+  try {
+    const res = await fetch(req);
+    if (res && res.ok && res.type === 'basic') { const c = await caches.open(RUNTIME); c.put(req, res.clone()); }
+    return res;
+  } catch (err) {
+    const hit = await caches.match(req, { ignoreSearch: true });
+    if (hit) return hit;
+    if (req.mode === 'navigate') { const home = await caches.match('./index.html'); if (home) return home; }
+    throw err;
+  }
+}

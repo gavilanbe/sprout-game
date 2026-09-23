@@ -52,7 +52,7 @@ function audio(){
       VOICE[k]=g; }
     WAVES.p125=pulseWave(.125); WAVES.p25=pulseWave(.25); WAVES.p50=null; // 50% = square nativo
     applyVolumes(); startMusic(); }
-  else if(AC.state==='suspended') AC.resume();
+  else if(AC.state!=='running'&&AC.state!=='closed') AC.resume(); // también «interrupted» (iOS al volver de otra app)
   return AC;
 }
 function f(m){ return 440*Math.pow(2,(m-69)/12); }

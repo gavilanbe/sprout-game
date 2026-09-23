@@ -18,16 +18,7 @@ window.__sprout={
   playTrack(n){ setTrack(n); }, music(){ return {curTrack}; }, equip(a,b){ equipped=[a||null,b||null]; }, setX(k){ xItem=k; },
   info(){ return {sx,sy,x:player.x,y:player.y,hp:player.hp,maxHp:player.maxHp,seeds,berries,hasBlade,bladeLvl,hasSpin,hasBomb,hasHook,hasBoomer,hasLantern,hasFeather,hasEmber,hasTear,hasFlake,won,bossDone,boss2Done,boss3Done,midKing,midDrone,midIce,midScare,hasPinwheel,hasAmber,boss4Done,thawed,summered,autumned,cycled,state,boss:boss?{hp:boss.hp,st:boss.st,type:boss.type}:null,midboss:midboss?{hp:midboss.hp,st:midboss.st,type:midboss.type}:null,track:curTrack,entry:lastEntry,visited:visited.size,xItem,equipped,amulets:[...amulets],pieces,keys:dungeonKeys,bigKeys}; },
 };
-/* ---------- PWA: icono desde el propio sprite ---------- */
-(function(){
-  const icon=mkCanvas(192,192); const g=icon.getContext('2d'); g.imageSmoothingEnabled=false;
-  g.fillStyle='#0b1a10'; g.fillRect(0,0,192,192); g.drawImage(P_SPRITES[0][0],0,0,16,16,16,16,160,160);
-  const url=icon.toDataURL('image/png');
-  for(const rel of ['icon','apple-touch-icon']){ const l=document.createElement('link'); l.rel=rel; l.href=url; document.head.appendChild(l); }
-  try{ const man={name:'SPROUT y las 8 semillas',short_name:'SPROUT',display:'standalone',orientation:'any',background_color:'#0b1a10',theme_color:'#0b1a10',start_url:'.',icons:[{src:url,sizes:'192x192',type:'image/png'}]};
-    const ml=document.createElement('link'); ml.rel='manifest'; ml.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'})); document.head.appendChild(ml); }catch(e){}
-  if('serviceWorker' in navigator && location.protocol.startsWith('http')){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
-})();
+/* la PWA (manifiesto, service worker, actualizaciones, instalar): js/16b-pwa.js */
 /* ---------- ARRANQUE ---------- */
 loadScreen(9,9); setTrack('titulo');
 let lastT=null, acc=0; const STEP=1000/60;

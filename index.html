@@ -9,6 +9,22 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SPROUT">
+<meta name="application-name" content="SPROUT">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="icons/splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="icons/splash-1320x2868.png">
 <style>
   /* ============================================================
      LA CONSOLA. Todas las medidas salen de variables que pone fit()
@@ -171,6 +187,19 @@
   .foot a{display:block; border-bottom:1px solid rgba(185,214,125,.35); padding-bottom:4px}
   .foot a:hover{border-color:rgba(248,232,200,.8)}
   body.touch .foot,.foot.off{display:none}
+
+  /* ---------- el aviso de la aplicación (instalar, versión nueva, sin red) ---------- */
+  .notice{position:fixed; left:50%; top:calc(env(safe-area-inset-top,0px) + 10px); z-index:20; transform:translate(-50%,-170%);
+    display:flex; align-items:center; gap:10px; padding:8px 16px; border:0; border-radius:999px; cursor:pointer;
+    background:#1f2e25; box-shadow:0 0 0 2px #0a100c, 0 3px 0 #0a100c, 0 10px 24px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.08);
+    transition:transform .4s cubic-bezier(.2,1.5,.4,1)}
+  .notice.show{transform:translate(-50%,0)}
+  .notice::before{content:""; width:8px; height:8px; border-radius:50%; background:#7cf05a; box-shadow:0 0 8px #7cf05a; flex:none}
+  .notice[data-k="update"]{background:#2b4a30} .notice[data-k="update"]::before{animation:ledlow .5s ease-in-out infinite alternate; background:#ffd060; box-shadow:0 0 8px #ffd060}
+  .notice[data-k="install"]::before,.notice[data-k="ios"]::before{background:#f0b848; box-shadow:0 0 8px #f0b848}
+  .notice:hover{filter:brightness(1.12)}
+  body.touch .notice{transform:translate(-50%,-50%) scale(.6); opacity:0; padding:5px 12px; transition:transform .35s cubic-bezier(.2,1.6,.4,1), opacity .2s}
+  body.touch .notice.show{transform:translate(-50%,-50%) scale(1); opacity:1}
 </style>
 </head>
 <body>
@@ -206,10 +235,12 @@
   <a href="slice.html" aria-label="La primera semilla: demo con sprites generados"><canvas class="px" id="footLink"></canvas></a>
   <canvas class="px" id="footLine" aria-hidden="true"></canvas>
 </nav>
+<button class="notice" id="notice" hidden aria-live="polite"><canvas class="px" id="noticeTxt"></canvas></button>
 <canvas id="cv" width="160" height="144"></canvas>
 
 <!-- el juego, por módulos de dominio: el ORDEN importa (ámbito global compartido).
      mapa completo y recetas para crecer: ARCHITECTURE.md -->
+<script src="js/00-version.js"></script>
 <script src="js/01-core.js"></script>
 <script src="js/01a-font.js"></script>
 <script src="js/02-sprites.js"></script>
@@ -237,6 +268,7 @@
 <script src="js/15d-momento.js"></script>
 <script src="js/16-input.js"></script>
 <script src="js/16a-shell.js"></script>
+<script src="js/16b-pwa.js"></script>
 <script src="js/17-boot.js"></script>
 </body>
 </html>

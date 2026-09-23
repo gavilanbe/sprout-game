@@ -305,6 +305,7 @@ function drawBoot(){
   ctx.drawImage(pressed&&pt>22?A.R2:A.R,x0+W+2,y);
   if(pressed&&pt>=24&&pt<42){ const s=pt<33?(pt-24)>>1:(42-pt)>>1, cx=x0+W+5, cy=y+3; if(s>0){ ctx.fillStyle='#ffffff'; ctx.fillRect(cx-s,cy,s*2+1,1); ctx.fillRect(cx,cy-s,1,s*2+1); } } // un destello en la ®
   if(pressed) for(let i=0;i<A.L.length;i++){ const k=pt-i*2.4-3; if(k>0&&k<14){ const l=A.L[i], px=x0+l.x*S+l.w, py=y-4-k*1.2; ctx.fillStyle=BOOT_COLS[i]; ctx.fillRect(px+(i&1?k*.4:-k*.4)|0,py|0,2,2); } } // chispas de color
+  if(!pressed&&bootT>=BOOT_LAND&&typeof GAME_VERSION!=='undefined') txtS('V '+GAME_VERSION.slice(0,10).replace(/\./g,'·'),157,137,'#6a8e18','right'); // la versión, como un firmware
   if(!pressed&&bootT>=BOOT_LAND+18&&((bootT-BOOT_LAND)&63)<42){
     const t=document.body.classList.contains('touch')?'TOCA PARA EMPEZAR':'PULSA '+(typeof keyName==='function'?keyName(keysNow().fire):'Z');
     txtS(t,80,104,'#306230','center'); }

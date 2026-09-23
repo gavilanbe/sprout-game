@@ -3,10 +3,11 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'), path=require('node:path'), http=require('node:http');
 const {chromium}=require(process.env.SPROUT_PLAYWRIGHT||'playwright');
 const root=path.resolve(__dirname,'..');
+let swBump=0; // la prueba de la aplicación «publica» versiones nuevas cambiando sw.js
 const server=http.createServer((req,res)=>{
   const file=path.join(root,decodeURIComponent(req.url.split('?')[0]==='/'?'/index.html':req.url.split('?')[0]));
   if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
-  fs.readFile(file,(err,data)=>{if(err){res.writeHead(404);res.end();return;}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png'})[path.extname(file)]||'application/octet-stream');res.end(data);});
+  fs.readFile(file,(err,data)=>{if(err){res.writeHead(404);res.end();return;} if(swBump&&file.endsWith(path.sep+'sw.js')) data=Buffer.concat([data,Buffer.from('\n// versión de prueba '+swBump+'\n')]);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.webmanifest':'application/manifest+json'})[path.extname(file)]||'application/octet-stream');res.end(data);});
 });
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -605,6 +606,28 @@ const server=http.createServer((req,res)=>{
     await m.mouse.move(r.ax,r.ay); await m.mouse.down(); await m.mouse.move(r.ax+25,r.ay+18); log.push(await m.evaluate(()=>[keys.fire,keys.fireHeld])); await m.mouse.up(); log.push(await m.evaluate(()=>keys.fireHeld));
     await ctx.close();
     eq(log,[[true,true],'up',true,'right','up+right','right','-',[true,true],false]);
+  });
+  await check('La aplicación: versión al día, manifiesto instalable, arranca sin red y se actualiza (con aviso en plena partida, sola en el título)',async()=>{
+    const {execSync}=require('node:child_process'); let upToDate=true; try{ execSync('node scripts/version.cjs --check',{cwd:root,stdio:'pipe'}); }catch(e){ upToDate=false; }
+    const ctx=await browser.newContext({viewport:{width:1000,height:800}}), p=await ctx.newPage(); p.on('pageerror',e=>errors.push('pwa: '+e.message));
+    await p.goto('http://127.0.0.1:'+server.address().port+'/'); await p.waitForFunction(()=>typeof __sprout==='object');
+    const man=await p.evaluate(async()=>{ const m=await (await fetch('manifest.webmanifest')).json();
+      const sizes=await Promise.all(m.icons.map(ic=>new Promise(r=>{ const im=new Image(); im.onload=()=>r(im.naturalWidth+'x'+im.naturalHeight+':'+ic.purpose); im.onerror=()=>r('error'); im.src=ic.src; })));
+      return [m.short_name,m.display,m.start_url,sizes.join(' ')]; });
+    await p.waitForFunction(()=>navigator.serviceWorker.controller!==null,null,{timeout:20000});
+    const cached=await p.evaluate(async()=>(await (await caches.open('sprout-'+GAME_VERSION)).keys()).length);
+    await ctx.setOffline(true); await p.reload(); await p.waitForFunction(()=>typeof __sprout==='object',null,{timeout:20000}); const offline=await p.evaluate(()=>state); await ctx.setOffline(false);
+    // una versión nueva en plena partida: aviso y sin recargar; al tocarlo se guarda, se aplica y lo cuenta
+    await p.evaluate(()=>{ window.__manual=true; newGame(); introDone=true; inBed=false; state='play'; });
+    swBump=1; await p.evaluate(()=>{ PWA.reg.update(); }); await p.waitForFunction(()=>PWA.updateReady,null,{timeout:20000}); await p.waitForTimeout(600);
+    const mid=await p.evaluate(()=>[state,PWA.notice,document.getElementById('notice').hidden]);
+    await Promise.all([p.waitForNavigation({timeout:20000}),p.click('#notice')]); await p.waitForFunction(()=>typeof __sprout==='object'); await p.waitForTimeout(1000);
+    const after=await p.evaluate(()=>PWA.notice);
+    // otra estando en el título: se aplica sola
+    await p.evaluate(()=>{ state='title'; }); swBump=2;
+    await Promise.all([p.waitForNavigation({timeout:20000}),p.evaluate(()=>{ PWA.reg.update(); })]); await p.waitForFunction(()=>typeof __sprout==='object');
+    swBump=0; await ctx.close();
+    eq([upToDate,man,cached>=40,offline,mid,after],[true,['SPROUT','standalone','./','192x192:any 512x512:any 192x192:maskable 512x512:maskable'],true,'boot',['play','update',false],'updated']);
   });
   await browser.close(); server.close();
   if(errors.length){ console.log('Errores de página:\n'+errors.join('\n')); }
