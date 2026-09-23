@@ -207,31 +207,31 @@ const TRACKS={
     chords:[KAm,KC,KG,KAm, KAm,KC,KF,KC, KF,KG,KC,KC, KAm,KF,KG,KC],
     leadM:N('A4:2 B4:2 C5:2 D5:2 E5:4  G5:4 E5:4 C5:4  D5:2 C5:2 B4:2 A4:2 G4:4  A4:8 .:4  A4:2 B4:2 C5:2 D5:2 E5:4  G5:4 A5:4 G5:4  E5:2 D5:2 C5:2 D5:2 E5:4  C5:8 .:4 '+
             'F5:4 E5:2 D5:2 C5:4  D5:4 E5:2 F5:2 G5:4  E5:4 D5:2 C5:2 B4:4  C5:8 .:4  A4:2 B4:2 C5:2 D5:2 E5:4  G5:2 F5:2 E5:2 D5:2 C5:4  D5:4 B4:4 G4:4  C5:12'),
-    harm:'arp', bass:'waltz', drums:['k...h...h...','k...h...h.h.'] },
+    hpat:'arp', bass:'waltz', drums:['k...h...h...','k...h...h.h.'] },
   /* LA NANA DE RAÍZ — 3/4, triángulo, sin prisa. Suena en casa. */
   casa:{ bpm:96, steps:12, lead:'triangle', harm:'p125', leadVol:.06, harmVol:.016, bassVol:.05, drumVol:0, echo:0, space:.22, arpVol:0,
     chords:[KC,KG,KC,KAm, KC,KG,KF,KC, KF,KC,KG,KAm, KF,KG,KC,KC],
     leadM:N('E5:4 G5:4 E5:4  D5:4 C5:4 D5:4  E5:8 C5:4  A4:12  E5:4 G5:4 E5:4  D5:4 C5:4 B4:4  C5:8 D5:4  C5:12 '+
             'F5:4 E5:4 D5:4  E5:4 D5:4 C5:4  D5:8 B4:4  A4:8 B4:4  C5:4 D5:4 E5:4  D5:4 C5:4 B4:4  C5:12  C5:12'),
-    harm:'arp', bass:'waltz', drums:[] },
+    hpat:'arp', bass:'waltz', drums:[] },
   /* LA TIENDA — 4/4 saltarín con swing de bayas */
   tienda:{ bpm:132, steps:16, lead:'p25', harm:'p125', leadVol:.042, harmVol:.02, bassVol:.075, drumVol:.03, echo:0, space:.1, arpVol:.007,
     chords:[KC,KC,KF,KG, KC,KAm,KF,KG],
     leadM:N('E5:2 G5:2 C6:4 G5:2 E5:2 G5:4  E5:2 G5:2 A5:2 G5:2 E5:2 C5:2 D5:4  F5:2 A5:2 C6:4 A5:2 F5:2 A5:4  G5:2 B5:2 D6:4 B5:4 G5:4 '+
             'E5:2 G5:2 C6:4 G5:2 E5:2 G5:4  A5:2 C6:2 E6:4 C6:2 A5:2 E5:4  F5:2 A5:2 C6:2 A5:2 F5:4 D5:4  G5:4 B5:4 C6:8'),
-    harm:'arp', bass:'walk', drums:['k.h.s.h.k.h.s.h.','k.h.s.hkk.h.s.hs'] },
+    hpat:'arp', bass:'walk', drums:['k.h.s.h.k.h.s.h.','k.h.s.hkk.h.s.hs'] },
   /* EL NORTE HELADO — 4/4 lento en La menor, eco largo, notas que cuelgan */
   nieve:{ bpm:104, steps:16, lead:'square', harm:'p125', leadVol:.03, harmVol:.016, bassVol:.06, drumVol:.02, echo:.22, alt:true, space:.36, arpVol:.007,
     chords:[KAm,KAm,KF,KE, KAm,KDm,KE,KAm, KC,KG,KAm,KF, KDm,KE,KAm,KAm],
     leadM:N('A4:6 C5:2 E5:8  D5:6 C5:2 B4:8  A4:4 C5:4 F5:4 E5:4  D5:12 B4:4  A4:6 C5:2 E5:8  F5:6 E5:2 D5:8  E5:4 D5:4 B4:4 G#4:4  A4:16 '+
             'E5:6 G5:2 E5:8  D5:6 B4:2 G4:8  A4:4 B4:4 C5:4 E5:4  F5:12 E5:4  D5:6 F5:2 D5:8  E5:6 D5:2 B4:8  A4:4 B4:4 C5:4 B4:4  A4:16'),
-    harm:'arp', bass:'drone', drums:['k.......s.......','k.......s...h...'] },
+    hpat:'arp', bass:'drone', drums:['k.......s.......','k.......s...h...'] },
   /* LAS MARISMAS — 3/4 arrastrado, cromatismos de hojarasca */
   pantano:{ bpm:112, steps:12, lead:'p25', harm:'p125', leadVol:.034, harmVol:.018, bassVol:.07, drumVol:.03, echo:.18, alt:true, space:.26, arpVol:.007,
     chords:[KAm,KE,KAm,KE, KAm,KDm,KE,KAm, KF,KE,KAm,KDm, KE,KE,KAm,KAm],
     leadM:N('A4:2 B4:2 C5:2 D5:2 Eb5:4  E5:4 D5:4 C5:4  B4:2 Bb4:2 B4:2 C5:2 A4:4  E4:8 .:4  A4:2 B4:2 C5:2 D5:2 Eb5:4  F5:4 E5:4 D5:4  C5:2 B4:2 G#4:2 B4:2 A4:4  A4:8 .:4 '+
             'F5:4 E5:2 D5:2 C5:4  B4:4 Bb4:2 B4:2 E5:4  A4:2 B4:2 C5:2 D5:2 E5:4  F5:4 D5:4 F5:4  E5:4 G#4:4 B4:4  E5:2 D5:2 C5:2 B4:2 G#4:4  A4:8 .:4  A4:12'),
-    harm:'arp', bass:'waltz', drums:['k..h..h.....','k..h..h..s..'] },
+    hpat:'arp', bass:'waltz', drums:['k..h..h.....','k..h..h..s..'] },
   /* LA CUEVA DEL TOPO — 4/4 grave, ostinato de bajo, melodía escasa */
   cueva:{ bpm:110, steps:16, lead:'p25', harm:'p125', leadVol:.024, harmVol:.014, bassVol:.09, drumVol:.035, echo:.2, space:.3, arpVol:0, duet:false,
     chords:[KAm,KAm,KAm,KF, KAm,KAm,KE,KAm],
@@ -245,13 +245,13 @@ const TRACKS={
     chords:[KAm,KEm,KF,KAm, KDm,KAm,KE,KAm, KF,KG,KEm,KAm, KF,KE,KAm,KAm],
     leadM:N('E5:8 D5:4 B4:4  A4:8 .:8  F5:8 E5:4 C5:4  A4:8 .:8  D5:8 E5:4 F5:4  E5:8 .:8  E5:4 G#4:4 B4:4 E5:4  A4:16 '+
             'C5:8 D5:4 E5:4  G5:8 .:8  E5:8 D5:4 B4:4  C5:8 .:8  F5:8 E5:4 F5:4  G#5:8 .:8  A5:4 E5:4 C5:4 A4:4  A4:16'),
-    harm:'arpfast', bass:'pulse', drums:['....h.......h...','....h.......h.s.'] },
+    hpat:'arpfast', bass:'pulse', drums:['....h.......h...','....h.......h.s.'] },
   /* LA CIMA DEL VIENTO — 4/4 abierto, sostenidos largos, aire */
   cima:{ bpm:100, steps:16, lead:'square', harm:'p125', leadVol:.03, harmVol:.014, bassVol:.07, drumVol:.018, echo:.26, alt:true, space:.42, arpVol:.006,
     chords:[KEm,KEm,KAm,KAm, KD,KG,KEm,KEm, KC,KD,KEm,KEm, KAm,KD,KEm,KEm],
     leadM:N('E5:6 F#5:2 E5:8  G5:8 E5:8  D5:6 C5:2 B4:8  A4:16  A4:4 B4:4 D5:4 E5:4  G5:8 B5:4 A5:4  G5:8 E5:8  E5:16 '+
             'C5:6 D5:2 E5:8  F#5:8 D5:8  E5:6 F#5:2 G5:8  B5:16  A5:4 G5:4 E5:4 D5:4  D5:8 F#5:4 A5:4  G5:8 F#5:8  E5:16'),
-    harm:'arp', bass:'drone', drums:['k...............','k.......h.......'] },
+    hpat:'arp', bass:'drone', drums:['k...............','k.......h.......'] },
   /* GUARDIÁN — 4/4 urgente: el motivo en menor (la-si-do-re-MIb), galope y aullido */
   jefe:{ bpm:160, steps:16, lead:'square', harm:'p25', leadVol:.042, harmVol:.024, bassVol:.1, drumVol:.05, echo:0, fat:7, space:.1, adaptive:true, duet:false, arpVol:.009,
     chords:[KAm,KAm,KEm,KEm, KAm,KF,KE,KAm, KAm,KAm,KDm,KDm, KAm,KF,KE,KE],
@@ -267,7 +267,7 @@ const TRACKS={
     chords:[KEm,KEm,KG,KG, KEm,KC,KBdim,KEm],
     leadM:N('E4:2 F#4:2 G4:2 A4:2 Bb4:6 A4:2  G4:2 F#4:2 E4:2 D4:2 E4:8  E4:2 F#4:2 G4:2 A4:2 Bb4:6 C5:2  B4:2 A4:2 G4:2 F#4:2 B4:8 '+
             'E5:4 D#5:2 C5:2 B4:4 A4:4  E4:2 F#4:2 G4:2 A4:2 Bb4:8  B4:2 A4:2 G4:2 F#4:2 D#4:4 F#4:4  E4:8 .:8'),
-    harm:'arp', bass:'octave', drums:['k.h.s.h.k.h.s.h.','k.h.s.h.kkh.s.ss'] },
+    hpat:'arp', bass:'octave', drums:['k.h.s.h.k.h.s.h.','k.h.s.h.kkh.s.ss'] },
   /* GRUTA — 4/4, zumbido de fondo y gotas */
   gruta:{ bpm:80, steps:16, lead:'p125', harm:'p125', leadVol:.03, harmVol:.012, bassVol:.06, drumVol:.02, echo:.3, space:.46, arpVol:0, duet:false,
     chords:[KAm,KAm,KEm,KEm, KAm,KF,KEm,KAm],
@@ -302,31 +302,31 @@ const TRACKS={
     chords:[KAm,KAm,KBb,KAm, KAm,KAm,KF,KE],
     leadM:N('A4:2 .:2 A4:2 .:2 C5:2 .:2 E5:2 .:2  Eb5:4 D5:2 C5:2 B4:4 A4:4  Bb4:2 .:2 Bb4:2 .:2 D5:2 .:2 F5:2 .:2  E5:4 D5:2 C5:2 B4:8 '+
             'A5:2 .:2 G5:2 .:2 F5:2 .:2 E5:2 .:2  Eb5:2 D5:2 C5:2 B4:2 A4:8  F5:4 E5:4 D5:4 C5:4  B4:4 G#4:4 E4:4 .:4'),
-    harm:'arpfast', bass:'octave', drums:['k.hsk.hsk.hsk.hs','k.hsk.hsk.hskshs'] },
+    hpat:'arpfast', bass:'octave', drums:['k.hsk.hsk.hsk.hs','k.hsk.hsk.hskshs'] },
   /* EL MOLINO DE LA HOJARASCA — 6/8 (12 semicorcheas) en re dórico: la rueda del molino gira
      en el arpegio, el bajo va a trompicones y la melodía huele a hojas secas. */
   molino:{ bpm:122, steps:12, lead:'p25', harm:'p125', leadVol:.04, harmVol:.022, bassVol:.08, drumVol:.032, echo:.16, alt:true, space:.24, arpVol:.007,
     chords:[KDm,KDm,KC,KDm, KBb,KC,KAm,KDm, KDm,KG,KDm,KC, KBb,KA,KDm,KDm],
     leadM:N('D5:3 E5:3 F5:3 A5:3  G5:6 F5:3 E5:3  E5:3 G5:3 C5:6  D5:9 .:3  F5:3 E5:3 D5:3 C5:3  E5:6 G5:6  A5:3 G5:3 E5:3 C5:3  D5:12 '+
             'A4:3 B4:3 D5:3 F5:3  G5:6 D5:6  F5:3 E5:3 D5:3 A4:3  C5:3 D5:3 E5:6  F5:6 D5:6  E5:3 C#5:3 A4:6  D5:3 F5:3 A5:6  D5:12'),
-    harm:'arpfast', bass:'mill', drums:['k..h..s..h..','k..h..s..hhs'] },
+    hpat:'arpfast', bass:'mill', drums:['k..h..s..h..','k..h..s..hhs'] },
   /* DESAFÍO — el post-juego: 4/4 a 162, el motivo en Mi menor, heroico y sin respiro */
   desafio:{ bpm:162, steps:16, lead:'square', harm:'p25', leadVol:.042, harmVol:.022, bassVol:.095, drumVol:.05, echo:0, fat:7, space:.12, adaptive:true, alt:true, arpVol:.009,
     chords:[KEm,KEm,KC,KD, KEm,KC,KD,KB],
     leadM:N('E5:2 F#5:2 G5:2 A5:2 B5:6 A5:2  G5:2 F#5:2 E5:2 D5:2 E5:8  C5:2 D5:2 E5:2 G5:2 C6:6 B5:2  A5:2 G5:2 F#5:2 E5:2 D5:8 '+
             'E5:2 F#5:2 G5:2 A5:2 B5:4 E6:4  D6:4 C6:4 B5:4 A5:4  G5:2 A5:2 B5:4 A5:2 G5:2 F#5:4  D#5:4 F#5:4 B5:8'),
-    harm:'arpfast', bass:'synco', drums:['k.hsk.hsk.hsk.hs','k.hsk.hskkhsksss'] },
+    hpat:'arpfast', bass:'synco', drums:['k.hsk.hsk.hsk.hs','k.hsk.hskkhsksss'] },
   /* EL FINAL — 4/4 a 92, majestuoso: el motivo trepa despacio y culmina en DO6; luego la nana */
   final:{ bpm:92, steps:16, lead:'square', harm:'p25', leadVol:.046, harmVol:.024, bassVol:.08, drumVol:.03, echo:.2, fat:6, space:.32, arpVol:.008,
     chords:[KAm,KF,KC,KG, KAm,KF,KG,KC, KF,KG,KEm,KAm, KF,KG,KC,KC],
     leadM:N('A4:4 B4:4 C5:4 D5:4  E5:12 C5:4  G5:8 E5:8  D5:12 B4:4  A4:4 B4:4 C5:4 D5:4  E5:8 F5:4 A5:4  G5:8 B5:8  C6:16 '+
             'A5:6 G5:2 F5:8  G5:6 F5:2 E5:4 D5:4  E5:8 G5:8  A5:16  F5:4 A5:4 C6:4 A5:4  B5:4 D6:4 B5:4 G5:4  C6:8 G5:4 E5:4  C6:16'),
-    harm:'arp', bass:'walk', drums:['k.......k.......','k.......k...o...'] },
+    hpat:'arp', bass:'walk', drums:['k.......k.......','k.......k...o...'] },
   /* ESTACIÓN — el valle cambia de estación: cuatro compases luminosos, en bucle */
   estacion:{ bpm:120, steps:16, lead:'p25', harm:'p125', leadVol:.042, harmVol:.022, bassVol:.06, drumVol:.02, echo:.18, space:.34, vary:false, arpVol:.01,
     chords:[KC,KD,KC,KG],
     leadM:N('C5:2 E5:2 G5:2 C6:2 E6:4 D6:4  F#5:2 A5:2 D6:2 A5:2 F#5:4 E5:4  G5:2 C6:2 E6:2 G6:2 E6:8  D6:4 B5:4 G5:8'),
-    harm:'arpfast', bass:'drone', drums:['....h...o.......'] },
+    hpat:'arpfast', bass:'drone', drums:['....h...o.......'] },
 };
 /* ---------- compilación: cadenas → eventos por semicorchea ---------- */
 function bassLine(t){ // patrón de bajo por acorde
@@ -346,7 +346,7 @@ function bassLine(t){ // patrón de bajo por acorde
 function harmLine(t){ // arpegios suaves sobre el acorde
   const S=t.steps, out=[];
   t.chords.forEach(c=>{ const [r,th,fi]=c;
-    if(t.harm==='arpfast'){ for(let i=0;i<S/2;i++) out.push([[r,th,fi][i%3]+24,2]); }
+    if(t.hpat==='arpfast'){ for(let i=0;i<S/2;i++) out.push([[r,th,fi][i%3]+24,2]); } // hpat: el dibujo de la armonía; harm es el instrumento (antes se pisaban y sonaba un seno)
     else if(S===12){ out.push([0,4],[th+12,4],[fi+12,4]); }
     else { out.push([0,4],[th+12,4],[0,4],[fi+12,4]); }
   });
