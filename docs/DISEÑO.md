@@ -2,6 +2,29 @@
 
 > Contiene spoilers de toda la aventura.
 
+## La historia
+
+La Tierra plantó dos hermanos: el **Gran Roble**, que trae la primavera y el
+verano, y el **Viento del Norte**, que trae el otoño y el invierno. Entre los dos
+hacen girar el año. El valle cantaba al Roble y olvidó el nombre del Viento;
+dolido, una noche el Viento arrancó al Roble sus **ocho semillas doradas** y el
+año se atascó: el Roble dejó de respirar y cada estación quedó presa en un rincón
+(la primavera bajo tierra con el Topo Real, el verano en la Lágrima que guarda la
+Reina Avispa, el invierno en el pico, con el propio Viento; el otoño, sin verano
+que lo releve, se pudre en las marismas).
+
+El Roble había escondido una **novena semilla**. Raíz, su voz, la plantó en una
+maceta del pueblo; tres primaveras después abre los ojos: es **Sprout**.
+
+- Capítulo 0: las 8 semillas devuelven la respiración al Roble.
+- Capítulos 1–3: con el Roble vivo, cada reliquia (Brasa, Lágrima, Copo) vuelve a
+  su altar y su estación regresa al valle.
+- Final: al Viento no se le vence, se le **dice su nombre**. Raíz revela a Sprout
+  que es la novena semilla, «la que nadie robó», y las cuatro estaciones giran.
+
+El prólogo (siete planos) y la intro del título cuentan esta premisa; las runas,
+el diario de Raíz y las Cartas del Viento la amplían.
+
 ## El mundo
 
 ```

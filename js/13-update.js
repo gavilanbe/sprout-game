@@ -55,13 +55,12 @@ function update(){
   if(state==='title'){ updTitle(); return; }
   if(state==='file'){ updFile(); return; }
   if(state==='cine'){
-    if((tick%5)===0) parts.push({x:164,y:Math.random()*140,vx:-(0.6+Math.random()*1.2),vy:(Math.random()-.5)*.3,life:160,col:[PAL.l,C.canopyL,C.flowerC][(tick/5|0)%3]});
+    cineT++; cineParts();
     if(cineFold>0){ cineFold--;
-      if(cineFold===12){ cinePage++; cineChars=0; noise(.4,.025,false);
-        for(let i=0;i<5;i++) parts.push({x:60+Math.random()*40,y:66+Math.random()*12,vx:(Math.random()-.5)*1.2,vy:-.4-Math.random()*.5,life:26,col:'#dce8a4'}); }
+      if(cineFold===12){ cinePage++; cineChars=0; cineT=0; parts=[]; noise(.4,.025,false); }
       keys.fire=false; updParts(); return; }
-    const pg=CINE[cinePage];
-    if(cineChars<pg.length){ cineChars+=0.4; if((tick&7)===0)SFX.blip(); if(cineChars>=pg.length) SFX.ping(); }
+    const pg=CINE[cinePage].replace(/\s*\n\s*/g,' ');
+    if(cineChars<pg.length){ cineChars+=0.7; if((tick&7)===0)SFX.blip(); if(cineChars>=pg.length) SFX.ping(); }
     if(keys.fire){ keys.fire=false;
       if(cineChars<pg.length) cineChars=pg.length;
       else if(cinePage<CINE.length-1){ cineFold=24; SFX.cut(); }

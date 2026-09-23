@@ -109,7 +109,7 @@ function introSfx(t){ if(!AC) return;
   if(t===TITLE_INTRO) SFX.chime();
 }
 /* franjas de cine y rótulos */
-const INTRO_CAPS=[[8,140,'UNA NOCHE, CAYÓ UNA SEMILLA DEL CIELO'],[INTRO_A+6,INTRO_A+150,'Y EL VALLE DESPERTÓ CON ELLA'],[INTRO_A+170,TITLE_INTRO-8,'PRIMAVERA, VERANO, OTOÑO, INVIERNO']];
+const INTRO_CAPS=[[8,140,'UNA SEMILLA QUE EL VIENTO NO ENCONTRÓ'],[INTRO_A+6,INTRO_A+150,'UN BROTE PARA DESPERTAR AL ROBLE'],[INTRO_A+170,TITLE_INTRO-8,'Y HACER GIRAR LAS ESTACIONES']];
 function drawLetterbox(t,k){ const h=Math.round(14*k); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
   for(const [a,b,s] of INTRO_CAPS) if(t>=a&&t<b){ const al=Math.min(1,(t-a)/14,(b-t)/14); ctx.globalAlpha=al; txtS(s,80,135,'#e8dcc0','center'); ctx.globalAlpha=1; } }
 /* ---------- la escena del título: el Gran Roble en su colina, con la estación del momento ---------- */
@@ -182,4 +182,85 @@ function drawIntro(){ // devuelve true si el plano ocupa toda la pantalla
     if(fade){ ctx.globalAlpha=clamp(fade[1],0,1); ctx.fillStyle=fade[0]; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
     return true; }
   return false;
+}
+/* ============================================================
+   PRÓLOGO DE PARTIDA NUEVA: siete planos a pantalla completa
+   (franjas de cine, texto a máquina abajo, iris entre páginas)
+   ============================================================ */
+let cineT=0;
+const CINE_TOP=8, CINE_BOT=106;
+const OAK_NIGHT=tintTo(OAK_GRAND,'#0c1224');
+const POT_BIG=(()=>{ const c=mkCanvas(40,30), g=c.getContext('2d');
+  blobArt(g,2,2,36,26,[{x:18,y:6,r:17,ry:4},{x:18,y:16,r:14,ry:10}],['#5a2410','#8a3818','#b85a28','#d88040','#f0a868'],{grad:.5,dither:.6});
+  g.fillStyle='#3a2410'; g.fillRect(6,5,28,3); g.fillStyle='#5a3a1c'; g.fillRect(8,5,24,1); return c; })();
+/* un plano de día sin Sprout (reutiliza la escena del título) */
+function dayScene(si){ const S=SEASONS[si], P=PARA[si];
+  ctx.drawImage(P.sky,0,0); glowAt(128,24,22,'rgba(255,250,220,.35)'); ctx.drawImage(disc(7,S.sun),121,17);
+  const drift=Math.round((tick*.12)%320); ctx.drawImage(P.clouds,-drift,20); ctx.drawImage(P.clouds,320-drift,20);
+  ctx.drawImage(P.mount,-40,40); ctx.drawImage(P.hills,-90,52);
+  ctx.drawImage(TITLE_HILL[si],0,78); drawShadow(80,102,26); ctx.drawImage(OAK_SEASON[si],37,20); }
+function nightSky(){ ctx.drawImage(NIGHT,0,-10);
+  for(const [x,y,big,ph] of STARS){ const tw=((tick+ph*7)>>3)%8; if(tw===0) continue; ctx.fillStyle=tw<3?'#8888b8':'#fffbe8'; ctx.fillRect(x,y-10,1,1); } }
+function windSpr(x,y,a,flip){ ctx.save(); ctx.globalAlpha=a; ctx.translate(Math.round(x),Math.round(y)); if(flip) ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-32,-32,64,64); ctx.restore(); }
+function windLines(n,y0,h,sp){ ctx.fillStyle='rgba(223,240,255,.7)'; for(let i=0;i<n;i++){ const x=((tick*sp+i*53)%200)-20, y=y0+(i*37)%h; ctx.fillRect(160-x,y,10+(i%3)*6,1); } }
+function drawCineScene(p,t){
+  switch(p){
+    case 0: { dayScene(1); // los dos hermanos: el Viento juega alrededor del Roble
+      const a=t*.03; windSpr(80+Math.cos(a)*56,34+Math.sin(a)*10,.85,Math.cos(a)<0);
+      ctx.strokeStyle='rgba(240,250,255,.6)'; ctx.lineWidth=1; for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(80,48,36+i*6,a*2+i,a*2+i+1.6); ctx.stroke(); } break; }
+    case 1: { const si=((t/45)|0)%4, w=t%45; // el año gira
+      dayScene((si+3)%4); ctx.save(); ctx.beginPath(); ctx.arc(80,50,Math.min(160,w*6),0,6.283); ctx.clip(); dayScene(si); ctx.restore();
+      if(w<26){ ctx.strokeStyle='rgba(255,255,240,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(80,50,w*6,0,6.283); ctx.stroke(); }
+      txtSO(SEASONS[si].name,80,CINE_TOP+4,'#fffbe8','center'); break; }
+    case 2: { // olvido: a la izquierda todos cantan al Roble; a la derecha, el Viento solo en el pico
+      ctx.save(); ctx.beginPath(); ctx.rect(0,0,80,144); ctx.clip(); dayScene(1);
+      [[PETRA_SPR,12,86],[LUPA_SPR,30,90],[TILO_SPR,48,88]].forEach(([s2,x,y],i)=>{ const b=((tick>>3)+i)&1; ctx.drawImage(s2,x,y-b); if(((tick>>4)+i)%3===0){ ctx.fillStyle='#fff6c0'; ctx.fillRect(x+10,y-8-b,2,2); ctx.fillRect(x+12,y-11-b,1,4); } }); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(80,0,80,144); ctx.clip(); nightSky();
+      ctx.fillStyle='#8a98c0'; ctx.beginPath(); ctx.moveTo(84,106); ctx.lineTo(122,40); ctx.lineTo(164,106); ctx.fill(); ctx.fillStyle='#e8f0ff'; ctx.beginPath(); ctx.moveTo(110,60); ctx.lineTo(122,40); ctx.lineTo(134,60); ctx.lineTo(126,56); ctx.lineTo(120,62); ctx.lineTo(115,57); ctx.fill();
+      windSpr(122,30+Math.sin(t*.05)*2,.85,false); ctx.restore();
+      ctx.fillStyle=PAL.k; ctx.fillRect(79,0,2,144); break; }
+    case 3: { nightSky(); ctx.drawImage(OAK_NIGHT,37,24); // el robo
+      const k=clamp(t/90,0,1); windSpr(150-k*70+Math.sin(t*.2)*3,34+Math.sin(t*.1)*4,.95,true); windLines(10,20,80,4);
+      for(let i=0;i<8;i++){ const a=i/8*6.283+.3, d=clamp((t-30-i*4)/60,0,1), e=d*d; const x=80+Math.cos(a)*(10+e*110), y=52+Math.sin(a)*(6+e*60)-Math.sin(d*3.1)*20;
+        if(d>0&&d<1){ glowAt(x,y,7,'rgba(255,230,140,.5)'); ctx.drawImage(ACORN_GOLD,(x-4)|0,(y-4)|0); } else if(d===0){ ctx.drawImage(ACORN_GOLD,(80+Math.cos(a)*18-4)|0,(48+Math.sin(a)*10-4)|0); } }
+      break; }
+    case 4: { dayScene(1); const k=clamp(t/150,0,1); // el valle se apaga
+      ctx.save(); ctx.globalCompositeOperation='saturation'; ctx.globalAlpha=k*.85; ctx.fillStyle='#808080'; ctx.fillRect(0,0,160,144); ctx.restore();
+      ctx.globalAlpha=k*.3; ctx.fillStyle='#6a6040'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=k*.45; ctx.drawImage(OAK_GRAND_DARK,37,20); ctx.globalAlpha=1; break; }
+    case 5: { ctx.fillStyle='#06060e'; ctx.fillRect(0,0,160,144); // la novena semilla
+      const k=clamp(t/110,0,1), e=1-(1-k)*(1-k), y=20+e*52; drawRaysAt(80,y,.6+Math.sin(t*.1)*.1);
+      glowAt(80,y,26,'rgba(255,230,140,.35)'); ctx.drawImage(ACORN_GOLD,0,0,8,8,72,(y-8)|0,16,16);
+      ctx.drawImage(POT_BIG,60,80); if(k>=1&&(t&15)===0) sparkle(70+Math.random()*20,74,'#fff6c0'); break; }
+    case 6: { // la maceta, de cerca, y unos ojos que se abren
+      ctx.fillStyle='#b88450'; ctx.fillRect(0,0,160,144); for(let y=0;y<144;y+=6){ ctx.fillStyle='#a07040'; ctx.fillRect(0,y,160,1); ctx.fillStyle='#c89458'; ctx.fillRect(0,y+1,160,1); }
+      ctx.fillStyle='#6a4a2a'; ctx.fillRect(18,16,36,40); ctx.fillStyle='#a8d8f8'; ctx.fillRect(21,19,30,34); ctx.fillStyle='#ffffff'; ctx.fillRect(23,21,8,4); ctx.fillStyle='#6a4a2a'; ctx.fillRect(35,19,2,34); ctx.fillRect(21,35,30,2);
+      ctx.save(); ctx.globalAlpha=.22; ctx.fillStyle='#fff6c0'; ctx.beginPath(); ctx.moveTo(21,19); ctx.lineTo(51,19); ctx.lineTo(120,106); ctx.lineTo(70,106); ctx.fill(); ctx.restore();
+      const awake=t>70, head=awake?H_WAKE:H_SLEEP; ctx.drawImage(head,0,2,16,14,56,34+((tick>>5)&1),48,42); ctx.drawImage(POT_BIG,0,0,40,30,50,70,60,45);
+      if(!awake&&(t%40)<30){ txtO('z',100,40-((t%40)>>2),'#e8f0ff'); if((t%40)>12) txtO('z',106,30-((t%40)>>2),'#e8f0ff'); }
+      if(awake&&t<110){ txtOL('!',80,20+Math.round(Math.max(0,10-(t-70))),'#ffe070','center'); } break; }
+  }
+}
+function drawRaysAt(cx,cy,k){ ctx.save(); ctx.translate(cx,cy); ctx.rotate(tick*.01); for(let i=0;i<12;i++){ const a=i/12*6.283; ctx.fillStyle=i&1?'rgba(255,240,180,.16)':'rgba(255,220,120,.1)'; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a-.12)*90*k,Math.sin(a-.12)*90*k); ctx.lineTo(Math.cos(a+.12)*90*k,Math.sin(a+.12)*90*k); ctx.fill(); } ctx.restore(); }
+function drawPrologue(){
+  const p=Math.min(cinePage,CINE.length-1);
+  drawCineScene(p,cineT); drawParts();
+  // franjas de cine con el texto a máquina
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,160,CINE_TOP); ctx.fillRect(0,CINE_BOT,160,144-CINE_BOT); ctx.fillStyle='#2a2418'; ctx.fillRect(0,CINE_BOT,160,1);
+  const lines=wrapPx(CINE[p].replace(/\s*\n\s*/g,' '),148); let budget=cineChars|0;
+  lines.forEach((ln,i)=>{ if(budget<=0) return; const s2=ln.slice(0,budget); budget-=ln.length+1; const y=CINE_BOT+6+i*11, x=80-(textW(ln)>>1);
+    drawRichLine(s2,x,y,s2.length,{text:'#f4ead0',key:'#ffd060',shadow:'#3a2c18'},false); });
+  for(let i=0;i<CINE.length;i++){ ctx.fillStyle=i===p?'#ffd060':i<p?'#8a7a50':'#3a3428'; ctx.fillRect(160-(CINE.length-i)*5,3,3,2); }
+  const full=CINE[p].replace(/\s*\n\s*/g,' ');
+  if(cineFold===0&&(cineChars|0)>=full.length){ const b=Math.abs(Math.sin(tick*.15))*2; ctx.drawImage(NEXT_SPR,150,(136+b)|0); }
+  // iris entre páginas
+  if(cineFold>0){ const c=cineFold>12?(24-cineFold)/12:cineFold/12, r=(1-c)*110;
+    const R2=Math.max(0,r)*Math.max(0,r); ctx.fillStyle='#000'; for(let y=0;y<144;y++){ const dy=y-56, w=dy*dy<R2?Math.round(Math.sqrt(R2-dy*dy)):0; if(!w){ ctx.fillRect(0,y,160,1); continue; } ctx.fillRect(0,y,Math.max(0,80-w),1); ctx.fillRect(80+w,y,Math.max(0,80-w),1); } }
+  if(cinePage===0&&cineT<24){ ctx.globalAlpha=1-cineT/24; ctx.fillStyle='#000'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
+}
+function cineParts(){
+  const p=cinePage;
+  if(p===0&&(tick%9)===0) parts.push({k:'leafF',x:170,y:20+Math.random()*60,vx:-1.2,vy:.2,life:160,max:160,sway:Math.random()*6,col:(tick&16)?'#78d838':'#a4e070',nog:true});
+  if(p===2&&(tick&3)===0) parts.push({k:'flake',x:80+Math.random()*80,y:-4,vx:-.2,vy:.6,life:140,max:140,r:(tick&8)?1:0,col:'#ffffff',nog:true});
+  if(p===4&&(tick%7)===0) parts.push({k:'leafF',x:Math.random()*160,y:-4,vx:.2,vy:.45,life:220,max:220,sway:Math.random()*6,col:(tick&8)?'#a89048':'#8a7a48',nog:true});
+  if(p===6&&(tick%13)===0) parts.push({k:'mote',x:30+Math.random()*60,y:30+Math.random()*60,vx:.05,vy:-.05,life:120,max:120,sway:Math.random()*6,col:'#fff6c0',nog:true});
 }

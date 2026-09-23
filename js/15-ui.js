@@ -291,19 +291,7 @@ function drawOptions(){
   txtS('RANURA '+(curSlot+1)+' · '+visited.size+' LUGARES',80,102,MENU.dim,'center'); txtS('GUARDADO AUTOMÁTICO',80,111,MENU.dim,'center'); txtS('AL CAMBIAR DE PANTALLA',80,118,MENU.dim,'center');
 }
 /* ---------- CINEMÁTICA, TÍTULO, ARCHIVOS, ENCENDIDO ---------- */
-function drawCine(){
-  ctx.fillStyle='#060c07'; ctx.fillRect(0,0,VW,VH);
-  for(const p of parts){ ctx.fillStyle=p.col; ctx.fillRect(p.x|0,p.y|0,2,1); }
-  const k=cineFold>0?(cineFold>12?(24-cineFold)/12:cineFold/12):0, folding=cineFold>12, cx=80, cy=72;
-  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect((cx-73*(1-k*.5))|0,128,(146*(1-k*.5))|0,3);
-  ctx.save(); ctx.translate(cx,cy); ctx.rotate(0.10*k*(folding?1:-1));
-  const syy=Math.max(0.06,1-0.94*smooth(k)); ctx.scale(1-0.05*k,syy);
-  if(cineFold===0) ctx.rotate(Math.sin(tick*.02)*0.012);
-  ctx.drawImage(LEAF_PAGE,-(LEAF_PAGE.width>>1),-(LEAF_PAGE.height>>1));
-  if(k<0.9){ ctx.globalAlpha=1-k*.7; drawCinePanel(cinePage,-42,-46); const lines=CINE[cinePage].slice(0,cineChars|0).split('\n'); lines.forEach((ln,i)=>{ drawText(ctx,ln,0,3+i*11,'#f4e8b8','center'); drawText(ctx,ln,0,2+i*11,'#4a3a14','center'); }); ctx.globalAlpha=1; }
-  ctx.restore();
-  if(cineFold===0&&(cineChars|0)>=CINE[cinePage].length&&(tick&31)<20) txt('Z',80,130,'#9ed86a','center');
-}
+function drawCine(){ drawPrologue(); }
 /* viñetas del prólogo: 84×40 dibujadas con los sprites del juego */
 function drawCinePanel(page,x,y){
   ctx.save(); ctx.translate(x,y); ctx.beginPath(); ctx.rect(0,0,84,40); ctx.clip();

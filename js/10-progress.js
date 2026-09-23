@@ -53,7 +53,7 @@ function newGame(){
   respawnPoint={...REGION_ANCHOR.valle,reg:'valle'};
   player.maxHp=6; player.hp=6; player.x=44; player.y=26; player.dir=0; inBed=true;
   loadScreen(9,9); setTrack('titulo');
-  introDone=true; state='cine'; cinePage=0; cineChars=0; cineFold=0; parts=[]; noise(.6,.025,false);
+  introDone=true; state='cine'; cinePage=0; cineChars=0; cineFold=0; cineT=0; parts=[]; noise(.6,.025,false);
 }
 /* ---------- RECUERDOS: todo lo leído, en orden de descubrimiento ---------- */
 function loreList(){
