@@ -64,10 +64,14 @@ HTML, un `<canvas>` y JavaScript en módulos que se cargan en orden.
   Z con la Hoja y su nivel, ranura X con el objeto (destella al usarlo),
   contadores que rebotan, burbuja «Z» sobre lo que puedes usar y cartel con el
   nombre de cada lugar al descubrirlo.
-- Zurrón con cinco pestañas (objetos y amuletos con el arte a doble tamaño, mapa
-  con **miniaturas reales** de las pantallas visitadas, el valle, recuerdos y
-  ajustes), guardado en 3 ranuras con capítulo y tiempo, mandos táctiles,
-  gamepad y PWA.
+- Un **zurrón de cuero** de verdad: al abrirlo el mundo se queda quieto y
+  apagado detrás, la bolsa cae con un golpe seco y polvo, salta la hebilla, se
+  levanta la solapa y todo salta a su sitio; al cerrarlo sale volando mientras
+  el juego ya sigue. Cinco pestañas (objetos; amuletos que vuelan a su engarce;
+  el **equipo** con el nivel de la Hoja, el escudo, el remolino y el zurrón de
+  bellotas; mapa con **miniaturas reales**; el valle; recuerdos y ajustes),
+  placa de latón que gira, cursor que planea y ficha de pergamino. Guardado en
+  3 ranuras con capítulo y tiempo, mandos táctiles, gamepad y PWA.
 
 ## 🎨 Arte
 
@@ -142,7 +146,8 @@ a visitarlos, tendrán algo que decirte.
 | `M` | Música on/off |
 
 En el zurrón, `Z` sobre un objeto lo equipa en `X`; `Z` sobre un amuleto lo pone o
-lo quita (dos ranuras). En móvil aparecen mandos táctiles. En mando: A = Z, B = X,
+lo quita (dos ranuras); la fila de EQUIPO enseña lo que ya llevas siempre
+puesto y, con `?`, lo que aún te falta. En móvil aparecen mandos táctiles. En mando: A = Z, B = X,
 Start = zurrón.
 
 ## 🛠 Desarrollo

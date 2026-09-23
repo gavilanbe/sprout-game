@@ -245,172 +245,7 @@ function drawShop(){
   const it=L[shopSel]; wrapPx((it.off&&it.dOff)?it.dOff:it.d,128).slice(0,2).forEach((ln,i)=>txt(ln,16,96+i*9,'#fff2d8'));
   txtS('Z COMPRAR · X SALIR',80,116,(tick&63)<44?(dark?'#5a3418':F.border):F.inner,'center');
 }
-/* ---------- EL ZURRÓN ---------- */
-const PAUSE_TABS=[['zurron','ZURRÓN'],['mapa','MAPA'],['valle','EL VALLE'],['recuerdos','RECUERDOS'],['ajustes','AJUSTES']];
-const MENU={bg:'#0b1a12',bg2:'#0e2016',slot:'#122a1c',slotD:'#081610',slotL:'#2c5238',line:'#2a4a34',label:'#8fc39a',dim:'#5d8a6b',gold:'#f0b848'};
-function slot(x,y,w,h,on){ // hueco hundido del menú
-  roundBox(x,y,w,h,PAL.k); ctx.fillStyle=MENU.slot; ctx.fillRect(x+1,y+1,w-2,h-2);
-  ctx.fillStyle=MENU.slotD; ctx.fillRect(x+1,y+1,w-2,1); ctx.fillStyle=MENU.slotL; ctx.fillRect(x+1,y+h-2,w-2,1);
-  if(on){ ctx.strokeStyle=MENU.gold; ctx.lineWidth=1; ctx.strokeRect(x+.5,y+.5,w-1,h-1); } }
-function label(s,x,y){ txtS(s,x,y,MENU.label); ctx.fillStyle=MENU.line; ctx.fillRect(x+textW(s,FONT_S)+3,y+2,Math.max(0,150-(x+textW(s,FONT_S)+3)),1); }
-function pauseFrame(){
-  ctx.fillStyle=MENU.bg; ctx.fillRect(0,0,160,144);
-  ctx.fillStyle=MENU.bg2; for(let y=0;y<144;y+=6) for(let x=((y/6)&1)*6;x<160;x+=12){ ctx.fillRect(x+2,y+1,2,1); ctx.fillRect(x+1,y+2,1,1); }
-  const vg=ctx.createRadialGradient(80,72,40,80,72,110); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.45)'); ctx.fillStyle=vg; ctx.fillRect(0,0,160,144);
-  // pestañas con icono; la activa se levanta y muestra su nombre
-  PAUSE_TABS.forEach(([ic,name],i)=>{ const on=i===pausePage, x=4+i*17, y=on?2:4;
-    roundBox(x,y,15,15,PAL.k); ctx.fillStyle=on?'#2a5a38':'#12281a'; ctx.fillRect(x+1,y+1,13,13);
-    ctx.fillStyle=on?'#4a8a58':'#1c3a26'; ctx.fillRect(x+1,y+1,13,1);
-    if(on){ ctx.strokeStyle=MENU.gold; ctx.strokeRect(x+.5,y+.5,14,14); }
-    ctx.save(); if(!on) ctx.globalAlpha=.6; ctx.drawImage(TAB_ICONS[ic],x+3,y+3); ctx.restore(); });
-  roundBox(91,3,66,15,PAL.k); ctx.fillStyle='#1c3a26'; ctx.fillRect(92,4,64,13); ctx.fillStyle='#2a5a38'; ctx.fillRect(92,4,64,1);
-  txtO(pausePage===4&&optRemap?'CONTROLES':PAUSE_TABS[pausePage][1],124,7,MENU.gold,'center','#081610');
-  ctx.fillStyle=MENU.line; ctx.fillRect(4,20,152,1);
-}
-function selFrame(x,y,w,h){ // marco de selección dorado que respira, con esquinas
-  const p=(tick&15)<8?0:1; ctx.strokeStyle=MENU.gold; ctx.lineWidth=1; ctx.strokeRect(x-p-.5,y-p-.5,w+p*2+1,h+p*2+1);
-  ctx.fillStyle='#fff0b0'; for(const [cx,cy] of [[x-p-2,y-p-2],[x+w+p,y-p-2],[x-p-2,y+h+p],[x+w+p,y+h+p]]) ctx.fillRect(cx,cy,2,2); }
-function drawPause(){
-  pauseFrame();
-  ctx.save(); if(tabSlide>0){ ctx.globalAlpha=1-tabSlide/8; ctx.translate(tabSlide*3,0); }
-  if(pausePage===0) drawBag(); else if(pausePage===1) drawMap(); else if(pausePage===2) drawValle(); else if(pausePage===3) drawLore(); else drawOptions();
-  ctx.restore();
-  ctx.fillStyle=MENU.line; ctx.fillRect(4,134,152,1);
-  const hint=pausePage===0?'Z EQUIPAR · X PESTAÑA':pausePage===3?'Z LEER · X PESTAÑA':pausePage===4?(optRemap?'Z ASIGNAR · X VOLVER':'←→ AJUSTAR · Z CAMBIAR · X PESTAÑA'):'X PESTAÑA · ENTER SALIR';
-  txtS(hint,80,137,MENU.dim,'center');
-}
-function drawBag(){
-  const items=ownedX(), am=[...amulets];
-  label('OBJETOS · X',6,24); ctx.drawImage(bladeSpr(),0,0,16,7,122,22,16,7); txtS('NV'+bladeLvl,152,24,MENU.gold,'right');
-  const nS=Math.max(5,items.length), sp=nS>5?25:30, sw=sp-4; // con el molinillo, seis huecos
-  for(let i=0;i<nS;i++){ const x=6+i*sp, y=31, it=items[i], eq=it&&xItem===it; slot(x,y,sw,22,eq);
-    if(it){ const bob=pauseSel===i?Math.round(Math.sin(tick*.2)):0; ctx.drawImage(X_ICON[it],x+((sw-16)>>1),y+3+bob); if(eq) badge('X',x+sw-8,y+14); if(it==='bomb') txtSO(bombAmmo+'/'+bombMax,x+2,y+15,'#fff6d8','left','#081610'); }
-    if(pauseSel===i&&i<items.length) selFrame(x,y,sw,22); }
-  label('AMULETOS',6,59); for(let r=0;r<2;r++){ const id=equipped[r]; slot(118+r*16,55,14,13,!!id); if(id) ctx.drawImage(AMULET_SPR[id],0,0,12,12,119+r*16,56,12,11); }
-  for(let i=0;i<10;i++){ const x=6+(i%5)*30, y=70+((i/5)|0)*17, id=am[i], eq=id&&equipped.includes(id); slot(x,y,26,15,eq);
-    if(id){ ctx.drawImage(AMULET_SPR[id],x+2,y+1); if(eq) badge('E',x+18,y+7); }
-    if(pauseSel===items.length+i&&i<am.length) selFrame(x,y,26,15); }
-  roundBox(6,106,148,26,PAL.k); ctx.fillStyle='#16301f'; ctx.fillRect(7,107,146,24); ctx.fillStyle='#1f4029'; ctx.fillRect(7,107,146,1);
-  slot(8,108,26,22,false);
-  let name='',desc='',art=null;
-  if(pauseSel<items.length){ name=X_NAME[items[pauseSel]]; art=X_ICON[items[pauseSel]]; desc={bomb:'Planta una bomba. Rompe rocas y muros.',hook:'Cruza agua y se agarra a postes.',boomer:'Vuela, aturde y trae cosas.',lantern:'Enciende antorchas. Alumbra cuevas.',feather:'Salta agujeros y vacíos.',molinillo:'Sopla: barre hojarasca y nieve, gira molinetes.'}[items[pauseSel]]; }
-  else if(am[pauseSel-items.length]){ const id=am[pauseSel-items.length], a=AMULETS[id]; name=a.name; art=AMULET_SPR[id]; desc=a.desc.replace(/\n/g,' ')+(equipped.includes(id)?' (equipado)':''); }
-  else { name='ZURRÓN VACÍO'; desc='Explora el valle: habla, corta, busca.'; }
-  if(art){ const bob=Math.round(Math.sin(tick*.1)); const k=art.width>12?1:1.5; ctx.drawImage(art,0,0,art.width,art.height,(21-art.width*k/2)|0,(119-art.height*k/2+bob)|0,(art.width*k)|0,(art.height*k)|0); }
-  txtO(name,38,109,MENU.gold,'left','#081610');
-  wrapPx(desc,114,FONT_S).slice(0,2).forEach((ln,i)=>txtS(ln,38,119+i*7,'#b8dcc0'));
-}
-function drawMap(){
-  const dk=dungeonOf(sx,sy); if(dk){ drawDungeonMap(dk); return; }
-  const cw=18,chh=14,ox=80-(5*cw)/2-1,oy=24;
-  roundBox(ox-4,oy-4,5*cw+8,7*chh+8,PAL.k); ctx.fillStyle='#0e2016'; ctx.fillRect(ox-3,oy-3,5*cw+6,7*chh+6);
-  ctx.strokeStyle=MENU.line; ctx.strokeRect(ox-2.5,oy-2.5,5*cw+5,7*chh+5);
-  for(let y=-3;y<=3;y++) for(let x=0;x<=4;x++){ const key=x+','+y; const px=ox+x*cw, py=oy+(y+3)*chh;
-    if(!MAPS[key]) continue;
-    const seen=visited.has(key), here=sx===x&&sy===y;
-    if(seen){ const th=ensureThumb(key); if(th) ctx.drawImage(th,px,py); else { ctx.fillStyle='#3a7a40'; ctx.fillRect(px,py,cw,chh); }
-      ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillRect(px,py+chh-1,cw,1); ctx.fillRect(px+cw-1,py,1,chh);
-      if(key==='1,1') ctx.drawImage(OAK,0,0,OAK.width,OAK.height,px+4,py+1,10,11);
-      if(key==='2,-1'||key==='1,3'||key==='1,-2'||key==='0,0'||key==='4,3'){ const done=(key==='2,-1'&&bossDone)||(key==='1,3'&&boss2Done)||(key==='1,-2'&&boss3Done)||(key==='4,3'&&boss4Done);
-        roundBox(px+5,py+3,8,8,PAL.k); ctx.fillStyle='#3a3448'; ctx.fillRect(px+6,py+4,6,6); ctx.fillStyle=done?'#a8ec78':((tick&31)<20?'#ff5050':'#a82020'); ctx.fillRect(px+8,py+6,2,2); }
-      if(key==='0,1'){ ctx.fillStyle='#d84838'; ctx.fillRect(px+3,py+4,4,3); ctx.fillRect(px+10,py+4,4,3); }
-      if(key==='1,-3'&&boss3Done) ctx.drawImage(FLAKE_SPR,0,0,16,16,px+5,py+2,9,9); }
-    else { ctx.fillStyle='#132419'; ctx.fillRect(px,py,cw,chh); ctx.fillStyle='#1d3324'; ctx.fillRect(px+8,py+6,2,2); }
-    if(here){ selFrame(px,py,cw,chh); const b=Math.round(Math.abs(Math.sin(tick*.15))*2); ctx.drawImage(P_SPRITES[0][0],0,0,16,16,px+4,py+1-b,11,11); }
-  }
-  const where=PLACE_NAMES[sx+','+sy]||'?'; txtO(where,80,126,'#dff0d0','center','#081610');
-}
-/* el mapa de la mazmorra: salas pisadas; con el MAPA, todas; con la BRÚJULA, el guardián y los cofres */
-function dungeonRooms(dk){ return Object.keys(MAPS).filter(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dk; }); }
-function roomsJoin(a,b,dx,dy){ const A=MAPS[a], B=MAPS[b], open=c=>!SOLID.has(c)||c===')'||c==='Ł'||c==='C'||c==='=';
-  if(dx){ for(let i=0;i<8;i++) if(open(A[i][dx>0?9:0])&&open(B[i][dx>0?0:9])) return true; } else { for(let i=0;i<10;i++) if(open(A[dy>0?7:0][i])&&open(B[dy>0?0:7][i])) return true; } return false; }
-function drawDungeonMap(dk){
-  const rooms=dungeonRooms(dk), xs=rooms.map(k=>+k.split(',')[0]), ys=rooms.map(k=>+k.split(',')[1]);
-  const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys), cols=x1-x0+1, rows=y1-y0+1;
-  const cw=24, ch=17, gap=4, W=cols*cw+(cols-1)*gap, H=rows*ch+(rows-1)*gap, ox=80-(W>>1), oy=26+Math.max(0,(90-H)>>1);
-  const hasMap=dmaps.has(dk), hasComp=dcomp.has(dk);
-  txtO(DUNGEON_NAMES[dk],80,23-(H>84?2:0),MENU.gold,'center','#081610');
-  const pos=k=>{ const [x,y]=k.split(',').map(Number); return [ox+(x-x0)*(cw+gap),oy+(y-y0)*(ch+gap)]; };
-  // pasillos entre salas conocidas
-  for(const k of rooms){ const [x,y]=k.split(',').map(Number), [px,py]=pos(k);
-    for(const [dx,dy] of [[1,0],[0,1]]){ const n=(x+dx)+','+(y+dy); if(!MAPS[n]||dungeonOf(x+dx,y+dy)!==dk) continue;
-      const known=(visited.has(k)||hasMap)&&(visited.has(n)||hasMap); if(!known||!roomsJoin(k,n,dx,dy)) continue;
-      ctx.fillStyle=visited.has(k)&&visited.has(n)?'#8fc39a':'#3e6a4a'; if(dx) ctx.fillRect(px+cw,py+(ch>>1)-1,gap,3); else ctx.fillRect(px+(cw>>1)-1,py+ch,3,gap); } }
-  for(const k of rooms){ const [px,py]=pos(k), seen=visited.has(k), here=k===sx+','+sy;
-    if(!seen&&!hasMap) continue;
-    roundBox(px,py,cw,ch,PAL.k);
-    if(seen){ ctx.fillStyle=here?'#4a8a58':'#2e5a3a'; ctx.fillRect(px+1,py+1,cw-2,ch-2); ctx.fillStyle=here?'#6aaa70':'#3e7048'; ctx.fillRect(px+1,py+1,cw-2,1); }
-    else { ctx.fillStyle='#15281c'; ctx.fillRect(px+1,py+1,cw-2,ch-2); ctx.fillStyle='#2a4a34'; for(let i=px+2;i<px+cw-2;i+=3) ctx.fillRect(i,py+(ch>>1),1,1); }
-    if(hasComp){ // el guardián y los cofres que faltan
-      if(DUNGEON_BOSS[dk]===k){ const done=(dk==='cueva'&&bossDone)||(dk==='tronco'&&boss2Done)||(dk==='templo'&&boss3Done); const bx=px+(cw>>1)-3, by=py+(ch>>1)-3;
-        ctx.fillStyle=PAL.k; ctx.fillRect(bx-1,by-1,8,8); ctx.fillStyle=done?'#a8ec78':((tick&31)<20?'#ff5050':'#a82020'); ctx.fillRect(bx,by,6,5); ctx.fillStyle=PAL.k; ctx.fillRect(bx+1,by+2,1,1); ctx.fillRect(bx+4,by+2,1,1); ctx.fillRect(bx+2,by+5,2,1); }
-      const M=MAPS[k]; let n=0; for(let yy=0;yy<SH;yy++) for(let xx=0;xx<SW;xx++){ const c=M[yy][xx], id='CH'+k+':'+xx+','+yy; if((c==='¤'||CHESTS[k+':'+xx+','+yy])&&!opened.has(id)){ ctx.fillStyle=(tick&15)<9?'#ffd060':'#b08020'; ctx.fillRect(px+3+n*4,py+ch-5,2,2); n++; } } }
-    if(here&&(tick&15)<11) ctx.drawImage(P_SPRITES[0][0],0,0,16,16,px+(cw>>1)-5,py+2,10,10); }
-  // lo que llevas de esta mazmorra
-  const by=128; ctx.save(); if(!hasMap) ctx.globalAlpha=.25; ctx.drawImage(MAP_SPR,0,0,16,16,8,by-3,11,11); ctx.restore();
-  ctx.save(); if(!hasComp) ctx.globalAlpha=.25; ctx.drawImage(COMPASS_SPR,0,0,16,16,22,by-3,11,11); ctx.restore();
-  ctx.drawImage(KEY_SPR,40,by-2); txtS('×'+(dungeonKeys[dk]||0),49,by,'#dff0d0');
-  ctx.save(); if(!bigKeys[dk]) ctx.globalAlpha=.25; ctx.drawImage(BIGKEY_SPR,0,0,12,10,64,by-2,12,10); ctx.restore();
-  const where=PLACE_NAMES[sx+','+sy]||'?'; txtS(where,154,by,'#9ec7aa','right');
-}
-function drawValle(){
-  txtO(CHAPTER_NAMES[chapterIdx()],80,25,MENU.gold,'center','#081610');
-  const X=88, row=(t,y)=>{ txtS(t,8,y+2,MENU.label); ctx.fillStyle=MENU.line; ctx.fillRect(8,y+9,144,1); };
-  row('SEMILLAS',33); for(let i=0;i<8;i++){ const on=won||i<seeds; ctx.save(); if(!on) ctx.globalAlpha=.22; ctx.drawImage(ACORN_GOLD,X+i*8,32+(on&&((tick>>3)%8)===i?-1:0)); ctx.restore(); }
-  row('ESTACIONES',43); [[EMBER_SPR,thawed],[TEAR_SPR,summered],[AMBER_SPR,autumned],[FLAKE_SPR,cycled]].forEach(([sp,on],i)=>{ const x=X+i*14; ctx.save(); if(!on) ctx.globalAlpha=.22; ctx.drawImage(sp,0,0,16,16,x,42,9,9); ctx.restore(); });
-  row('VIGOR',53); ctx.drawImage(HEART_FULL,X,53); txt(''+(player.maxHp/2),X+10,53);
-  for(let i=0;i<4;i++){ ctx.fillStyle=i<pieces?'#f04850':'#2a3a2e'; ctx.beginPath(); ctx.moveTo(X+34,57); ctx.arc(X+34,57,4,i*Math.PI/2-Math.PI/2,(i+1)*Math.PI/2-Math.PI/2); ctx.fill(); }
-  ctx.strokeStyle=PAL.k; ctx.beginPath(); ctx.arc(X+34,57,4,0,6.283); ctx.stroke(); txtS(pieces+'/4',X+42,55,MENU.label);
-  row('AMULETOS',63); txt(amulets.size+'/'+Object.keys(AMULETS).length,X,63); row('CARTAS',73); ctx.drawImage(LETTER_SPR,0,0,LETTER_SPR.width,LETTER_SPR.height,X,74,10,7); txt(lettersCount()+'/5',X+13,73);
-  row('SECRETOS',83); txt(secretsFound()+'/'+SECRETS.length,X,83);
-  row('TRUEQUE',93); if(tradeStep>0&&tradeStep<8){ ctx.drawImage(TRADE[tradeStep].spr,56,93); txtS(TRADE[tradeStep].name,67,95,'#fff6d0'); } else if(tradeStep>=8){ ctx.drawImage(AMULET_SPR.trebol,0,0,12,12,56,92,10,10); txtS('COMPLETO',68,95,MENU.gold); } else txtS('—',X,95,MENU.dim);
-  row('PESCA',103); for(let i=0;i<4;i++) fishIcon(i,X+i*13,105,!!(fishDex&(1<<i)));
-  row('TIEMPO',113); txt(timeStr(playTime),X,113); row('MARCHITADO',123); txt(wilts+(wilts===1?' vez':' veces'),X,123);
-}
-function drawLore(){
-  const L=loreList();
-  if(!L.length){ txt('Aún no has leído nada.',80,54,MENU.dim,'center'); txt('Busca diarios, runas,',80,66,MENU.dim,'center'); txt('libros y cartas.',80,78,MENU.dim,'center'); return; }
-  const rows=9, top=Math.max(0,Math.min(loreSel-4,L.length-rows));
-  txtS((loreSel+1)+'/'+L.length,154,24,MENU.dim,'right');
-  for(let i=0;i<rows;i++){ const e=L[top+i]; if(!e) break; const y=32+i*11, sel=top+i===loreSel;
-    if(sel){ ctx.fillStyle='#1b3a26'; ctx.fillRect(6,y-2,148,11); selFrame(6,y-2,148,11); ctx.drawImage(CURSOR_SPR,7+((tick&15)<8?0:1),y); }
-    const ic=e.kind==='diario'?DIARY_SPR:e.kind==='carta'?LETTER_SPR:e.kind==='runa'?runeTile(0):bookshelfTile();
-    if(e.kind==='runa'||e.kind==='libro') ctx.drawImage(ic,0,0,16,16,17,y-1,9,9); else ctx.drawImage(ic,0,0,ic.width,ic.height,17,y,8,7);
-    let t=e.title; while(textW(t)>122&&t.length>3) t=t.slice(0,-2)+'…';
-    txt(t,29,y,sel?'#fffbe8':'#9ec7aa'); }
-}
-function drawOptions(){
-  if(optRemap){ drawRemap(); return; }
-  OPT_ROWS.forEach((id,i)=>{ const y=26+i*11, sel=i===optSel;
-    slot(6,y-3,148,11,false);
-    if(sel){ ctx.fillStyle='#1f4029'; ctx.fillRect(7,y-2,146,9); ctx.drawImage(CURSOR_SPR,8+((tick&15)<8?0:1),y-1); }
-    txt(OPT_NAMES[id],18,y-1,sel?'#fffbe8':'#9ec7aa');
-    if(id==='musica'||id==='efectos') drawSlider(99,y-2,id==='musica'?(opts.musVol??7):(opts.sfxVol??8),id==='musica'&&!musicOn,sel);
-    else { const v=id==='texto'?(opts.textSpeed===2?'RÁPIDO':'NORMAL'):id==='temblor'?(opts.shake?'SÍ':'NO'):id==='dificultad'?DIFF_NAMES[opts.diff??1]:id==='vibracion'?(opts.vib===0?'NO':'SÍ'):id==='controles'?'>':'';
-      if(v) txtO(v,150,y-1,id==='dificultad'?['#8ad860',MENU.gold,'#ff7050'][opts.diff??1]:MENU.gold,'right','#081610'); }
-    if(sel) selFrame(6,y-3,148,11); });
-  txtS('GUARDADO AUTOMÁTICO',80,117,MENU.dim,'center'); txtS('RANURA '+(curSlot+1)+' · '+visited.size+' LUGARES',80,124,MENU.dim,'center');
-}
-/* barra de volumen de 10 muescas que crecen, verde → oro → rojo */
-function drawSlider(x,y,v,muted,sel){
-  for(let i=0;i<10;i++){ const h=3+Math.round(i*.5), yy=y+8-h, on=i<v;
-    ctx.fillStyle=PAL.k; ctx.fillRect(x+i*5-1,yy-1,5,h+2);
-    ctx.fillStyle=muted?(on?'#4a5a4e':'#12281a'):on?(i<6?'#8ad860':i<8?'#f0b848':'#ff7050'):'#12281a'; ctx.fillRect(x+i*5,yy,3,h);
-    if(on&&!muted){ ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(x+i*5,yy,3,1); } }
-  if(muted) txtSO('MUDA',x+25,y+1,'#ff9080','center','#081610');
-}
-/* la pantalla de controles: cada acción con su tecla; Z y luego la tecla nueva */
-function drawRemap(){ // el título de la pestaña pasa a decir CONTROLES; filas con el mismo paso que AJUSTES
-  const K=keysNow(), n=ACTIONS.length, rowY=i=>i<n?26+i*11:28+i*11;
-  const row=(label,value,i,warn)=>{ const y=rowY(i), sel=remapSel===i;
-    slot(6,y-3,148,11,false);
-    if(sel){ ctx.fillStyle='#1f4029'; ctx.fillRect(7,y-2,146,9); ctx.drawImage(CURSOR_SPR,8+((tick&15)<8?0:1),y-1); }
-    txt(label,18,y-1,sel?'#fffbe8':'#9ec7aa'); if(value) txtO(value,150,y-1,warn?'#ffd060':MENU.gold,'right','#081610'); };
-  ACTIONS.forEach((a,i)=>{ const waiting=remapWait===a; row(ACTION_NAMES[a],waiting?((tick&31)<22?'?':''):keyName(K[a]),i,waiting); });
-  row('Restaurar','',n); row('Volver','',n+1);
-  selFrame(6,rowY(remapSel)-3,148,11);
-  if(remapWait&&(tick&31)<24) txtSO('PULSA LA TECLA NUEVA · ESC CANCELA',80,127,'#ffd060','center','#081610');
-}
+/* ---------- EL ZURRÓN: vive en 15b-zurron.js ---------- */
 /* ---------- CINEMÁTICA, TÍTULO, ARCHIVOS, ENCENDIDO ---------- */
 function drawCine(){ drawPrologue(); }
 /* viñetas del prólogo: 84×40 dibujadas con los sprites del juego */
@@ -621,10 +456,11 @@ function draw(){
     ctx.drawImage(trans.a,ox,oy); ctx.drawImage(trans.b,ox+trans.dx*160,oy+trans.dy*128);
     const s=P_SPRITES[player.dir][(tick>>3)&1], pxFrom=player.x+trans.dx*160, pyFrom=player.y+trans.dy*128;
     ctx.drawImage(s,(pxFrom+(player.x-pxFrom)*e)|0,(pyFrom+(player.y-pyFrom)*e)|0);
-    drawUI(); drawToast(); ctx.restore(); return; }
+    drawUI(); drawToast(); drawZurronOut(); ctx.restore(); return; }
   if(state==='credits'){ drawCredits(); ctx.restore(); return; }
   if(state==='pause'){ drawPause(); ctx.restore(); return; }
-  drawScene(); drawHint(); drawUI(); drawPlaceBanner();
+  if(state==='dialog'&&zLore&&dlg){ drawPause(); drawDialog(); ctx.restore(); return; } // un recuerdo leído desde el zurrón
+  drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
   if(state==='itemget'){ const bob=Math.sin(tick*.15)*1.5; drawRays(player.x+8,player.y-9,Math.min(1,(120-itemT)/14)); ctx.drawImage(itemSpr||BLADE_SPR,(player.x+(itemSpr&&itemSpr.width===12?2:0))|0,(player.y-17+bob)|0);
     if(itemCardName){ const a=Math.min(1,(120-itemT)/12); ctx.globalAlpha=a; const y=player.y+8>56?8:88; ctx.fillStyle='rgba(5,10,7,.92)'; ctx.fillRect(8,y,144,24); ctx.strokeStyle=C.flowerC; ctx.strokeRect(8.5,y+.5,143,23);
       txtS('¡NUEVO!',80,y+4,'#9ec7aa','center'); txtO(itemCardName,80,y+12,C.flowerC,'center'); ctx.globalAlpha=1; } }

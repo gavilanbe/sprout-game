@@ -4,7 +4,7 @@
    160×144 (resolución GB real) · tiles 16px · UI inferior 16px
    ============================================================ */
 const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
+let ctx = cv.getContext('2d'); // let: el zurrón (15b) lo cambia un momento para pintar en su propio lienzo
 ctx.imageSmoothingEnabled = false;
 
 const TILE=16, SW=10, SH=8, VW=160, VH=144, PLAY_H=128;

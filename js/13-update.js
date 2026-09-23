@@ -26,7 +26,7 @@ function update(){
   tickFx();
   if(!toast&&toastQ.length&&(state==='play'||state==='trans')){ toast=toastQ.shift(); SFX.blip(); }
   if(toast&&--toast.t<=0) toast=null;
-  if(saveFlash>0) saveFlash--; if(placeBanner&&(state==='play'||state==='trans')&&--placeBanner.t<=0) placeBanner=null; if(hudBerryT>0) hudBerryT--; if(hudSeedT>0) hudSeedT--; if(xFlash>0) xFlash--; if(hudHurtT>0) hudHurtT--; if(tabSlide>0) tabSlide--;
+  if(saveFlash>0) saveFlash--; if(placeBanner&&(state==='play'||state==='trans')&&--placeBanner.t<=0) placeBanner=null; if(hudBerryT>0) hudBerryT--; if(hudSeedT>0) hudSeedT--; if(xFlash>0) xFlash--; if(hudHurtT>0) hudHurtT--; zTick();
   if(player.hp<lastHp) hudHurtT=18; if(player.hp>lastHp) hudHealT=16; if(hudHealT>0) hudHealT--; lastHp=player.hp;
   if(itemCardT>0) itemCardT--;
   if(introDone&&!['boot','title','file','cine','credits'].includes(state)) playTime++;
@@ -121,7 +121,7 @@ function update(){
 
   /* === PLAY === */
   if(sproutT>0){ if(sproutT===40) SFX.regrow(); if(sproutT===14) SFX.chime(); if((tick&3)===0&&sproutT<40) sparkle(player.x+2+Math.random()*12,player.y+4+Math.random()*10,sproutT>24?'#a8e878':'#fff0a0'); sproutT--; if(fadeIn>0)fadeIn--; updParts(); return; }
-  if(keys.menu){ keys.menu=false; state='pause'; pausePage=0; pauseSel=0; SFX.menu(); return; }
+  if(keys.menu){ keys.menu=false; openZurron(0); return; }
   if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;
   if(bossCard&&--bossCard.t<=0) bossCard=null;
@@ -342,25 +342,14 @@ const X_ITEMS=['bomb','hook','boomer','lantern','feather','molinillo'];
 function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather,molinillo:hasPinwheel})[k]); }
 function updPause(){
   if(pausePage===4&&optRemap){ updRemap(); return; }
-  if(keys.menu){ keys.menu=false; state='play'; SFX.menu(); return; }
-  if(keys.alt){ keys.alt=false; pausePage=(pausePage+1)%5; pauseSel=0; loreSel=0; optSel=0; tabSlide=8; SFX.menu(); return; }
+  if(keys.menu){ keys.menu=false; closeZurron(); return; }   // el zurrón (15b) sale volando; el juego sigue ya
+  if(keys.alt){ keys.alt=false; zTabTo((pausePage+1)%5); return; }
   const lr=(keys.right?1:0)-(keys.left?1:0), ud=(keys.down?1:0)-(keys.up?1:0);
-  if(pausePage===0){
-    const items=ownedX(), am=[...amulets]; const n=items.length+am.length;
-    if(lr!==pauseLR){ pauseLR=lr; if(lr&&n){ pauseSel=(pauseSel+lr+n)%n; SFX.blip(); } }
-    if(ud!==pauseUD){ pauseUD=ud;
-      if(ud>0){ if(pauseSel<items.length){ if(am.length){ pauseSel=items.length; SFX.blip(); } } else if(pauseSel+5<n){ pauseSel+=5; SFX.blip(); } }
-      else if(ud<0){ if(pauseSel>=items.length+5){ pauseSel-=5; SFX.blip(); } else if(pauseSel>=items.length){ pauseSel=items.length?0:pauseSel; SFX.blip(); } } }
-    if(keys.fire){ keys.fire=false;
-      if(pauseSel<items.length){ xItem=items[pauseSel]; SFX.equip(); save(); }
-      else if(am.length){ const id=am[pauseSel-items.length];
-        if(equipped.includes(id)){ equipped[equipped.indexOf(id)]=null; SFX.blip(); }
-        else { const slot=equipped[0]===null?0:equipped[1]===null?1:0; equipped[slot]=id; SFX.equip(); }
-        save(); } }
-  } else if(pausePage===3){
+  if(pausePage===0) updBag(lr,ud); // objetos, amuletos y equipo (15b)
+  else if(pausePage===3){
     const L=loreList();
     if(ud!==pauseUD){ pauseUD=ud; if(ud&&L.length){ loreSel=(loreSel+ud+L.length)%L.length; SFX.blip(); } }
-    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); say(e.pages,()=>{ state='pause'; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':'paper'); } }
+    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); zLore=true; say(e.pages,()=>{ state='pause'; zLore=false; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':'paper'); } }
   } else if(pausePage===4){ updOptions(lr,ud);
   } else { if(lr!==pauseLR) pauseLR=lr; if(ud!==pauseUD) pauseUD=ud; if(keys.fire){ keys.fire=false; SFX.blip(); } }
 }

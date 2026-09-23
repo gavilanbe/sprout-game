@@ -104,4 +104,4 @@ function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)
 /* ---------- HUD y menú elevados ---------- */
 const THUMBS={};                 // miniaturas del mapa por pantalla ('x,y' → canvas 18×14)
 let placeBanner=null;            // {txt,t} nombre del lugar al descubrirlo
-let hudBerryT=0, hudSeedT=0, xFlash=0, lastHp=6, hudHurtT=0, hudHealT=0, tabSlide=0;
+let hudBerryT=0, hudSeedT=0, xFlash=0, lastHp=6, hudHurtT=0, hudHealT=0;

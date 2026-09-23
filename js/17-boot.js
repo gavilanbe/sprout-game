@@ -13,7 +13,7 @@ window.__sprout={
   spin(){ hasSpin=true; }, blade3(){ bladeLvl=3; }, shop(){ enterShop(); }, shopUI(k){ shopKind=k||'tilo'; state='shop'; shopSel=0; },
   quests(){ return questList(); }, cine(p,f){ state='cine'; cinePage=p||0; cineChars=999; cineFold=f||0; },
   title(t){ state='title'; titleT=t||0; }, tick(){ return tick; }, freeze(n){ hitStop=n===undefined?600:n; },
-  toast(a,b){ showToast(a||'NUEVA MISIÓN',b||'Semillas 0/8'); }, pause(p){ state='pause'; pausePage=p||0; pauseSel=0; },
+  toast(a,b){ showToast(a||'NUEVA MISIÓN',b||'Semillas 0/8'); }, pause(p){ openZurron(p||0); },
   say(p,who){ say(p,null,who); }, tile(x,y){ return grid[y]&&grid[y][x]; }, enemyTypes(){ return enemies.map(e=>e.type); },
   playTrack(n){ setTrack(n); }, music(){ return {curTrack}; }, equip(a,b){ equipped=[a||null,b||null]; }, setX(k){ xItem=k; },
   info(){ return {sx,sy,x:player.x,y:player.y,hp:player.hp,maxHp:player.maxHp,seeds,berries,hasBlade,bladeLvl,hasSpin,hasBomb,hasHook,hasBoomer,hasLantern,hasFeather,hasEmber,hasTear,hasFlake,won,bossDone,boss2Done,boss3Done,midKing,midDrone,midIce,midScare,hasPinwheel,hasAmber,boss4Done,thawed,summered,autumned,cycled,state,boss:boss?{hp:boss.hp,st:boss.st,type:boss.type}:null,midboss:midboss?{hp:midboss.hp,st:midboss.st,type:midboss.type}:null,track:curTrack,entry:lastEntry,visited:visited.size,xItem,equipped,amulets:[...amulets],pieces,keys:dungeonKeys,bigKeys}; },

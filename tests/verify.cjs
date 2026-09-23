@@ -406,6 +406,20 @@ const server=http.createServer((req,res)=>{
       keys.menu=true; __step(1); const back=state;
       berries=100; __sprout.shopUI('tilo'); keys.fire=true; __step(1); __skipDialog(); return [p,x1,eq1,back,bladeLvl,berries]; }),['pause','hook',['raiz','buho'],'play',2,85]);
   });
+  await check('El zurrón: cae y se abre sobre el mundo quieto, fila de EQUIPO, un recuerdo se lee con el zurrón detrás y al cerrarlo el juego sigue mientras sale volando',async()=>{
+    eq(await ev(()=>{ hasBomb=true; hasHook=true; hasBlade=true; const sh=hasShield; hasShield=true; amulets.clear(); amulets.add('raiz'); equipped=[null,null]; xItem='bomb';
+      const rk=Object.keys(RUNAS)[0]; collected.add('r:'+rk); __go(0,1,60,70); const log=[];
+      keys.menu=true; __step(1); log.push(state,zOpenT,zSnapOk); draw(); __step(30); draw();
+      keys.down=true; __step(1); keys.down=false; __step(1); keys.down=true; __step(1); keys.down=false; __step(1); log.push(bagRow(),EQUIP[pauseSel-ownedX().length-amulets.size]);
+      keys.fire=true; __step(1); log.push(xItem,equipped[0]); draw();
+      keys.alt=true; __step(1); keys.alt=true; __step(1); keys.alt=true; __step(1); log.push(pausePage); __step(10);
+      let n=0; const dp=drawPause; drawPause=function(){ n++; return dp(); };
+      keys.fire=true; __step(1); log.push(state,zLore); draw(); log.push(n>0); drawPause=dp; __skipDialog(); log.push(state,zLore);
+      keys.menu=true; __step(1); log.push(state,zCloseT); draw();
+      const x0=player.x; keys.right=true; __step(8); keys.right=false; log.push(player.x>x0); draw(); __step(20); log.push(zCloseT);
+      hasShield=sh; collected.delete('r:'+rk); return log; }),
+      ['pause',0,true, 2,'hoja', 'bomb',null, 3, 'dialog',true,true,'pause',false, 'play',0, true, -1]);
+  });
   await check('Gran Remolino: Tilo lo enseña tras el deshielo; carga antes, gira dos vueltas y barre más',async()=>{
     eq(await ev(()=>{ hasBlade=true; hasSpin=true; hasBigSpin=false; bladeLvl=1; equipped=[null,null]; const th=thawed; thawed=false; __go(0,1,60,70); enemies=[]; npcs=[];
       shopKind='tilo'; const locked=shopList().find(i=>i.id==='bigspin').off;
