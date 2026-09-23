@@ -93,18 +93,19 @@ function update(){
       else { loadScreen(lastEntry.sx,lastEntry.sy); player.x=lastEntry.x; player.y=lastEntry.y; if(!boxFree(player.x+4,player.y+8,8,8)) [player.x,player.y]=findFree(player.x,player.y,'x'); }
       player.dir=0; bombs=[]; projs=[]; state='play'; fadeIn=30; sproutT=48; } return; }
   if(state==='dialog'){
-    const pg=dlg.pages[dlg.page]; dlg.t++;
+    const pg=dlg.pages[dlg.page]; dlg.t++; dlg.pt=(dlg.pt||0)+1;
+    if(dlg.t===1&&(dlg.style||'normal')==='normal'){ const yb=(player.y+8>56)?7:78; for(const [lx,ly] of [[6,yb],[154,yb],[154,yb+46],[6,yb+46]]) for(let i=0;i<2;i++) parts.push({k:'blade',x:lx,y:ly,vx:(lx<80?-1:1)*(.4+Math.random()*.6),vy:-.6-Math.random()*.5,life:26,max:26,col:i?'#78d838':'#a8e870',rot:Math.random()*6,vr:.3}); }
     if(dlg.chars<pg.length){
       if(dlg.pause>0&&!keys.fire) dlg.pause--;
       else { const before=dlg.chars|0; dlg.chars+=(keys.fire?3:0.6*(opts.textSpeed||1)); const now=Math.min(pg.length,dlg.chars|0);
         for(let i=before;i<now;i++){ const c=pg[i]; if('.!?…'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:10); else if(',;:'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:5); }
-        if((tick&3)===0&&dlg.chars<pg.length) SFX.blip(); } }
+        if((tick&3)===0&&dlg.chars<pg.length) voiceBlip(dlg.who,pg[dlg.chars|0]); } }
     const lastDone=dlg.page===dlg.pages.length-1&&dlg.chars>=pg.length;
     if(dlg.ask&&lastDone){ const lr=(keys.right?1:0)-(keys.left?1:0); if(lr&&dlg.lr!==lr){ dlg.sel=lr>0?1:0; SFX.menu(); } dlg.lr=lr;
       if(keys.alt){ keys.alt=false; const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return; } }
     if(keys.fire){ keys.fire=false;
       if(dlg.chars<pg.length) dlg.chars=pg.length;
-      else if(dlg.page<dlg.pages.length-1){ dlg.page++; dlg.chars=0; dlg.pause=0; }
+      else if(dlg.page<dlg.pages.length-1){ dlg.page++; dlg.chars=0; dlg.pause=0; dlg.pt=0; SFX.blip(); }
       else if(dlg.ask){ const cb=dlg.ask, yes=dlg.sel===0; dlg=null; state='play'; if(yes) SFX.blip(); else SFX.bump(); cb(yes); }
       else { const cb=dlg.cb; dlg=null; state='play'; if(cb)cb(); } }
     keys.alt=false; updParts(); return;
