@@ -119,16 +119,39 @@ function artOutline(g,w,h,col){ // contorno de 1 px alrededor de todo lo opaco
 function artClip(g,rects,fn){ g.save(); g.beginPath(); for(const [x,y,w,h] of rects) g.rect(x,y,w,h); g.clip(); fn(); g.restore(); }
 const GOLD5=['#6a4210','#b07818','#e0a830','#f8d848','#fff8c0'];
 const IRON5=['#26262e','#4a4a58','#76768a','#a8a8bc','#e0e0f0'];
-/* la Hoja en combate: apunta a la derecha; el peciolo (x=1,y=3) va en la mano */
-const LEAF_SWING=sprN([
-"....kkkkkkk.....",
-"..kkLLLLlllkk...",
-".kLLllllllllmk..",
-"kAkmmmmmmmmmmdk.",
-"..kddllllllddk..",
-"...kkdddddkkk...",
-".....kkkkk......",
-],{A:'#8a5028',L:'#d8ffa0',l:'#78d838',m:'#b8f080',d:'#2e8a38'});
+/* LA HOJA: una hoja de verdad, hecha píxel a píxel. Apunta a la derecha: peciolo marrón (lo que
+   agarra Sprout), lámina ovada con la punta afilada, nervio central y nervios laterales que miran
+   a la punta, borde aserrado, brillo en el haz (la cara de arriba) y el envés más pálido, con los
+   nervios en relieve. Se puede doblar (la punta se queda atrás o latiguea) y ver de canto.
+   P = [oscuro, medio, base, claro, brillo]; o = {len, half, stem, pad, bend, face: 0 haz · 1 envés · 2 canto, slope, dew, veins} */
+function leafBladeArt(P,o){
+  o=o||{}; const len=o.len||19, half=o.half||3.6, stem=o.stem??3, pad=o.pad??0, bend=o.bend||0, face=o.face||0, slope=o.slope||0;
+  const W=len+2, H=2*Math.ceil(half)+3+2*pad, cy=o.cy??(H-1)/2, K=[...Array(H)].map(()=>Array(W).fill(null));
+  const mix=(h,k)=>{ const a=hex2rgb(h); return '#'+a.map(v=>Math.round(v+(255-v)*k).toString(16).padStart(2,'0')).join(''); };
+  const Q=face===1?P.map((c,i)=>mix(c,i<2?.3:.42)):P;                                   // el envés: más pálido, como plateado
+  const put=(x,y,c)=>{ if(x>=0&&x<W&&y>=0&&y<H) K[y][x]=c; };
+  for(let x=1;x<W-1;x++){ const t=(x-1-stem+.5)/(len-stem); // 0 en la base de la lámina → 1 en la punta
+    const c=Math.round(cy+bend*Math.max(0,t)*Math.max(0,t)-slope*(x-1));
+    if(t<0){ put(x,Math.round(c),x===1?'#5a3418':'#8a5028'); continue; }              // el peciolo
+    let hw=half*Math.pow(Math.sin(Math.PI*Math.min(1,t*1.03+.03)),.7)*(1-.2*t);
+    if(face===2) hw=Math.min(hw,.55);                                                     // de canto: casi una raya
+    const tooth=face!==2&&o.serr!==false&&t>.14&&t<.9, nUp=tooth&&(x%3)===0?.95:0, nDn=tooth&&(x%3)===2?.95:0; // dientes del borde (los iconos pequeños, lisos)
+    for(let y=0;y<H;y++){ const dy=y-c; if(dy<0?-dy>hw-nUp:dy>hw-nDn) continue; const d=hw>.6?dy/hw:0, ady=Math.abs(dy);
+      let col;
+      if(ady<.5) col=face===2?Q[3]:Q[4];                                                   // el nervio central
+      else if(face!==2&&o.serr!==false&&ady<hw-.7&&((x-1-stem-ady*1.6)%4+4)%4<1) col=o.veins&&face===0?o.veins:(dy<0?Q[4]:Q[3]); // nervios laterales
+      else if(dy<0) col=(face===0&&t>.2&&t<.52&&d>-.8&&d<-.3)?Q[4]:(d<-.78?Q[2]:Q[3]);   // el haz, con su brillo
+      else col=d>.62?Q[1]:Q[2];
+      put(x,y,col); }
+    if(o.dew&&face===0&&(x===1+stem+4||x===1+stem+10)){ const yy=Math.round(c-(x===1+stem+4?1.4:-1.2)); put(x,yy,'#ffffff'); if(K[yy+1]&&K[yy+1][x]) put(x,yy+1,'#b8f4ff'); } // gotas de rocío
+  }
+  const cv2=mkCanvas(W,H), g=cv2.getContext('2d');
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const v=K[y][x];
+    if(v){ g.fillStyle=v; g.fillRect(x,y,1,1); continue; }
+    if((x>0&&K[y][x-1])||(x<W-1&&K[y][x+1])||(y>0&&K[y-1][x])||(y<H-1&&K[y+1][x])){ g.fillStyle=PAL.k; g.fillRect(x,y,1,1); } }
+  return cv2; }
+/* la Hoja en combate, recta y de cara (el primer filo); 12b hace los tres filos, doblada y de canto */
+const LEAF_SWING=leafBladeArt(['#1d5a22','#2e8a34','#78d838','#b8f070','#e8ffc8']);
 const LEAF_SWING_L=flipH(LEAF_SWING);
 /* ---------- iconos 8×8 ---------- */
 const HEART_ROWS=[".kk.kk..","kLRkRRk.","kRRRRRk.","kRRRRDk.",".kRRDk..","..kDk...","...k....","........"];
@@ -161,24 +184,11 @@ const PIECE_SPR=sprN([".kk.kk..","kLRkRRk.","kRRRRDk.",".kRRDk..","..kDk...","..
 /* ============================================================
    OBJETOS DEL ZURRÓN (16×16)
    ============================================================ */
-const BLADE_SPR=spr([   // la Hoja Ancestral plantada en la arena
-"................",
-".......kk.......",
-"......kLlk......",
-".....kLLmdk.....",
-".....kLlmdk.....",
-"....kLLlmddk....",
-"....kLllmddk....",
-"....kLllmddk....",
-".....kLlmdk.....",
-".....kllmdk.....",
-"......klmk......",
-".......kAk......",
-"....kkkkAkkkk...",
-"...ksSSkAkSssk..",
-"..kssSSSSSSSssk.",
-"...kkkkkkkkkkk..",
-],{L:'#d8ffa0',l:'#78d838',m:'#b8f080',d:'#2e8a38',A:'#8a5028',s:'#f4e2a8',S:'#d8bc80'});
+const BLADE_SPR=mkTile(g=>{ // la Hoja Ancestral plantada en la arena: la misma hoja de combate, de pie, con el peciolo hundido
+  const L=leafBladeArt(['#1d5a22','#2e8a34','#78d838','#b8f070','#e8ffc8'],{len:14,half:3.9,stem:2}); g.imageSmoothingEnabled=false;
+  g.save(); g.translate(8-Math.floor(L.height/2),15); g.rotate(-Math.PI/2); g.drawImage(L,0,0); g.restore(); // la punta arriba
+  artPix(g,["....kkkkkkkk....","...ksSSkkSssk...","..kssSSSSSSSssk.","...kkkkkkkkkkk.."],{s:'#f4e2a8',S:'#d8bc80'},0,12);
+  g.fillStyle='#8a5028'; g.fillRect(8,12,1,1); });
 const BOMB_SPR=mkTile(g=>{ // la Bellota-bomba, con la mecha encendida
   blobArt(g,3,6,11,9,[{x:5.5,y:4,r:5.2,ry:4.8}],['#6a3a16','#a86430','#d89a50','#f0c070','#fff0c8'],{outline:false,grad:.2});
   blobArt(g,2,3,13,5,[{x:6.5,y:3,r:6.6,ry:3.2}],['#3a2210','#5a3418','#7a4a24','#a06a34','#c88a4c'],{outline:false,dither:0});

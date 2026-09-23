@@ -32,10 +32,37 @@ function retintLum(img,pal){ // recolorea por luminancia los píxeles verdes (la
   const lum=idx.map(i=>a[i]*.3+a[i+1]*.59+a[i+2]*.11), lo=Math.min(...lum), hi=Math.max(...lum);
   idx.forEach((i,k)=>{ const t=hi>lo?(lum[k]-lo)/(hi-lo):.5, [r,gg,b]=hex2rgb(pal[Math.min(pal.length-1,Math.round(t*(pal.length-1)))]); a[i]=r; a[i+1]=gg; a[i+2]=b; });
   g.putImageData(d,0,0); return c; }
-const LEAF_TIER=[null,LEAF_SWING,retintLum(LEAF_SWING,BLADE_TIERS[2].pal),retintLum(LEAF_SWING,BLADE_TIERS[3].pal)];
+/* la Hoja por filos, con leafBladeArt (02): el primero verde, «afilada» con rocío, «templada» de otoño
+   con los nervios rojizos. Recta (rayo, tienda, HUD) y, para el tajo, doblada (±4 px) y de las tres caras */
+const LEAF_TIER_OPT=[null,{},{dew:true},{veins:'#c8541c'}];
+const LEAF_TIER=[null,LEAF_SWING,leafBladeArt(BLADE_TIERS[2].pal,LEAF_TIER_OPT[2]),leafBladeArt(BLADE_TIERS[3].pal,LEAF_TIER_OPT[3])];
+const LEAF_BENT=[null,1,2,3].map(t=>t&&[0,1,2].map(face=>[-4,-3,-2,-1,0,1,2,3,4].map(bend=>leafBladeArt(BLADE_TIERS[t].pal,{...LEAF_TIER_OPT[t],pad:4,bend,face}))));
+const BLADE_HUD=[null,1,2,3].map(t=>t&&leafBladeArt(BLADE_TIERS[t].pal,{len:13,half:2.2,stem:2,serr:false}));  // iconos pequeños: sin dientes ni nervios laterales
+const BLADE_SHOP=[null,1,2,3].map(t=>t&&leafBladeArt(BLADE_TIERS[t].pal,{len:10,half:2.2,stem:2,serr:false}));
 function bladeTier(){ return BLADE_TIERS[Math.max(1,Math.min(3,bladeLvl))]; }
 function bladeSpr(){ return LEAF_TIER[Math.max(1,Math.min(3,bladeLvl))]; }
 function bladeGlow(x,y){ const T=bladeTier(); if(T.glow) glowAt(x,y,9+Math.sin(tick*.4),T.glow); }
+/* pinta la Hoja desde el peciolo (cx,cy) hacia `ang`; cara 0 haz · 1 envés · 2 canto; bend: la punta se dobla (+ hacia donde va el tajo) */
+function drawLeafBlade(cx,cy,ang,face,bend,alpha,tint){
+  const mir=Math.cos(ang)<-.2; // apuntando a la izquierda se refleja en vez de ponerse boca abajo: la luz sigue arriba
+  const img=LEAF_BENT[Math.max(1,Math.min(3,bladeLvl))][face|0][clamp(Math.round((mir?-1:1)*(bend||0)),-4,4)+4], im=tint?tintCached(img,tint):img;
+  ctx.save(); if(alpha!=null) ctx.globalAlpha=alpha; ctx.translate(Math.round(cx),Math.round(cy)); ctx.rotate(ang); if(mir) ctx.scale(1,-1); ctx.drawImage(im,2,-(img.height>>1)); ctx.restore(); }
+/* el tajo, fotograma a fotograma (ph = 14-player.atk): [barrido, doblez de la punta, cara].
+   Coge impulso hacia atrás, barre con la punta rezagada y girándose (se le ve el envés), latiguea
+   al final y tiembla un poco. La caja de golpe y los tiempos no cambian (09 y 13) */
+const LEAF_SWING_FR=[[-2.05,1,0],[-2.15,2,0],[-1.55,-2,0],[-.85,-4,2],[-.15,-4,1],[.38,-3,1],[.66,1,2],[.72,4,0],[.64,3,0],[.56,1,0],[.52,-1,0],[.5,-1,0],[.49,0,0],[.48,0,0]];
+function leafSwingAt(ph){ return LEAF_SWING_FR[Math.max(0,Math.min(13,ph|0))]; }
+function leafSwingTick(){ // en update: el filo suena al arrancar y del tajo se desprenden briznas y rocío
+  const ph=14-player.atk, base=[Math.PI/2,-Math.PI/2,Math.PI,0][player.dir], T=bladeTier();
+  if(ph===1&&bladeLvl>=2){ const a=audio(),t=a.currentTime; if(bladeLvl>=3) beep('triangle',f(93),0,.18,.016,t); else beep('triangle',f(88),0,.1,.011,t); } // el temple tintinea
+  if(ph<3||ph>7) return;
+  const a=base+leafSwingAt(ph)[0], tx=player.x+8+Math.cos(a)*18, ty=player.y+10+Math.sin(a)*18;
+  if(ph===4||ph===6){ const va=a+Math.PI/2; parts.push({k:'blade',x:tx,y:ty,vx:Math.cos(va)*1.1+Math.cos(a)*.5,vy:Math.sin(va)*1.1+Math.sin(a)*.5-.35,life:22,max:22,col:ph===4?T.pal[3]:T.pal[2],rot:Math.random()*6,vr:.35}); }
+  if(ph===5) parts.push({x:tx,y:ty,vx:Math.cos(a)*.3,vy:-.25,life:12,col:bladeLvl>=3?'#fff0a0':'#e8fff8',star:true,nog:true}); } // un destello de rocío
+function leafHitFx(x,y){ // cuando la Hoja da en un bicho: un «chas» y savia verde que salpica
+  SFX.leafHit(); const T=bladeTier();
+  for(let i=0;i<6;i++){ const a=Math.random()*6.283, s=1+Math.random()*1.6; parts.push({k:'shard',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.4,life:10+(i&3),max:14,col:i&1?T.pal[3]:'#eaffb0',nog:true}); }
+  bladeBits(x,y,[T.pal[2],T.pal[3],T.pal[1]],3); }
 /* ---------- quién es vulnerable ahora (mismas reglas que el tornadito) ---------- */
 function bossVulnerable(b){ return (b.type==='topo'&&b.st==='dazed')||(b.type==='avispa'&&b.st==='pinned')||(b.type==='viento'&&b.st==='rest')||(b.type==='ciervo'&&b.mantle===0&&b.st!=='yield'); }
 function midVulnerable(m){ return (m.type==='king'&&m.st==='stuck')||(m.type==='drone'&&m.st==='stunned')||(m.type==='iceguard'&&m.soft>0)||(m.type==='scare'&&m.st==='dizzy'); }
@@ -45,7 +72,7 @@ function rangedHitBoss(dmg,x,y){ if(bossVulnerable(boss)) bossHit(boss,dmg); els
 function leafBeamTry(){
   if(bladeLvl<3||player.hp<player.maxHp||leafBeams.length) return;
   const D=DIRV[player.dir]; leafBeams.push({x:player.x+8+D[0]*8,y:player.y+10+D[1]*8,vx:D[0]*3.4,vy:D[1]*3.4,t:52,dir:player.dir,rm:gearRm()});
-  beep('square',880,1760,.12,.04); beep('triangle',1320,1980,.1,.03);
+  const t=audio().currentTime; swish(.24,.1,1200,5200,2400,t,1.3); beep('triangle',f(93),f(100),.2,.022,t); beep('triangle',1320,1980,.1,.02,t+.03); // la hoja sale volando: aire y un tintineo
 }
 function beamBurst(b){ for(let i=0;i<8;i++){ const a=i/8*6.283; parts.push({k:'shard',x:b.x,y:b.y,vx:Math.cos(a)*1.6,vy:Math.sin(a)*1.6,life:10,max:12,col:i&1?'#fff6c0':'#f0c040',nog:true}); } }
 function updLeafBeams(){
@@ -107,7 +134,7 @@ function drawSpinPass(py,front){
   renderSpinSmear(); const cx=Math.round(player.x+8), cy=Math.round(py+10), a=spinAngle(), h=26;
   if(front) ctx.drawImage(SPIN_CV,0,h,60,52-h,cx-30,cy-26+h,60,52-h); else ctx.drawImage(SPIN_CV,0,0,60,h,cx-30,cy-26,60,h);
   if((Math.sin(a)>=0)!==front) return;                                                  // la Hoja, en su mitad
-  ctx.save(); ctx.translate(cx,cy); ctx.rotate(a); ctx.drawImage(bladeSpr(),3,-4); ctx.restore();
+  drawLeafBlade(cx,cy,a,[0,2,1,2][(tick>>1)&3],-3); // la Hoja gira con la punta rezagada, dándose la vuelta
   bladeGlow(cx+Math.cos(a)*14,cy+Math.sin(a)*14); }
 /* ---------- el TORNADITO que sale del giro: un remolino de viento de verdad ---------- */
 const TORNADO={s:[],b:[]};
@@ -306,8 +333,8 @@ function updGear(){
 }
 /* ---------- lo que se pinta encima de los actores ---------- */
 function drawGearFx(){
-  for(const b of leafBeams){ const ang=[Math.PI/2,-Math.PI/2,Math.PI,0][b.dir]; glowAt(b.x,b.y,11,'rgba(255,230,140,.4)');
-    ctx.save(); ctx.translate(b.x|0,b.y|0); ctx.rotate(ang); ctx.drawImage(bladeSpr(),-8,-4); ctx.restore(); }
+  for(const b of leafBeams){ const ang=[Math.PI/2,-Math.PI/2,Math.PI,0][b.dir], fl=Math.sin(tick*.55+b.t)*.28; glowAt(b.x,b.y,11,'rgba(255,230,140,.4)');
+    drawLeafBlade(b.x-Math.cos(ang)*11,b.y-Math.sin(ang)*11,ang+fl,[0,2,1,2][(tick>>2)&3],Math.round(Math.sin(tick*.4)*2)); } // el rayo: una hoja que vuela revoloteando
   if(grabRope&&grabRope.tgt){ const t=grabRope.tgt, x0=player.x+8, y0=player.y+10, x1=t.x+(t.type?8:4), y1=t.y+(t.type?8:4), n=Math.max(2,(Math.hypot(x1-x0,y1-y0)/4)|0);
     for(let i=0;i<=n;i++){ ctx.fillStyle=i%2?PAL.l:PAL.d; ctx.fillRect((x0+(x1-x0)*i/n-1)|0,(y0+(y1-y0)*i/n-1)|0,2,2); }
     ctx.drawImage(HOOK_SPR,0,2,8,6,(x1-4)|0,(y1-3)|0,8,6); }

@@ -114,7 +114,7 @@ function updEnemies(){
       if(e.type==='golem') blindHit=true; // el hielo solo cede al fuego
       if(player.spin>0&&(e.type==='beetle'||e.type==='roller')) blindHit=false;
       if(blindHit){ SFX.block(); e.flash=4; player.kx=(player.x-e.x)/d*2; player.ky=(player.y-e.y)/d*2; sparkle(e.x+8,e.y+4,'#c8d8ff'); }
-      else { damageEnemy(e,meleeDmg(),player.x,player.y);
+      else { damageEnemy(e,meleeDmg(),player.x,player.y); leafHitFx(e.x+8,e.y+8); // el «chas» de la Hoja y su savia (12b)
         if(e.type==='frog'&&e.st!=='jump') e.st='sit';
         if(e.type==='snail'&&e.hp>0){ e.st='in'; e.shellT=90; SFX.block(); } }
     }
