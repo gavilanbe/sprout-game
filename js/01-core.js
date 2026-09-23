@@ -66,3 +66,27 @@ function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),
 function rgb2hex(r,g,b){return '#'+[r,g,b].map(v=>Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join('');}
 function mix(a,b,k){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(lerp(A[0],B[0],k),lerp(A[1],B[1],k),lerp(A[2],B[2],k));}
 function shade(h,k){ return k<0?mix(h,'#101018',-k):mix(h,'#ffffff',k); }
+const BAYER4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+/* ---------- volúmenes por lóbulos: copas, arbustos, rocas ----------
+   Cada lóbulo es una esfera; el de delante gana. La luz viene de
+   arriba-izquierda; entre lóbulos hay sombra de contacto; el paso
+   entre tonos va tramado (Bayer 4×4) y todo lleva contorno. */
+function blobArt(g,ox,oy,w,h,lobes,pal,o){
+  o=o||{}; const n=pal.length, own=new Int16Array(w*h).fill(-1);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++) for(let i=lobes.length-1;i>=0;i--){ const L=lobes[i], dx=(x+.5-L.x)/L.r, dy=(y+.5-L.y)/(L.ry||L.r); if(dx*dx+dy*dy<=1){ own[y*w+x]=i; break; } }
+  const at=(x,y)=>x<0||y<0||x>=w||y>=h?-1:own[y*w+x];
+  const lx=-.5, ly=-.72, lz=.48, dith=o.dither===undefined?.9:o.dither, bias=o.bias||0, grad=o.grad===undefined?.35:o.grad;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=own[y*w+x]; if(i<0) continue;
+    const L=lobes[i], nx=(x+.5-L.x)/L.r, ny=(y+.5-L.y)/(L.ry||L.r), nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+    let d=nx*lx+ny*ly+nz*lz+bias-(y/h-.5)*grad;
+    // sombra de contacto bajo/tras los lóbulos de delante
+    if(at(x,y-1)>i||at(x-1,y)>i) d-=.55; else if(at(x,y-2)>i||at(x+1,y)>i) d-=.28;
+    const v=(d+.9)/1.8*(n-1)+(BAYER4[y&3][x&3]/16-.47)*dith;
+    const c=clamp(Math.round(v),0,n-1); g.fillStyle=pal[c]; g.fillRect(ox+x,oy+y,1,1); }
+  if(o.outline!==false){ g.fillStyle=o.outline||PAL.k;
+    for(let y=-1;y<=h;y++) for(let x=-1;x<=w;x++){ if(at(x,y)>=0) continue; if(at(x+1,y)>=0||at(x-1,y)>=0||at(x,y+1)>=0||at(x,y-1)>=0) g.fillRect(ox+x,oy+y,1,1); } }
+  return own;
+}
+function shadowBlob(g,cx,cy,rx,ry,a){ g.fillStyle='rgba(18,26,14,'+(a||.26)+')'; for(let y=-ry;y<=ry;y++){ const w=Math.round(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry)))); g.fillRect(cx-w,cy+y,w*2,1); } }
+
+

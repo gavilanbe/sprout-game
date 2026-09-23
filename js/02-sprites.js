@@ -21,226 +21,61 @@ function scaleN(c,n){const o=mkCanvas(c.width*n,c.height*n);const g=o.getContext
 function shadowOf(c){ return tintTo(c,'rgba(20,16,12,.35)'); }
 
 /* ============================================================
-   SPROUT, el brote — 16×16. Hojas en la cabeza, peto terracota.
-   k contorno · s piel · S sombra piel · l/L/d hoja · b/B peto · m botas
+   SPROUT, el brote — 16×16. Dos hojas en la cabeza, bulbo, túnica.
+   k contorno · h/s/S/T bulbo (luz→sombra) · L/l/d/D hojas
+   q brillo del ojo · c moflete · m boca · B/b/n túnica · f/F botas
+   Se construye por filas: hojas (0-4), cabeza (5-11), cuerpo (12-13),
+   pies (14-15). El andar tiene 4 tiempos con rebote.
    ============================================================ */
-const H_DOWN_A=spr([
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqssk.",
-"..ksskkssskkssk.",
-"..kssssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kBbbbbbk....",
-"...ksBbbbbbbsk..",
-"....kbbbbbbk....",
-"....kmmk.kmmk...",
-".....kk...kk....",
-]);
-const H_DOWN_B=spr([
-"................",
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqssk.",
-"..ksskkssskkssk.",
-"..kssssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kBbbbbbk....",
-"...ksBbbbbbbsk..",
-"....kmmkbbmk....",
-".....kk.kmmk....",
-]);
-const H_UP_A=spr([
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kSSSSSSSSk...",
-"..kSssssssssSk..",
-"..kssssssssssk..",
-"..kssssssssssk..",
-"..kssssssssssk..",
-"...kssssssssk...",
-"....kbbbbbbk....",
-"...ksbbBbbbbsk..",
-"....kbbbbbbk....",
-"....kmmk.kmmk...",
-".....kk...kk....",
-]);
-const H_UP_B=spr([
-"................",
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kSSSSSSSSk...",
-"..kSssssssssSk..",
-"..kssssssssssk..",
-"..kssssssssssk..",
-"..kssssssssssk..",
-"...kssssssssk...",
-"....kbbbbbbk....",
-"...ksbbBbbbbsk..",
-"....kbbkmmbk....",
-"....kmmk.kk.....",
-]);
-const H_SIDE_A=spr([ // mira a la DERECHA
-"......kk........",
-".....kLlk..kk...",
-"......kllkklLk..",
-".......kdkdk....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssssssskqsk..",
-"..kssssssskksk..",
-"..kSsssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kbbBbbbk....",
-"....kbbbbbbsk...",
-"....kbbbbbbk....",
-".....kmmkmmk....",
-"......kk.kk.....",
-]);
-const H_SIDE_B=spr([ // paso: piernas abiertas
-"................",
-"......kk........",
-".....kLlk..kk...",
-"......kllkklLk..",
-".......kdkdk....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssssssskqsk..",
-"..kssssssskksk..",
-"..kSsssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kbbBbbbk....",
-"....kbbbbbbsk...",
-"...kmmkbbbkmmk..",
-"....kk.kkk.kk...",
-]);
-/* poses de ataque: el brazo se extiende hacia donde mira (la Hoja se dibuja aparte) */
-const H_ATK_DOWN=spr([
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqssk.",
-"..ksskkssskkssk.",
-"..kssssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"...kbBbbbbbbbk..",
-"..ksbbbbbbkssk..",
-"...kbbbbbbkksk..",
-"....kmmk.kmmk...",
-".....kk...kk....",
-]);
-const H_ATK_UP=spr([
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"..ksSSSSSSSSk...",
-".kssSssssssssk..",
-".ksskssssssssk..",
-"..kkssssssssk...",
-"...kssssssssk...",
-"...kssssssssk...",
-"....kbbbbbbk....",
-"....kbbBbbbbsk..",
-"....kbbbbbbk....",
-"....kmmk.kmmk...",
-".....kk...kk....",
-]);
-const H_ATK_SIDE=spr([ // a la derecha, brazo estirado
-"......kk........",
-".....kLlk..kk...",
-"......kllkklLk..",
-".......kdkdk....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssssssskqsk..",
-"..kssssssskksk..",
-"..kSsssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kbbBbbbkkk..",
-"....kbbbbbbsssk.",
-"....kbbbbbbkkk..",
-".....kmmkmmk....",
-"......kk.kk.....",
-]);
-const H_LIFT=spr([ // ¡objeto en alto! (los dos brazos arriba)
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"..kkkkkkkkkkkk..",
-".kssssssssssssk.",
-".ksksqkssskqsksk",
-".kskkkkssskkkksk",
-"..kkssssssssskk.",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"....kBbbbbbk....",
-"....kbbbbbbk....",
-"....kbbbbbbk....",
-"....kmmk.kmmk...",
-".....kk...kk....",
-]);
-const H_SLEEP=spr([ // dormido en la maceta
-"................",
-"................",
-"................",
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssssssssssk..",
-"..kskkssssskkk..",
-"..kssssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"................",
-"................",
-]);
-const H_WAKE=spr([
-"................",
-"................",
-"................",
-"....kk....kk....",
-"...kLlk..klLk...",
-"....kllkkllk....",
-".....kdkkdk.....",
-"....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqssk.",
-"..ksskkssskkssk.",
-"..kssssssssssk..",
-"..kSSsssssssSk..",
-"...kSSSSSSSSk...",
-"................",
-"................",
-]);
+const HERO_PAL={h:'#fff0c8',s:'#f8cc88',S:'#dc9c5c',T:'#b0703c',L:'#d0f890',l:'#78d838',d:'#2e9a38',D:'#1a5a24',
+  q:'#ffffff',c:'#f89a8a',m:'#8a3a28',B:'#ffa060',b:'#e8743c',n:'#b04a20',f:'#6a3818',F:'#a0602e'};
+const HERO_ROWS={
+  down:{ leaves:["...kkk..........","..kLLlk.....kkk.","..kLlllk...kLlk.","...kllldk.kllk..","......kdkdk....."],
+    head:["....kkkkkkkk....","...khhssssssk...","..khsssssssssk..","..khkqsssskqSk..","..kskksssskkSk..","..kscssmmsscSk..","...kSSssssSSk..."],
+    body:["...kBbbbbbbnk...","..ksBbbbbbbnSk.."], feet:["....kffkkffk....","....kkk..kkk...."] },
+  up:{ leaves:null, // las mismas hojas, vistas por detrás
+    head:["....kkkkkkkk....","...ksshhhhssk...","..ksssshhssssk..","..kSssssssssSk..","..kSssssssssSk..","..kSSssssssSSk..","...kTSSSSSSTk..."],
+    body:["...kbbnbbnbbk...","..ksbbbbbbbbsk.."], feet:["....kffkkffk....","....kkk..kkk...."] },
+  side:{ leaves:["..kkk...........",".kLLlkk.........",".kLllldk..kkk...","..kkklddkkLlk...","......kdkdkk...."],
+    head:["....kkkkkkkk....","...khhssssssk...","..khsssssssssk..","..kSsssssskqsk..","..kSsssssskksk..","..kSSssssssck...","...kTSSsssssk...."].map(r=>r.slice(0,16)),
+    body:["....kbbbBbbk....","....knbbbbbsk..."], feet:[".....kffkffk....",".....kkk.kkk...."] },
+};
+HERO_ROWS.up.leaves=HERO_ROWS.down.leaves.map(r=>[...r].reverse().join(''));
+/* ensambla una pose: rows = 16 filas de texto */
+function heroRows(dir,o){ o=o||{}; const H=HERO_ROWS[dir], out=[];
+  const lv=H.leaves.slice(), hd=H.head.slice(), bd=H.body.slice(); let ft=H.feet.slice();
+  if(o.feet) ft=o.feet;
+  if(o.eyes==='closed') hd[3]=hd[3].replace(/kq/g,'ss');
+  const up=o.bob?1:0; // rebote: todo menos los pies sube 1 px; las hojas se estiran
+  const top=[...lv,...hd,...bd];
+  if(up){ top.splice(4,1); top.push(bd[1]); } // el tallo se esconde y la túnica se estira
+  for(let i=0;i<14;i++) out.push(top[i]); out.push(...ft);
+  return out;
+}
+function heroSpr(dir,o){ return spr(heroRows(dir,o),HERO_PAL); }
+const FEET={
+  down:{stand:["....kffkkffk....","....kkk..kkk...."], stepL:["....kffk.kFk....","....kkk...k....."], stepR:["....kFk.kffk....",".....k...kkk...."]},
+  up:{stand:["....kffkkffk....","....kkk..kkk...."], stepL:["....kFk.kffk....",".....k...kkk...."], stepR:["....kffk.kFk....","....kkk...k....."]},
+  side:{stand:[".....kffkffk....",".....kkk.kkk...."], stepA:["....kffk..kffk..","....kkk....kkk.."], stepB:["......kffFk.....","......kkkkk....."]},
+};
+function heroWalk(dir){ const F=FEET[dir];
+  if(dir==='side') return [heroSpr(dir,{feet:F.stand}),heroSpr(dir,{feet:F.stepA,bob:1}),heroSpr(dir,{feet:F.stand}),heroSpr(dir,{feet:F.stepB,bob:1})];
+  return [heroSpr(dir,{feet:F.stand}),heroSpr(dir,{feet:F.stepL,bob:1}),heroSpr(dir,{feet:F.stand}),heroSpr(dir,{feet:F.stepR,bob:1})]; }
+const HW_DOWN=heroWalk('down'), HW_UP=heroWalk('up'), HW_SIDE=heroWalk('side');
+const P_BLINK={0:heroSpr('down',{eyes:'closed'}),1:HW_UP[0],3:heroSpr('side',{eyes:'closed'})}; P_BLINK[2]=flipH(P_BLINK[3]);
+const H_DOWN_A=HW_DOWN[0], H_DOWN_B=HW_DOWN[1], H_UP_A=HW_UP[0], H_UP_B=HW_UP[1], H_SIDE_A=HW_SIDE[0], H_SIDE_B=HW_SIDE[1];
+/* poses de ataque: el brazo se estira hacia donde mira (la Hoja se dibuja aparte) */
+const H_ATK_DOWN=(()=>{ const r=heroRows('down',{feet:FEET.down.stepR}); r[12]="...kBbbbbbbnkk.."; r[13]="..ksBbbbbbbnksk."; return spr(r,HERO_PAL); })();
+const H_ATK_UP=(()=>{ const r=heroRows('up',{feet:FEET.up.stepL}); r[11]=".kk"+r[11].slice(3); r[12]=".ksk"+r[12].slice(4); r[13]="..kkbbbbbbbbsk.."; return spr(r,HERO_PAL); })();
+const H_ATK_SIDE=(()=>{ const r=heroRows('side',{feet:FEET.side.stepA}); r[12]="....kbbbBbbkkk.."; r[13]="....knbbbbbssk.."; return spr(r,HERO_PAL); })();
+const H_LIFT=(()=>{ const r=heroRows('down',{feet:FEET.down.stand}).map(x=>x.split(''));
+  for(let y=3;y<=10;y++){ r[y][0]=y===3?'.':'k'; r[y][1]=y===3?'k':'s'; r[y][2]=y<5?'k':r[y][2]; r[y][15]=y===3?'.':'k'; r[y][14]=y===3?'k':'s'; r[y][13]=y<5?'k':r[y][13]; }
+  r[11][1]='k'; r[11][14]='k'; r[3][1]='k'; r[2][1]='k'; r[2][14]='k'; r[2][0]='.'; r[2][15]='.';
+  r[13]="...kBbbbbbbnk...".split(''); return spr(r.map(x=>x.join('')),HERO_PAL); })();
+/* dormido y despertando en la maceta: sólo asoma la cabeza */
+const H_HEAD=(eyes)=>{ const hr=heroRows('down',{eyes}).slice(0,12); return spr(["................","................","................","................",...hr].slice(0,16),HERO_PAL); };
+const H_SLEEP=H_HEAD('closed');
+const H_WAKE=H_HEAD();
 const H_WILT=spr([ // marchito: hoja caída, cabeza gacha, mustio
 "................",
 "................",
@@ -270,53 +105,59 @@ const H_SEEDLING=spr([
 ".......k........",
 "................","................",
 ]);
-const P_SPRITES={ // [dir] → [frameA, frameB]; 0 abajo 1 arriba 2 izq 3 dcha
-  0:[H_DOWN_A,H_DOWN_B], 1:[H_UP_A,H_UP_B], 3:[H_SIDE_A,H_SIDE_B], 2:[flipH(H_SIDE_A),flipH(H_SIDE_B)],
+const P_SPRITES={ // [dir] → 4 tiempos del andar (0 = quieto); 0 abajo 1 arriba 2 izq 3 dcha
+  0:HW_DOWN, 1:HW_UP, 3:HW_SIDE, 2:HW_SIDE.map(flipH),
 };
 const P_ATK={0:H_ATK_DOWN,1:H_ATK_UP,3:H_ATK_SIDE,2:flipH(H_ATK_SIDE)};
 const P_WHITE={0:whiten(H_DOWN_A),1:whiten(H_UP_A),2:whiten(flipH(H_SIDE_A)),3:whiten(H_SIDE_A)};
-/* la Hoja en combate: apunta a la derecha; el peciolo (x=1,y=4) va en la mano */
+/* ---------- utilidades de arte a mano: filas → píxeles, contorno, franjas ---------- */
+function artPix(g,rows,map,ox,oy){ rows.forEach((r,y)=>{ for(let x=0;x<r.length;x++){ const ch=r[x]; if(ch==='.') continue;
+  g.fillStyle=(map&&map[ch])||PAL[ch]||'#ff00ff'; g.fillRect((ox||0)+x,(oy||0)+y,1,1); } }); }
+function artOutline(g,w,h,col){ // contorno de 1 px alrededor de todo lo opaco
+  const d=g.getImageData(0,0,w,h).data, A=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&d[(y*w+x)*4+3]>40;
+  g.fillStyle=col||PAL.k; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1))) g.fillRect(x,y,1,1); }
+function artClip(g,rects,fn){ g.save(); g.beginPath(); for(const [x,y,w,h] of rects) g.rect(x,y,w,h); g.clip(); fn(); g.restore(); }
+const GOLD5=['#6a4210','#b07818','#e0a830','#f8d848','#fff8c0'];
+const IRON5=['#26262e','#4a4a58','#76768a','#a8a8bc','#e0e0f0'];
+/* la Hoja en combate: apunta a la derecha; el peciolo (x=1,y=3) va en la mano */
 const LEAF_SWING=sprN([
-".....kkkkkk.....",
-"...kkLLlllllkk..",
-"..kLLLlllllllk..",
-"kAkdddddddddllk.",
-"..kllllllllllk..",
-"...kklllllkkk...",
+"....kkkkkkk.....",
+"..kkLLLLlllkk...",
+".kLLllllllllmk..",
+"kAkmmmmmmmmmmdk.",
+"..kddllllllddk..",
+"...kkdddddkkk...",
 ".....kkkkk......",
-],{A:'#8a5028'});
+],{A:'#8a5028',L:'#d8ffa0',l:'#78d838',m:'#b8f080',d:'#2e8a38'});
 const LEAF_SWING_L=flipH(LEAF_SWING);
 /* ---------- iconos 8×8 ---------- */
-const HEART_ROWS=[".kk..kk.","kRwkkRRk","kRRRRRRk","kRRRRRRk",".kRRRRk.","..kRRk..","...kk...","........"];
-const HEART_FULL=spr8(HEART_ROWS);
-const HEART_EMPTY=spr8(HEART_ROWS,{R:'#384038',w:'#384038'});
+const HEART_ROWS=[".kk.kk..","kLRkRRk.","kRRRRRk.","kRRRRDk.",".kRRDk..","..kDk...","...k....","........"];
+const HEART_FULL=spr8(HEART_ROWS,{L:'#ffd8d0',R:'#f04850',D:'#b01c38'});
+const HEART_EMPTY=spr8(HEART_ROWS,{L:'#b8966a',R:'#b8966a',D:'#a07c54'});
 const HEART_HALF=(()=>{const c=mkCanvas(8,8),g=c.getContext('2d');g.drawImage(HEART_EMPTY,0,0);
   g.save();g.beginPath();g.rect(0,0,4,8);g.clip();g.drawImage(HEART_FULL,0,0);g.restore();return c;})();
-const ACORN=spr8(["..kkkk..",".kAAAAk.","kAAAAAAk","kaawaaak",".kaaaak.","..kaak..","...kk...","........"]);
-const ACORN_GOLD=spr8(["..kkkk..",".kaaaak.","kaYyyyak","kyywyyyk",".kyyyyk.","..kyyk..","...kk...","........"]);
-const BERRY_SPR=spr8(["...kl...","..klk...",".kBBRk..","kBRRRRk.","kRRwRRk.","kRRRRRk.",".kRRRk..","..kkk..."],{B:'#a83858',R:'#d84878'});
-const DIARY_SPR=spr8(["kkkkkk..","kvvvvk..","kvAAvk..","kvvvvk..","kvAAvk..","kvvvvk..","kkkkkk..","........"]);
-const KEY_SPR=spr8(["..kkk...",".kyYyk..",".kykyk..","..kyk...","..kyk...","..kyyk..","..kyk...","..kkk..."]);
+const HEART_WHITE=spr8(HEART_ROWS,{L:'#ffffff',R:'#ffffff',D:'#ffe8e0'});
+const ACORN_ROWS=["...kk...",".kkmmkk.","kAaAaAAk","kkkkkkkk",".kbwbbk.",".kbbbBk.","..kbBk..","...kk..."];
+const ACORN=spr8(ACORN_ROWS,{m:'#5a3418',A:'#7a4a24',a:'#a86c38',b:'#d89a50',B:'#a86a30',w:'#fbe0a8'});
+const ACORN_GOLD=spr8(ACORN_ROWS,{m:'#6a4210',A:'#b07818',a:'#e0a830',b:'#f8d030',B:'#c88a10',w:'#fffbd0'});
+const BERRY_SPR=spr8(["...kLk..","..kkkk..",".kRRRRk.","kRwRRRDk","kRRRRRDk","kRRRRDDk",".kDDDDk.","..kkkk.."],{R:'#e8487c',D:'#a82858',w:'#ffd8e8',L:'#78d840'});
+const CURSOR_SPR=spr8(["k.......","kkk.....","kLlkk...","kLllldk.","kllddk..","kddk....","kk......","........"],{L:'#e0ffa0',l:'#78d838',d:'#2e8038'});
+const NEXT_SPR=sprN(["kkkkkkk","kYyyyOk",".kyyOk.","..kOk..","...k..."],{Y:'#fff6c0',y:'#f8c838',O:'#c08010'});
+const DIARY_SPR=sprN(["kkkkkkk.","kRrvvvvk","kRvAAAvk","kRvvvvvk","kRvAAvvk","kRvvvvVk","kRkkkkkk","kkk....."],{R:'#a83838',r:'#d86060',v:'#f4e4c0',V:'#c8b088',A:'#8a6a48'});
+const KEY_SPR=sprN(["..kkk...",".kYyyk..",".kykOk..","..kyk...","..kyk...","..kyyk..","..kyOk..","..kkk..."],{Y:'#fff8c0',y:'#f8c838',O:'#b07818'});
 const BIGKEY_SPR=sprN([
 "...kkkk.....",
-"..kyYYyk....",
-".kyYkkYyk...",
-".kyk..kyk...",
-".kyYkkYyk...",
-"..kyyyykkkkk",
-"...kyykyyyyk",
-"....kykkyky.",
+"..kYyyyk....",
+".kYkkkyOk...",
+".kyk.RkOk...",
+".kyOkkyOk...",
+"..kyOOOkkkkk",
+"...kyykYyyyk",
+"....kyOkkyOk",
 "....kyk.kyk.",
 "....kkk.kkk.",
-]);
-const PIECE_SPR=sprN([ // cuarto de corazón
-".kk..kk.",
-"kRwkkrRk",
-"kRRRRRRk",
-".kRRRRk.",
-"..kRRk..",
-"...kk...",
-]);
+],{Y:'#fff8c0',y:'#f8c838',O:'#b07818',R:'#e84848'});
+const PIECE_SPR=sprN([".kk.kk..","kLRkRRk.","kRRRRDk.",".kRRDk..","..kDk...","...k...."],{L:'#ffd8d0',R:'#f04850',D:'#b01c38'}); // cuarto de corazón
 /* ============================================================
    OBJETOS DEL ZURRÓN (16×16)
    ============================================================ */
@@ -324,306 +165,258 @@ const BLADE_SPR=spr([   // la Hoja Ancestral plantada en la arena
 "................",
 ".......kk.......",
 "......kLlk......",
-".....kLldlk.....",
-".....kLldlk.....",
-"....klLldllk....",
-"....kllldllk....",
-".....klldlk.....",
-".....klldlk.....",
-"......kldk......",
+".....kLLmdk.....",
+".....kLlmdk.....",
+"....kLLlmddk....",
+"....kLllmddk....",
+"....kLllmddk....",
+".....kLlmdk.....",
+".....kllmdk.....",
+"......klmk......",
 ".......kAk......",
-".......kAk......",
-"....kmmkAkmmk...",
-".....kkkkkkk....",
-"................",
-"................",
-]);
-const BOMB_SPR=spr([    // la Bellota-bomba
-"................",
-"........kk......",
-".......kok......",
-"....kkkkkk......",
-"...kAAAAAAk.....",
-"..kAAAAAAAAk....",
-"..kaaaaaaaak....",
-"..kaawaaaaak....",
-"...kaaaaaak.....",
-"....kaaaak......",
-".....kaak.......",
-"......kk........",
-"................",
-"................",
-"................",
-"................",
-]);
+"....kkkkAkkkk...",
+"...ksSSkAkSssk..",
+"..kssSSSSSSSssk.",
+"...kkkkkkkkkkk..",
+],{L:'#d8ffa0',l:'#78d838',m:'#b8f080',d:'#2e8a38',A:'#8a5028',s:'#f4e2a8',S:'#d8bc80'});
+const BOMB_SPR=mkTile(g=>{ // la Bellota-bomba, con la mecha encendida
+  blobArt(g,3,6,11,9,[{x:5.5,y:4,r:5.2,ry:4.8}],['#6a3a16','#a86430','#d89a50','#f0c070','#fff0c8'],{outline:false,grad:.2});
+  blobArt(g,2,3,13,5,[{x:6.5,y:3,r:6.6,ry:3.2}],['#3a2210','#5a3418','#7a4a24','#a06a34','#c88a4c'],{outline:false,dither:0});
+  for(let x=3;x<14;x+=2){ g.fillStyle='#3a2210'; g.fillRect(x,5,1,1); g.fillStyle='#b07c44'; g.fillRect(x+1,4,1,1); }
+  g.fillStyle='#5a3418'; g.fillRect(8,1,1,3); g.fillRect(9,1,1,1);
+  artOutline(g,16,16);
+  artPix(g,[".Y.","YWY",".Y."],{Y:'#f8a030',W:'#fff8c0'},9,0);
+});
 const HOOK_SPR=spr([    // la Raíz-gancho
 "................",
+"....kkkkk.......",
+"...kaAAAak......",
+"..kak...kAk.....",
+"..kAk...kAk.....",
+"..kkk...kak.....",
+"........kAk.....",
+".......kAak.....",
+"..kkk.kAak......",
+".kgGgkkaAk......",
+".kGgGkaAk.......",
+"..kkkaAk........",
+"....kaAk........",
+"...kaAk.........",
+"...kkk..........",
 "................",
-"....kkk.........",
-"...kdldk........",
-"...kldlk........",
-"....klk.........",
-"....klk..kkk....",
-".....klkkdldk...",
-"......klkdldk...",
-".......kklkk....",
-"......kdlk......",
-".....kdlk.......",
-"....kdlkk.......",
-"....kkk.........",
-"................",
-"................",
-]);
+],{a:'#d8a060',A:'#8a5028',g:'#b0f070',G:'#3aa840'});
 const BOOMER_SPR=spr([  // la Vaina voladora (bumerán de vaina de semilla)
 "................",
 "..kkk...........",
-".kLlak..........",
-".kllakk.........",
-".kdlaaak........",
-"..kdlaaakk......",
-"...kdlaaaak.....",
-"....kkdaaaakk...",
-"......kkdaaaak..",
-"........kkaaaak.",
-"..........kkaaak",
-"............kkkk",
+".kLlmk..........",
+".kLlmk..........",
+".klmak..........",
+".kmaak..........",
+".kdaaak.........",
+".kdaaaakkkkkk...",
+".kdaaaaaaaaaAk..",
+"..kdaaaaaaaAAk..",
+"...kkdddddAAk...",
+".....kkkkkkk....",
 "................",
 "................",
 "................",
 "................",
-],{a:'#d09040'});
+],{L:'#d8ffa0',l:'#78d838',m:'#3aa840',d:'#8a5a28',a:'#e8b060',A:'#a86a30'});
 const LANTERN_SPR=spr([ // el Farol de brasa
 "................",
-".......kk.......",
-"......kAAk......",
+"......kkkk......",
+".....kGk.kk.....",
 ".....kkkkkk.....",
-"....kAAAAAAk....",
-"....kAkyykAk....",
-"....kAkYYkAk....",
-"....kAkoYkAk....",
-"....kAkookAk....",
-"....kAkkkkAk....",
-"....kAAAAAAk....",
+"....kGGgggGk....",
+"....kkkkkkkk....",
+"....kgkYYkgk....",
+"....kGkYWkdk....",
+"....kGkoYkdk....",
+"....kGkOokdk....",
+"....kkkkkkkk....",
+"....kGgggGdk....",
 ".....kkkkkk.....",
 "................",
 "................",
 "................",
-"................",
-]);
-const FEATHER_SPR=spr([ // el Vilano de Petra (diente de león)
-"................",
-"......kwkwk.....",
-".....kwwwwwk....",
-"....kwwqwwwwk...",
-"....kwwwwqwwk...",
-".....kwwwwwk....",
-"......kwkwk.....",
-".......kdk......",
-".......kdk......",
-".......kdk......",
-"......kdk.......",
-"......kdk.......",
-".....kdk........",
-"......k.........",
-"................",
-"................",
-],{w:'#f0f0e0'});
-const EMBER_SPR=spr([   // la Brasa de Primavera
-"................",
-"................",
-"................",
-".......k........",
-"......kok.......",
-".....koook......",
-".....koYok......",
-"....koYYYok.....",
-"....koYYYok.....",
-".....koook......",
-"......kkk.......",
-"................",
-"................",
-"................",
-"................",
-"................",
-]);
-const TEAR_SPR=spr([    // la Lágrima de Verano
-"................",
-"................",
-"................",
-".......k........",
-"......kCk.......",
-"......kCk.......",
-".....kCcCk......",
-"....kCcwcCk.....",
-"....kCcccCk.....",
-".....kCcCk......",
-"......kkk.......",
-"................",
-"................",
-"................",
-"................",
-"................",
-]);
+],{G:'#f8d848',g:'#c89020',d:'#7a4a10',Y:'#f8e060',W:'#ffffff',o:'#f8a030',O:'#e05820'});
+const FEATHER_SPR=mkTile(g=>{ // el Vilano de Petra (diente de león)
+  blobArt(g,3,0,11,9,[{x:5.5,y:4.5,r:5.2,ry:4.5}],['#98a8b8','#c8d0d8','#e8ecf0','#f8f8f8','#ffffff'],{outline:false,dither:.6});
+  g.fillStyle='#a8b4c0'; for(const [x,y] of [[5,2],[11,3],[4,6],[9,7],[12,6],[7,1]]) g.fillRect(x,y,1,1);
+  g.fillStyle='#2e8a38'; for(let i=0;i<5;i++) g.fillRect(8-(i>>1),9+i,1,1); g.fillStyle='#70d838'; g.fillRect(9,9,1,1);
+  artOutline(g,16,16);
+});
+const EMBER_SPR=mkTile(g=>{ // la Brasa de Primavera
+  artPix(g,[".......o........","......oo..o.....",".....oYo.oo.....",".....oYooYo.....","....oYYYYYYo....","....oYWWWYYo....","...oYYWWYYYYo..."],{o:'#e05820',Y:'#f8a030',W:'#f8e060'},0,0);
+  blobArt(g,4,5,8,7,[{x:4,y:3.6,r:3.8,ry:3.4}],['#a02810','#e05820','#f8a030','#f8e060','#ffffff'],{outline:false,grad:.1,dither:.5});
+  artOutline(g,16,16); g.fillStyle='#ffffff'; g.fillRect(6,7,1,1);
+});
+const TEAR_SPR=mkTile(g=>{ // la Lágrima de Verano
+  blobArt(g,4,4,8,8,[{x:4,y:4.6,r:3.8,ry:3.6},{x:4,y:2,r:1.6,ry:2.6}],['#184c90','#2878c8','#58b0e8','#a8e0f8','#ffffff'],{outline:false,dither:.5});
+  g.fillStyle='#2878c8'; g.fillRect(8,2,1,2); g.fillStyle='#58b0e8'; g.fillRect(8,4,1,1);
+  artOutline(g,16,16); g.fillStyle='#ffffff'; g.fillRect(6,7,1,2); g.fillRect(7,6,1,1);
+});
 const FLAKE_SPR=spr([   // el Copo Eterno
 "................",
 "......k.k.......",
-".....knknk......",
-"......knk.......",
-"..k.kknnnkk.k...",
-"...knnnnnnnk....",
-"kknnnnnnnnnnnkk.",
-".knnnknnnknnnk..",
-"kknnnnnnnnnnnkk.",
-"...knnnnnnnk....",
-"..k.kknnnkk.k...",
-"......knk.......",
-".....knknk......",
+".....kLkLk......",
+"..k...kLk...k...",
+".kLk.kkNkk.kLk..",
+"..kLkNLNNNkLk...",
+"...kNLnnnNNk....",
+".kkkLNnWnNNkkk..",
+"kLNNNNnnnNNNNNk.",
+".kkkNNnnnNMkkk..",
+"...kNNNnNMMk....",
+"..kLkNNMNMkMk...",
+".kLk.kkMkk.kMk..",
+"..k...kMk...k...",
+".....kLkMk......",
 "......k.k.......",
-"................",
-"................",
-]);
-const SHIELD_SPR=spr([  // el Escudo de corteza
-"................",
-"....kkkkkkkk....",
-"...kAaaaaaaAk...",
-"...kaaLllaaak...",
-"...kaalddlaak...",
-"...kaaLllaaak...",
-"...kAaaaaaaAk...",
-"....kAaaaaAk....",
-".....kAaaAk.....",
-"......kAAk......",
-".......kk.......",
-"................",
-"................",
-"................",
-"................",
-"................",
-]);
-/* ---------- AMULETOS (12×12, equipables) ---------- */
-const AMULET_ROWS={
-  raiz:["....kkkk....","...kAaaAk...","..kAaddaAk..","..kadlldak..","..kadlldak..","..kAaddaAk..","...kAaaAk...","....kkkk....","....kAk.....","....kAk.....","...kkkkk....","............"],
-  savia:["....kkkk....","...kRrrRk...","..kRrwrRRk..","..kRrrrRRk..","..kRRrrRRk..","...kRRRRk...","....kkkk....","....kRk.....","...kkkkk....","............","............","............"],
-  musgo:["............","...kkkkkk...","..kggGGggk..","..kgLlggGk..","..kGgllgGk..","..kGGgggGk..","...kkkkkk...","....kGk.....","...kkkkk....","............","............","............"],
-  erizo:["....k.k.....","...kpkpk....","..kpPpPpk...","..kPPPPPk...","..kpPPPpk...","...kpppk....","....kkk.....","....kPk.....","...kkkkk....","............","............","............"],
-  viento:["...kkkkk....","..kccnncck..","..kcnnnnck..","..kccnnccck.","...kcccck...","....kkkk....","....kck.....","...kkkkk....","............","............","............","............"],
-  buho:["...kkkkk....","..kyYYYyk...","..kykYkyk...","..kyYYYyk...","..kyyyyyk...","...kkkkk....","....kyk.....","...kkkkk....","............","............","............","............"],
-  rana:["...kkkkk....","..kgGGGgk...","..kGqkqGk...","..kGGGGGk...","..kgGGGgk...","...kkkkk....","....kGk.....","...kkkkk....","............","............","............","............"],
-  topo:["...kkkkk....","..kaAAAak...","..kAyYyAk...","..kAAAAAk...","..kaAAAak...","...kkkkk....","....kAk.....","...kkkkk....","............","............","............","............"],
+],{L:'#ffffff',N:'#c8e8ff',n:'#88c8f0',W:'#ffffff',M:'#6a98c8'});
+const SHIELD_SPR=mkTile(g=>{ // el Escudo de corteza, con su hoja
+  blobArt(g,2,1,12,12,[{x:6,y:4.2,r:6,ry:4.6},{x:6,y:7.5,r:4.2,ry:4.3}],['#3e2210','#6a4020','#9a6634','#c08c50','#e0b878'],{outline:false,grad:.25});
+  g.fillStyle='#4e2e14'; g.fillRect(4,5,1,5); g.fillRect(11,4,1,4); g.fillRect(7,10,1,2);
+  artPix(g,["..L..",".Llm.","Llmmd",".lmd.","..d.."],{L:'#d8ffa0',l:'#78d838',m:'#3aa840',d:'#1e6a2a'},6,3);
+  artOutline(g,16,16);
+  g.fillStyle='#f0d090'; g.fillRect(4,2,3,1); g.fillRect(3,3,1,2);
+});
+/* ---------- AMULETOS (12×12: medallón de oro en las 10 filas de arriba) ---------- */
+function amuletArt(gem,emblem,emap){ return mkTile(g=>{
+  blobArt(g,1,1,10,10,[{x:5,y:5,r:4.8}],GOLD5,{outline:false,dither:.4});
+  blobArt(g,3,3,6,6,[{x:3,y:3,r:3}],gem,{outline:false,dither:.5,grad:.2});
+  g.fillStyle=gem[4]; g.fillRect(4,4,1,1);
+  if(emblem) artPix(g,emblem,emap,3,3);
+  artOutline(g,12,12);
+  g.fillStyle=PAL.k; g.fillRect(5,0,2,1); g.fillStyle=GOLD5[3]; g.fillRect(5,1,1,1);
+},12,12); }
+const AMULET_SPR={
+  raiz:amuletArt(['#1e4a1a','#2e7030','#58a040','#90d060','#d8ffa0'],["......","..A...",".AAA..","A.A.A.","..A..."],{A:'#6a3a18'}),
+  savia:amuletArt(['#6a0c20','#a01c38','#e04858','#f890a0','#ffe0e8'],["......",".R.R..","RRRRR.",".RRR..","..R..."],{R:'#fff0f0'}),
+  musgo:amuletArt(['#143a1a','#246a2a','#3a9a38','#70c850','#c0f090'],["......","..l...",".lLl..","..l...","......"],{l:'#1e5a22',L:'#ffffff'}),
+  erizo:amuletArt(['#2a1244','#4c2478','#7c44b0','#b080e0','#f0d8ff'],["k.k.k.",".kkk..","kkWkk.",".kkk..","......"],{W:'#ffffff'}),
+  viento:amuletArt(['#1a4a7a','#2878b8','#58c8e8','#a8e8f8','#ffffff'],["......",".WWW..","W...W.","..WW..","......"],{W:'#ffffff'}),
+  buho:amuletArt(['#5a3410','#8a5a20','#c89040','#e8c070','#fff0c0'],["......","WW.WW.","kW.kW.","..y...","......"],{W:'#ffffff',y:'#f8a030'}),
+  rana:amuletArt(['#1a4a1a','#2e7a2a','#58b048','#90e068','#e0ffc0'],["W...W.","k...k.","......","kkkkk.","......"],{W:'#ffffff'}),
+  topo:amuletArt(['#3a2412','#5a3a22','#84583a','#a87c54','#e8c8a0'],[".y.y..",".yyy..","......",".pp...","......"],{y:'#f8d848',p:'#f0a0b8'}),
+  susurro:amuletArt(['#406080','#80a8d0','#c0dcf0','#e8f4ff','#ffffff'],["......","..W...",".W.W..","W...W.","......"],{W:'#3a6a9a'}),
 };
-const AMULET_SPR={}; for(const k in AMULET_ROWS) AMULET_SPR[k]=sprN(AMULET_ROWS[k]);
 
 /* ============================================================
    LOS VECINOS DEL VALLE
    ============================================================ */
-const ELDER=spr([   // RAÍZ, la voz del Roble: corona de hojas, barba de musgo, bastón vivo
-"......klk.......",
-".....kdldk......",
-"....kkkkkkk.kl..",
-"...kssssssk.kdk.",
-"..ksWssssWsk.kAk",
-"..ksqkssqksk.kAk",
-"..ksskssksk..kAk",
-"..kWWssssWWkkkAk",
-"...kWWWWWWk..kAk",
-"..kbkWWWWWWk.kAk",
-"..kbbkWWkbbk.kAk",
-"..kbbbkkkbbk.kAk",
-"..kbabbbbbak.kAk",
-"...kbbbbbbk..kAk",
-"....kmmkmmk..kAk",
-"................",
-],{W:'#e8f0dc'});
-const PETRA_SPR=spr([ // Petra, la niña del diente de león
-"................",
-"......kwwk......",
-".....kwwwwk.....",
-"......kdk.......",
+/* piel y rasgos comunes de los vecinos (mismo lenguaje que Sprout) */
+const NPC_PAL={h:'#ffe8c4',s:'#f8cc90',S:'#d8985c',T:'#a86838',q:'#ffffff',c:'#f8988a',m:'#8a3a28',f:'#6a3818'};
+const npcSpr=(rows,extra)=>spr(rows,Object.assign({},NPC_PAL,extra));
+const ELDER=npcSpr([   // RAÍZ, la voz del Roble: corona de hojas, barba de musgo, bastón vivo
+"....kk.kk....kk.",
+"...kLlkLlk..kLlk",
+"..kkdlkldkk.kldk",
+".kWWhssssWWk.kAk",
+".khkksssskkSkkAk",
+".kscssTTsscSk.kA",
+".kWWWsmmsWWWk.kA",
+"..kWVWWWWWVk.kAk",
+"..kRWVWWWVRk.kAk",
+"..kRrrVVrrok.sAk",
+"..kRrrrrrrok.kAk",
+"..kRrorrrrok.kAk",
+"..kRrrrrrrok.kAk",
+"...kRrrrrok..kAk",
+"...kffkkffk..kAk",
+"....kk..kk...kkk",
+],{W:'#f4f8e8',V:'#b8c8a0',R:'#c08a50',r:'#8a5a30',o:'#5a3418',A:'#8a5028',L:'#b0f068',l:'#70d838',d:'#2e8a38'});
+const PETRA_SPR=npcSpr([ // Petra, la niña del diente de león
+".....k.kk.k.....",
+"....kwkwwkwk....",
+"...kwwwwwwWwk...",
+"....kwWwwWwk....",
+"......kddk......",
 "....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqsk..",
-"..ksskkssskksk..",
-"...kssssssssk...",
-"....kSSSSSSk....",
-"....kzzzzzzk....",
-"...kszzzzzzsk...",
-"....kzzzzzzk....",
-"....kmk..kmk....",
-".....k....k.....",
-"................",
-],{w:'#f0f0e0',z:'#d84878'});
-const LUPA_SPR=spr([ // Lupa, la jardinera: pamela de paja con flor
-"......kRk.......",
-".....kyyyyyk....",
-"....kyyyyyyyk...",
-"...kssssssssk...",
-"..kssqkssskqsk..",
-"..ksskkssskksk..",
-"..kssssssssssk..",
+"...kHIHHHHHHk...",
+"..kHIsssssHHHk..",
+"..kHkqsssskqHk..",
+"..kskksssskkSk..",
+"..kscsssmsscSk..",
 "...kSSssssSSk...",
-"....kkkkkkkk....",
-"....kCccccCk....",
-"...ksCccccCCsk..",
-"....kCccccCk....",
-"....kCccccCk....",
-"....kmmk.kmmk...",
+"...kzZzzzzzZk...",
+"..kszzzzzzzzsk..",
+"...kZzzzzzzZk...",
+"....kfk..kfk....",
+],{w:'#fffff0',W:'#d8d8c0',d:'#58a848',H:'#c07030',I:'#e8a050',z:'#e04880',Z:'#f890b8'});
+const LUPA_SPR=npcSpr([ // Lupa, la jardinera: pamela de paja con flor
+"......kkkk......",
+"....kkyYYykRk...",
+"...kyyyYyykRrk..",
+".kkyyyyyyyyykkk.",
+"kyyyyyyyyyyyyyyk",
+".kkuuuuuuuuuukk.",
+"..khkqsssskqSk..",
+"..kskksssskkSk..",
+"..kscssmmsscSk..",
+"...kSSssssSSk...",
+"...kOoOOOOoOk...",
+"..ksOooooooOsk..",
+"...kOooooooOk...",
+"...kOoOOOOoOk...",
+"....kffk.kffk...",
+"....kkk...kkk...",
+],{y:'#e8c860',Y:'#fff0a0',u:'#a88838',R:'#f04868',r:'#ffa0b8',O:'#2e68c0',o:'#58a0e8'});
+const MOSS_SPR=npcSpr([ // Moss, el pescador: gorra de musgo y caña al hombro
+"..............w.",
+"....kkkkkkk..kA.",
+"...kGgGGGGGk.kA.",
+"..kGgGGGGGGGkkA.",
+"..kkkkkkkkkkkkkk",
+"..khssssssSSk.A.",
+"..khkqsssskqSkA.",
+"..kskksssskkSkA.",
+"..kscssmmsscSkA.",
+"...kSSssssSSk.A.",
+"...kTtttttTTksA.",
+"..ksTttttttTkkA.",
+"...kTtttttTTk.A.",
+"...kTtTTTTtTk...",
+"....kffk.kffk...",
 ".....kk...kk....",
-"................",
-],{y:'#e8c860',C:'#3878d8',c:'#58a0e8'});
-const MOSS_SPR=spr([ // Moss, el pescador: gorra de musgo y caña al hombro
-"................",
-"....kGGGGGGk....",
-"...kGGGGGGGGk...",
-"....kkkkkkkk..w.",
-"...kssssssssk.A.",
-"..kssqkssskqskA.",
-"..ksskkssskkskA.",
-"..kssssssssskkA.",
-"...kSSSSSSSSk.A.",
-"....kkkkkkkk..A.",
-"....kTttttTk..A.",
-"...ksTttttTsk.A.",
-"....kTttttTk..A.",
-"....kTttttTk....",
-"....kmmk.kmmk...",
-".....kk...kk....",
-],{T:'#4a4030',t:'#6a5838',G:'#3a5a2a',w:'#d8e8f0'});
-const TILO_SPR=spr([ // Tilo, el tendero: hoja de tilo en la frente y delantal
-".....kl.lk......",
-"....klllllk.....",
-"......klk.......",
+],{T:'#4a4030',t:'#6e5c3c',G:'#3a6a2a',g:'#6aa048',w:'#d8e8f0',A:'#8a5028'});
+const TILO_SPR=npcSpr([ // Tilo, el tendero: hoja de tilo en la frente y delantal
+"......kkk.......",
+".....kLllk......",
+"....kLllldk.....",
+".....kkdkk......",
 "....kkkkkkkk....",
-"...kssssssssk...",
-"..kssqkssskqsk..",
-"..ksskkssskksk..",
-"..kssssssssssk..",
+"...khhssssssk...",
+"..khsssssssssk..",
+"..khkqsssskqSk..",
+"..kskksssskkSk..",
+"..kscsmmmmscSk..",
+"...kSSssssSSk...",
+"...kbwwwwwwbk...",
+"..kswwwwwwwwsk..",
+"...kbwWWWWwbk...",
+"....kffk.kffk...",
+"....kkk...kkk...",
+],{b:'#e8b050',w:'#f8f0dc',W:'#d8c8a8',L:'#b0f068',l:'#58b048',d:'#2e7830'});
+const CORTEZA_SPR=npcSpr([ // Corteza, la abuela ermitaña del bosque (vende amuletos)
+"......kkkk......",
+".....kNnNNk.....",
+"....kkkkkkkk....",
+"...kNNnNNNNNk...",
+"..kNnNNNNNNNNk..",
+"..kNkhssssskNk..",
+"..kNskksskksNk..",
+"..kNcsssssscNk..",
+"..kNSssmmssSNk..",
 "...kSSSSSSSSk...",
-"....kkkkkkkk....",
-"....kBwwwwBk....",
-"...ksBwwwwBsk...",
-"....kBwwwwBk....",
-"....kBwwwwBk....",
-"....kmmk.kmmk...",
+"...kPpPPPPpPk...",
+"..ksPpppppppPk..",
+"..kPPpppyppPPk..",
+"...kPPPPPPPPk...",
+"....kffk.kffk...",
 ".....kk...kk....",
-],{B:'#e8b050',w:'#f0e8d0',l:'#3a7a30'});
-const CORTEZA_SPR=spr([ // Corteza, la abuela ermitaña del bosque (vende amuletos)
-"....kkkkkkkk....",
-"...kNNNNNNNNk...",
-"..kNNNNNNNNNNk..",
-"..kNkkkkkkkkNk..",
-"..kkssssssssk...",
-"..kssqkssskqsk..",
-"..ksskkssskksk..",
-"..kSSssssssSSk..",
-"...kSSSSSSSSk...",
-"....kkkkkkkk....",
-"...kPPpppppPk...",
-"..ksPPpppppPsk..",
-"...kPPpppppPk...",
-"...kPPpppppPk...",
-"....kmmk.kmmk...",
-".....kk...kk....",
-],{N:'#e0e0e8',P:'#5c3080',p:'#8858b0'});
+],{N:'#e8e8f0',n:'#ffffff',P:'#5c3080',p:'#8858b0',y:'#f8d030'});
 const NPCS={
   h:{name:'Petra', img:PETRA_SPR}, j:{name:'Lupa', img:LUPA_SPR},
   y:{name:'Moss', img:MOSS_SPR},  g:{name:'Tilo', img:TILO_SPR}, 'ö':{name:'Corteza', img:CORTEZA_SPR},
@@ -631,474 +424,495 @@ const NPCS={
 /* ============================================================
    CRIATURAS (16×16, dos fotogramas cuando se mueven)
    ============================================================ */
-const BLOB_A=spr([ // el Brotón: gelatina verde con un brote encima
+/* criaturas con volumen: cuerpo por lóbulos (blobArt, luz arriba-izquierda)
+   y rasgos a mano encima ('.' = transparente) */
+function creature(lobes,pal,rows,extra,o){ const c=mkCanvas(16,16), g=c.getContext('2d');
+  if(lobes) blobArt(g,0,0,16,16,lobes,pal,o||{grad:.5});
+  if(rows) g.drawImage(sprN(rows,extra),0,0); return c; }
+const BLOB_PAL=['#1a4a22','#2a7a30','#48a840','#7ad058','#b8f090'];
+const BLOB_FX={L:'#b0f068',l:'#70d838',d:'#2e8a38',e:'#f0ffe0',q:'#ffffff',m:'#7a1a28'};
+const BLOB_A=creature([{x:8,y:8,r:3.2},{x:8,y:10.4,r:6.6,ry:4.8}],BLOB_PAL,[ // el Brotón: gelatina verde con un brote encima
 "................",
 "................",
-".......klk......",
-"......klllk.....",
-".....kkkdkkk....",
-"....kgggggggk...",
-"...kgLgggggggk..",
-"..kgLggkggkgggk.",
-"..kggggkggkgggk.",
-"..kggggggggGggk.",
-"..kGggggggGGGk..",
-"...kGGGGGGGGk...",
-"....kkkkkkkk....",
-"................",
-"................",
-"................",
-],{L:'#a8e878'});
-const BLOB_B=spr([ // aplastado
-"................",
-"................",
-"................",
-".......klk......",
-"......klllk.....",
-".....kkkdkkk....",
-"...kkgggggggkk..",
-"..kgLggkggkggggk",
-".kgggggkggkgggGk",
-".kggggggggggGGGk",
-"..kGGGggggGGGGk.",
-"...kkkkkkkkkkk..",
+"......kk........",
+".....kLlk.kk....",
+".....klldkLlk...",
+"......kkdkdk....",
+"........d.......",
+"....ee..........",
+"...e............",
+".....kq..kq.....",
+".....kk..kk.....",
+".......mm.......",
 "................",
 "................",
 "................",
 "................",
-],{L:'#a8e878'});
+],BLOB_FX);
+const BLOB_B=creature([{x:8,y:11.6,r:7.3,ry:3.7}],BLOB_PAL,[ // aplastado
+"................",
+"................",
+"................",
+"................",
+".....kk.........",
+"....kLlk.kk.....",
+"....klldkLlk....",
+".....kkdkdk.....",
+"...ee...d.......",
+"..e.............",
+"....kq....kq....",
+"....kk....kk....",
+".......mm.......",
+"................",
+"................",
+"................",
+],BLOB_FX);
+const BAT_PAL={P:'#3e1e5a',p:'#6a3a98',v:'#9a62d0',V:'#c8a0f0',y:'#ffe040',q:'#ffffff'};
 const BAT_A=spr([
 "................",
-"................",
-"..kk........kk..",
-".kppk......kppk.",
-".kpppkkPPkkpppk.",
-"..kppkPPPPkppk..",
-"...kkkPqkqPkkk..",
-"......kPPPPk....",
-".......kPPk.....",
-"........kk......",
-"................",
-"................",
-"................",
-"................",
+".k............k.",
+".kk..........kk.",
+".kVk..k..k..kVk.",
+".kvVkkVkkVkkVvk.",
+".kpvvkvVVvkvvpk.",
+".kppvkyvvykvppk.",
+".kPpvkvqqvkvpPk.",
+".kPkPkvvvvkPkPk.",
+".kk.kkpvvpkk.kk.",
+"......kppk......",
+".......kk.......",
 "................",
 "................",
-]);
+"................",
+"................",
+],BAT_PAL);
 const BAT_B=spr([
 "................",
 "................",
 "................",
 "................",
-".....kkkPPkkk...",
-"..kkkpppPPpppkkk",
-".kpppppkPqkqpppk",
-"..kkkkkkPPPPkkkk",
-".......kPPk.....",
-"........kk......",
+"................",
+".....kVkkVk.....",
+".kk..kvVVvk..kk.",
+"kVvkkkyvvykkkvVk",
+"kpvvvkvqqvkvvvpk",
+"kPpppkvvvvkpppPk",
+".kPkPkkppkkPkPk.",
+"..k.k..kk..k.k..",
 "................",
 "................",
 "................",
 "................",
-"................",
-"................",
-]);
-const BEETLE=spr([ // escarabajo acorazado (mira a la derecha; el morro blinda)
-"................",
-"................",
-"......kkkkk.....",
-".....khHHHhk....",
-"....khHHHHHhk...",
-"...kkhHHHHHhBBk.",
-"...kAhhHHHHhBqk.",
-"...kkhhHHHHhBBk.",
-"....khhHHHHhk...",
-".....khhhhhk....",
-"......kkkkk.....",
-"....kAk.kAk.....",
+],BAT_PAL);
+const SHELL_PAL=['#10281c','#1c5034','#2e7a48','#4aa864','#a0e8b0'];
+const BEETLE_FX={t:'#d0c8b8',T:'#6a6458',q:'#ffffff',D:'#10281c',e:'#e0fff0',n:'#3a3028'};
+const BEETLE=creature([{x:6.5,y:8.2,r:5.8,ry:5.2}],SHELL_PAL,[ // escarabajo acorazado (mira a la derecha; el morro blinda)
 "................",
 "................",
 "................",
+"....ee.....kkk..",
+"...e......ktttk.",
+"..........kttTTk",
+"......D...kqkTTk",
+"..DDDDDDDDkTTTTk",
+"......D...kTTTTk",
+"..........ktTTk.",
+"...........kkk..",
 "................",
-],{h:'#3a7a3a',H:'#5aa84a',B:'#8a7a5a',A:'#2a2a2a'});
-const BEETLE_B=spr([
+"..k..k..k.......",
+".kn.kn.kn.......",
+".k..k..k........",
 "................",
-"................",
-"......kkkkk.....",
-".....khHHHhk....",
-"....khHHHHHhk...",
-"...kkhHHHHHhBBk.",
-"...kAhhHHHHhBqk.",
-"...kkhhHHHHhBBk.",
-"....khhHHHHhk...",
-".....khhhhhk....",
-"......kkkkk.....",
-".....kAk.kAk....",
-"................",
-"................",
-"................",
-"................",
-],{h:'#3a7a3a',H:'#5aa84a',B:'#8a7a5a',A:'#2a2a2a'});
-const ROLLER=spr([ // rodapúas en reposo
-"................",
-"......kkkk......",
-".....kppppk.....",
-"...k.kppppk.k...",
-"..kpkkppppkkpk..",
-"...kppqppqppk...",
-"..kkppkppkppkk..",
-".k.kppppppppk.k.",
-"...kpPPPPPPpk...",
-"..kkpPPPPPPpkk..",
-".k.kkpPPPPpkk.k.",
-"....kkkkkkkk....",
+],BEETLE_FX);
+const BEETLE_B=creature([{x:6.5,y:8.2,r:5.8,ry:5.2}],SHELL_PAL,[
 "................",
 "................",
 "................",
+"....ee.....kkk..",
+"...e......ktttk.",
+"..........kttTTk",
+"......D...kqkTTk",
+"..DDDDDDDDkTTTTk",
+"......D...kTTTTk",
+"..........ktTTk.",
+"...........kkk..",
 "................",
-],{p:'#a878a8',P:'#7a4a7a'});
-const ROLLER_BALL=spr([
-"................",
-"......kkkk......",
-".....kpPPpk.....",
-"..k.kpPPPPpk.k..",
-".kpkpPPPPPPpkpk.",
-"..kpPPPpPPPPpk..",
-".kpPPPPPPPPPPpk.",
-".kPPPPpPPPPPPPk.",
-".kpPPPPPPPpPPpk.",
-"..kpPPPPPPPPpk..",
-".kpkkpPPPPpkkpk.",
-"..k.kkkkkkkk.k..",
-"................",
-"................",
-"................",
-"................",
-],{p:'#a878a8',P:'#7a4a7a'});
-const GHOST=spr([
-"................",
-"......kkkk......",
-".....kwwwwk.....",
-"....kwwwwwwk....",
-"...kwwwwwwwwk...",
-"...kwXwwwwXwk...",
-"...kwwwwwwwwk...",
-"...kwwwwwwwwk...",
-"...kwwwwwwwwk...",
-"...kwwwwwwwwk...",
-"...kw.kw.kw.k...",
+"...k..k..k......",
+"...nk.nk.nk.....",
 "....k..k..k.....",
 "................",
+],BEETLE_FX);
+const ROLL_PAL=['#2a1a40','#4a2e6a','#7048a0','#9a70c8','#d0b0f0'];
+const ROLL_FX={S:'#f4e8ff',q:'#ffffff',w:'#ffe0e8',n:'#2a1a40'};
+const ROLLER=creature([{x:8,y:9.6,r:6,ry:5.2}],ROLL_PAL,[ // rodapúas en reposo
+"................",
+"...S...S...S....",
+"...k..kk..kk..S.",
+"S..kk.k...k.kk..",
+".kk..........k..",
+"....ee..........",
+"...e............",
+".......kk.......",
+"...nnk....knn...",
+"....kq....kq....",
+"....kk....kk....",
+".......ww.......",
 "................",
 "................",
+"...kk......kk...",
 "................",
-],{w:'#c8e8ff',X:'#2a3a6a'});
+],ROLL_FX);
+const ROLLER_BALL=creature([{x:8,y:8,r:6.2}],ROLL_PAL,[
+"........S.......",
+"...S....k...S...",
+"....k.......k...",
+"................",
+"....ee...n......",
+"...e....n.......",
+"..........n.....",
+"Sk....nn...n..kS",
+"....n.......n...",
+".....n...nnn....",
+"......nnn.......",
+"................",
+"....k.......k...",
+"...S....k...S...",
+"........S.......",
+"................",
+],ROLL_FX,{grad:.3});
+const GHOST=spr([
+"................",
+"......kkkkk.....",
+"....kkwwwwwkk...",
+"...kwwWwwwwwlk..",
+"..kwWWwwwwwwwlk.",
+"..kwwnnwwwnnwlk.",
+"..kwwnnwwwnnwlk.",
+"..kwwwwwwwwwwlk.",
+"..kwwwwnnnwwwlk.",
+"..kwwwwnnnwwllk.",
+"..klwwwwwwwwllk.",
+"..kllwwwwwlllLk.",
+"..kLllllllllLLk.",
+"..kLLkLLLLkLLk..",
+"...kk.kkkk.kk...",
+"................",
+],{w:'#e8f4ff',W:'#ffffff',l:'#a8c4e8',L:'#6a88c0',n:'#1a2048'});
+const FROG_FX={g:'#58b048',G:'#2e7830',h:'#8ad860',H:'#c0f090',y:'#f0f0b0',Y:'#c8c880',q:'#ffffff'};
 const FROG=spr([
 "................",
 "................",
-"...kk....kk.....",
-"..kqqk..kqqk....",
-"..kqkk..kqkk....",
-".kkggkkkkggkk...",
-".kgggggggggggk..",
-".kggGggggGgggk..",
-".kgggggggggggk..",
-"..kgggggggggk...",
-"...kk.kk.kk.....",
 "................",
-"................",
-"................",
-"................",
-"................",
-],{g:'#6aa84a',G:'#4a8838'});
+"...kkk....kkk...",
+"..kqqqk..kqqqk..",
+"..kqkqk..kqkqk..",
+"..khhhkkkkhhhk..",
+".khHhgggggghhhk.",
+".kgggggggggggGk.",
+".kgGgkkkkkkgGgk.",
+".kggyyyyyyyyggk.",
+"kgGgyyyyyyyygGgk",
+"kGggGyYYYYyGggGk",
+".kkGgkkkkkkgGkk.",
+"kGGGk......kGGGk",
+".kkk........kkk.",
+],FROG_FX);
 const FROG_JUMP=spr([
+"...kkk....kkk...",
+"..kqqqk..kqqqk..",
+"..kqkqk..kqkqk..",
+"..khhhkkkkhhhk..",
+".khHhgggggghhhk.",
+".kgggggggggggGk.",
+".kgGgkkkkkkgGgk.",
+".kggyyyyyyyyggk.",
+"kgGgyyyyyyyygGgk",
+"kGggGyYYYYyGggGk",
+".kkGgkkkkkkgGkk.",
+".kGk........kGk.",
+".kGk........kGk.",
+"kGGk........kGGk",
+"kkkk........kkkk",
 "................",
-"...kk....kk.....",
-"..kqqk..kqqk....",
-"..kqkk..kqkk....",
-".kkggkkkkggkk...",
-".kgggggggggggk..",
-".kggGggggGgggk..",
-".kgggggggggggk..",
-".kgggggggggggk..",
-".kgggggggggggk..",
-"..kgggggggggk...",
-".kk.kkkkkk.kk...",
-"kk..........kk..",
+],FROG_FX);
+const THORN_PAL=['#12401a','#1e6a28','#2e8a34','#58b048','#9ae070'];
+const THORN_FX={T:'#f8ecc0',R:'#c83040',r:'#f07080',q:'#ffffff',n:'#12401a',y:'#ffe040'};
+const THORN=creature([{x:8,y:9,r:5.6}],THORN_PAL,[
+"........T.......",
+"...T....k...T...",
+"....k.......k...",
 "................",
+".....e..........",
+"....e...........",
+"Tk..nn....nn..kT",
+"....ky....yk....",
 "................",
-"................",
-],{g:'#6aa84a',G:'#4a8838'});
-const THORN=spr([
-"................",
-"................",
-"................",
-"................",
-"......kkkk......",
-".....kmmmmk.....",
-"....kmGGGGmk....",
-"....kGGGGGGk....",
-"....kGqGGqGk....",
-"....kGGGGGGk....",
-".....kmmmmk.....",
-"......kmmk......",
-".....kkmmkk.....",
-"................",
+".....RRRRRR.....",
 "................",
 "................",
-],{m:'#3a5a2a',G:'#56843a'});
-const THORN_OPEN=spr([
-".......kk.......",
-"...k...kk...k...",
-"...kk..||..kk...",
-"....kk.||.kk....",
-"..kk.kmmmmk.kk..",
-"...kkmGGGGmkk...",
-"k--kmRRRRRRmk--k",
-"..kmRRqqqqRRmk..",
-"k--kmRRRRRRmk--k",
-"...kkmGGGGmkk...",
-"..kk.kmmmmk.kk..",
-"....kk.||.kk....",
-"...kk..||..kk...",
-"...k...kk...k...",
-".......kk.......",
+"....k.......k...",
+"...T....k...T...",
+"........T.......",
 "................",
-],{m:'#3a5a2a',G:'#56843a',R:'#a83838','|':'#6a8a3a','-':'#6a8a3a'});
+],THORN_FX);
+const THORN_OPEN=creature([{x:8,y:9,r:6.2}],THORN_PAL,[
+"........T.......",
+"..T.....k....T..",
+"...k........k...",
+"................",
+".....e..........",
+"....nn....nn....",
+"Tk..ky....yk..kT",
+"....kkkkkkkk....",
+"....RqkqqkqR....",
+"....RkkkkkkR....",
+"....RrkkkkrR....",
+"....RqkqqkqR....",
+"...k.kkkkkk.k...",
+"..T.....k....T..",
+"........T.......",
+"................",
+],THORN_FX);
 const SQUIRREL=spr([
 "................",
+"..........kkkk..",
+".........kTttTk.",
+"..k.k...kTtttttk",
+".kBkBk..ktTkkttk",
+".kBbbbk.ktk..kTk",
+"kbkqbbbk.k..ktTk",
+"kbkkbbnk...kttk.",
+"kkbbbnk...kttk..",
+".kvvbbbk.kttk...",
+".kvvbbbbkttTk...",
+".kvvbbbbbtTk....",
+"..kvbbbbnnk.....",
+"..knbkknbk......",
+"..kk..kk........",
 "................",
-"...........kk...",
-"..........kqqk..",
-".....kk..kqqqqk.",
-"....kQQk.kqqqqk.",
-"...kQQQQkkqqqk..",
-"...kQkQQQQQqk...",
-"...kQQQQQQQk....",
-"....kQQQQQQk....",
-".....kQQQQk.....",
-"....kQk..kQk....",
-"................",
-"................",
-"................",
-"................",
-],{q:'#b07840',Q:'#c89050'});
+],{b:'#c07838',B:'#e8a868',n:'#8a4a20',v:'#f8e0b8',t:'#d89048',T:'#9a5a28',q:'#ffffff'});
 const ICICLE_SPR=spr([
-"....knnnnnk.....",
-"....knNNNnk.....",
-".....knNNnk.....",
-".....knNNnk.....",
-"......knNnk.....",
-"......knNnk.....",
-".......knNk.....",
-".......knNk.....",
-"........knk.....",
-"........knk.....",
+"....kkkkkkk.....",
+"....keeNNMk.....",
+".....keNNMk.....",
+".....kenNMk.....",
+"......keNMk.....",
+"......knNMk.....",
+".......keMk.....",
+".......knMk.....",
+"........kMk.....",
+"........kek.....",
 ".........k......",
 "................",
 "................",
 "................",
 "................",
 "................",
-]);
+],{e:'#ffffff',n:'#e8f4ff',N:'#a8d0f0',M:'#6a90c0'});
+const SETON_FX={R:'#e84040',r:'#a82030',H:'#ff9080',w:'#fff8e8',s:'#f8e8c8',S:'#d8c098',q:'#ffffff',m:'#8a3a28',c:'#f8a090'};
 const SETON=spr([ // Setón: seta escupe-esporas
 "................",
+"......kkkk......",
+"....kkHHRRkk....",
+"...kHHwwRRRRk...",
+"..kHwwwRRRwwRk..",
+"..kRwwRRRRwwRk..",
+".kRRRRRRwwRRRrk.",
+".krRRwwRRRRRrrk.",
+".kkrrrrrrrrrrkk.",
+"...kssssssssk...",
+"...kskqsskqSk...",
+"...kskksskkSk...",
+"...kscsmmscSk...",
+"...kSsssssSSk...",
+"....kkkkkkkk....",
 "................",
-".....kkkkkk.....",
-"....kRRqRRRk....",
-"...kRRRRRqRRk...",
-"..kRqRRRRRRRRk..",
-"..kRRRRRRqRRRk..",
-"..kkkkkkkkkkkk..",
-"....kvvvvvvk....",
-"....kvkvvkvk....",
-"....kvvvvvvk....",
-"....kvvVVvvk....",
-".....kvvvvk.....",
-"....kkk..kkk....",
-"................",
-"................",
-],{R:'#d85050',v:'#e8dcc0',V:'#c0b090'});
+],SETON_FX);
 const SETON_B=spr([ // hinchado: va a soltar esporas
-"................",
 ".....kkkkkk.....",
-"....kRRqRRRk....",
-"...kRRRRRqRRk...",
-"..kRqRRRRRRRRk..",
-".kRRRRRRRqRRRRk.",
-".kRRRRRRRRRRRRk.",
-".kkkkkkkkkkkkkk.",
-"....kvvvvvvk....",
-"....kvkvvkvk....",
-"....kvvVVvvk....",
-"....kvvvvvvk....",
-".....kvvvvk.....",
-"....kkk..kkk....",
+"...kkHHRRRRkk...",
+"..kHHwwRRRRwwk..",
+".kHwwwwRRRwwwRk.",
+".kRwwwRRRRRwwRk.",
+"kRRRRRRwwwRRRRrk",
+"kRRwwRRwwwRRRrrk",
+"krrRwwRRRRRRrrrk",
+"kkrrrrrrrrrrrrkk",
+"..kssssssssssk..",
+"..kskkssssskkSk.",
+"..kccssssssccSk.",
+"..kssssmmsssSSk.",
+"..kSssssssssSSk.",
+"...kkkkkkkkkkk..",
 "................",
-"................",
-],{R:'#d85050',v:'#e8dcc0',V:'#c0b090'});
+],SETON_FX);
+const CRAB_FX={o:'#f07040',O:'#b83820',H:'#ffb080',q:'#ffffff',y:'#f8d0a0'};
 const CRAB=spr([ // cangrejo de playa
 "................",
+".kk.k......k.kk.",
+"kHHkHk....kHkHHk",
+"kHOOOkk..kkOOOHk",
+".kOOkkqkkqkkOOk.",
+"..kOk.k..k.kOk..",
+"..kOk.O..O.kOk..",
+"...kkkkkkkkkkk..",
+"..kHHoooooooOOk.",
+".kHoooooooooooOk",
+".koooyoooyooooOk",
+".kOoooooooooOOOk",
+"..kOOOOOOOOOOOk.",
+".k.kk.k..k.kk.k.",
+"k.k..k....k..k.k",
 "................",
-"................",
-"..kk........kk..",
-".kOOk......kOOk.",
-".kOkOk....kOkOk.",
-"..kOkkkkkkkkOk..",
-"...kOOOOOOOOk...",
-"..kOOqOOOOqOOk..",
-"..kOOkOOOOkOOk..",
-"..kOOOOOOOOOOk..",
-"...kkOOOOOOkk...",
-"..kOkkOkkOkkOk..",
-".kk..kk..kk..kk.",
-"................",
-"................",
-],{O:'#e87040'});
+],CRAB_FX);
 const CRAB_B=spr([
 "................",
+"kk..k......k..kk",
+"kHk.Hk....kH.kHk",
+"kHOkOkk..kkOkOHk",
+".kOOkkqkkqkkOOk.",
+"..kOk.k..k.kOk..",
+"..kOk.O..O.kOk..",
+"...kkkkkkkkkkk..",
+"..kHHoooooooOOk.",
+".kHoooooooooooOk",
+".koooyoooyooooOk",
+".kOoooooooooOOOk",
+"..kOOOOOOOOOOOk.",
+"..k.kk.k..k.kk.k",
+".k.k..k....k..k.",
 "................",
-"..kk........kk..",
-".kOOk......kOOk.",
-".kOkOk....kOkOk.",
-"..kOkkkkkkkkOk..",
-"...kOOOOOOOOk...",
-"..kOOqOOOOqOOk..",
-"..kOOkOOOOkOOk..",
-"..kOOOOOOOOOOk..",
-"...kkOOOOOOkk...",
-"...kOkOkkOkOk...",
-"..kk.kk..kk.kk..",
-"................",
-"................",
-"................",
-],{O:'#e87040'});
+],CRAB_FX);
+const WISP_FX={y:'#fff4b0',Y:'#ffffff',o:'#f8b030',O:'#e86818',r:'#a82810'};
 const WISP=spr([ // fuego fatuo de la mina
+"........k.......",
+".......kok......",
+"......kook..k...",
+"......koyok.ko..",
+".....koyyyokok..",
+"....kOoyYyyoOk..",
+"...kOoyyyyyyoOk.",
+"...kOokkyykkoOk.",
+"...kOoyyyyyyoOk.",
+"...kOoyykkyyoOk.",
+"....kOooyyooOk..",
+".....krOOOOrk...",
+"......krrrrk....",
+".......kkkk.....",
 "................",
 "................",
-".......k........",
-"......koYk......",
-".....koYYok.....",
-"....koYYYYok....",
-"....koYqYqok....",
-"....koYYYYok....",
-"....kooYYook....",
-".....kooook.....",
-"......kkkk......",
-"....k..k..k.....",
-"................",
-"................",
-"................",
-"................",
-]);
+],WISP_FX);
 const WISP_B=spr([
 "................",
-".......k........",
-"......kok.......",
-"......koYk......",
-".....koYYok.....",
-"....koYYYYok....",
-"....koYqYqok....",
-"....koYYYYok....",
-"....kooYYook....",
-".....kooook.....",
-"......kkkk......",
-".....k.k.k......",
+"....k...........",
+"...kok....k.....",
+"...koo...kok....",
+"....kok.kook....",
+"....kOokyyok....",
+"...kOoyYyyyoOk..",
+"...kOokkyykkoOk.",
+"...kOoyyyyyyoOk.",
+"...kOoyykkyyoOk.",
+"...kOooyyyyooOk.",
+"....kOooyyooOk..",
+".....krOOOOrk...",
+"......kkrrkk....",
+"........kk......",
 "................",
-"................",
-"................",
-"................",
-]);
+],WISP_FX);
+const BEE_FX={y:'#f8d030',Y:'#fff0a0',O:'#c08010',w:'#e8f4ff',W:'#a8c8e8',q:'#ffffff',s:'#3a3020'};
 const BEE=spr([ // abeja obrera del panal
 "................",
-"................",
-"...kk...kk......",
-"..knnk.knnk.....",
-"..knnnknnnk.....",
-"...kkkyykkk.....",
-"....kyakyak.....",
-"...kayayayak....",
-"...kyayayayk....",
-"....kayayak.....",
-".....kyakk......",
-"......kk........",
-"................",
-"................",
-"................",
-"................",
-],{a:'#1a1410',y:'#f8d030',n:'#d8e8f0'});
+"..kkk.....kkk...",
+".kwwWk...kWwwk..",
+".kwwwWk.kWwwwk..",
+"..kwwwkkkwwwk...",
+"...kkkYyykkk....",
+"....kYyyyyyk....",
+"...kykqyykqyk...",
+"...kykkyykkyk...",
+"...kkkkkkkkkk...",
+"...kyyyyyyyOk...",
+"...kkkkkkkkkk...",
+"....kyyyyyOk....",
+".....kkkkkk.....",
+".......kk.......",
+"........k.......",
+],BEE_FX);
 const BEE_B=spr([
 "................",
 "................",
 "................",
-"..kkk....kkk....",
-".knnnkkkknnnk...",
-"..kkkkyykkkk....",
-"....kyakyak.....",
-"...kayayayak....",
-"...kyayayayk....",
-"....kayayak.....",
-".....kyakk......",
-"......kk........",
-"................",
-"................",
-"................",
-"................",
-],{a:'#1a1410',y:'#f8d030',n:'#d8e8f0'});
+"kkk..........kkk",
+"kwwWkk....kkWwwk",
+".kwwwWkkkkWwwwk.",
+"...kkkYyykkk....",
+"....kYyyyyyk....",
+"...kykqyykqyk...",
+"...kykkyykkyk...",
+"...kkkkkkkkkk...",
+"...kyyyyyyyOk...",
+"...kkkkkkkkkk...",
+"....kyyyyyOk....",
+".....kkkkkk.....",
+".......kk.......",
+],BEE_FX);
 const GOLEMITO=spr([ // golemito de hielo del templo
 "................",
-"....kkkkkkk.....",
-"...kNnnnnnNk....",
-"...kNnknknNk....",
-"...kNnnnnnNk....",
-"..kkNNNNNNNkk...",
-".kNkNnnnnnNkNk..",
-".kNkNnNNNnNkNk..",
-".kNkNnnnnnNkNk..",
-".kkkNNNNNNNkkk..",
-"...kNNkkkNNk....",
-"...kNNk.kNNk....",
-"...kkkk.kkkk....",
-"................",
-"................",
-"................",
-]);
-const SNAIL=spr([ // caracol de las marismas (fuera de la concha)
-"................",
-"................",
-"................",
-"................",
-"......kkkkk.....",
-".....kaAAAAk....",
-"....kaAaaaAAk...",
-"....kaAaAaAAk...",
-"..kkkaAaaaAAk...",
-".kqkgkkAAAAk....",
-".kkgggggkkk.....",
-"..kgggggggggk...",
-"...kkkkkkkkkk...",
-"................",
-"................",
-"................",
-],{g:'#8ab858',a:'#d09040',A:'#8a5028'});
-const SNAIL_IN=spr([ // metido en la concha: invulnerable
-"................",
-"................",
-"................",
-"................",
-"......kkkkk.....",
-".....kaAAAAk....",
-"....kaAaaaAAk...",
-"....kaAaAaAAk...",
-"....kaAaaaAAk...",
-"....kkAAAAAk....",
-"...kgkkkkkkgk...",
-"...kgggggggkk...",
 "....kkkkkkkk....",
+"...kwwWWwwwNk...",
+"...kwWwwwwNNk...",
+"...kwkkwwkkNk...",
+"...kwkcwwkcNk...",
+"...kNwwwwwwMk...",
+".kkkkkkkkkkkkkk.",
+"kwWkwwWwwwwNkNMk",
+"kWwkwwwwwwNNkNMk",
+"kwNkwwwwwNNMkMMk",
+".kkkNNNNNNMMkkk.",
+"....kNNkkNMk....",
+"...kwNNk.kNMk...",
+"...kkkkk.kkkk...",
+"................",
+],{w:'#d8ecff',W:'#ffffff',N:'#8ab0d8',M:'#5a78a8',c:'#58e8d8'});
+const SNAIL_PAL=['#5a2e10','#8a4a1c','#b87030','#e0a050','#f8d890'];
+const SNAIL_FX={g:'#88c870',G:'#4a8a40',h:'#c0f0a0',q:'#ffffff',n:'#5a2e10'};
+const SNAIL=creature([{x:9,y:8.5,r:5.2}],SNAIL_PAL,[ // caracol de las marismas (fuera de la concha)
+"................",
+"..k..k..........",
+"..q..q..........",
+"..k..k..........",
+"..kk.k..ee......",
+".kGhk..e........",
+"kqkhk...nnnn....",
+"kkhhk..n....n...",
+"khhgk..n..n.n...",
+"khggk..n...nn...",
+"kgggkk.........k",
+"kgggggkk......kk",
+"kGggggggkkkkkkgk",
+".kGGgggggggggGk.",
+"..kkkkkkkkkkkk..",
+"................",
+],SNAIL_FX);
+const SNAIL_IN=creature([{x:8,y:9,r:5.6}],SNAIL_PAL,[ // metido en la concha: invulnerable
 "................",
 "................",
 "................",
-],{g:'#8ab858',a:'#d09040',A:'#8a5028'});
+"................",
+"......ee........",
+".....e..........",
+"......nnnn......",
+".....n....n.....",
+".....n..n.n.....",
+".....n...nn.....",
+"................",
+"................",
+"................",
+"..kkk.......kkk.",
+"..kGgkkkkkkkgGk.",
+"...kkkkkkkkkkk..",
+],SNAIL_FX);
 function recolor(c,map){ // recolorea por sustitución exacta de colores
   const n=mkCanvas(c.width,c.height),g=n.getContext('2d');g.drawImage(c,0,0);
   const id=g.getImageData(0,0,n.width,n.height),d=id.data;
@@ -1107,8 +921,8 @@ function recolor(c,map){ // recolorea por sustitución exacta de colores
     for(const [A,B] of M){ if(d[i]===A[0]&&d[i+1]===A[1]&&d[i+2]===A[2]){ d[i]=B[0];d[i+1]=B[1];d[i+2]=B[2]; break; } } }
   g.putImageData(id,0,0); return n;
 }
-const BLOB_ICE=[recolor(BLOB_A,{'#58b048':'#58a8c8','#2e7830':'#2e6890','#a8e878':'#b8e8f8'}),recolor(BLOB_B,{'#58b048':'#58a8c8','#2e7830':'#2e6890','#a8e878':'#b8e8f8'})];
-const BAT_RED=[recolor(BAT_A,{'#9858c8':'#c84848','#5c3080':'#802020'}),recolor(BAT_B,{'#9858c8':'#c84848','#5c3080':'#802020'})];
+const BLOB_ICE=[BLOB_A,BLOB_B].map(c=>recolor(c,{'#1a4a22':'#1a3a5a','#2a7a30':'#2a6890','#48a840':'#4898c8','#7ad058':'#80c8e8','#b8f090':'#c8f0ff'}));
+const BAT_RED=[BAT_A,BAT_B].map(c=>recolor(c,{'#3e1e5a':'#4a0e10','#6a3a98':'#902428','#9a62d0':'#d04848','#c8a0f0':'#f8a0a0'}));
 const E_SPR={ // tipo → fotogramas y variantes
   blob:{a:BLOB_A,b:BLOB_B,fast:BLOB_ICE},
   bat:{a:BAT_A,b:BAT_B,fast:BAT_RED},
@@ -1127,194 +941,107 @@ const E_SPR={ // tipo → fotogramas y variantes
   snail:{a:SNAIL,shell:SNAIL_IN},
 };
 for(const k in E_SPR){ const S=E_SPR[k]; S.w={}; for(const f in S){ if(f==='w')continue; if(Array.isArray(S[f])) S.w[f]=S[f].map(whiten); else S.w[f]=whiten(S[f]); } }
-const SPORE_SPR=sprN(["..kk..",".kqRk.","kqRRRk","kRRRRk",".kRRk.","..kk.."],{R:'#d85050'});
-const ROCK_PROJ=sprN([".kkkk.","ktttTk","kttTTk","ktTTTk",".kkkk."]);
+const SPORE_SPR=sprN(["..kk..",".kqRk.","kqRRrk","kRRrrk",".krrk.","..kk.."],{R:'#f06060',r:'#a82838'});
+const ROCK_PROJ=sprN([".kkkk.","kttTTk","ktTTnk","kTTnnk",".kkkk."],{n:'#4a443a'});
 /* ============================================================
    MINIJEFES (24×24)
    ============================================================ */
-const KING_BEETLE=sprN([ // El Escarabajo Rey — mira a la derecha; el morro es blindaje
-"........................",
-"........................",
-"..........kkkkkkk.......",
-"........kkhhHHHhhkk.....",
-".......khhHHHHHHHhhk....",
-"......khhHHHyyHHHHhhk...",
-".....khhHHHyYYyHHHHhk...",
-"....kkhhHHHyyyyHHHHhkkk.",
-"...kAAhhHHHHHHHHHHhBBBk.",
-"...kAkhhhHHHHHHHhhBqBBk.",
-"...kkkhhhhHHHHHhhhBBBBk.",
-"...kAAhhhhhHHHhhhhkBBk..",
-"....kkkhhhhhhhhhhhhkkk..",
-".....kkhhhhhhhhhhhkk....",
-"......kkhhhhhhhhhkk.....",
-".......kkkhhhhhkkk......",
-"....kAAk.kkkkkkk.kAAk...",
-"...kAk.........kAk......",
-"........................",
-"........................",
-"........................",
-"........................",
-"........................",
-"........................",
-],{h:'#3a7a3a',H:'#5aa84a',B:'#8a7a5a',A:'#2a2a2a'});
-const DRONE=sprN([ // El Zángano Capitán — avispa grande con casco
-"........................",
-".....kkk........kkk.....",
-"....knnnk......knnnk....",
-"...knnnnnk....knnnnnk...",
-"...knnnnnnk..knnnnnnk...",
-"....knnnnnkkkknnnnnk....",
-".....kkkkkTTTTkkkk......",
-"........kTtttttTk.......",
-".......kTtqttqtTk.......",
-".......kkTTTTTTkk.......",
-".......kaaayyyaaak......",
-"......kayyayyayyak......",
-"......kaayyayyayak......",
-"......kayyaayyayyk......",
-".......kaayyyaaak.......",
-".......kayyyayyak.......",
-"........kaayyaak........",
-".........kayyak.........",
-"..........kaak..........",
-"...........kk...........",
-"...........k............",
-"........................",
-"........................",
-"........................",
-],{a:'#1a1410',y:'#f8d030',n:'#d8e8f0',T:'#6a6458',t:'#b8b0a0'});
-const ICE_GUARD=sprN([ // El Guardián de Hielo — golem grande
-"........................",
-"......kkkkkkkkkkk.......",
-".....kNNnnnnnnnNNk......",
-".....kNnnnnnnnnnNk......",
-".....kNnnkkknnnkNk......",
-".....kNnnkcknnkcNk......",
-".....kNnnnnnnnnnNk......",
-"......kNNnnnnnNNk.......",
-"..kkkkkkNNNNNNNkkkkkk...",
-".kNNNNkNnnnnnnnNkNNNNk..",
-".kNnnNkNnnNNNnnNkNnnNk..",
-".kNnnNkNnnNcNnnNkNnnNk..",
-".kNnnNkNnnNNNnnNkNnnNk..",
-".kNnnNkNnnnnnnnNkNnnNk..",
-".kNNNNkNNnnnnnNNkNNNNk..",
-"..kkkk.kNNNNNNNk.kkkk...",
-".......kNNk.kNNk........",
-".......kNNk.kNNk........",
-".......kNNk.kNNk........",
-"......kNNNk.kNNNk.......",
-"......kkkkk.kkkkk.......",
-"........................",
-"........................",
-"........................",
-]);
+const KING_BEETLE=mkTile(g=>{ // El Escarabajo Rey — mira a la derecha; morro de hierro delante, caparazón verde metálico
+  g.fillStyle=PAL.k; for(const [x,y] of [[5,17],[10,18],[15,17]]){ g.fillRect(x,y,1,3); g.fillRect(x-1,y+3,2,1); g.fillRect(x+2,y+1,1,2); }
+  artPix(g,["k..","kk.",".kk"],null,4,18); artPix(g,["k..","kk.",".kk"],null,9,19); artPix(g,["k..","kk.",".kk"],null,14,18);
+  blobArt(g,1,5,19,14,[{x:9.5,y:7,r:9.2,ry:6.8}],['#0c2a16','#1a5028','#2e8038','#58b04a','#b8f080'],{outline:false,grad:.5});
+  g.fillStyle='#0c2a16'; g.fillRect(10,6,1,12); g.fillStyle='#58b04a'; g.fillRect(9,7,1,4);         // costura del élitro
+  g.fillStyle='#b8f080'; g.fillRect(5,8,3,1); g.fillRect(4,9,1,2); g.fillRect(13,8,2,1);
+  g.fillStyle='#1a5028'; for(const [x,y] of [[5,13],[7,15],[13,12],[14,15],[3,12]]) g.fillRect(x,y,2,1);                 // motas del élitro
+  blobArt(g,15,8,8,9,[{x:3.5,y:4.5,r:3.8,ry:4.2}],['#1a1420','#2e2838','#4a4258','#6a627a','#9a92aa'],{outline:false});
+  blobArt(g,17,7,7,8,[{x:4.2,y:4,r:3.2,ry:3.6}],IRON5,{outline:false,dither:.3});            // morro blindado
+  g.fillStyle='#26262e'; g.fillRect(21,9,1,4); g.fillStyle='#ffffff'; g.fillRect(19,8,1,1);
+  artPix(g,["y.y.y","yyyyy"],{y:'#f8d848'},14,5); g.fillStyle='#e84848'; g.fillRect(16,6,1,1);  // coronita
+  artOutline(g,24,24);
+  g.fillStyle='#ffffff'; g.fillRect(17,11,1,1); g.fillStyle='#e84848'; g.fillRect(17,12,1,1);   // ojo
+},24,24);
+const DRONE=mkTile(g=>{ // El Zángano Capitán — avispa grande con casco
+  blobArt(g,0,0,11,10,[{x:5.5,y:5,r:5,ry:4.2}],['#8aa8c0','#b8d0e0','#d8e8f4','#f0f8ff','#ffffff'],{outline:false,dither:.5});
+  blobArt(g,13,0,11,10,[{x:5.5,y:5,r:5,ry:4.2}],['#8aa8c0','#b8d0e0','#d8e8f4','#f0f8ff','#ffffff'],{outline:false,dither:.5});
+  g.fillStyle='#8aa8c0'; g.fillRect(3,4,5,1); g.fillRect(16,4,5,1);
+  blobArt(g,6,11,12,11,[{x:6,y:5.5,r:5.2,ry:5.4}],['#6a4a08','#b88810','#f0c020','#f8e060','#fff8c0'],{outline:false,grad:.3});
+  artClip(g,[[6,13,12,2],[6,17,12,2]],()=>blobArt(g,6,11,12,11,[{x:6,y:5.5,r:5.2,ry:5.4}],['#0c0a0a','#1a1410','#2a2218','#3a3020','#4a4030'],{outline:false}));
+  g.fillStyle='#1a1410'; g.fillRect(11,22,2,1); g.fillRect(12,23,1,1);
+  blobArt(g,7,4,10,9,[{x:5,y:4.5,r:4.8,ry:4.2}],IRON5,{outline:false,dither:.4});        // casco
+  g.fillStyle='#1a1420'; g.fillRect(8,8,8,2); g.fillStyle='#e84848'; g.fillRect(9,8,2,1); g.fillRect(13,8,2,1); // visera y ojos
+  g.fillStyle='#f8d848'; g.fillRect(11,3,2,2);
+  artOutline(g,24,24);
+  g.fillStyle='#ffb0b0'; g.fillRect(9,8,1,1); g.fillRect(13,8,1,1);
+},24,24);
+function artIceBlock(g,x,y,w,h){ g.fillStyle='#6a9ac8'; g.fillRect(x,y,w,h); g.fillStyle='#a8d0f0'; g.fillRect(x,y,w-1,h-1);
+  g.fillStyle='#d8f0ff'; g.fillRect(x,y,w-1,1); g.fillRect(x,y,1,h-1); g.fillStyle='#4a78a8'; g.fillRect(x+1,y+h-1,w-1,1); g.fillRect(x+w-1,y+1,1,h-1);
+  g.fillStyle='#ffffff'; g.fillRect(x+1,y+1,Math.min(2,w-3),1); }
+const ICE_GUARD=mkTile(g=>{ // El Guardián de Hielo — golem de bloques con bisel, ojos cian y un núcleo que late
+  artIceBlock(g,7,16,4,6); artIceBlock(g,13,16,4,6);             // piernas
+  artIceBlock(g,1,8,5,8); artIceBlock(g,18,8,5,8);                // brazos
+  artIceBlock(g,5,7,14,10);                                    // torso
+  artIceBlock(g,7,1,10,7);                                     // cabeza
+  g.fillStyle='#4a78a8'; g.fillRect(12,9,1,6); g.fillRect(8,12,3,1);          // grietas
+  artPix(g,["kkk","kCk","kkk"],{C:'#f8a030'},11,11); g.fillStyle='#fff0a0'; g.fillRect(12,12,1,1); // núcleo
+  g.fillStyle='#1a2a4a'; g.fillRect(9,3,2,2); g.fillRect(13,3,2,2); g.fillStyle='#58e8f8'; g.fillRect(9,3,1,1); g.fillRect(13,3,1,1);
+  artPix(g,[".W.","WWW"],{W:'#e8f8ff'},2,5); artPix(g,[".W","WW"],{W:'#e8f8ff'},20,6); artPix(g,["W","W"],{W:'#e8f8ff'},15,0);
+  artOutline(g,24,24);
+},24,24);
 /* ============================================================
    LOS GUARDIANES (32×32): ningún jefe muere
    ============================================================ */
-const TOPO_SPR=sprN([ // EL TOPO REAL, con su coronita de oro y su lámpara
-"................................",
-"..............yy.yy.yy..........",
-"..............yyyyyyyy..........",
-"..............kkkkkkkk..........",
-"...........kkkAAAAAAAAkkk.......",
-".........kkAAAAAAAAAAAAAAkk.....",
-"........kAAAAAAAAAAAAAAAAAAk....",
-".......kAAAAkkAAAAAAAAkkAAAAk...",
-".......kAAAkqkAAAAAAAAkqkAAAk...",
-"......kAAAAkkkAAAAAAAAkkkAAAAk..",
-"......kAAAAAAAAzzzzzzAAAAAAAAk..",
-"......kAAAAAAAzzzzzzzzAAAAAAAk..",
-"......kAAAAAAAzzZzzZzzAAAAAAAk..",
-"......kAAAAAAAAzzzzzzAAAAAAAAk..",
-".....kAAAAAAAAAAAAAAAAAAAAAAAAk.",
-".....kAAAAAAAAAAAAAAAAAAAAAAAAk.",
-".....kAAAAAAAAAAAAAAAAAAAAAAAAk.",
-".....kAAAAAAAAAAAAAAAAAAAAAAAAk.",
-"....kvvkAAAAAAAAAAAAAAAAAAkvvk..",
-"...kvvvvkAAAAAAAAAAAAAAAAkvvvvk.",
-"..kvvvvvvkAAAAAAAAAAAAAAkvvvvvvk",
-"..kvvvvvvkAAAAAAAAAAAAAAkvvvvvvk",
-"..kvvvvvvkAAAAAAAAAAAAAAkvvvvvvk",
-"...kkkkkkkAAAAAAAAAAAAAAkkkkkkk.",
-"......kAAAAAAAAAAAAAAAAAAAAk....",
-".......kkAAAAAAAAAAAAAAAAkk.....",
-".........kkkAAAAAAAAAAkkk.......",
-"............kkkkkkkkkk..........",
-"................................",
-"................................",
-"................................",
-"................................",
-],{A:'#7a5a38',z:'#e89cb8',Z:'#c07090',v:'#e8d8c0',y:'#f8d030'});
-const WASP_SPR=sprN([ // LA REINA AVISPA — tiara de oro entre las alas
-"..............y.y.y.............",
-"..............yyyyy.............",
-".....kkk......kkkkk......kkk....",
-"....knnnk....kkTTTkk....knnnk...",
-"...knnnnnk..kTTtttTTk..knnnnnk..",
-"..knnnnnnnk.kTtttttTk.knnnnnnnk.",
-"..knnnnnnnnkkTtqtqtTkknnnnnnnnk.",
-"..knnnnnnnnkkTtttttTkknnnnnnnnk.",
-"...knnnnnnnkkkTTTTTkkknnnnnnnk..",
-"....knnnnnnkkayyyyyakknnnnnnk...",
-".....knnnnkkayyayyayyakknnnnk...",
-"......kkkkkayyyayyyayyyakkkkk...",
-"..........kaayyyayyyayaak.......",
-".........kayyyaayyyaayyyak......",
-".........kayyyaayyyaayyyak......",
-".........kaayyyayyyayyyaak......",
-"..........kayyyaayyaayyak.......",
-"..........kaayyyayyayyaak.......",
-"...........kayyyaayaayyk........",
-"...........kaayyyayyyaak........",
-"............kayyyaayyak.........",
-"............kaayyyyyaak.........",
-".............kaayyyaak..........",
-"..............kaayaak...........",
-"...............kaaak............",
-"................kak.............",
-"................kk..............",
-".................k..............",
-"................................",
-"................................",
-"................................",
-"................................",
-],{a:'#1a1410',y:'#f8d030',n:'#d8e8f0',T:'#6a6458',t:'#b8b0a0'});
-const WIND_SPR=sprN([ // EL VIENTO DEL NORTE — espíritu de tormenta (32×32)
-"...........wwwwwwwww............",
-"........wwwcccccccccwww.........",
-"......wwccccccccccccccww........",
-".....wcccccccccccccccccw........",
-"....wccccccccccccccccccccw......",
-"...wcccckkccccccccckkcccccw.....",
-"...wccckMMkcccccccckMMkcccw.....",
-"...wcccckkccccccccckkcccccw.....",
-"..wcccccccccccccccccccccccw.....",
-"..wcccccccccccccccccccccccw.....",
-"..wcccccckkkkkkkkkkkcccccccw....",
-"..wccccckMMMMMMMMMMMkcccccw.....",
-"..wccccckMMMMMMMMMMMkcccccw.....",
-"...wcccccckkkkkkkkkkccccccw.....",
-"...wccccccccccccccccccccccw.....",
-"....wccccccccccccccccccccw......",
-".....wwccccccccccccccccww.......",
-"w......wwccccccccccccww.........",
-"ww.......wwwcccccccwww..........",
-".www........wwwwwww....ww.......",
-"...www..............wwww........",
-".....wwww........wwww...........",
-"........wwwwwwwwww..............",
-"..w..........................w..",
-"..ww.......wwwww............ww..",
-"...www...www...www........www...",
-".....wwwww.......wwww..wwww.....",
-"...................wwwww........",
-".w..............................",
-".ww.....wwwww.......www.........",
-"..wwwwwww...wwww..ww..ww........",
-"................wwww............",
-],{w:'#aaccdd',c:'#e8f4ff',M:'#3a5a8a'});
+const TOPO_SPR=mkTile(g=>{ // EL TOPO REAL: panzón, zarpas de pala, hocico rosa y coronita de oro
+  const FUR=['#2a1a0e','#50341e','#7a5434','#a07850','#c8a070'];
+  blobArt(g,8,26,6,4,[{x:3,y:2,r:3,ry:2}],FUR,{outline:false}); blobArt(g,18,26,6,4,[{x:3,y:2,r:3,ry:2}],FUR,{outline:false});
+  blobArt(g,3,4,26,25,[{x:13,y:16,r:12,ry:10},{x:13,y:9,r:9,ry:7.5}],FUR,{outline:false,grad:.45});
+  blobArt(g,9,15,14,12,[{x:7,y:6,r:6.5,ry:5.5}],['#a07850','#c8a070','#e0c090','#f0d8b0','#fff0d8'],{outline:false,dither:.5,grad:.1}); // panza
+  const PAW=['#8a4a48','#c07070','#e8a0a0','#f8c8c0','#fff0e8'];
+  blobArt(g,0,16,9,9,[{x:4.5,y:4.5,r:4.4,ry:4}],PAW,{outline:false}); blobArt(g,23,16,9,9,[{x:4.5,y:4.5,r:4.4,ry:4}],PAW,{outline:false});
+  g.fillStyle='#3a1a18'; for(const x of [1,3,5]){ g.fillRect(x,23,1,2); g.fillRect(x+24,23,1,2); }       // uñas
+  g.fillStyle='#fff8f0'; for(const x of [1,3,5]){ g.fillRect(x,24,1,1); g.fillRect(x+24,24,1,1); }
+  blobArt(g,12,12,8,6,[{x:4,y:3,r:3.8,ry:2.8}],['#8a3a50','#c05878','#e88ca8','#f8c0d0','#ffffff'],{outline:false}); // hocico
+  g.fillStyle='#5a1a28'; g.fillRect(14,14,1,1); g.fillRect(17,14,1,1);
+  artPix(g,["kk.....kk","kWk...kWk"],{W:'#ffffff'},11,9);                      // ojitos entornados
+  g.fillStyle='#e89aa0'; g.fillRect(9,13,2,1); g.fillRect(21,13,2,1);        // mofletes
+  artPix(g,["y..y..y","yY.y.Yy","yyyRyyy","OOOOOOO"],{y:'#f8d848',Y:'#fff8c0',O:'#b07818',R:'#e84848'},12,0); // corona
+  artOutline(g,32,32);
+  g.fillStyle='#fff8c0'; g.fillRect(15,1,1,1); // destello de la joya
+},32,32);
+const WASP_SPR=mkTile(g=>{ // LA REINA AVISPA: alas de cristal, tiara, abdomen a franjas y aguijón
+  const WING=['#7a98b8','#a8c4dc','#d0e4f4','#eef6ff','#ffffff'];
+  blobArt(g,0,3,13,12,[{x:6.5,y:6,r:6.2,ry:5.2}],WING,{outline:false,dither:.5}); blobArt(g,19,3,13,12,[{x:6.5,y:6,r:6.2,ry:5.2}],WING,{outline:false,dither:.5});
+  blobArt(g,2,12,9,7,[{x:4.5,y:3.5,r:4.2,ry:3}],WING,{outline:false}); blobArt(g,21,12,9,7,[{x:4.5,y:3.5,r:4.2,ry:3}],WING,{outline:false});
+  g.fillStyle='#7a98b8'; g.fillRect(4,8,6,1); g.fillRect(22,8,6,1); g.fillRect(5,15,4,1); g.fillRect(23,15,4,1);
+  const Y=['#7a4a08','#c08810','#f0c020','#f8e060','#fff8c0'], K=['#0a0808','#161210','#221c18','#302820','#403428'];
+  blobArt(g,9,17,14,14,[{x:7,y:6,r:6.2,ry:6.8}],Y,{outline:false,grad:.3});
+  artClip(g,[[9,19,14,2],[9,23,14,2],[9,27,14,2]],()=>blobArt(g,9,17,14,14,[{x:7,y:6,r:6.2,ry:6.8}],K,{outline:false}));
+  g.fillStyle='#1a1410'; g.fillRect(15,31,2,1);
+  blobArt(g,10,12,12,8,[{x:6,y:4,r:5.4,ry:3.8}],['#2a1c10','#4a3218','#6a4a24','#8a6434','#b08a50'],{outline:false,dither:1}); // tórax peludo
+  blobArt(g,8,1,16,12,[{x:8,y:6.2,r:7,ry:5.4}],Y,{outline:false,grad:.4});                         // cabeza
+  const EYE=['#3a0810','#701828','#b02838','#e05060','#ff9098'];
+  blobArt(g,9,4,5,6,[{x:2.5,y:3,r:2.5,ry:3}],EYE,{outline:false,dither:0}); blobArt(g,18,4,5,6,[{x:2.5,y:3,r:2.5,ry:3}],EYE,{outline:false,dither:0}); // ojos compuestos
+  g.fillStyle='#ffffff'; g.fillRect(10,5,1,1); g.fillRect(19,5,1,1); g.fillRect(11,6,1,1); g.fillRect(20,6,1,1);
+  g.fillStyle='#1a1410'; g.fillRect(9,3,4,1); g.fillRect(19,3,4,1); g.fillRect(14,10,4,1); g.fillRect(13,11,1,1); g.fillRect(18,11,1,1); // cejas y mandíbulas
+  g.fillStyle='#f0a060'; g.fillRect(14,8,1,1); g.fillRect(17,8,1,1);
+  g.fillStyle='#1a1410'; g.fillRect(11,0,1,2); g.fillRect(20,0,1,2); g.fillRect(10,0,1,1); g.fillRect(21,0,1,1);
+  artPix(g,["y.Y.y","yyRyy"],{y:'#f8d848',Y:'#fff8c0',R:'#58c8e8'},14,0);    // tiara
+  artOutline(g,32,32);
+},32,32);
+const WIND_SPR=mkTile(g=>{ // EL VIENTO DEL NORTE: nube de tormenta con cara y cola en remolino (32×32)
+  const CL=['#5a7898','#8aaccc','#b8d4ec','#e4f2ff','#ffffff'];
+  blobArt(g,1,1,30,22,[{x:15,y:13,r:13,ry:8.5},{x:8,y:9,r:6.5},{x:16,y:7,r:7.5},{x:24,y:9,r:6},{x:5,y:14,r:4.5},{x:26,y:14,r:4.5}],CL,{outline:false,grad:.5});
+  // cola en remolino
+  g.fillStyle='#b8d4ec'; const tail=[[14,23],[13,24],[12,25],[12,26],[13,27],[15,27],[16,26],[16,25],[18,24],[20,24],[22,25],[23,26],[23,28],[22,29],[20,29]];
+  for(const [x,y] of tail){ g.fillRect(x,y,2,1); } g.fillStyle='#e4f2ff'; for(const [x,y] of tail.slice(0,8)) g.fillRect(x,y,1,1);
+  g.fillStyle='#8aaccc'; for(const [x,y] of [[4,24],[5,25],[7,26],[26,22],[28,23],[29,25],[9,29],[11,30]]) g.fillRect(x,y,2,1);
+  // cara: cejas de tormenta, ojos con brillo, boca que sopla
+  artPix(g,["kk.......kk","..kk...kk.."],null,10,8);
+  artPix(g,["kkk.....kkk","kWk.....kWk","kkk.....kkk"],{W:'#ffffff'},10,10);
+  blobArt(g,13,14,6,5,[{x:3,y:2.5,r:2.6,ry:2.2}],['#0a1a30','#1a3050','#2a4a78','#3a5a8a','#5a7aa8'],{outline:false,dither:0});
+  g.fillStyle='#a8c4e0'; g.fillRect(8,13,2,1); g.fillRect(21,13,2,1);   // mejillas frías
+  artOutline(g,32,32,'#1a2a44');
+  g.fillStyle='#ffffff'; g.fillRect(9,4,3,1); g.fillRect(15,2,3,1); g.fillRect(8,5,1,1);
+},32,32);
 const BOSS_SPR={topo:TOPO_SPR,avispa:WASP_SPR,viento:WIND_SPR,king:KING_BEETLE,drone:DRONE,iceguard:ICE_GUARD};
 const BOSS_WHITE={}; for(const k in BOSS_SPR) BOSS_WHITE[k]=whiten(BOSS_SPR[k]);
 BOSS_SPR.kingL=flipH(KING_BEETLE); BOSS_WHITE.kingL=whiten(BOSS_SPR.kingL);
@@ -1323,8 +1050,11 @@ const PORTRAITS={
   'RAÍZ':ELDER,'PETRA':PETRA_SPR,'LUPA':LUPA_SPR,'MOSS':MOSS_SPR,'TILO':TILO_SPR,'CORTEZA':CORTEZA_SPR,
   'EL VIENTO':WIND_SPR,'EL TOPO REAL':TOPO_SPR,'LA REINA':WASP_SPR,'SPROUT':H_DOWN_A,
 };
-const SPIN_ICON=mkTile(g=>{ g.strokeStyle=PAL.l; g.lineWidth=1.5; g.beginPath(); g.arc(8,8,5.5,0.4,5.2); g.stroke();
-  g.strokeStyle='#a8ec78'; g.beginPath(); g.arc(8,8,3,2.4,7.2); g.stroke(); g.fillStyle='#a8ec78'; g.fillRect(12,3,2,2); });
+const SPIN_ICON=mkTile(g=>{ // remolino: anillo con flecha
+  for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const dx=x+.5-8, dy=y+.5-8, d=Math.hypot(dx,dy), a=Math.atan2(dy,dx);
+    if(d>=3.6&&d<6.2&&!(a>-1.25&&a<-.15)){ const lit=-(dx*.6+dy*.8)/d; g.fillStyle=lit>.35?'#d8ffa0':lit>-.3?'#70d838':'#2e8a38'; g.fillRect(x,y,1,1); } }
+  artPix(g,["YYYY","YYY.","YY..","Y..."],{Y:'#fff8c0'},9,1);
+  artOutline(g,16,16); });
 /* ---------- LOGO del título: letras propias con bisel, a lo Zelda ---------- */
 function silRects(w,h,rects,cuts){ // silueta por rectángulos + cortes diagonales
   const g=Array.from({length:h},()=>Array(w).fill(false));
@@ -1465,16 +1195,20 @@ const LEAF_PAGE=(()=>{
 /* (el antiguo retrato grande del título se retiró: en su lugar, el sprite
    del juego contempla el Gran Roble — la escala pequeña ES el póster) */
 /* el Gran Roble del fondo (nuestro huevo del Pez Viento) */
+/* copas y troncos con volumen (blobArt): la misma luz que el resto del mundo */
+const OAK_LEAF=['#0c2e1a','#1a5a2c','#2c8038','#4aa444','#7ccc5c','#b4ec80'];
+const OAK_BARK=['#2e1808','#4e2c14','#7a4a24','#a06a38','#c8905a'];
+function barkStreaks(q,x0,y0,w,h,seed){ // vetas verticales sobre la corteza ya pintada
+  const d=q.getImageData(x0,y0,w,h).data, at=(x,y)=>d[(y*w+x)*4+3]>0&&d[(y*w+x)*4]>40;
+  q.fillStyle=OAK_BARK[1];
+  for(let x=1;x<w-1;x+=3) for(let y=1;y<h-1;y++) if(at(x,y)&&at(x-1,y)&&at(x+1,y)&&((hash(x+seed,y>>2)&3)!==0)) q.fillRect(x0+x,y0+y,1,1);
+}
 const OAK=(()=>{
   const W=40,H=42, c=document.createElement('canvas'); c.width=W+2; c.height=H+2;
   const q=c.getContext('2d');
-  const tg=silRects(W,H,[[17,20,6,18],[14,35,12,3],[12,37,16,2],[14,23,4,3],[23,25,4,3]]);
-  q.drawImage(glyphC(tg,'#a8744c','#8a5028','#5a3418'),0,0);
-  const cg=gridNew(W,H);
-  discOn(cg,13,13,10); discOn(cg,27,12,10); discOn(cg,20,8,8); discOn(cg,20,16,10);
-  q.drawImage(glyphC(cg,'#359045','#1e6830','#143c20'),0,0);
-  q.fillStyle='#4ab058'; // motas de luz en la copa
-  [[8,10],[15,6],[24,5],[31,10],[12,17],[27,18],[20,12],[33,15]].forEach(([x,y])=>q.fillRect(x+1,y+1,2,1));
+  blobArt(q,1,1,W,H,[{x:20,y:31,r:3.6,ry:11},{x:20,y:38,r:5,ry:3},{x:15,y:40,r:3,ry:2},{x:25,y:40,r:3,ry:2},{x:14,y:25,r:2.6,ry:1.6},{x:26,y:27,r:2.6,ry:1.6}],OAK_BARK,{grad:.3});
+  barkStreaks(q,1,1,W,H,3);
+  blobArt(q,1,1,W,H,[{x:20,y:7,r:7},{x:11,y:12,r:7},{x:29,y:12,r:7},{x:5,y:19,r:5},{x:35,y:19,r:5},{x:14,y:19,r:8},{x:26,y:19,r:8},{x:20,y:16,r:9},{x:12,y:24,r:5},{x:28,y:24,r:5},{x:20,y:24,r:5.5}],OAK_LEAF,{grad:.8,bias:-.4,dither:.6});
   return c;
 })();
 const OAK_DARK=darken(OAK); // el Roble apagado, mientras sus semillas anden lejos
@@ -1482,15 +1216,16 @@ const OAK_DARK=darken(OAK); // el Roble apagado, mientras sus semillas anden lej
 const OAK_GRAND=(()=>{
   const W=84,H=80, c=document.createElement('canvas'); c.width=W+2; c.height=H+2;
   const q=c.getContext('2d');
-  const tg=silRects(W,H,[[36,36,12,38],[30,66,24,6],[26,72,32,4],[28,42,8,5],[48,46,8,5]]);
-  q.drawImage(glyphC(tg,'#a8744c','#8a5028','#5a3418'),0,0);   // tronco anciano con raíces
-  const cg=gridNew(W,H);
-  discOn(cg,26,24,19); discOn(cg,57,22,19); discOn(cg,41,13,15);
-  discOn(cg,41,30,19); discOn(cg,12,32,11); discOn(cg,71,33,11);
-  q.drawImage(glyphC(cg,'#359045','#1e6830','#143c20'),0,0);   // copa enorme
-  q.fillStyle='#4ab058'; // motas de luz
-  [[14,26],[28,12],[44,8],[60,14],[72,28],[20,36],[38,24],[54,34],[66,38],[32,30],[48,20],[10,34]]
-    .forEach(([x,y])=>q.fillRect(x+1,y+1,2,1));
+  // tronco anciano: fuste, ramas que se hunden en la copa y raíces que agarran el suelo
+  blobArt(q,1,1,W,H,[{x:42,y:56,r:7.5,ry:22},{x:33,y:44,r:6,ry:3},{x:52,y:46,r:6,ry:3},{x:42,y:70,r:10,ry:6},{x:32,y:73,r:6,ry:3.4},{x:52,y:73,r:6,ry:3.4},{x:26,y:76,r:4,ry:2},{x:58,y:76,r:4,ry:2}],OAK_BARK,{grad:.4,bias:-.15,dither:.8});
+  barkStreaks(q,1,1,W,H,7);
+  q.fillStyle=OAK_BARK[0]; q.fillRect(41,60,3,5); q.fillRect(42,59,1,7); q.fillStyle='#1a0e06'; q.fillRect(42,61,1,3); // el hueco del tronco
+  // copa enorme: lóbulos de atrás a delante
+  blobArt(q,1,1,W,H,[
+    {x:32,y:8,r:7.5},{x:52,y:8,r:7.5},{x:16,y:21,r:8},{x:68,y:21,r:8},
+    {x:42,y:14,r:15},{x:26,y:19,r:14},{x:58,y:18,r:14},{x:11,y:31,r:10.5},{x:73,y:31,r:10.5},
+    {x:30,y:30,r:15},{x:54,y:30,r:15},{x:42,y:25,r:15},
+    {x:19,y:40,r:9},{x:65,y:40,r:9},{x:35,y:42,r:10},{x:50,y:42,r:10}],OAK_LEAF,{grad:.8,bias:-.42,dither:.6});
   return c;
 })();
 const OAK_GRAND_DARK=darken(OAK_GRAND);
@@ -1500,22 +1235,22 @@ const OAK_GRAND_DARK=darken(OAK_GRAND);
    ============================================================ */
 const TOPILLO=spr([ // topillo: asoma del agujero y muerde
 "................",
+".....kk..kk.....",
+"....kAAkkAAk....",
+"...kAaaaaaaAk...",
+"..kaaaaaaaaaAk..",
+"..kakqaaaakqAk..",
+"..kakkaaaakkAk..",
+"..kavvvzzvvvAk..",
+"..kvvvkzzkvvvk..",
+"..kvvvqkkqvvvk..",
+"...kvvvvvvvvk...",
+"..kvkkaaaakkvk..",
+".kvvvkaaaakvvvk.",
+".kkkkkAAAAkkkkk.",
+"....kkkkkkkk....",
 "................",
-"................",
-"......kkkk......",
-".....kAAAAk.....",
-"....kAAAAAAk....",
-"....kAqAAqAk....",
-"....kAAzzAAk....",
-"....kAAAAAAk....",
-"...kAAAAAAAAk...",
-"..kvvkAAAAkvvk..",
-"..kkkkAAAAkkkk..",
-"...kkkkkkkkkk...",
-"....kTTTTTTk....",
-".....kkkkkk.....",
-"................",
-],{A:'#7a5a38',z:'#e89cb8',v:'#e8d8c0',T:'#3a3026'});
+],{a:'#9a7048',A:'#6a4a2a',v:'#f0e0c8',z:'#f08ab0',q:'#ffffff'});
 const TOPILLO_HOLE=sprN([
 "....kkkkkkkk....",
 "...kTTTTTTTTk...",
@@ -1523,79 +1258,82 @@ const TOPILLO_HOLE=sprN([
 "..kTtttttttttk..",
 "...kTTTTTTTTk...",
 "....kkkkkkkk....",
-],{T:'#3a3026',t:'#241c14'});
+],{T:'#5a4630',t:'#1a120c'});
+const LIRIO_FX={z:'#f050a0',Z:'#ff98cc',x:'#b02870',y:'#f8d030',g:'#58a848',G:'#2e7830',L:'#98e070',q:'#ffffff'};
 const LIRIO=spr([ // lirio de agua: flor que escupe semillas
 "................",
 "................",
-".......k........",
-"......kzk.......",
-".....kzZzk......",
-"....kzZyZzk.....",
-"....kzZyZzk.....",
-".....kzZzk......",
-"......kdk.......",
-"....kkkdkkk.....",
-"...kggggggggk...",
-"..kgLgggggggk...",
-"..kggggkgggggk..",
-"...kggggggggk...",
-"....kkkkkkkk....",
+".......kk.......",
+"......kZzk......",
+"....kkkZzkkk....",
+"...kZzkZzkzxk...",
+"...kZzzkkzzxk...",
+"....kZzzzzxk....",
+".....kxzzxk.....",
+"..kkkkkxxkkkkk..",
+".kLLggggggggGGk.",
+"kLgggggggggggGGk",
+"kgggkkggggggGGGk",
+".kGGGGGGGGGGGGk.",
+"..kkkkkkkkkkkk..",
 "................",
-],{z:'#f050a0',Z:'#ff90c8',g:'#58a848',L:'#88d868'});
+],LIRIO_FX);
 const LIRIO_B=spr([ // abierto: escupe
 "................",
-"......k.k.k.....",
-".....kzkzkzk....",
-"....kzZzZzZzk...",
-"....kzZyyyZzk...",
-"....kzZyyyZzk...",
-"....kzZzZzZzk...",
-".....kzkzkzk....",
-"......kkdkk.....",
-"....kkkdkkk.....",
-"...kggggggggk...",
-"..kgLgggggggk...",
-"..kggggkgggggk..",
-"...kggggggggk...",
-"....kkkkkkkk....",
+"..k....kk....k..",
+".kZk..kZzk..kzk.",
+".kZzk.kZzk.kzxk.",
+"..kZzkkkkkkzxk..",
+"...kzkyyyykxk...",
+"..kZzkykkykzxk..",
+"..kZzkyyyykzxk..",
+"...kxzkkkkzxk...",
+"..kkkkkxxkkkkk..",
+".kLLggggggggGGk.",
+"kLgggggggggggGGk",
+"kgggkkggggggGGGk",
+".kGGGGGGGGGGGGk.",
+"..kkkkkkkkkkkk..",
 "................",
-],{z:'#f050a0',Z:'#ff90c8',g:'#58a848',L:'#88d868'});
-const RODAHOJA=spr([ // rodahoja: bola de hojarasca que rebota
+],LIRIO_FX);
+const RODA_PAL=['#5a2410','#944418','#c06a24','#e09a3a','#f8cc68'];
+const RODA_FX={v:'#5a2410',q:'#ffffff',n:'#3a1808',g:'#8a9a38'};
+const RODAHOJA=creature([{x:8,y:8.5,r:6.3},{x:4.5,y:6,r:3},{x:11.5,y:6.5,r:3}],RODA_PAL,[ // rodahoja: bola de hojarasca que rebota
 "................",
+"...g............",
+"....g.......v...",
+"..........v.....",
+"....v...........",
+"...........v....",
+".....kq..kq.....",
+".....kk..kk.....",
+"..v.............",
+"......nnnn...v..",
 "................",
-".....kkkkkk.....",
-"....kaAaaAak....",
-"...kaaAaaaAak...",
-"..kAaaaAaaaaAk..",
-"..kaaAaaaaAaak..",
-"..kaaaaAaaaaak..",
-"..kAaaaaaAaaak..",
-"..kaaAaaaaaAak..",
-"...kaaaAaaaak...",
-"....kAaaaAak....",
-".....kkkkkk.....",
-"................",
-"................",
-"................",
-],{a:'#c87830',A:'#a05820'});
-const RODAHOJA_B=spr([
-"................",
-"................",
-".....kkkkkk.....",
-"....kAaaaAak....",
-"...kaAaaAaaak...",
-"..kaaaAaaaAaak..",
-"..kAaaaaAaaaak..",
-"..kaaAaaaaaAak..",
-"..kaaaaAaaaaak..",
-"..kAaaaaaAaaak..",
-"...kaaAaaaaak...",
-"....kaaAaaak....",
-".....kkkkkk.....",
+"....v.......v...",
+"........v.......",
 "................",
 "................",
 "................",
-],{a:'#c87830',A:'#a05820'});
+],RODA_FX);
+const RODAHOJA_B=creature([{x:8,y:9.5,r:6.8,ry:5.6},{x:4,y:7.5,r:3},{x:12,y:7.5,r:3}],RODA_PAL,[
+"................",
+"................",
+"...g............",
+"....g.......v...",
+"............v...",
+"....v...........",
+"................",
+".....kk..kk.....",
+"..v.............",
+"......nnnn...v..",
+"................",
+"....v.......v...",
+"........v.......",
+"................",
+"................",
+"................",
+],RODA_FX);
 Object.assign(E_SPR,{
   topillo:{a:TOPILLO},
   lirio:{a:LIRIO,b:LIRIO_B},
@@ -1604,24 +1342,22 @@ Object.assign(E_SPR,{
 for(const k of ['topillo','lirio','rodahoja']){ const S=E_SPR[k]; S.w={}; for(const f in S){ if(f==='w')continue; S.w[f]=whiten(S[f]); } }
 const LETTER_SPR=sprN([ // carta del Viento: sobre azul con sello de copo
 "kkkkkkkkkkkk",
-"kNNNNNNNNNNk",
-"kNnkNNNNknNk",
-"kNNnkNNknNNk",
-"kNNNnkknNNNk",
-"kNNNNccNNNNk",
-"kNNNNNNNNNNk",
+"kWNNNNNNNNMk",
+"kNnkNNNNknMk",
+"kNNnkNNknNMk",
+"kNNNnkknNNMk",
+"kNNNNcCNNNMk",
+"kMMMMMMMMMMk",
 "kkkkkkkkkkkk",
-],{c:'#58c8e8'});
+],{W:'#ffffff',N:'#c8dcf0',n:'#a0b8d8',M:'#8aa0c0',c:'#88e0ff',C:'#3890c8'});
 const SEED_ICON=ACORN_GOLD;
-AMULET_ROWS.susurro=["....kkkk....","...kcnnck...","..kcnwwnck..","..knwccwnk..","..knwccwnk..","..kcnwwnck..","...kcnnck...","....kkkk....","....kck.....","...kkkkk....","............","............"];
-AMULET_SPR.susurro=sprN(AMULET_ROWS.susurro,{w:'#ffffff'});
 /* iconos de pestaña del zurrón (10×10) */
 const TAB_ICONS={
-  zurron:sprN(["...kkkk...","..kAAAAk..",".kAAAAAAk.","kaaaaaaaak","kaaawaaaak",".kaaaaaak.","..kaaaak..","...kaak...","....kk....",".........."]),
-  mapa:sprN(["kkkkkkkkkk","kvvvkvvvvk","kvvkkvvvvk","kvkvvvkvvk","kvvvvkkvvk","kvvkvvvkvk","kvvvvvvvvk","kvkkvvvkvk","kvvvvvvvvk","kkkkkkkkkk"],{v:'#c8b070'}),
-  valle:sprN(["...kkkk...","..kddddk..",".kdlddldk.","kdddlddddk","kdlddddldk",".kddddddk.","..kkkkkk..","....kAk...","....kAk...","...kkkkk.."]),
-  recuerdos:sprN(["kkkkkkkkk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kvAAAvvvk.","kvvvvvvvk.","kvAAAAAvk.","kvvvvvvvk.","kkkkkkkkk.",".........."]),
-  ajustes:sprN(["...kkkk...","..ktttTk..",".kttkkttk.","kttk..kttk","kttk..kttk",".kttkkttk.","..ktttTk..","...kkkk...","..........",".........."]),
+  zurron:sprN(["...kkkk...","..kmAAmk..",".kkkkkkkk.","kaAaaaaaAk","kaaYyaaaak","kaaykaaaBk",".kaaaaaBk.","..kaaBBk..","...kkkk...",".........."],{m:'#5a3418',A:'#8a5a2c',a:'#d8a060',B:'#a06a30',Y:'#f8d848',y:'#b07818'}),
+  mapa:sprN(["kkkkkkkkkk","kvvvkvvvVk","kvgkkvvvVk","kvgvvvRkVk","kvvvvkRvVk","kvvkvvvkVk","kvbbvvvvVk","kvbkvvvkVk","kVVVVVVVVk","kkkkkkkkkk"],{v:'#f0dca0',V:'#c8a868',g:'#58a848',b:'#4888d8',R:'#e84848'}),
+  valle:sprN(["...kkkk...","..kLllmk..",".kLllmmdk.","kLlllmmddk","klllmmmddk",".kdmmmddk.","..kkkkkk..","....kAk...","...kkAkk..","..kkkkkkk."],{L:'#b0f070',l:'#70d838',m:'#3aa840',d:'#1e6a2a',A:'#8a5028'}),
+  recuerdos:sprN(["kkkk.kkkk.","kvvvkvvvVk","kvAAkvAAVk","kvvvkvvvVk","kvAAkvAvVk","kvvvkvvvVk","kvAAkvAAVk","kvvvkvvvVk","kkkkkkkkkk","....kk...."],{v:'#f8ecd0',V:'#c8b088',A:'#8a6a48'}),
+  ajustes:sprN(["...kkkk...","..kLllTk..",".kLtkktTk.","kLtk..ktTk","ktTk..kTTk",".ktTkkTTk.","..kTTTTk..","...kkkk...","..........",".........."],{L:'#f0f0f8',t:'#b8b8c8',T:'#6a6a80'}),
 };
 /* ---------- marchitarse: pose intermedia y semilla ---------- */
 const H_DROOP=spr([ // se dobla: hojas caídas hacia un lado, ojos medio cerrados

@@ -15,6 +15,7 @@ numerados — datos primero, lógica después, arranque al final.
 | Módulo | Qué vive aquí |
 |---|---|
 | `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL` (sprites) y `C` (mundo), utilidades (`hash`, `mkCanvas`, `mix`, `shade`) |
+| `js/01a-font.js` | Tipografía de píxel propia: `FONT_M` (proporcional, mayúsculas de 7 px, tildes) y `FONT_S` (versalitas de 5 px). `drawText`, `textW`, `wrapPx`. Atlas en blanco + tintado cacheado |
 | `js/02-sprites.js` | `spr`/`sprN` (filas de texto → canvas), héroe (4 direcciones, 2 fotogramas, ataque, alzar objeto), vecinos, criaturas (`E_SPR`), minijefes 24 px y guardianes 32 px (`BOSS_SPR`), objetos, amuletos, iconos, logo y Gran Roble |
 | `js/03-tiles.js` | Arte de tiles procedural con caché (`cached`), paletas por bioma (`BIOMES`), **autotiles** (agua, acantilado, muro, camino, arena, barro), leyenda (`GROUND`, `SOLID`, `ENEMY_MARK`…) y `renderScreenTo()` |
 | `js/04-maps.js` | `MAPS`: cada pantalla es 8 strings de 10 chars. Leyenda completa en la cabecera. `CHESTS` (cofres) y `PLACE_NAMES` |
@@ -22,6 +23,7 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/06-audio.js` | Chiptune WebAudio: `beep`/`noise`, `SFX.*`, `TRACKS` y el secuenciador |
 | `js/07-state.js` | Estado global (flags de progreso, `player`, inventario, amuletos), `hurt()`, `say()`/`ask()` y `paginate()` |
 | `js/08-world.js` | Regiones y biomas (`regionOf`, `screenBiome`), `loadScreen()` (spawnea la pantalla), fondo pre-renderizado (`rebuildBg`/`markDirty`), colisiones, partículas |
+| `js/08a-fx.js` | Efectos: partículas con tipo (`dust`, `spark`, `smoke`, `blade`, `mote`, `leafF`, `firefly`, `ripple`), `stepDust`, `hitSpark`, `deathPoof`, `bladeBits`, `collectBurst`, ambiente por lugar, destello de pantalla y viñeta de daño |
 | `js/09-player.js` | Movimiento con deslizamiento en esquinas, Hoja, remolino, empujar bloques, cortar, cristales, antorchas, `interact()` (todo lo que se hace con Z), objetos de X (`useItem`), gancho, vaina, salto, tiendas |
 | `js/10-progress.js` | Guardado (3 slots), `newGame()`, `questList()` (derivada del estado), entregas visibles, `bloom()` |
 | `js/11-enemies.js` | IA de las 16 criaturas (`updEnemies`), daño (`damageEnemy`), escudo |
@@ -39,10 +41,19 @@ necesita decidir según el estado, es una función que se evalúa al hablar
 
 ## El render
 
-`loadScreen()` marca el fondo sucio; `rebuildBg()` pinta la pantalla entera dos
-veces (fotograma 0 y 1 de agua, hierba alta y antorchas) en dos canvas. Cada
-frame se dibuja el fondo cacheado y encima los actores. Cualquier cambio en
-`grid` (cortar, abrir, empujar, encender) llama a `markDirty()`.
+`loadScreen()` marca el fondo sucio; `rebuildBg()` pinta la pantalla entera
+cuatro veces (fotogramas 0–3 de agua, hierba alta, flores y antorchas) en
+`bgCanvas`, y en paralelo `fgCanvas` recoge lo que sobresale por encima de los
+actores (la copa de los árboles asoma 6 px sobre la celda de arriba y tapa a
+quien pasa por detrás). Cada frame: fondo → actores ordenados por los pies →
+primer plano → sombras de nubes → partículas → oscuridad → destellos. Cualquier
+cambio en `grid` (cortar, abrir, empujar, encender) llama a `markDirty()`.
+
+Copas, arbustos y rocas salen de `blobArt()` (01): lóbulos esféricos con luz
+desde arriba-izquierda, sombra de contacto entre lóbulos, tramado Bayer 4×4 y
+contorno. El texto nunca usa `fillText`: todo pasa por la fuente de píxel (01a),
+así no hay suavizado ni escalados a 0,75×. Los diálogos se reflujan por ancho
+real (`wrapPx`), no por número de caracteres.
 
 Los tiles se generan una vez y se guardan en `TILE_CACHE` por clave
 (clase + variante + bioma + fotograma). Los autotiles calculan un bitmask de

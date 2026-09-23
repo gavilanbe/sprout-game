@@ -121,7 +121,7 @@ function updEnemies(){
   enemies=enemies.filter(e=>{
     if(e.despawn) return false;
     if(e.hp<=0){
-      SFX.edie(); puff(e.x+8,e.y+8,'#e8e8d8',8,1.4); puff(e.x+8,e.y+8,'#9088a0',5,1);
+      SFX.edie(); deathPoof(e.x+8,e.y+8); shake=Math.max(shake,4);
       if(e.type==='squirrel'){ for(let i=0;i<3;i++) pickups.push({kind:'berry',x:e.x+i*7-3,y:e.y+4,t:0,drop:14}); return false; }
       dropLoot(e.x+4,e.y+4,e.type==='thorn'?.4:.22,.35+(e.fast?.2:0));
       return false;
@@ -132,5 +132,5 @@ function damageEnemy(e,n,fx,fy){
   e.hp-=n; e.flash=8; SFX.ehit(); hitStop=Math.max(hitStop,2);
   const d=Math.hypot(e.x-fx,e.y-fy)||1; e.kx=(e.x-fx)/d*3; e.ky=(e.y-fy)/d*3;
   flyText.push({x:e.x+8,y:e.y-2,txt:''+n,t:24,col:'#fffbe8'});
-  for(let i=0;i<4;i++){ const a=Math.random()*6.283; parts.push({x:e.x+8,y:e.y+8,vx:Math.cos(a)*1.6,vy:Math.sin(a)*1.6,life:10,col:'#fffbe8',nog:true}); }
+  hitSpark((e.x+8+fx+8)/2,(e.y+8+fy+8)/2); e.squash=.35; shake=Math.max(shake,2);
 }

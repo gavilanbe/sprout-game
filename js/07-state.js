@@ -11,7 +11,7 @@ let boomer=null;              // la Vaina en vuelo {x,y,vx,vy,t,ret,hits,carry}
 let hook=null;                // {fx,fy,tx,ty,t} animación del gancho
 let jumpT=0, jumpDir=[0,0], jumpZ=0;  // salto con el Vilano
 let flyText=[];               // textos flotantes {x,y,txt,t,col}
-let bgCanvas=[null,null], bgDirty=true; // fondo pre-renderizado (2 fotogramas)
+let bgCanvas=[null,null,null,null], fgCanvas=[null,null,null,null], bgDirty=true; // fondo pre-renderizado (4 fotogramas) y lo que asoma por encima de los actores
 let crystalOn=false;          // estado del cristal en la sala actual (persistente en `opened`)
 /* progreso */
 const collected=new Set();    // ids de recogibles (semillas, corazones, cuartos, llaves, diarios)
@@ -61,7 +61,7 @@ let overSel=0;
 function hurt(n,fromX,fromY,force){ // daño al jugador, con amuleto de raíz y escudo
   if(player.inv>0&&!force) return false;
   if(hasAmulet('raiz')) n=Math.max(1,Math.ceil(n/2));
-  player.hp-=n; player.inv=60; shake=8; SFX.hurt(); hitStop=3;
+  player.hp-=n; player.inv=60; shake=8; SFX.hurt(); hitStop=3; hurtVig=24; player.squash=-.35; hitSpark(player.x+8,player.y+8,'#ffb0b0');
   if(fromX!==undefined){ const d=Math.hypot(player.x-fromX,player.y-fromY)||1; player.kx=(player.x-fromX)/d*2.5; player.ky=(player.y-fromY)/d*2.5; }
   flyText.push({x:player.x+8,y:player.y-4,txt:'-'+n,t:30,col:'#f89090'});
   if(player.hp<=0) die();
@@ -76,8 +76,9 @@ function wrapText(s,maxc){
   return out;
 }
 function paginate(pages,who){
-  const cols=(who&&PORTRAITS[who])?13:17, out=[];
-  for(const p of pages){ const ls=wrapText(p,cols); for(let i=0;i<ls.length;i+=3) out.push(ls.slice(i,i+3).join('\n')); }
+  const maxW=(who&&PORTRAITS[who])?DLG_TXT_POR:DLG_TXT, out=[];
+  // los saltos del guion eran para la fuente vieja (17 columnas): se reflujan por ancho real
+  for(const p of pages){ const ls=wrapPx(String(p).replace(/\s*\n\s*/g,' '),maxW); for(let i=0;i<ls.length;i+=3) out.push(ls.slice(i,i+3).join('\n')); }
   return out;
 }
 let dlg=null; // {pages, page, chars, cb, who, ask}
@@ -96,4 +97,4 @@ function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)
 /* ---------- HUD y menú elevados ---------- */
 const THUMBS={};                 // miniaturas del mapa por pantalla ('x,y' → canvas 18×14)
 let placeBanner=null;            // {txt,t} nombre del lugar al descubrirlo
-let hudBerryT=0, hudSeedT=0, xFlash=0, lastHp=6, hudHurtT=0, tabSlide=0;
+let hudBerryT=0, hudSeedT=0, xFlash=0, lastHp=6, hudHurtT=0, hudHealT=0, tabSlide=0;

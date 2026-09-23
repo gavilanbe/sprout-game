@@ -91,7 +91,7 @@ function cutAt(sb){
       else dropLoot(x*16+4,y*16+4,.12,.3);
     } else if(ch==='t'){
       grid[y][x]='.'; SFX.grass(); any=true;
-      const P=BIOMES[screenBiome(sx,sy)].grass; puff(x*16+8,y*16+10,P[2],5,.9); puff(x*16+8,y*16+10,P[1],3,.7);
+      const P=BIOMES[screenBiome(sx,sy)].grass; bladeBits(x*16+8,y*16+10,[P[0],P[1],P[2],P[3]],10);
       dropLoot(x*16+4,y*16+4,.06,.14);
     } else if(ch==='¢'){ toggleCrystal(); any=true; }
   }
@@ -140,7 +140,7 @@ function attack(){
     if(noBladeMsg<2){ noBladeMsg++; say(["Manoteas el aire\nsin mucho efecto...","Necesitas la HOJA\nANCESTRAL.\n(playa suroeste)"]); }
     else SFX.bump(); return;
   }
-  player.atk=14; SFX.sword();
+  player.atk=14; SFX.sword(); player.squash=.28;
 }
 function interact([tx,ty,ch]){
   const guest=npcs.find(n=>n.guest&&n.x===tx&&n.y===ty);
@@ -352,7 +352,7 @@ function getItem(kind){
   if(kind==='tear') hasTear=true; if(kind==='flake') hasFlake=true; if(kind==='boomer') hasBoomer=true; if(kind==='lantern') hasLantern=true;
   if(kind==='feather') hasFeather=true; if(kind==='shield') hasShield=true;
   if(!xItem&&['bomb','hook','boomer','lantern','feather'].includes(kind)) xItem=kind;
-  [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
+  [itemSpr,itemPages]=M[kind]; SFX.fanfare(); shake=6; screenFlash(8,'#fff6c0'); player.squash=.4; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
   puff(player.x+8,player.y+8,C.flowerC,14,1.6); puff(player.x+8,player.y+8,PAL.l,10,1.2);
 }
 function findFree(px,py,axis){

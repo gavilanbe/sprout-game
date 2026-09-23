@@ -48,9 +48,12 @@ const REGION_ANCHOR={
 let respawnPoint={sx:1,sy:1,x:72,y:78,name:'el pueblo',reg:'valle'};
 function renderOpts(){ return {bio:screenBiome(sx,sy),style:screenStyle(sx,sy),floor:regionFloor(),sx,sy,crystal:crystalOn,openChests:openChestSet()}; }
 function openChestSet(){ const s=new Set(); for(const id of opened) if(id.startsWith('CH'+sx+','+sy+':')) s.add(id.slice(('CH'+sx+','+sy+':').length)); return s; }
+const BG_FRAMES=4;
+function bgFrame(){ return (tick>>3)&3; }   // agua, hierba alta y antorchas: 4 fotogramas de 8 ticks
 function rebuildBg(){
-  for(let f=0;f<2;f++){ if(!bgCanvas[f]) bgCanvas[f]=mkCanvas(160,128);
-    const g=bgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); renderScreenTo(g,grid,0,0,renderOpts(),f); }
+  const o=renderOpts();
+  for(let f=0;f<BG_FRAMES;f++){ if(!bgCanvas[f]){ bgCanvas[f]=mkCanvas(160,128); fgCanvas[f]=mkCanvas(160,128); }
+    const g=bgCanvas[f].getContext('2d'), fg=fgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128); renderScreenTo(g,grid,0,0,o,f,fg); }
   bgDirty=false;
   const r=regionOf(sx,sy); if(r==='valle'||r==='norte'||r==='marisma') thumbOf(sx+','+sy,bgCanvas[0]);
 }
@@ -219,7 +222,7 @@ function puff(x,y,col,n,spd){
   for(let i=0;i<(n||6);i++){ const a=Math.random()*6.283, s=(spd||1)*(.4+Math.random());
     parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.3,life:14+Math.random()*10,col}); }
 }
-function leaves(x,y){ const P=BIOMES[screenBiome(sx,sy)].bush; puff(x,y,P[1],5,1.2); puff(x,y,P[0],4,1); }
+function leaves(x,y){ const B=BIOMES[screenBiome(sx,sy)], P=B.bush; puff(x,y,P[1],3,1.2); bladeBits(x,y,[B.bushL[1],B.bushL[2],B.bushL[3],B.bushL[4]],9); parts.push({k:'dust',x,y,vx:0,vy:-.1,life:12,max:12,r:4,col:B.bushL[3],nog:true}); }
 function sparkle(x,y,col){ parts.push({x,y,vx:0,vy:-.3,life:16,col:col||C.flowerC,star:true}); }
-function updParts(){ for(const p of parts){ p.x+=p.vx; p.y+=p.vy; if(!p.nog) p.vy+=.02; p.life--; } parts=parts.filter(p=>p.life>0);
+function updParts(){ for(const p of parts){ p.x+=p.vx; p.y+=p.vy; if(!p.nog) p.vy+=.02; if(p.k) stepPart(p); p.life--; } parts=parts.filter(p=>p.life>0);
   for(const f of flyText){ f.y-=.35; f.t--; } flyText=flyText.filter(f=>f.t>0); }

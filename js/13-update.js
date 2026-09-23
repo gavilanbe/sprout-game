@@ -6,10 +6,10 @@ function startTransition(dx,dy){
   if(!elderMet&&introDone&&inTown(sx,sy)&&!inTown(nx,ny)){
     pendingSay=["(Tus raíces se\nclavan en el\nsuelo...","La voz del GRAN\nROBLE aún te\nreclama. Ve a la\nplaza.)"]; return; }
   if(bgDirty) rebuildBg();
-  const a=mkCanvas(160,128); a.getContext('2d').drawImage(bgCanvas[(tick>>4)&1],0,0);
+  const a=mkCanvas(160,128); { const g=a.getContext('2d'); g.drawImage(bgCanvas[bgFrame()],0,0); g.drawImage(fgCanvas[bgFrame()],0,0); }
   const oldEnemies=enemies.map(e=>({...e})), oldNpcs=npcs.slice(), oldElder=elderPos;
   loadScreen(nx,ny); rebuildBg();
-  const b=mkCanvas(160,128); b.getContext('2d').drawImage(bgCanvas[(tick>>4)&1],0,0);
+  const b=mkCanvas(160,128); { const g=b.getContext('2d'); g.drawImage(bgCanvas[bgFrame()],0,0); g.drawImage(fgCanvas[bgFrame()],0,0); }
   trans={dx,dy,t:0,dur:dx?28:24,a,b};
   state='trans';
   if(dx===1) player.x=1; if(dx===-1) player.x=160-17;
@@ -23,10 +23,11 @@ function update(){
   tick++;
   if(shake>0)shake--;
   if(hitStop>0){ hitStop--; return; }
+  tickFx();
   if(!toast&&toastQ.length&&(state==='play'||state==='trans')){ toast=toastQ.shift(); SFX.blip(); }
   if(toast&&--toast.t<=0) toast=null;
   if(saveFlash>0) saveFlash--; if(placeBanner&&(state==='play'||state==='trans')&&--placeBanner.t<=0) placeBanner=null; if(hudBerryT>0) hudBerryT--; if(hudSeedT>0) hudSeedT--; if(xFlash>0) xFlash--; if(hudHurtT>0) hudHurtT--; if(tabSlide>0) tabSlide--;
-  if(player.hp<lastHp) hudHurtT=18; lastHp=player.hp;
+  if(player.hp<lastHp) hudHurtT=18; if(player.hp>lastHp) hudHealT=16; if(hudHealT>0) hudHealT--; lastHp=player.hp;
   if(itemCardT>0) itemCardT--;
   if(introDone&&!['boot','title','file','cine','credits'].includes(state)) playTime++;
   if(state!=='play'&&state!=='pause'&&state!=='shop'&&state!=='file') keys.menu=false;
@@ -131,7 +132,7 @@ function update(){
   const onTile=playerOnTile();
   // salto con el Vilano
   if(jumpT>0){ jumpT--; jumpZ=Math.sin((26-jumpT)/26*Math.PI)*14; tryMove(jumpDir[0]*2.1,jumpDir[1]*2.1); player.anim=0;
-    if(jumpT===0){ SFX.land(); puff(player.x+8,player.y+14,'#e8e8d8',4,.7); } }
+    if(jumpT===0){ SFX.land(); player.squash=-.45; stepDust(); stepDust(); } }
   else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); }
   else {
     let dx=0,dy=0;
@@ -145,12 +146,14 @@ function update(){
     if(onIce){ player.ivx+=(dx*sp-player.ivx)*.07; player.ivy+=(dy*sp-player.ivy)*.07; } else { player.ivx=dx*sp; player.ivy=dy*sp; }
     if(Math.abs(player.ivx)>.05||Math.abs(player.ivy)>.05){
       tryMove(player.ivx,player.ivy);
-      if(dx||dy){ player.anim+=.13; player.frame=(player.anim|0)%2; }
+      if(dx||dy){ const was=player.frame; player.anim+=.16*(sp/Math.max(.1,playerSpeed())); player.frame=(player.anim|0)%4;
+        if(player.frame!==was&&(player.frame&1)&&!onIce&&onTile!=='w'&&onTile!=='W') stepDust(); }
       if(onIce&&(tick&7)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:0,vy:.1,life:8,col:'#cfe6f4'});
       if(onTile==='t'&&(dx||dy)&&(tick&7)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:(Math.random()-.5)*.6,vy:-.6,life:12,col:BIOMES[screenBiome(sx,sy)].grass[2]});
       if(onTile==='w'&&(dx||dy)&&(tick&5)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:(Math.random()-.5)*.8,vy:-.7,life:12,col:'#c8e8ff'});
+      if(onTile==='w'&&(dx||dy)&&(tick&15)===0) parts.push({k:'ripple',x:player.x+8,y:player.y+14,vx:0,vy:0,life:20,max:20,col:'#d8f0ff',nog:true});
       if(onTile==='m'&&(dx||dy)&&(tick&9)===0) parts.push({x:player.x+4+Math.random()*8,y:player.y+14,vx:0,vy:-.2,life:10,col:C.mudD});
-    } else { player.anim=0; player.frame=0; }
+    } else { if(player.frame) stepDust(); player.anim=0; player.frame=0; }
     if(keys.fire){ keys.fire=false; attack(); if(state!=='play')return; }
     if(keys.alt){ keys.alt=false; useItem(); if(state!=='play')return; }
   }
@@ -178,12 +181,12 @@ function update(){
 function weather(){
   const ph=inValleyScr(sx,sy)?seasonPhase():-1, r=regionOf(sx,sy);
   if(r==='norte'&&!(thawed&&sy===-1)&&!(boss&&boss.type==='viento')){ const mask=(sy===-3&&boss3Done)?15:3;
-    if((tick&mask)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.5+Math.random()*.4,life:90,col:(tick&4)?'#dff0ff':'#ffffff',nog:true}); }
-  if(r==='marisma'&&!summered&&(tick&7)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.3,life:110,col:(tick&8)?'#c87830':'#e8a040',nog:true});
+    if((tick&mask)===0) parts.push({k:'flake',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.5+Math.random()*.4,life:90,max:90,r:(tick&8)?1:0,col:(tick&4)?'#dff0ff':'#ffffff',nog:true}); }
+  if(r==='marisma'&&!summered&&(tick&7)===0) parts.push({k:'leafF',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.3,life:110,max:110,sway:Math.random()*6,col:(tick&8)?'#c87830':'#e8a040',nog:true});
   if(sx===1&&sy===1&&summered&&ph<0&&(tick&31)===0) parts.push({x:20+Math.random()*120,y:20+Math.random()*70,vx:(Math.random()-.5)*.2,vy:-Math.random()*.15,life:50,col:'#fff7c0',nog:true});
-  if(ph===0&&(tick&15)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.4,vy:.35,life:100,col:(tick&16)?'#f8c8e0':C.flower2,nog:true});
-  if(ph===2&&(tick&7)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4,life:110,col:(tick&8)?'#c87830':'#e8a040',nog:true});
-  if(ph===3&&(tick&5)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.4,life:110,col:'#ffffff',nog:true});
+  if(ph===0&&(tick&15)===0) parts.push({k:'petal',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.4+.15,vy:.35,life:100,max:100,sway:Math.random()*6,col:(tick&16)?'#f8c8e0':C.flower2,nog:true});
+  if(ph===2&&(tick&7)===0) parts.push({k:'leafF',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4,life:110,max:110,sway:Math.random()*6,col:(tick&8)?'#c87830':'#e8a040',nog:true});
+  if(ph===3&&(tick&5)===0) parts.push({k:'flake',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.4,life:110,max:110,r:(tick&8)?1:0,col:'#ffffff',nog:true});
   if(r==='valle'&&won&&ph<0&&(tick&63)===0) parts.push({x:Math.random()*160,y:30+Math.random()*80,vx:.3+Math.random()*.3,vy:-.1,life:120,col:(tick&64)?'#fffbe8':'#f0a0d0',nog:true,fly:true});
   if((tick%45)===0) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const ch=grid[y][x];
     if(ch==='Q'||(hasAmulet('buho')&&(ch==='C'||(ch==='¤'&&!opened.has('CH'+sx+','+sy+':'+x+','+y))))) sparkle(x*16+5+Math.random()*6,y*16+3,C.flowerC); }
@@ -255,17 +258,17 @@ function updPickups(){
     const big=['blade','bomb','ember','hook','tear','flake','boomer','lantern','feather'].includes(p.kind), cx=big?8:4;
     const d=Math.hypot(p.x+cx-(player.x+8),p.y+cx-(player.y+12));
     if(d<(big?12:11)&&(!p.drop||p.drop<8)){
-      if(p.kind==='seed'){ seeds++; hudSeedT=30; collected.add(p.id); SFX.seed(); puff(p.x+4,p.y+4,C.flowerC,8,1.2); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
+      if(p.kind==='seed'){ seeds++; hudSeedT=30; collected.add(p.id); SFX.seed(); collectBurst(p.x+4,p.y+4,'#ffe070',1); screenFlash(5,'#fff6c0'); save(); showToast('¡SEMILLA DORADA!',seeds+'/8'); if(seeds>=8&&!announced8){ announced8=true; say(TXT.allSeeds); } }
       else if(p.kind==='key'){ const dk=dungeonOf(sx,sy)||'x'; dungeonKeys[dk]=(dungeonKeys[dk]||0)+1; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.a,8,1.2); say(TXT.keyGet); save(); }
       else if(p.kind==='bigkey'){ const dk=dungeonOf(sx,sy)||'x'; bigKeys[dk]=true; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.y,10,1.4); say(TXT.bigkeyGet); save(); }
       else if(p.kind==='letter'){ collected.add(p.id); SFX.secret(); puff(p.x+6,p.y+4,'#a8c0d8',10,1.2); const key=sx+','+sy; const n=lettersCount();
         showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
       else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
-      else if(p.kind==='berry'){ berries=Math.min(999,berries+1); hudBerryT=14; SFX.blip(); puff(p.x+4,p.y+4,'#d84878',5,.9); }
+      else if(p.kind==='berry'){ berries=Math.min(999,berries+1); hudBerryT=14; SFX.blip(); collectBurst(p.x+4,p.y+4,'#ff7aa8'); flyText.push({x:p.x+4,y:p.y-2,txt:'+1',t:22,col:'#ffd0e0'}); }
       else if(p.kind==='container'){ player.maxHp+=2; player.hp=player.maxHp; collected.add(p.id); SFX.fanfare(); puff(p.x+4,p.y+4,PAL.R,12,1.5); say(TXT.containerGet); save(); }
       else if(p.kind==='piece'){ collected.add(p.id); puff(p.x+4,p.y+4,PAL.R,10,1.3); addPiece(); }
-      else { player.hp=Math.min(player.maxHp,player.hp+2); SFX.heart(); puff(p.x+4,p.y+4,PAL.R,6,1); }
+      else { player.hp=Math.min(player.maxHp,player.hp+2); SFX.heart(); collectBurst(p.x+4,p.y+4,'#ff8890'); }
       return false; } return true; });
 }
 function updExits(){
@@ -289,7 +292,8 @@ function updExits(){
 /* ---------- TÍTULO Y ARCHIVOS ---------- */
 function updTitle(){
   if(fontsReady) titleT++;
-  if(titleT>0&&(titleT%9)===0) parts.push({x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.35,vy:.2+Math.random()*.3,life:110,col:[PAL.l,C.canopyL,C.flowerC,C.flower1][(titleT/9|0)%4]});
+  if(titleT>0&&(titleT%9)===0) parts.push({k:'leafF',x:Math.random()*170-10,y:-4,vx:.1+(Math.random()-.3)*.35,vy:.3+Math.random()*.3,life:220,max:220,nog:true,sway:Math.random()*6,col:[PAL.l,C.canopyL,'#f8c8e0',C.flowerC][(titleT/9|0)%4]});
+  if(titleT>0&&(titleT%23)===0) parts.push({k:'mote',x:Math.random()*160,y:70+Math.random()*60,vx:(Math.random()-.5)*.1,vy:-.2,life:180,max:180,nog:true,sway:Math.random()*6,col:'#fff6c0'});
   updParts();
   for(let i=0;i<6;i++){ if(titleT===TITLE_T0+i*TITLE_STAG+TITLE_DUR){ shake=(i===5)?5:2; puff(LOGO_POS[i]+8,LOGO_Y+20,'#cfe8d8',6,1); if(AC){ SFX.thud(i===5?9:i); if(i===5) SFX.ping(); } } }
   if(titleT>TITLE_LEAF0&&titleT<TITLE_LEAF0+TITLE_LEAFD&&(titleT%9)===0) parts.push({x:50+Math.random()*60,y:Math.random()*24,vx:(Math.random()-.5)*.5,vy:.45,life:70,col:[PAL.l,'#a8ec78',C.canopyL][titleT%3]});
