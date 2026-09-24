@@ -1,6 +1,6 @@
 {
   "name": "sprout-pacto-estaciones",
   "private": true,
-  "scripts": { "test": "node tests/verify.cjs && node tests/slice.cjs", "test:slice": "node tests/slice.cjs", "assets:slice": "node scripts/export-slice.cjs", "bump": "node scripts/version.cjs", "icons": "node scripts/icons.cjs" },
+  "scripts": { "test": "node tests/verify.cjs && node tests/slice.cjs", "test:slice": "node tests/slice.cjs", "assets:slice": "node scripts/export-slice.cjs", "bump": "node scripts/version.cjs", "icons": "node scripts/icons.cjs", "trailer": "node tools/trailer/render.cjs all" },
   "devDependencies": { "playwright": "1.58.2" }
 }

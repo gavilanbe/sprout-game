@@ -11,7 +11,7 @@
    · Lo que no está en la precarga (la demo, las capturas): red primero y,
      sin red, lo último que se vio.
    ============================================================ */
-const VERSION = '2026.09.24-f570b0de';
+const VERSION = '2026.09.24-689f68d4';
 const CACHE = 'sprout-' + VERSION, RUNTIME = 'sprout-runtime';
 const PRECACHE = [
   // PRECACHE:BEGIN
@@ -87,6 +87,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   const rel = url.pathname.slice(new URL(self.registration.scope).pathname.length);
+  // los vídeos (piden trozos, 206) y la documentación (docs/: el tráiler, las capturas) van directos a la red
+  if (req.headers.has('range') || rel.startsWith('docs/') || /\.(mp4|webm|mov)$/i.test(rel)) return;
   if (req.mode === 'navigate' && (rel === '' || rel === 'index.html')) { e.respondWith(shell(req)); return; }
   e.respondWith((async () => (await caches.match(req, { ignoreSearch: true, cacheName: CACHE })) || network(req))());
 });
@@ -98,7 +100,7 @@ async function shell(req) { // el juego: de la precarga; si faltara (primera vis
 async function network(req) { // red primero, guardando una copia; sin red, la copia
   try {
     const res = await fetch(req);
-    if (res && res.ok && res.type === 'basic') { const c = await caches.open(RUNTIME); c.put(req, res.clone()); }
+    if (res && res.status === 200 && res.type === 'basic') { const copy = res.clone(); caches.open(RUNTIME).then(c => c.put(req, copy)).catch(() => {}); } // la copia, sin esperar; si no se puede guardar, la respuesta sigue valiendo
     return res;
   } catch (err) {
     const hit = await caches.match(req, { ignoreSearch: true });

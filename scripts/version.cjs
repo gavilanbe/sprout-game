@@ -1,6 +1,6 @@
 // node scripts/version.cjs [--check]
 // La versión del juego sale del CONTENIDO: un hash de todo lo que se precarga (index.html, los scripts en el
-// orden de index.html, el manifiesto, los iconos y el fondo del título). Escribe la versión y la lista de
+// orden de index.html, el manifiesto, los iconos y el fondo del título) y de la lógica de sw.js. Escribe la versión y la lista de
 // precarga en sw.js y la versión en js/00-version.js. Con --check solo comprueba que están al día (las pruebas
 // lo usan: si cambias el juego y no la ejecutas, fallan). Ejecútala antes de cada commit que se vaya a publicar.
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
@@ -12,6 +12,8 @@ const VERSION_FILE='js/00-version.js';
 const hashed=[...STATIC,...scripts.filter(s=>s!==VERSION_FILE)];
 for(const f of hashed) if(!fs.existsSync(path.join(root,f))){ console.error('falta '+f); process.exit(1); }
 const h=crypto.createHash('sha1'); for(const f of hashed){ h.update(f+'\0'); h.update(rd(f)); }
+// la lógica del service worker también cuenta (sin su versión ni su lista de precarga, que se escriben aquí)
+h.update('sw.js\0'+rd('sw.js').toString().replace(/const VERSION = '[^']*';/,'').replace(/(\/\/ PRECACHE:BEGIN\n)[\s\S]*?(\s*\/\/ PRECACHE:END)/,'$1$2'));
 const hash=h.digest('hex').slice(0,8);
 const verSrc=fs.existsSync(path.join(root,VERSION_FILE))?rd(VERSION_FILE).toString():'', old=(verSrc.match(/GAME_VERSION='([^']+)'/)||[])[1]||'';
 const today=new Date().toISOString().slice(0,10).replace(/-/g,'.');

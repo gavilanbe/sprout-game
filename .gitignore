@@ -9,3 +9,6 @@ assets/title-bg-src.png
 # Herramientas de verificación (el juego no necesita dependencias)
 node_modules/
 test-results/
+
+# el tráiler renderizado (fotogramas, audio y vídeos: npm run trailer)
+tools/trailer/out/
