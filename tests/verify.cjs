@@ -25,6 +25,7 @@ const server=http.createServer((req,res)=>{
     window.__press=(k,n)=>{ keys[k]=true; if(k==='fire') keys.fireHeld=true; __step(n||1); if(k==='fire') keys.fireHeld=false; if(k!=='fire'&&k!=='alt'&&k!=='menu') keys[k]=false; };
     window.__hold=(k,n)=>{ keys[k]=true; __step(n); keys[k]=false; };
     window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } };
+    window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
   });
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
@@ -54,9 +55,19 @@ const server=http.createServer((req,res)=>{
       __go(0,2,90,30); player.x=6*16; player.y=4*16-4; player.dir=0; const wasBush=grid[5][6]==='Q'; keys.fire=true; __step(16); const cut=grid[5][6]!=='Q'; const seedOut=pickups.some(p=>p.kind==='seed');
       return [before,got,state,wasBush,cut,seedOut]; }),[false,true,'play',true,true,true]);
   });
-  await check('Las 8 semillas + Raíz = valle florece y la zarza se seca',async()=>{
-    eq(await ev(()=>{ seeds=8; announced8=true; __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog();
-      const w=won; __go(0,0,72,30); return [w,grid[0][4],isSolid(grid[0][4])]; }),[true,'zd',false]);
+  await check('Las 8 semillas + Raíz = el rito: vuelan a la copa, el Roble despierta, el valle florece y la zarza se seca',async()=>{
+    eq(await ev(()=>{ seeds=8; announced8=true; __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); const r0=state, w0=won; __step(160); const w1=won, look=robleLook();
+      __skipRite(); const r1=state; __skipDialog(); __step(2); __skipDialog();
+      const w=won; __go(0,0,72,30); return [r0,w0,w1,look,r1,w,grid[0][4],isSolid(grid[0][4])]; }),['rite',false,true,'base','dialog',true,'zd',false]);
+  });
+  await check('El rito de una reliquia: vuela a su altar, la raíz lleva la luz, vuelve la estación, cinemática del valle y habla Raíz',async()=>{
+    eq(await ev(()=>{ won=true; seeds=8; thawed=false; hasEmber=true; __go(1,1,64,72); enemies=[]; player.dir=1; keys.fire=true; __step(1); const log=[state,rite&&rite.A&&rite.A.k];
+      __step(100); log.push(thawed,rite.t>=RITE_T.land); __step(60); log.push(thawed,robleLook(),valleySeason());
+      while(state==='rite') __step(1); log.push(state,seasonCine&&seasonCine.kind); __skipRite(); log.push(state,dlg&&dlg.who);
+      __skipDialog(); log.push(state);
+      // desde el altar también: con la Lágrima en la mano, Z frente al altar del verano
+      hasTear=true; summered=false; __go(1,1,112,56); player.dir=1; keys.fire=true; __step(1); log.push(state,rite&&rite.A&&rite.A.k); __skipRite(); __skipDialog(); log.push(summered,screenBiome(1,1));
+      return log; }),['rite','primavera',false,true,true,'spring',0,'seasoncine','primavera','dialog','RAÍZ','play','rite','verano',true,'summer']);
   });
   await check('Transición entre pantallas conserva al jugador dentro del mapa',async()=>{
     eq(await ev(()=>{ __go(2,1,140,20); player.x=150; __hold('right',10); __step(40); const a=[sx,sy,state,boxFree(player.x+4,player.y+8,8,8)];
@@ -153,9 +164,9 @@ const server=http.createServer((req,res)=>{
       const em=pickups.find(p=>p.kind==='ember'); if(em){ player.x=em.x; player.y=em.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
       log.push(['brasa',bossDone,hasEmber]);
       // a Raíz: primavera
-      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['deshielo',thawed,screenBiome(1,-1)]);
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(20); const rt=state; __skipRite(); __skipDialog(); __step(2); __skipDialog(); log.push(['deshielo',rt,thawed,screenBiome(1,-1)]);
       return log; });
-    eq(r,[['cueva',6,0],['guardias','=','q',1],['galería',2],['placas','#','#','q'],['pulsador','q'],['llave',1,'q'],['nido',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo',true,'valley']]);
+    eq(r,[['cueva',6,0],['guardias','=','q',1],['galería',2],['placas','#','#','q'],['pulsador','q'],['llave',1,'q'],['nido',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo','rite',true,'valley']]);
   });
   await check('Camino crítico: el Tronco Hueco (llave, Zángano, gancho, cristal, llave grande, Reina)',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -172,9 +183,9 @@ const server=http.createServer((req,res)=>{
       player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['puerta',grid[7][4]]);
       __go(10,2,72,96); __skipDialog(); boss.hp=2; __step(3); __skipDialog(); player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
       const t=pickups.find(p=>p.kind==='tear'); if(t){ player.x=t.x; player.y=t.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['lágrima',boss2Done,hasTear]);
-      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); __skipDialog(); __step(2); __skipDialog(); log.push(['verano',summered,screenBiome(2,3)]);
+      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __skipRite(); __skipDialog(); __step(2); __skipDialog(); log.push(['verano',summered,screenBiome(2,3),screenBiome(2,1)]);
       return log; });
-    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['colmena',1],['cristal','æ','Æ','º'],['cerrojo este','q','q',0],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'valley']]);
+    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['colmena',1],['cristal','æ','Æ','º'],['cerrojo este','q','q',0],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'summer','summer']]);
   });
   await check('Camino crítico: el Templo de la Cima (bloques, cerrojo, llave grande, Guardián, vilano, antorchas, cima, Viento)',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -248,7 +259,7 @@ const server=http.createServer((req,res)=>{
       log.push(['otoño',autumned,st,state,chapterIdx(),grid[6][6],questList().some(q=>q.id==='templo')]);
       return log; });
     eq(r,[['ciénaga','.','G'],['molino',19,2],['granero','=','q',1],['sacos','q',2],['cerrojo oeste','q','q',1],['espantapájaros','scare',true,true],['engranajes','q','q',true],['despensa','¤','itemget',true,'q',0],
-      ['viento','=','q','='],['molinetes','q','=','q'],['llave grande',true],['aspas',1,'q'],['laberinto','q','q','°','q','q','q',true],['ciervo','yield',true,true],['salida',4,3,7,2],['otoño',true,'seasoncine','play',4,'{',true]]);
+      ['viento','=','q','='],['molinetes','q','=','q'],['llave grande',true],['aspas',1,'q'],['laberinto','q','q','°','q','q','q',true],['ciervo','yield',true,true],['salida',4,3,7,2],['otoño',true,'rite','play',4,'{',true]]);
   });
   await check('Molinillo: barre hojarasca (con bayas debajo, y se recuerda), tumba cuervos y desarma caballeros; la hojarasca podrida resiste hasta el verano',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; hasPinwheel=true; xItem='molinillo'; hitStop=0;
