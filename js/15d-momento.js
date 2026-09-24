@@ -39,10 +39,14 @@ function updMoment(){
 /* el gesto en el juego: el arma salta, Sprout la atrapa y la alza entre rayos */
 function drawMomentPose(M){
   const t=M.t, img=itemSpr||BLADE_SPR;
-  if(t<M_CATCH){ const k=t/M_CATCH, x=lerp(M.fx,M.hx,k), y=lerp(M.fy,M.hy,k)-Math.sin(Math.PI*k)*16, sx=Math.max(.2,Math.abs(Math.cos(k*Math.PI*2)));
+  const at=k=>[lerp(M.fx,M.hx,k),lerp(M.fy,M.hy,k)-Math.sin(Math.PI*k)*16];
+  if(t<M_CATCH){ const k=t/M_CATCH, [x,y]=at(k), sx=Math.max(.2,Math.abs(Math.cos(k*Math.PI*2)));
+    for(let i=1;i<=4;i++){ const [x2,y2]=at(Math.max(0,(t-i*1.3)/M_CATCH)); ctx.fillStyle=i<2?'#fffbe0':'rgba(255,246,192,'+(.7/i).toFixed(2)+')'; ctx.fillRect(Math.round(x2),Math.round(y2),i<2?2:1,i<2?2:1); } // la estela
     ctx.save(); ctx.translate(Math.round(x),Math.round(y)); ctx.scale(sx,1); ctx.drawImage(img,-8,-8); ctx.restore(); }
-  else { const k=Math.min(1,(t-M_CATCH)/10), bob=Math.round(Math.sin(t*.25)*1.5);
+  else { const k=Math.min(1,(t-M_CATCH)/10), bob=Math.round(Math.sin(t*.25)*1.5), u=t-M_CATCH;
     drawRays(M.hx,M.hy,easeOutBack(k)); ctx.drawImage(img,M.hx-8,M.hy-8+bob);
+    if(u<12){ const r=Math.round(4+CA_EASE.out(u/12)*20); ctx.globalAlpha=1-u/12; ctx.drawImage(ringArt(r,'#fff6c0',1),M.hx-r-1,M.hy-r-1); ctx.globalAlpha=1; } // ¡la atrapa!: un anillo
+    if(u<9) caStar(M.hx+5,M.hy-6+bob,[2,4,6,5,4,3,2,1,1][u],'#ffffff');
     if((t&3)===0) sparkle(M.hx-10+Math.random()*20,M.hy-10+Math.random()*14,'#fff6c0'); }
   if(t<8){ ctx.fillStyle='rgba(255,255,244,'+(1-t/8).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } } // venimos del fogonazo de la cinemática
 function drawMoment(){ const M=moment; if(!M) return; if(M.phase==='cine') drawCineArm(); else drawMomentPose(M); }
