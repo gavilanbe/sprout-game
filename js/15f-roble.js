@@ -262,6 +262,93 @@ const SC={
   /* ═════════ otono ═════════ */
   // (guion: vuelve el otoño)
   /* ═════════ invierno ═════════ */
-  // (guion: vuelve el invierno y las cuatro estaciones giran)
+  invierno:{ len:480, title:'VUELVE EL INVIERNO', sub:'el Copo no se derrite', titleAt:406,
+    // en la cima, el Viento del Norte deja de aullar; la nevada baja despacio del pico hasta el Roble;
+    // y en la plaza la rueda de las estaciones echa a andar: una luz da la vuelta a los cuatro altares
+    keys:['1,-3','1,-2','1,-1','1,0','1,1'],                                   // de la cima (arriba) a la plaza (desde y=512)
+    LOOK:['spring','summer','autumn','winter'],
+    WHEEL:[[300,0],[318,1],[336,2],[354,3],[366,0],[376,1],[386,2],[396,3]],   // la rueda: [fotograma, estación que llega]
+    NOTE:[72,76,79,84],
+    prep(c){ const st={won:true,thawed:true,summered:true,autumned:true};
+      c.old=scStrip(this.keys,st,true); c.nu=scStrip(this.keys,Object.assign({},st,{cycled:true,force:3}),true);
+      c.plaza=[0,1,2,3].map(s=>{ const [bio,floor]=scState('1,1',Object.assign({},st,{cycled:true,force:s})); return scScreen('1,1',bio,floor); });
+      this.calmArt(); },
+    /* el Viento, en calma: la cara de tormenta se borra y quedan los ojos cerrados y una sonrisa */
+    calmArt(){ if(this._calm) return this._calm; const W=WIND_SPR, w=W.width, h=W.height, c=mkCanvas(w,h), g=c.getContext('2d'); g.drawImage(W,0,0);
+      const d=g.getImageData(0,0,w,h), p=d.data;
+      for(let y=7;y<=19;y++) for(let x=9;x<=22;x++){ const i=(y*w+x)*4, s=p[i]+p[i+1]+p[i+2]; if(p[i+3]<200) continue;
+        if(!(s<380||(s>740&&y>=10&&y<=12))) continue; const q=((x+y)&1)?[228,242,255]:[184,212,236]; p[i]=q[0]; p[i+1]=q[1]; p[i+2]=q[2]; }
+      g.putImageData(d,0,0);
+      g.fillStyle='#3a5a8a'; for(const [x,y] of [[10,11],[11,12],[12,12],[13,11],[18,11],[19,12],[20,12],[21,11],[14,16],[15,17],[16,17],[17,16]]) g.fillRect(x,y,1,1); // ojos cerrados y la sonrisa
+      g.fillStyle='#5a7898'; g.fillRect(10,9,3,1); g.fillRect(19,9,3,1); // cejas en paz
+      return this._calm=c; },
+    camY(t){ return caK(t,[[0,0],[112,0],[284,518,'io']]); },                 // la vista baja de la cima a la plaza
+    front(t){ return t<284?this.camY(t)+88:caK(t,[[284,606],[312,664,'io']]); }, // la nevada: por encima, ya es invierno
+    season(t){ let s=3; for(const [t0,si] of this.WHEEL) if(t>=t0) s=si; return s; },
+    cues:{ 2:()=>swish(1.4,.05,260,720,380), 34:()=>swish(1.2,.045,300,820,420), 64:()=>{ swish(1.3,.05,760,360,200); noise(.9,.02,false,undefined,700); },
+      86:()=>{ const a=audio(),t=a.currentTime; [79,84,88].forEach((m,i)=>beep('triangle',f(m),0,.5,.028,t+i*.12)); },
+      116:()=>noise(1.6,.01,true,undefined,6200), 236:()=>{ const a=audio(),t=a.currentTime; [72,79,84].forEach((m,i)=>beep('triangle',f(m),0,.4,.025,t+i*.1)); } },
+    tick(t,c){ const R=c.rng;
+      if(t<64){ for(let i=0;i<2;i++) c.parts.push({k:'streak',x:166,y:14+R()*116,vx:-4-R()*2.5,vy:.7+R()*.5,t:0,life:46,len:6+((R()*10)|0),col:R()<.7?'#ffffff':'#cfe4f8'}); // la ventisca
+        if(t%2===0) c.parts.push({k:'dot',x:166,y:12+R()*110,vx:-2.6-R()*1.4,vy:.9+R()*.6,t:0,life:70,s:R()<.3?2:1,col:'#ffffff'});
+        if(t%3===0) c.parts.push({k:'streak',x:66,y:66+R()*6,vx:-2.8-R(),vy:1.2+R()*.8,t:0,life:26,len:5,col:'#e4f2ff'}); } // el soplo, de su boca
+      if(t===64) for(let i=0;i<14;i++){ const a=R()*6.283, s=.4+R()*1.2; c.parts.push({k:'smoke',x:80+Math.cos(a)*8,y:66+Math.sin(a)*5,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.5-.2,t:0,life:34,r0:1,r1:5,col:'#ffffff',a:.7}); } // el último suspiro
+      const sy=this.camY(t), fy=this.front(t)-sy+12;
+      if(t>=64&&(t%2)===0){ const top=12, bot=t<112?132:Math.min(132,fy); if(bot>top) c.parts.push({k:'dot',x:R()*164-2,y:top+R()*Math.min(30,bot-top),vx:(R()-.5)*.25,vy:.28+R()*.3,t:0,life:t<112?150:100,s:R()<.18?2:1,col:R()<.8?'#ffffff':'#dff0ff'}); } // nieve mansa
+      if(t>=64&&t<112&&(t%9)===0) c.parts.push({k:'star',x:66+R()*28,y:52+R()*26,vx:0,vy:.1,t:0,life:18,s:2,col:'#ffffff'});
+      if(t>=112&&t<300&&fy>12&&fy<132){ if(t%2===0) c.parts.push({k:'smoke',x:R()*160,y:fy+R()*2,vx:(R()-.5)*.2,vy:.15,t:0,life:22,r0:1,r1:3,col:'#f4f8ff',a:.55}); // el filo de la nevada
+        if(t%5===0) c.parts.push({k:'leaf',x:R()*160,y:fy+6+R()*24,vx:(R()-.5)*.5,vy:.35,g:.01,fr:1,t:0,life:70,rot:R()*6,vr:.12,col:['#e8a040','#c86830','#fcd878'][(R()*3)|0]}); } // hojas de otoño que aún caen abajo
+      if(t>=296){ const s=this.season(t);
+        if(s===0&&t%4===0) c.parts.push({k:'petal',x:R()*160,y:12,vx:.3+R()*.4,vy:.35,g:.002,fr:1,t:0,life:130,ph:(R()*4)|0,col:R()<.5?'#f8c8e0':'#fff4f8'});
+        if(s===1&&t%5===0) c.parts.push({k:'dot',x:R()*160,y:60+R()*60,vx:(R()-.5)*.2,vy:-.2-R()*.15,t:0,life:70,col:R()<.5?'#fff7c0':'#ffffff'});
+        if(s===2&&t%4===0) c.parts.push({k:'leaf',x:R()*160,y:12,vx:(R()-.5)*.6,vy:.4,g:.004,fr:1,t:0,life:120,rot:R()*6,vr:.1,col:['#e8a040','#c86830','#fcd878'][(R()*3)|0]});
+        if(s===3&&t%3===0) c.parts.push({k:'dot',x:R()*164-2,y:12,vx:(R()-.5)*.25,vy:.3+R()*.3,t:0,life:130,s:R()<.18?2:1,col:'#ffffff'}); }
+      for(const [t0,si] of this.WHEEL) if(t===t0){ const oy=6, A=altarOf(['primavera','verano','otono','invierno'][si]), x=A.tx*16+8, y=oy+A.ty*16+4;
+        c.parts.push({k:'ring',x,y,r0:3,r1:16,t:0,life:14,col:A.col,w:1}); for(let i=0;i<6;i++) c.parts.push({k:'dot',x,y,vx:(R()-.5)*2,vy:-R()*1.6,g:.05,t:0,life:20,s:1,col:A.col});
+        beep('triangle',f(this.NOTE[si]+(t0>=366?12:0)),0,.26,.032); } },
+    /* las cuatro reliquias en sus altares (oy: dónde cae la plaza en pantalla); la de la estación viva, encendida */
+    relics(oy,hot){ for(const A of ROBLE_ALTARS){ const x=A.tx*16, y=oy+A.ty*16, on=A.si===hot, bob=Math.round(Math.sin(tick*.06+A.si*1.7)*1.2);
+      glowAt(x+8,y-2,(on?16:10)+Math.sin(tick*.08+A.si)*2,'rgba('+A.rgb+','+(on?.55:.3)+')'); ctx.drawImage(relicSprite(A.k),x,y-10+bob); } },
+    /* la luz que da la vuelta a los altares, en el sentido de las agujas */
+    orb(t,oy){ const W=this.WHEEL, pos=si=>{ const A=ROBLE_ALTARS[si]; return [A.tx*16+8,oy+A.ty*16+2]; };
+      if(t<286) return null; let a=3, b=W[0][1], t0=286, t1=W[0][0];
+      for(let i=0;i<W.length;i++){ if(t>=W[i][0]){ a=W[i][1]; b=i+1<W.length?W[i+1][1]:W[i][1]; t0=W[i][0]; t1=i+1<W.length?W[i+1][0]:W[i][0]+1; } }
+      const k=clamp((t-t0)/(t1-t0),0,1), e=CA_EASE.io(k), [x0,y0]=pos(a), [x1,y1]=pos(b), mx=(x0+x1)/2, my=(y0+y1)/2, dx=mx-80, dy=my-(oy+74), L=Math.hypot(dx,dy)||1, bul=Math.sin(Math.PI*k)*10;
+      return [lerp(x0,x1,e)+dx/L*bul,lerp(y0,y1,e)+dy/L*bul]; },
+    draw(t,c){ const sy=Math.round(this.camY(t)), fy=this.front(t);
+      if(t<296){ // 1 y 2: la cima y la bajada
+        scFrontY(c.nu,c.old,0,sy,fy,cut=>{ if(fy<250||cut<12||cut>132) return; // el filo de la nevada: un velo blanco con destellos
+          ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillRect(0,cut-2,160,4); ctx.fillStyle='rgba(255,255,255,.8)'; for(let x=(tick*3)%7;x<160;x+=7) ctx.fillRect(x,cut-1+((x>>2)&1),1,1); });
+        // la tormenta: cielo cerrado y cortinas de nieve que barren la cima (se abren cuando el Viento se calma)
+        const storm=t<64?1:Math.max(0,1-(t-64)/40);
+        if(storm>0&&sy<120){ ctx.fillStyle='rgba(30,44,78,'+(.4*storm).toFixed(2)+')'; ctx.fillRect(0,12,160,120);
+          for(let i=0;i<7;i++){ const x=Math.round(((t*(6+i%3)+i*53)%240)*-1+200), y=18+((i*37)%104), w=28+(i%4)*14; ctx.fillStyle='rgba(236,246,255,'+((.22+(i%3)*.08)*storm).toFixed(2)+')'; ctx.fillRect(x,y,w,1+(i&1)); ctx.fillRect(x+w+4,y,6,1); } }
+        // el Viento del Norte sobre su pico: aúlla y sopla... suspira... y se calma
+        const wy=12-sy, calm=t>=64, bob=calm?Math.round(Math.sin(t*.05)*2):Math.round(Math.sin(t*.3)*1), sh=!calm&&(t&2)?1:0;
+        if(wy+36<132&&wy+36+32>12){ if(calm) glowAt(80,wy+52,20+Math.sin(t*.06)*3,'rgba(220,236,255,'+(.35*Math.min(1,(t-64)/30)).toFixed(2)+')');
+          ctx.drawImage(calm?this.calmArt():WIND_SPR,64+sh,wy+36+bob); if(t>=64&&t<72){ ctx.globalAlpha=.9-(t-64)*.11; ctx.drawImage(BOSS_WHITE.viento,64,wy+36+bob); ctx.globalAlpha=1; } } // el suspiro: un destello blanco en su silueta
+        // la plaza: el Roble se nieva cuando le llega la línea; Sprout y Raíz lo miran; las reliquias en su sitio
+        const oy=512-sy+12; if(oy<132){ const cut=Math.round(fy-sy+12);
+          ctx.save(); ctx.beginPath(); ctx.rect(0,Math.max(0,cut),160,144); ctx.clip(); scOak('autumn',0,oy); ctx.restore();
+          if(cut>0){ ctx.save(); ctx.beginPath(); ctx.rect(0,0,160,cut); ctx.clip(); scOak('winter',0,oy); ctx.restore(); }
+          this.relics(oy,3); ctx.drawImage(ELDER,64,oy+64); ctx.drawImage(P_SPRITES[1][0],64,oy+74); }
+        if(t>=112&&t<124){ ctx.fillStyle='rgba(235,245,255,'+((124-t)/12*.35).toFixed(2)+')'; ctx.fillRect(0,0,160,144); } // la bajada empieza con un soplo claro
+        return; }
+      // 3: la rueda de las estaciones en la plaza
+      const oy=6, s=this.season(t); let prev=3, t0=-1, nx=null;
+      for(let i=0;i<this.WHEEL.length;i++){ if(t>=this.WHEEL[i][0]){ t0=this.WHEEL[i][0]; prev=i?this.WHEEL[i-1][1]:3; nx=i+1<this.WHEEL.length?this.WHEEL[i+1][0]:t0+20; } }
+      const dur=t0<0?1:Math.min(14,nx-t0), k=t0<0?1:clamp((t-t0)/dur,0,1), from=t0<0?3:prev;
+      ctx.drawImage(c.plaza[from],0,oy); scOak(this.LOOK[from],0,oy);
+      if(k>0&&from!==s){ const cx=80, cy=oy+72, r=CA_EASE.in(k)*176; ctx.save(); ctx.beginPath();
+        for(let y=12;y<132;y++){ const dy=y+.5-cy, h=r*r-dy*dy; if(h>0){ const w=Math.sqrt(h); ctx.rect(Math.round(cx-w),y,Math.round(w*2),1); } }
+        ctx.clip(); ctx.drawImage(c.plaza[s],0,oy); scOak(this.LOOK[s],0,oy); ctx.restore();
+        if(k<1){ ctx.fillStyle=ROBLE_ALTARS[s].col; for(let i=0;i<72;i++){ const a=i/72*6.283, x=Math.round(cx+Math.cos(a)*r), y=Math.round(cy+Math.sin(a)*r); if(y>12&&y<132&&x>=0&&x<160&&((i+(t>>1))%3)) ctx.fillRect(x,y,1,1); } } }
+      else if(k>0) { ctx.drawImage(c.plaza[s],0,oy); scOak(this.LOOK[s],0,oy); }
+      ctx.save(); ctx.translate(0,oy); rootLight(ROBLE_ALTARS[s],1,.85,((t*1.3)%60)/60); ctx.restore(); // la raíz de la estación viva lleva su luz al Roble
+      this.relics(oy,s); ctx.drawImage(ELDER,64,oy+64); ctx.drawImage(P_SPRITES[1][0],64,oy+74);
+      if(t<402){ const o=this.orb(t,oy); if(o){ let nxt=this.WHEEL.find(w=>w[0]>t); const A=ROBLE_ALTARS[nxt?nxt[1]:3];
+        for(let i=6;i>=1;i--){ const q=this.orb(t-i,oy); if(!q) continue; ctx.fillStyle='rgba('+A.rgb+','+(.75-i*.1).toFixed(2)+')'; ctx.fillRect(Math.round(q[0])-(i<3?1:0),Math.round(q[1])-(i<3?1:0),i<3?3:2,i<3?3:2); } // la estela
+        glowAt(o[0],o[1],12,'rgba('+A.rgb+',.55)'); glowAt(o[0],o[1],6,'rgba(255,255,255,.7)'); caStar(o[0],o[1],4+((t>>2)&1),'#ffffff'); } }
+      if(t>=296&&t<306){ ctx.fillStyle='rgba(255,255,255,'+((306-t)/10*.3).toFixed(2)+')'; ctx.fillRect(0,0,160,144); } } },
   /* ═════════ fin ═════════ */
 };
