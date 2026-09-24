@@ -67,14 +67,16 @@ function update(){
   if(state==='cine'){
     cineT++; cineParts();
     if(cineFold>0){ cineFold--;
-      if(cineFold===12){ cinePage++; cineChars=0; cineT=0; parts=[]; noise(.4,.025,false); }
+      if(cineFold===12){ cinePage++; cineChars=0; cinePause=0; cineT=0; parts=[]; noise(.4,.025,false); }
+      if(cineFold===0&&cinePage>=CINE.length){ state='play'; wakeT=26; parts=[]; } // el iris ya se abrió sobre la casa: «!» y entra Petra
       keys.fire=false; updParts(); return; }
     const pg=CINE[cinePage].replace(/\s*\n\s*/g,' ');
-    if(cineChars<pg.length){ cineChars+=0.7; if((tick&7)===0)SFX.blip(); if(cineChars>=pg.length) SFX.ping(); }
+    if(cineChars<pg.length){ if(cinePause>0) cinePause--; // el narrador respira en las comas y los puntos
+      else { const a=cineChars|0; cineChars+=0.7; for(let i=a;i<Math.min(pg.length,cineChars|0);i++){ const c=pg[i]; if(c==='.') cinePause=pg[i+1]==='.'?4:12; else if(',;:'.includes(c)) cinePause=6; }
+        if((tick&7)===0)SFX.blip(); if(cineChars>=pg.length) SFX.ping(); } }
     if(keys.fire){ keys.fire=false;
       if(cineChars<pg.length) cineChars=pg.length;
-      else if(cinePage<CINE.length-1){ cineFold=24; SFX.cut(); }
-      else { state='play'; fadeIn=70; wakeT=90; parts=[]; setTrack('casa'); } }
+      else { cineFold=24; SFX.cut(); if(cinePage===CINE.length-1) setTrack('casa'); } } // la última página se cierra y el iris se abre en la casa (15a)
     updParts(); return;
   }
   if(state==='itemget'){ if(moment){ updMoment(); return; } itemT--; if((tick&3)===0) puff(player.x+8,player.y-10,C.flowerC,2,1.2); updParts(); if(itemT<=0) say(itemPages||TXT.bladeGet); return; } // las armas: su momento (15d)
