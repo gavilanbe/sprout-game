@@ -312,7 +312,66 @@ const SC={
       const oy=256-sy+12; if(oy<132){ scOak('spring',0,oy); ctx.drawImage(ELDER,64,oy+64); ctx.drawImage(P_SPRITES[1][0],64,oy+74); }
       if(t>=290){ const k=Math.min(1,(t-290)/40); glowAt(80,72,40+k*50,'rgba(255,240,200,'+(.18*k).toFixed(2)+')'); } } }, // el campo, al sol
   /* ═════════ verano ═════════ */
-  // (guion: vuelve el verano)
+  verano:{ len:470, title:'VUELVE EL VERANO', sub:'la Lágrima brilla en su altar', titleAt:344,
+    // Del Roble, recién vestido de verano (la Brasa y la Lágrima ya lucen en sus altares), la luz del sol baja por el
+    // camino del sur hasta la puerta del Tronco de la Reina. Corte: las marismas de oeste a este; el sol las cruza,
+    // la hojarasca podrida se seca y se la lleva el aire caliente, el agua vuelve a estar limpia y salen libélulas y mariposas.
+    vkeys:['1,1','1,2','1,3'], hkeys:['1,3','2,3','3,3','4,3'], CUT:222,
+    pools(keys,vertical){ const out=[]; keys.forEach((k,i)=>(MAPS[k]||[]).forEach((row,y)=>[...row].forEach((ch,x)=>{ if(ch==='~') out.push(vertical?[x*16,i*128+y*16]:[i*160+x*16,y*16]); }))); return out; },
+    prep(c){ const o={won:true,thawed:true}, n={won:true,thawed:true,summered:true};
+      c.vOld=scStrip(this.vkeys,o,true); c.vNu=scStrip(this.vkeys,n,true); c.hOld=scStrip(this.hkeys,o,false); c.hNu=scStrip(this.hkeys,n,false);
+      c.vpools=this.pools(this.vkeys,true); c.pools=this.pools(this.hkeys,false); },
+    camY(t){ return caK(t,[[0,0],[46,0],[182,264,'io']]); },                                  // la vista baja por la tira: plaza (0) → marisma (256)
+    frontY(t){ return t<182?Math.max(66,this.camY(t)+34):caK(t,[[182,298],[220,396,'io']]); }, // el sol baja: por encima, ya es verano
+    camX(t){ return t<356?clamp(this.frontX(t)-116,0,334):334+(t-356)*.12; },                  // la vista sigue al sol por las marismas (0 = Tronco de la Reina) y luego se deja llevar
+    frontX(t){ return caK(t,[[this.CUT,152],[356,650,'io']]); },                               // el sol sigue de oeste a este (el Tronco ya lo cruzó): a su izquierda, verano
+    cicada(){ const a=audio(), t=a.currentTime; for(let i=0;i<10;i++) noise(.045,.011+.005*Math.sin(i*1.3),true,t+i*.065,6400); }, // la chicharra
+    cues:{ 6:()=>{ const a=audio(),t=a.currentTime; [76,79,83,88].forEach((m,i)=>beep('triangle',f(m),0,.28,.026,t+i*.07)); },
+      70:()=>swish(1.5,.028,300,900,500), 178:()=>SC.verano.cicada(), 222:()=>swish(.3,.06,700,2400,1200), 238:()=>noise(1.6,.028,false,undefined,1400),
+      300:()=>{ const a=audio(),t=a.currentTime; [88,91,95].forEach((m,i)=>beep('triangle',f(m),f(m)*1.01,.22,.02,t+i*.09)); }, 324:()=>SC.verano.cicada() },
+    leafCol:['#c87830','#a05820','#e8a040','#8a6030'],
+    tick(t,c){ const R=c.rng;
+      if(t<this.CUT){ const sy=this.camY(t), fy=this.frontY(t)-sy+12;
+        if(fy>12&&fy<132){ if((t%2)===0) c.parts.push({k:'leaf',x:R()*160,y:fy+2+R()*6,vx:.6+R()*1.2,vy:-.9-R()*.8,g:-.004,fr:.99,t:0,life:70,rot:R()*6,vr:(R()-.5)*.3,col:this.leafCol[(R()*4)|0]}); // la hojarasca seca, al aire
+          if((t%3)===0) c.parts.push({k:'dot',x:R()*160,y:fy-2-R()*10,vx:(R()-.5)*.2,vy:-.3-R()*.3,g:0,t:0,life:40,col:R()<.5?'#fff4b0':'#ffffff'}); }
+        if((t%5)===0&&fy>30) c.parts.push({k:'dot',x:R()*160,y:14+R()*Math.min(110,fy-20),vx:(R()-.5)*.15,vy:-.12,g:0,t:0,life:70,col:'#fff7c0'}); } // polen en lo que ya es verano
+      else { const fx=this.frontX(t)-this.camX(t);
+        if(fx>-4&&fx<164&&(t%2)===0) for(let i=0;i<2;i++) c.parts.push({k:'leaf',x:fx+R()*6,y:14+R()*116,vx:1+R()*1.4,vy:-.7-R()*.9,g:-.003,fr:.99,t:0,life:70,rot:R()*6,vr:(R()-.5)*.3,col:this.leafCol[(R()*4)|0]});
+        if((t%4)===0&&fx>6) c.parts.push({k:'dot',x:R()*Math.min(160,fx),y:16+R()*110,vx:(R()-.5)*.15,vy:-.15-R()*.1,g:0,t:0,life:80,col:R()<.5?'#fff7c0':'#ffffff'}); } },
+    sunEdgeY(cut){ if(cut<12||cut>132) return; ctx.fillStyle='rgba(255,214,110,.28)'; ctx.fillRect(0,cut-6,160,6); ctx.fillStyle='rgba(255,236,160,.5)'; ctx.fillRect(0,cut-2,160,2);
+      ctx.fillStyle='#fffbe0'; for(let x=(tick*3)%7;x<160;x+=7) ctx.fillRect(x,cut-1-((x>>2)&1),2,1); },
+    shafts(t,x1,y1){ ctx.fillStyle='rgba(255,236,170,.13)'; // haces de sol en diagonal sobre lo que ya es verano
+      for(let b=0;b<3;b++){ const x0=((b*67+t*.3)%220)-40; for(let y=12;y<Math.min(132,y1);y++){ const x=Math.round(x0+(y-12)*.55), w=Math.min(14+b*4,x1-x); if(w>0) ctx.fillRect(x,y,w,1); } } },
+    water(x,y,t,px,py){ ctx.fillStyle='rgba(92,204,214,.36)'; ctx.fillRect(x,y,16,16); // la charca, limpia: agua clara, onda y brillo
+      const r=((t>>2)+((px*3+py)>>4))%14; ctx.fillStyle='rgba(220,252,255,.55)'; if(r<11) ctx.fillRect(x+2+((px>>4)*5&5),y+2+r,5,1);
+      const ph=(t+px*3+py*7)%44; if(ph<8){ ctx.fillStyle=ph<4?'#ffffff':'#bff0ff'; ctx.fillRect(x+9-((py>>4)&3),y+5+((px>>4)&5),ph<4?2:1,1); } },
+    fly(x,y,t){ ctx.fillStyle='#1a4a9a'; ctx.fillRect(x,y,5,1); ctx.fillStyle='#8ad8ff'; ctx.fillRect(x+4,y,2,1); ctx.fillStyle='rgba(235,250,255,.9)'; // una libélula
+      if(t&2){ ctx.fillRect(x+2,y-1,2,1); ctx.fillRect(x+2,y+1,2,1); ctx.fillRect(x+1,y-2,1,1); ctx.fillRect(x+1,y+2,1,1); } else { ctx.fillRect(x+1,y-2,3,1); ctx.fillRect(x+1,y+2,3,1); } },
+    bfly(x,y,t,col){ const open=((t>>2)&1)===0; ctx.fillStyle=col; // una mariposa
+      if(open){ ctx.fillRect(x-2,y-1,2,2); ctx.fillRect(x+1,y-1,2,2); } else { ctx.fillRect(x-1,y-2,1,2); ctx.fillRect(x+1,y-2,1,2); } ctx.fillStyle='#3a2a1a'; ctx.fillRect(x,y-1,1,2); },
+    life(t,sx,sy,limitX,limitY){ // mariposas y libélulas por lo que ya es verano (coords de pantalla de la vista)
+      for(let i=0;i<4;i++){ const k=t*.035+i*1.9, x=Math.round(((i*47+t*.35)%200)-20+Math.sin(k*2.1)*8), y=Math.round(34+i*22+Math.sin(k*1.4)*9-Math.abs(Math.sin(k*3))*4);
+        if(x<limitX-4&&y<limitY-2) this.bfly(x,y,t+i*3,['#fff6a0','#ffffff','#ffd060','#fff6a0'][i]); } },
+    down(t,c){ const sy=Math.round(this.camY(t)), fy=this.frontY(t), cut=Math.round(fy-sy+12);
+      scFrontY(c.vNu,c.vOld,0,sy,fy,k=>this.sunEdgeY(k));
+      for(const [px,py] of c.vpools){ const y=py-sy+12; if(y<-16||y>132||py+12>fy) continue; this.water(px,y,t,px,py); }
+      const oy=-sy+12; if(oy>-110&&oy<132){ // el Roble en verano, sus altares llenos y los dos al pie
+        for(const [x,y,img,rgb] of [[32,38,EMBER_SPR,'255,176,96'],[112,38,TEAR_SPR,'138,216,255']]){ const b=Math.round(Math.sin(t*.06+x)*1.2); glowAt(x+8,oy+y+10,11,'rgba('+rgb+',.32)'); ctx.drawImage(img,x,oy+y+b); }
+        scOak('summer',0,oy); ctx.drawImage(ELDER,64,oy+64); ctx.drawImage(P_SPRITES[1][0],64,oy+74); }
+      if(t>40) this.life(t,0,sy,160,cut);
+      this.shafts(t,160,cut); },
+    east(t,c){ const sx=Math.round(this.camX(t)), fx=Math.round(this.frontX(t)-sx);
+      ctx.drawImage(c.hOld,-sx,12); // el otoño viejo que se pudre
+      if(fx>0){ ctx.save(); ctx.beginPath(); for(let y=12;y<132;y++){ const w=fx+Math.round(Math.sin((y+t*.4)*.35)*2+Math.sin(y*1.3)); if(w>0) ctx.rect(0,y,Math.min(160,w),1); } ctx.clip(); ctx.drawImage(c.hNu,-sx,12); ctx.restore(); }
+      for(const [px,py] of c.pools){ const x=px-sx, y=py+12; if(x<-16||x>160||x+14>fx) continue; this.water(x,y,t,px,py); }
+      if(t>this.CUT+24) for(let i=0;i<6;i++){ const P=c.pools[(i*7+3)%c.pools.length]; if(!P||P[0]+10>this.frontX(t)-20) continue; // libélulas sobre las charcas
+        const k=t*.06+i*1.7; this.fly(Math.round(P[0]-sx+6+Math.sin(k)*16+Math.sin(k*2.3)*4),Math.round(P[1]+16+Math.cos(k*1.3)*7),t+i); }
+      this.life(t,sx,0,fx,132);
+      this.shafts(t,fx,132);
+      if(fx>-8&&fx<168){ ctx.fillStyle='rgba(255,214,110,.28)'; ctx.fillRect(fx-8,12,8,120); ctx.fillStyle='rgba(255,236,160,.5)'; ctx.fillRect(fx-2,12,2,120); // el filo del sol
+        ctx.fillStyle='#fffbe0'; for(let y=12+(tick*3)%7;y<132;y+=7) ctx.fillRect(fx-1-((y>>2)&1),y,1,2); }
+      if(t>=this.CUT+130){ const k=Math.min(1,(t-this.CUT-130)/40); glowAt(126,26,34+k*34,'rgba(255,236,170,'+(.26*k).toFixed(2)+')'); } }, // la tarde, dorada
+    draw(t,c){ caCut(t,this.CUT,10,()=>this.down(t,c),()=>this.east(t,c),'slash','#fff0a0'); } },
   /* ═════════ otono ═════════ */
   // (guion: vuelve el otoño)
   /* ═════════ invierno ═════════ */
