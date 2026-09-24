@@ -420,24 +420,30 @@ function updEnding(){
 }
 function drawEnding(){
   const e=ending; if(!e) return; const S=END_SHOTS[e.shot], t=e.t;
-  if(e.shot===0){ // la plaza: el Roble y sus cuatro altares encendidos
-    drawTitleScene(1,1,0,false);
-    const alt=[[EMBER_SPR,30,98],[TEAR_SPR,114,98],[relicSprite('otono'),50,110],[FLAKE_SPR,96,110]];
-    alt.forEach(([sp,x,y],i)=>{ const k=clamp((t-30-i*30)/20,0,1); if(k<=0) return; glowAt(x+8,y+8,10+k*6,'rgba(255,240,180,.5)'); ctx.save(); ctx.globalAlpha=k; ctx.drawImage(sp,x,y-Math.round(Math.sin(tick*.08+i)*2)); ctx.restore(); });
+  if(e.shot===0){ // la plaza: las cuatro raíces se encienden una a una y llevan su estación al Roble
+    const keep=SEASON_FORCE; SEASON_FORCE=0; const bg=scScreen('1,1','valley','.'); if(bg) ctx.drawImage(bg,0,8); ctx.save(); ctx.translate(0,8);
+    ctx.drawImage(ROBLE_ROOTS,0,0);
+    ROBLE_ALTARS.forEach((A,i)=>{ const k=clamp((t-24-i*34)/30,0,1); if(k>0) rootLight(A,k,.85,k<1?k:((tick*.7+i*40)%150)/150); });
+    const lit=ROBLE_ALTARS.filter((A,i)=>t>=54+i*34).length; if(lit) glowAt(80,62,16+lit*6+Math.sin(tick*.1)*2,'rgba(255,244,200,'+(.12*lit).toFixed(2)+')');
+    drawRoble(ROBLE_X,ROBLE_Y); ROBLE_ALTARS.forEach(A=>drawAltarRelic(A));
+    ctx.drawImage(ELDER,64,64); ctx.drawImage(P_SPRITES[1][0],64,80); ctx.restore(); SEASON_FORCE=keep;
   } else if(e.shot===1){ // los hermanos: el Viento baja y rodea al Roble, manso
     drawTitleScene(3,1,0,false); const k=clamp(t/160,0,1), a=t*.02;
     const wx=80+Math.cos(a)*44*(1-k*.3), wy=18+k*22+Math.sin(a)*8;
     ctx.save(); ctx.globalAlpha=.95; ctx.translate(Math.round(wx),Math.round(wy)); if(Math.cos(a)<0) ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore();
     if(t>150&&(tick&7)<4) sparkle(80+(Math.random()-.5)*60,40+(Math.random()-.5)*30,'#fff6d0');
-  } else if(e.shot===2){ // el año gira, con todos mirando
+  } else if(e.shot===2){ // el año gira, con todos mirando (barrido nítido desde la copa)
     const si=((t/75)|0)%4, w=t%75; drawTitleScene((si+3)%4,1,0,false);
-    const r=Math.round(Math.min(1,w/30)*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore();
+    if(w<30){ ctx.save(); ctx.beginPath(); for(const [y,a,b] of caWipeSpans(w/30,'iris')) ctx.rect(a,y,b-a,1); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); } else drawTitleScene(si,1,0,false);
     const crowd=[PETRA_SPR,LUPA_SPR,MOSS_SPR,TILO_SPR,CORTEZA_SPR,ELDER]; crowd.forEach((sp,i)=>{ const x=6+i*26, hop=((tick>>3)+i*3)%12===0?2:0; drawShadow(x+8,131,6); ctx.drawImage(sp,x,115-hop); });
-  } else { // la novena semilla, de cerca
-    drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.18)'; ctx.fillRect(0,0,160,144);
-    const hop=t>120&&((t>>4)&3)===0?Math.round(Math.sin(((t&15)/16)*Math.PI)*6):0; drawShadow(80,126,12);
-    ctx.drawImage(t>200?H_LIFT:P_SPRITES[0][0],0,0,16,16,56,78-hop,48,48); ctx.drawImage(ELDER,0,0,16,16,112,90,32,32);
-    if(t>200&&(tick&3)===0) sparkle(64+Math.random()*32,70+Math.random()*10,'#fff6c0');
+  } else { // la novena semilla, de cerca: Sprout en grande (el mismo de las cinemáticas), bajo el Roble en flor
+    drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.16)'; ctx.fillRect(0,0,160,144);
+    const air=t>=150&&t<168?Math.sin((t-150)/18*Math.PI):0, fy=Math.round(132-air*16);
+    const pose={eyes:t<70?'closed':t<104?(t<76?'open':'wide'):t<150?'open':'closed',lid:t>=200?caBlinkAt(t,260):0,mouth:t<70?'smile':t<104?'o':'grin',look:t>=104&&t<150?caStep(t,[[104,-1],[122,1],[138,0]]):0,
+      arms:t<150?[[18,44],[46,44]]:[[caK(t,[[150,18],[160,12,'out']]),caK(t,[[150,44],[160,14,'back']])],[caK(t,[[150,46],[160,52,'out']]),caK(t,[[150,44],[160,14,'back']])]],
+      leaf:Math.round(Math.sin(t*.09)*5+caWob(t,168,16,.45,9)),sq:t>=150&&t<154?.9:t>=168&&t<174?.86:1+Math.round(Math.sin(t*.07))*.02};
+    drawShadow(80,132,14-air*6); caHeroAt(pose,80,fy);
+    if(t>170&&(tick&3)===0) sparkle(56+Math.random()*48,70+Math.random()*30,'#fff6c0');
   }
   drawParts();
   const lb=Math.min(1,t/16,(S.len-t)/16), h=Math.round(14*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
