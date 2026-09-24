@@ -1204,11 +1204,6 @@ const LOGO_GLYPHS=[
 LOGO_GLYPHS.forEach(g=>{ g.dark=darken(g.img); g.white=whiten(g.img); });
 const LOGO_X=Math.round(80-(19*5+21)/2)-1, LOGO_Y=10;
 const LOGO_POS=(()=>{ let x=LOGO_X; return LOGO_GLYPHS.map(g=>{ const p=x; x+=g.w; return p; }); })();
-/* fondo del título: tira vertical (arte externo) que se recorre con un paneo.
-   Si no carga (offline la 1ª vez, etc.), drawTitleBg cae al valle procedural. */
-const TITLE_BG = new Image(); let titleBgOk = false;
-TITLE_BG.onload = () => { titleBgOk = true; };
-TITLE_BG.src = 'assets/title-bg.png';
 function gridNew(w,h){ return Array.from({length:h},()=>Array(w).fill(false)); }
 function discOn(g,cx,cy,r){ const r2=r*r;
   for(let y=0;y<g.length;y++) for(let x=0;x<g[0].length;x++){

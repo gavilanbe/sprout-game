@@ -261,12 +261,6 @@ function drawCinePanel(page,x,y){
   else { ctx.fillStyle='#c89858'; ctx.fillRect(0,0,84,40); ctx.fillStyle='#a87840'; for(let yy=7;yy<40;yy+=8) ctx.fillRect(0,yy,84,1); ctx.drawImage(bedTile(),34,8); ctx.drawImage(((tick>>4)&1)?H_WAKE:H_SLEEP,34,4); ctx.fillStyle='#fffbe8'; if((tick>>3)&1) ctx.fillRect(50,6,2,2); }
   ctx.restore(); ctx.strokeStyle='#8a7a40'; ctx.strokeRect(x-.5,y-.5,85,41);
 }
-function titlePanOff(){ const travel=Math.max(0,(titleBgOk?TITLE_BG.height:VH)-VH); const k=clamp((titleT-TITLE_INTRO)/TITLE_PAN_D,0,1), e=1-(1-k)*(1-k)*(1-k); return -travel*(1-e); }
-function drawTitleBg(){
-  if(titleBgOk){ ctx.drawImage(TITLE_BG,0,titlePanOff()|0); return; }
-  ctx.fillStyle='#5088dc'; ctx.fillRect(0,0,160,60); ctx.fillStyle='#86c0f0'; ctx.fillRect(0,30,160,50);
-  ctx.fillStyle='#78c050'; ctx.fillRect(0,80,160,64); ctx.drawImage(OAK,80-(OAK.width>>1),50);
-}
 /* ---------- EL ARRANQUE: «gavilanbe®» baja como el logo de la Game Boy ----------
    letras propias con el aire del logotipo de Nintendo: trazo de 2 px, hombros con muesca, la i con su
    punto suelto y la ® pequeña a escala 1. Diez filas: 0-1 ascendentes, 2-7 cuerpo, 8-9 la cola de la g */
@@ -311,42 +305,12 @@ function drawBoot(){
     txtS(t,80,104,'#306230','center'); }
   if(bootGo>0&&bootGo<22){ ctx.fillStyle='rgba(8,20,8,'+((1-bootGo/22).toFixed(2))+')'; ctx.fillRect(0,0,VW,VH); }
 }
-function drawTitle(){
-  if(drawIntro()) return;
-  const cam=titleCam;
-  drawSeasonWorld(cam); drawSeedsHome(); drawSeasonTint();
-  if(cam>0) drawPots(cam,Math.round((1-cam)*40));
-  drawParts();
-  drawLogo(-Math.round(cam*56),1-cam);
-  if(titleT<TITLE_INTRO+16){ ctx.globalAlpha=1-(titleT-TITLE_INTRO)/16; ctx.fillStyle='#fff'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-  if(titleT>=TITLE_MENU&&cam<1){ const k=Math.min(1,(titleT-TITLE_MENU)/20)*(1-cam), bob=Math.round(Math.sin(tick*.08)*1.5);
-    ctx.globalAlpha=k;
-    // placa «PULSA Z» que respira
-    const on=(tick&47)<36, w=58, x=80-w/2, y=113+bob+Math.round(cam*30); roundBox(x-1,y-1,w+2,15,PAL.k); roundBox(x,y,w,13,'#2a5a30'); ctx.fillStyle='#4a8a48'; ctx.fillRect(x+1,y+1,w-2,1); ctx.fillStyle='#16361c'; ctx.fillRect(x+1,y+11,w-2,1);
-    if(on){ txtO('PULSA',x+8,y+3,'#fffbe8','left','#0c2010'); badge('Z',x+w-18,y+2); }
-    else { ctx.drawImage(CURSOR_SPR,x+4,y+3); txtO('PULSA',x+14,y+3,'#c8f080','left','#0c2010'); }
-    const si=menuSeason(); seasonIcon(si,4,135); txtSO(SEASONS[si].name,13,136,'#fff6d0','left','#1a1408'); txtSO('M MÚSICA',156,136,'#dff0d8','right','#0c1a08'); ctx.globalAlpha=1; }
-}
 /* icono de 7×7 de cada estación: flor, sol, hoja, copo */
 function seasonIcon(si,x,y){ ctx.fillStyle=PAL.k; ctx.fillRect(x,y,7,7);
   if(si===0){ ctx.fillStyle='#f8a0d0'; ctx.fillRect(x+2,y+1,3,5); ctx.fillRect(x+1,y+2,5,3); ctx.fillStyle='#f8d030'; ctx.fillRect(x+3,y+3,1,1); }
   else if(si===1){ ctx.fillStyle='#f8d030'; ctx.fillRect(x+2,y+2,3,3); ctx.fillStyle='#fff0a0'; ctx.fillRect(x+3,y+1,1,1); ctx.fillRect(x+3,y+5,1,1); ctx.fillRect(x+1,y+3,1,1); ctx.fillRect(x+5,y+3,1,1); }
   else if(si===2){ ctx.fillStyle='#e8803a'; ctx.fillRect(x+2,y+1,3,4); ctx.fillRect(x+1,y+2,5,2); ctx.fillStyle='#8a3a14'; ctx.fillRect(x+3,y+2,1,4); }
   else { ctx.fillStyle='#dff0ff'; ctx.fillRect(x+3,y+1,1,5); ctx.fillRect(x+1,y+3,5,1); ctx.fillRect(x+2,y+2,1,1); ctx.fillRect(x+4,y+2,1,1); ctx.fillRect(x+2,y+4,1,1); ctx.fillRect(x+4,y+4,1,1); } }
-/* el logo: letras que caen, brillo que las recorre, ola de saltos en reposo y la cinta del subtítulo */
-function drawLogo(oy,A){
-  if(A<=0) return;
-  const hopT=titleT>=TITLE_MENU?(titleT-TITLE_MENU)%240:999;
-  const eachGlyph=(fn)=>{ LOGO_GLYPHS.forEach((gl,i)=>{ const k=(titleT-(TITLE_T0+i*TITLE_STAG))/TITLE_DUR; if(k<0) return;
-    let y=LOGO_Y+gl.dy+(k>=1?0:-(1-easeOutBack(k))*52)+oy; const lt=hopT-i*5; if(lt>=0&&lt<16) y-=Math.sin(lt/16*Math.PI)*4; fn(gl,i,LOGO_POS[i],y|0); }); };
-  eachGlyph((gl,i,x,y)=>{ ctx.globalAlpha=.35*A; ctx.drawImage(gl.dark,x+2,y+4); }); ctx.globalAlpha=A; eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.img,x,y); });
-  if(titleT>=TITLE_SHINE){ const cyc=(titleT-TITLE_SHINE)%190;
-    if(cyc<34){ const gx=LOGO_X-8+(cyc/34)*140; ctx.save(); ctx.beginPath(); ctx.moveTo(gx,LOGO_Y-4+oy); ctx.lineTo(gx+9,LOGO_Y-4+oy); ctx.lineTo(gx-7,LOGO_Y+30+oy); ctx.lineTo(gx-16,LOGO_Y+30+oy); ctx.closePath(); ctx.clip(); ctx.globalAlpha=.85*A; eachGlyph((gl,i,x,y)=>{ ctx.drawImage(gl.white,x,y); }); ctx.restore(); }
-    else if(cyc<54){ const s2=cyc<44?(cyc-34)>>1:(54-cyc)>>1; if(s2>0){ const cx=LOGO_POS[3]+7, cy=LOGO_Y+12+oy; ctx.globalAlpha=A; ctx.fillStyle='#fff'; ctx.fillRect(cx-s2,cy,s2*2+1,1); ctx.fillRect(cx,cy-s2,1,s2*2+1); } } }
-  const a=clamp((titleT-TITLE_LAND)/22,0,1);
-  if(a>0){ const y=Math.round(38-(1-easeOutBack(a))*14)+oy; ctx.globalAlpha=Math.min(1,a*2)*A; ribbon(80,y,textW('Y LAS 8 SEMILLAS')+14,'Y LAS 8 SEMILLAS'); }
-  ctx.globalAlpha=1;
-}
 function drawFile(){ drawFileSelect(); }
 function drawCredits(){
   // el valle gira sus estaciones mientras suben los nombres

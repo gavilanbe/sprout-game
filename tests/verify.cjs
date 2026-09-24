@@ -39,6 +39,15 @@ const server=http.createServer((req,res)=>{
       for(let yy=0;yy<SH;yy++) for(let xx=0;xx<SW;xx++){ const ch=grid[yy][xx]; if(!GROUND.has(ch)&&!SOLID.has(ch)&&ch!=='zd'&&ch!=='z') out.push(key+':'+ch); } } return out; });
     eq(r,[]);
   });
+  await check('El título: la tormenta, el tronco y la bellota se ruedan sin errores; el tema entra al posarse, Z salta la intro y las flechas mueven a Sprout',async()=>{
+    const r=await ev(()=>{ state='title'; titleT=0; parts=[]; curTrack='silencio'; const out=[];
+      for(let i=0;i<TITLE_MENU+30;i++){ update(); if(i%3===0) draw(); if(titleT===TITLE_LAND-9) out.push(curTrack); if(titleT===TITLE_LAND) out.push(curTrack); }
+      out.push(state,titleT>=TITLE_MENU);
+      state='title'; titleT=40; curTrack='silencio'; keys.fire=true; update(); out.push(titleT>=TITLE_MENU,curTrack,state);
+      keys.left=true; update(); keys.left=false; update(); out.push(TI.look&&TI.look.dir);
+      keys.fire=true; update(); out.push(state); return out; });
+    eq(r,['silencio','titulo','title',true,true,'titulo','title',2,'file']);
+  });
   await check('Arranque: boot → título → archivos → partida nueva → cinemática → casa',async()=>{
     eq(await ev(()=>{ state='boot'; bootT=50; keys.fire=true; __step(1); const s1=state; __step(70); const s2=state; titleT=TITLE_MENU+5; keys.fire=true; __step(1); const s3=state; keys.fire=true; __step(1); const s4=state;
       for(let i=0;i<8&&state==='cine';i++){ cineChars=9999; keys.fire=true; __step(1); if(cineFold) __step(30); } return [s1,s2,s3,s4,state,sx,sy,inBed]; }),['boot','title','file','cine','play',9,9,true]);

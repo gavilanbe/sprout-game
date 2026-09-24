@@ -50,7 +50,7 @@ function update(){
   if(state==='boot'){
     bootT++;
     if(bootGo>0){ bootGo--; if(bootGo===0){ state='title'; titleT=0; parts=[]; } return; }
-    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(); musicStep=0; nextNoteT=AC.currentTime+1.3; SFX.gbDing(); bootGo=66; if(bootT<BOOT_LAND) bootT=BOOT_LAND; }
+    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(); SFX.gbDing(); bootGo=66; if(bootT<BOOT_LAND) bootT=BOOT_LAND; } // la música no suena hasta que la bellota se posa en el logo (15h)
     return;
   }
   if(state==='title'){ updTitle(); return; }
@@ -303,22 +303,6 @@ function updExits(){
   else if(player.y>128-22){ if(sy<=-2&&!keys.down){ player.y=128-22; player.ky=Math.min(0,player.ky); } else startTransition(0,1); }
 }
 /* ---------- TÍTULO Y ARCHIVOS ---------- */
-function updTitle(){
-  if(fontsReady) titleT++;
-  updIntro(); titleCam=Math.max(0,titleCam-1/22);
-  if(titleT>=TITLE_INTRO&&titleT<TITLE_MENU&&(titleT%9)===0) parts.push({k:'leafF',x:Math.random()*170-10,y:-4,vx:.1+(Math.random()-.3)*.35,vy:.3+Math.random()*.3,life:220,max:220,nog:true,sway:Math.random()*6,col:[PAL.l,C.canopyL,'#f8c8e0',C.flowerC][(titleT/9|0)%4]});
-  if(titleT>=TITLE_INTRO&&(titleT%23)===0) parts.push({k:'mote',x:Math.random()*160,y:70+Math.random()*60,vx:(Math.random()-.5)*.1,vy:-.2,life:180,max:180,nog:true,sway:Math.random()*6,col:'#fff6c0'});
-  updParts();
-  for(let i=0;i<6;i++){ if(titleT===TITLE_T0+i*TITLE_STAG+TITLE_DUR){ shake=(i===5)?5:2; puff(LOGO_POS[i]+8,LOGO_Y+20,'#cfe8d8',6,1); if(AC){ SFX.thud(i===5?9:i); if(i===5) SFX.ping(); } } }
-  if(false) parts.push({x:50+Math.random()*60,y:Math.random()*24,vx:(Math.random()-.5)*.5,vy:.45,life:70,col:[PAL.l,'#a8ec78',C.canopyL][titleT%3]});
-  if(titleT===TITLE_LAND+14){ for(let i=0;i<10;i++) sparkle(LOGO_X+Math.random()*120,LOGO_Y+Math.random()*26,'#fff6c0'); if(AC) SFX.chime(); }
-  if(AC&&titleT===TITLE_LAND+8) SFX.ping();
-  if(AC&&titleT===TITLE_MENU) SFX.menuIn();
-  if(AC&&titleT>TITLE_MENU){ const cyc=(titleT-TITLE_SHINE)%190; if(cyc===0) SFX.shing(); else if(cyc===36) SFX.ping(); }
-  if(keys.fire||keys.alt){ keys.fire=false; keys.alt=false; audio();
-    if(titleT<TITLE_MENU) titleT=TITLE_MENU;
-    else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; fileT=0; fileWake[fileSel]=tick+12; fileSpotX=FILE_POT_X[fileSel]; SFX.blip(); } }
-}
 function updFile(){
   updParts(); fileT++; titleCam=Math.min(1,titleCam+1/22); fileParts();
   for(let i=0;i<3;i++) if(fileDelT[i]>0) fileDelT[i]--;

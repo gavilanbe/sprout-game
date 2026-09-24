@@ -20,7 +20,7 @@ window.__sprout={
 };
 /* la PWA (manifiesto, service worker, actualizaciones, instalar): js/16b-pwa.js */
 /* ---------- ARRANQUE ---------- */
-loadScreen(9,9); setTrack('titulo');
+loadScreen(9,9); setTrack('silencio'); // el tema del título entra en la intro (15h), al posarse la bellota
 let lastT=null, acc=0; const STEP=1000/60;
 function loop(now){
   if(lastT===null) lastT=now; acc+=Math.min(now-lastT,100); lastT=now; pollGamepad();

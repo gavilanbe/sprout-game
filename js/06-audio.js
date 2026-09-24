@@ -385,6 +385,9 @@ function setTrack(name){
   curTrack=name; MLEN=TRACKS[name].len; MEV=TRACKS[name].ev.lead; mIntTarget=0;
   musicStep=0; if(AC){ nextNoteT=AC.currentTime+.12; if(delayWet) delayWet.gain.setTargetAtTime(TRACKS[name].space??.16,AC.currentTime,.3); }
 }
+/* por dónde va la pista que suena, en semicorcheas desde su arranque (con decimales), según el reloj del audio; null sin audio o sin música */
+function musicPos(){ if(!AC||!musicOn||!curTrack) return null; const t=TRACKS[curTrack]; if(!t) return null;
+  const I=t.adaptive?mIntTarget:0; return musicStep-(nextNoteT-AC.currentTime)/(t.EI/(1+.07*I)); }
 /* intensidad de combate: 0 tranquilo · 1 herido · 2 a la desesperada */
 function musicIntensity(level){ level=Math.max(0,Math.min(2,level|0)); const t=TRACKS[curTrack];
   if(!t||!t.adaptive){ mIntTarget=0; return; }

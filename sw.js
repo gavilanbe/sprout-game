@@ -11,7 +11,7 @@
    · Lo que no está en la precarga (la demo, las capturas): red primero y,
      sin red, lo último que se vio.
    ============================================================ */
-const VERSION = '2026.09.24-218dd637';
+const VERSION = '2026.09.24-f570b0de';
 const CACHE = 'sprout-' + VERSION, RUNTIME = 'sprout-runtime';
 const PRECACHE = [
   // PRECACHE:BEGIN
@@ -54,6 +54,7 @@ const PRECACHE = [
   './js/15e-cinearma.js',
   './js/15f-roble.js',
   './js/15g-puertas.js',
+  './js/15h-titulo.js',
   './js/16-input.js',
   './js/16a-shell.js',
   './js/16b-pwa.js',
