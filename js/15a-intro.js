@@ -395,53 +395,7 @@ function fileParts(){
   if((tick%(si===3?5:11))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si===2?.4:.1)+(Math.random()-.5)*.3,vy:.3+Math.random()*.35,life:260,max:260,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
   if((tick%14)===0) parts.push({k:'mote',x:fileSpotX-10+Math.random()*20,y:20+Math.random()*60,vx:0,vy:.12,life:90,max:90,sway:Math.random()*6,col:'#fff6c0',nog:true});
 }
-/* ============================================================
-   CINEMÁTICA DE ESTACIÓN: al devolver cada reliquia, el valle
-   cambia ante tus ojos. Primavera y verano llegan floreciendo
-   desde la copa del Roble; otoño e invierno, con el Viento.
-   playSeasonCinematic('primavera'|'verano'|'otono'|'invierno', cb)
-   ============================================================ */
-let seasonCine=null;
-const SEASON_KIND={primavera:0,verano:1,otono:2,invierno:3};
-const SEASON_TITLE={primavera:'VUELVE LA PRIMAVERA',verano:'VUELVE EL VERANO',otono:'VUELVE EL OTOÑO',invierno:'VUELVE EL INVIERNO'};
-const SEASON_SUB={primavera:'la Brasa late en su altar',verano:'la Lágrima brilla en su altar',otono:'la Hoja de Ámbar cae en su altar',invierno:'el Copo no se derrite'};
-const SEASON_DUR=330;
-function relicSprite(kind){ return kind==='primavera'?EMBER_SPR:kind==='verano'?TEAR_SPR:kind==='otono'?(typeof AMBER_SPR!=='undefined'?AMBER_SPR:ACORN_GOLD):FLAKE_SPR; }
-function playSeasonCinematic(kind,cb){
-  seasonCine={kind:kind in SEASON_KIND?kind:'primavera',t:0,cb:cb||null}; state='seasoncine'; parts=[]; toast=null;
-  if(AC){ if(typeof TRACKS!=='undefined'&&TRACKS.estacion) setTrack('estacion'); SFX.chime(); }
-}
-function updSeasonCine(){
-  const c=seasonCine; if(!c){ state='play'; return; } c.t++;
-  const si=SEASON_KIND[c.kind], S=SEASONS[si];
-  if(c.t>70&&(tick%(si===3?3:5))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si>=2?-.6:.1)+(Math.random()-.5)*.3,vy:.35+Math.random()*.35,life:220,max:220,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
-  if(c.t===64){ for(let i=0;i<24;i++){ const a=i/24*6.283; parts.push({k:'shard',x:80,y:44,vx:Math.cos(a)*2.2,vy:Math.sin(a)*2.2,life:26,max:26,col:i&1?'#ffffff':'#fff6c0',nog:true}); } if(AC) SFX.fanfare(); }
-  updParts();
-  if(keys.fire&&c.t>40){ keys.fire=false; c.t=Math.max(c.t,SEASON_DUR-20); }
-  if(c.t>=SEASON_DUR){ const cb=c.cb; seasonCine=null; state='play'; parts=[]; fadeIn=24; if(cb) cb(); }
-}
-function drawSeasonCine(){
-  const c=seasonCine; if(!c) return; const si=SEASON_KIND[c.kind], prev=(si+3)%4, t=c.t;
-  // el valle: antes, la estación que se va; desde t=70, la nueva entra como la trae su dueño
-  const k=clamp((t-70)/40,0,1);
-  if(k<=0) drawTitleScene(prev,1,0,false);
-  else if(k>=1) drawTitleScene(si,1,0,false);
-  else { drawTitleScene(prev,1,0,false);
-    if(si<=1){ const r=Math.round(k*k*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.strokeStyle='rgba(255,255,240,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.stroke(); }
-    else { const wx=Math.round(166-k*190); ctx.save(); ctx.beginPath(); ctx.rect(wx,0,200,144); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.fillStyle='rgba(235,245,255,.8)'; ctx.fillRect(wx,0,1,144);
-      ctx.save(); ctx.translate(wx+6,40+Math.sin(tick*.12)*4); ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore(); } }
-  // la reliquia sube desde la plaza y estalla en luz
-  if(t<70){ const e=easeOutBack(clamp(t/50,0,1)), y=Math.round(110-e*66); glowAt(80,y+8,18+Math.sin(tick*.2)*3,'rgba(255,240,180,.55)'); ctx.drawImage(relicSprite(c.kind),72,y); }
-  else if(t<90){ const a=1-(t-70)/20; ctx.globalAlpha=a; ctx.fillStyle='#fffbe8'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-  drawParts();
-  // Sprout y Raíz lo miran desde abajo
-  const bob=((tick>>4)&1); drawShadow(52,132,7); ctx.drawImage(P_SPRITES[1][0],0,0,16,16,36,100+bob,32,32);
-  // franjas y rótulo
-  const lb=Math.min(1,t/20,(SEASON_DUR-t)/20), h=Math.round(12*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
-  if(t>96){ const a=Math.min(1,(t-96)/16,(SEASON_DUR-t)/16), y=Math.round(20-(1-easeOutBack(Math.min(1,(t-96)/18)))*12);
-    ctx.globalAlpha=a; ribbon(80,y,textW(SEASON_TITLE[c.kind])+14,SEASON_TITLE[c.kind]); txtSO(SEASON_SUB[c.kind].toUpperCase(),80,137,'#fff6d0','center','#1a1408'); ctx.globalAlpha=1; }
-  if(t<24){ ctx.globalAlpha=1-t/24; ctx.fillStyle='#000'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-}
+/* la cinemática de estación (cuando vuelve cada reliquia) vive ahora en 15f-roble.js: el valle cambia de verdad */
 /* ============================================================
    EL FINAL: cuatro planos antes de los créditos.
    playEnding(cb) — Z pasa de plano; cb al terminar (créditos)
@@ -466,24 +420,30 @@ function updEnding(){
 }
 function drawEnding(){
   const e=ending; if(!e) return; const S=END_SHOTS[e.shot], t=e.t;
-  if(e.shot===0){ // la plaza: el Roble y sus cuatro altares encendidos
-    drawTitleScene(1,1,0,false);
-    const alt=[[EMBER_SPR,30,98],[TEAR_SPR,114,98],[relicSprite('otono'),50,110],[FLAKE_SPR,96,110]];
-    alt.forEach(([sp,x,y],i)=>{ const k=clamp((t-30-i*30)/20,0,1); if(k<=0) return; glowAt(x+8,y+8,10+k*6,'rgba(255,240,180,.5)'); ctx.save(); ctx.globalAlpha=k; ctx.drawImage(sp,x,y-Math.round(Math.sin(tick*.08+i)*2)); ctx.restore(); });
+  if(e.shot===0){ // la plaza: las cuatro raíces se encienden una a una y llevan su estación al Roble
+    const keep=SEASON_FORCE; SEASON_FORCE=0; const bg=scScreen('1,1','valley','.'); if(bg) ctx.drawImage(bg,0,8); ctx.save(); ctx.translate(0,8);
+    ctx.drawImage(ROBLE_ROOTS,0,0);
+    ROBLE_ALTARS.forEach((A,i)=>{ const k=clamp((t-24-i*34)/30,0,1); if(k>0) rootLight(A,k,.85,k<1?k:((tick*.7+i*40)%150)/150); });
+    const lit=ROBLE_ALTARS.filter((A,i)=>t>=54+i*34).length; if(lit) glowAt(80,62,16+lit*6+Math.sin(tick*.1)*2,'rgba(255,244,200,'+(.12*lit).toFixed(2)+')');
+    drawRoble(ROBLE_X,ROBLE_Y); ROBLE_ALTARS.forEach(A=>drawAltarRelic(A));
+    ctx.drawImage(ELDER,64,64); ctx.drawImage(P_SPRITES[1][0],64,80); ctx.restore(); SEASON_FORCE=keep;
   } else if(e.shot===1){ // los hermanos: el Viento baja y rodea al Roble, manso
     drawTitleScene(3,1,0,false); const k=clamp(t/160,0,1), a=t*.02;
     const wx=80+Math.cos(a)*44*(1-k*.3), wy=18+k*22+Math.sin(a)*8;
     ctx.save(); ctx.globalAlpha=.95; ctx.translate(Math.round(wx),Math.round(wy)); if(Math.cos(a)<0) ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore();
     if(t>150&&(tick&7)<4) sparkle(80+(Math.random()-.5)*60,40+(Math.random()-.5)*30,'#fff6d0');
-  } else if(e.shot===2){ // el año gira, con todos mirando
+  } else if(e.shot===2){ // el año gira, con todos mirando (barrido nítido desde la copa)
     const si=((t/75)|0)%4, w=t%75; drawTitleScene((si+3)%4,1,0,false);
-    const r=Math.round(Math.min(1,w/30)*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore();
+    if(w<30){ ctx.save(); ctx.beginPath(); for(const [y,a,b] of caWipeSpans(w/30,'iris')) ctx.rect(a,y,b-a,1); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); } else drawTitleScene(si,1,0,false);
     const crowd=[PETRA_SPR,LUPA_SPR,MOSS_SPR,TILO_SPR,CORTEZA_SPR,ELDER]; crowd.forEach((sp,i)=>{ const x=6+i*26, hop=((tick>>3)+i*3)%12===0?2:0; drawShadow(x+8,131,6); ctx.drawImage(sp,x,115-hop); });
-  } else { // la novena semilla, de cerca
-    drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.18)'; ctx.fillRect(0,0,160,144);
-    const hop=t>120&&((t>>4)&3)===0?Math.round(Math.sin(((t&15)/16)*Math.PI)*6):0; drawShadow(80,126,12);
-    ctx.drawImage(t>200?H_LIFT:P_SPRITES[0][0],0,0,16,16,56,78-hop,48,48); ctx.drawImage(ELDER,0,0,16,16,112,90,32,32);
-    if(t>200&&(tick&3)===0) sparkle(64+Math.random()*32,70+Math.random()*10,'#fff6c0');
+  } else { // la novena semilla, de cerca: Sprout en grande (el mismo de las cinemáticas), bajo el Roble en flor
+    drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.16)'; ctx.fillRect(0,0,160,144);
+    const air=t>=150&&t<168?Math.sin((t-150)/18*Math.PI):0, fy=Math.round(132-air*16);
+    const pose={eyes:t<70?'closed':t<104?(t<76?'open':'wide'):t<150?'open':'closed',lid:t>=200?caBlinkAt(t,260):0,mouth:t<70?'smile':t<104?'o':'grin',look:t>=104&&t<150?caStep(t,[[104,-1],[122,1],[138,0]]):0,
+      arms:t<150?[[18,44],[46,44]]:[[caK(t,[[150,18],[160,12,'out']]),caK(t,[[150,44],[160,14,'back']])],[caK(t,[[150,46],[160,52,'out']]),caK(t,[[150,44],[160,14,'back']])]],
+      leaf:Math.round(Math.sin(t*.09)*5+caWob(t,168,16,.45,9)),sq:t>=150&&t<154?.9:t>=168&&t<174?.86:1+Math.round(Math.sin(t*.07))*.02};
+    drawShadow(80,132,14-air*6); caHeroAt(pose,80,fy);
+    if(t>170&&(tick&3)===0) sparkle(56+Math.random()*48,70+Math.random()*30,'#fff6c0');
   }
   drawParts();
   const lb=Math.min(1,t/16,(S.len-t)/16), h=Math.round(14*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);

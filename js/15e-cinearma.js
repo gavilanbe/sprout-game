@@ -1602,7 +1602,7 @@ function updCineArm(){ const C=cineArm, S=CA_SCRIPT[C.kind]||CA_SCRIPT.blade, L=
     if(f===0){ C.parts=C.parts.filter(p=>p.k==='star'||p.k==='spark'); C.hold=0; C.inv=0; }
     if(f>=0) caTitleTick(f,C);
     if(f>=26&&C.chars<L){ C.chars=Math.min(L,C.chars+1); if((C.chars|0)%3===0) beep('triangle',1320,1100,.025,.012); } } // a máquina, con su tecleo
-  for(const p of C.parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g||0; if(p.fr){ p.vx*=p.fr; p.vy*=p.fr; } if(p.k==='petal') p.vx+=Math.sin((p.t+(p.ph||0)*9)*.15)*.03; p.t++; if(p.rot!==undefined) p.rot+=p.vr||0; }
+  for(const p of C.parts){ p.x+=p.vx||0; p.y+=p.vy||0; p.vy+=p.g||0; if(p.fr){ p.vx*=p.fr; p.vy*=p.fr; } if(p.k==='petal') p.vx+=Math.sin((p.t+(p.ph||0)*9)*.15)*.03; p.t++; if(p.rot!==undefined) p.rot+=p.vr||0; }
   C.parts=C.parts.filter(p=>p.t<p.life&&p.y<VH+8&&p.x>-20&&p.x<VW+20);
   if(keys.fire&&C.t>10){ keys.fire=false; // Z: al título · la frase entera · se acabó
     if(C.t<CA_TITLE){ C.t=CA_TITLE; C.parts=[]; C.hold=0; C.inv=0; C.shake=0; }

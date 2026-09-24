@@ -48,6 +48,7 @@ function drawPlayer(){
   if(player.atk>0&&player.atk>4) s=P_ATK[player.dir];
   if(player.spin>0) s=P_ATK[spinFacing()];                           // en el Remolino, Sprout gira con su Hoja
   if(state==='itemget'&&!(typeof moment!=='undefined'&&moment&&moment.phase==='grab'&&moment.t<M_CATCH)) s=H_LIFT; // tras la cinemática, alza los brazos al atraparla
+  if(state==='rite'&&rite&&rite.t<(rite.A?RITE_T.fly+4:RITE_T.tree)) s=H_LIFT; // el rito: alza la reliquia (o las semillas)
   if(player.inv>54&&state==='play'&&!rebornInv) s=P_WHITE[player.dir]; // destello al recibir daño (al rebrotar no: 15c)
   // estirar y encoger: el golpe estira, el aterrizaje y el daño aplastan; en reposo respira
   let sq=player.squash||0; if(idle&&((tick>>5)&1)&&(tick&31)<10) sq-=.06;
@@ -183,13 +184,10 @@ function drawMidboss(){
 }
 function drawScene(){
   if(bgDirty) rebuildBg();
-  ctx.drawImage(bgCanvas[bgFrame()],0,0); drawScorches();
+  ctx.drawImage(bgCanvas[bgFrame()],0,0); if(sx===1&&sy===1&&typeof riteBgOld==='function') riteBgOld(); drawScorches();
   if(sx===1&&sy===1){
-    drawGreatOak(37,-2);
-    if(thawed){ ctx.drawImage(EMBER_SPR,32,38); if((tick&15)===0) parts.push({x:40,y:44,vx:0,vy:-.3,life:12,col:'#f8a030',nog:true}); }
-    if(summered){ ctx.drawImage(TEAR_SPR,112,38); if((tick&15)===7) parts.push({x:120,y:44,vx:0,vy:-.3,life:12,col:'#78c8f8',nog:true}); }
-    if(cycled){ ctx.drawImage(FLAKE_SPR,48,86); if((tick&15)===11) parts.push({x:56,y:92,vx:0,vy:-.3,life:12,col:'#dff0ff',nog:true});
-      [[26,70],[40,78],[58,70],[74,78],[90,70],[106,78],[26,86],[106,86]].forEach(([gx,gy],i)=>{ const bob=Math.sin(tick*.05+i*1.3)>0?0:1; ctx.drawImage(H_SEEDLING,gx,gy+bob); }); }
+    if(typeof drawPlaza==='function') drawPlaza(); else drawGreatOak(37,-2); // el Roble vivo, sus raíces y los altares (15f)
+    if(cycled) [[26,70],[40,78],[58,70],[74,78],[90,70],[106,78],[26,86],[106,86]].forEach(([gx,gy],i)=>{ const bob=Math.sin(tick*.05+i*1.3)>0?0:1; ctx.drawImage(H_SEEDLING,gx,gy+bob); });
   }
   // fuego de las antorchas encendidas (parpadeo y luz cálida)
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';'){ glowAt(x*16+8,y*16+4,16,'rgba(248,160,48,.22)'); if((tick&7)===0) parts.push({x:x*16+7+Math.random()*3,y:y*16+2,vx:0,vy:-.4,life:10,col:(tick&8)?'#f8e060':'#f8a030',nog:true}); } }

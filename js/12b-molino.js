@@ -319,7 +319,6 @@ function drawWindmillCienaga(){
 }
 function drawMillBack(){
   if(sx===4&&sy===3) drawWindmillCienaga();
-  if(sx===1&&sy===1&&autumned){ for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='{'){ ctx.drawImage(AMBER_SPR,x*16,y*16-10); if((tick&15)===5) parts.push({x:x*16+8,y:y*16-2,vx:0,vy:-.3,life:12,col:'#fcd878',nog:true}); } }
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='ψ') drawSwitch(x,y,x+','+y);
 }
 /* dentro del molino: haces de luz entre las tablas y las esquinas en penumbra */

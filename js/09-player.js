@@ -169,12 +169,16 @@ function interact([tx,ty,ch]){
     ask(WELL_TALK.concat(WELL_ASK),null,yes=>{ if(!yes){ say(["(Las bayas se\nquedan en tu\nzurrón.)"]); return; }
       berries-=20; wellDone=true; SFX.blip(); noise(.3,.05,false); save();
       say(WELL_DONE,()=>{ pickups.push({kind:'piece',id:'♥pozo',x:player.x+4,y:player.y+4,t:0,drop:20}); SFX.secret(); }); }); return true; }
+  if(ch==='['&&won&&hasEmber&&!thawed){ deliverSeason('primavera'); return true; } // tu reliquia, a su altar
   if(ch==='['){ SFX.blip(); say(thawed?["ALTAR DE LA\nPRIMAVERA.","La BRASA late aquí\nsu calor de\ndeshielo. El valle\nlo siente."]:["ALTAR DE LA\nPRIMAVERA.","El cuenco está\nfrío. Espera algo\nque lata como un\ncorazón."]); return true; }
+  if(ch===']'&&won&&hasTear&&!summered){ deliverSeason('verano'); return true; } // tu reliquia, a su altar
   if(ch===']'){ SFX.blip(); say(summered?["ALTAR DEL\nVERANO.","La LÁGRIMA brilla\nfresca y tibia.\nEl sol dormido\ndespertó en ella."]:["ALTAR DEL\nVERANO.","El cuenco está\nseco. Espera un\nllanto que el sol\nquiera habitar."]); return true; }
+  if(ch==='{'&&won&&hasAmber&&!autumned){ deliverSeason('otono'); return true; } // tu reliquia, a su altar
   if(ch==='{'){ SFX.blip(); say(autumned?["ALTAR DEL OTOÑO.","La HOJA DE ÁMBAR arde quieta, sin quemarse. Huele a castañas y a lluvia."]:["ALTAR DEL OTOÑO.","Hojas secas en el cuenco. Espera algo dorado que sepa caer despacio."]); return true; }
   if(ch==='ξ'){ SFX.blip(); say(sx===4&&sy===3&&!summered?["Un montón de hojas podridas, empapadas de ciénaga.","Tapan una puerta. Quizá el calor del VERANO las seque."]:hasPinwheel?["Hojarasca apilada. Un buen soplo de MOLINILLO (X) la barrería."]:["Hojarasca apilada, alta como tú. La Hoja la atraviesa sin moverla.","Haría falta VIENTO para barrerla."]); return true; }
   if(ch==='∩'){ SFX.blip(); say(hasPinwheel?["Un ventisquero de nieve dura. Sopla con el MOLINILLO (X) para abrir paso."]:["Un ventisquero de nieve dura cierra el sendero.","Ni la Hoja ni las bombas lo mueven: se necesita VIENTO."]); return true; }
   if(ch==='ψ'){ SFX.blip(); say(["Una rueda de aspas de madera clavada en el suelo.","Gira con el viento. Algo en la sala escucha su chirrido."]); return true; }
+  if(ch==='}'&&won&&hasFlake&&!cycled&&autumned){ deliverSeason('invierno'); return true; } // tu reliquia, a su altar
   if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está junto al del otoño, apartado de los del Roble, como esperando a alguien que no vuelve."]); return true; }
   if(ch==='g'||(ch==='ñ'&&sx===8)){ openShop('tilo'); return true; }
   if(ch==='ö'||(ch==='ñ'&&sx===7)){ openShop('corteza'); return true; }
@@ -222,18 +226,22 @@ function interact([tx,ty,ch]){
   if(ch==='P'){ ask(["¿Echar una\nsiesta en la\nmaceta?"],null,yes=>{ if(yes){ player.hp=player.maxHp; SFX.heart(); fadeIn=40; save(); say(["Sueñas con hojas\nnuevas. ¡Vigor\nrestaurado!"]); } }); return true; }
   return false;
 }
+/* entregar una reliquia: el rito en la plaza (la reliquia vuela a su altar y la estación sale del Roble, 15f),
+   la cinemática del valle y, al final, las palabras de Raíz. El invierno cierra el año: el final y los créditos. */
+function deliverSeason(k){ const sayR=(p,cb)=>say(p,cb,'RAÍZ'), words={primavera:TXT.thaw,verano:TXT.summer,otono:TXT.autumn,invierno:TXT.cycle}[k];
+  startRite(k,()=>sayR(words,()=>{ SFX.fanfare(); save();
+    if(k==='invierno'){ const toCredits=()=>{ state='credits'; creditsT=0; parts=[]; setTrack('creditos'); }; if(typeof playEnding==='function') playEnding(toCredits); else toCredits(); } })); }
 function elderTalk(){
   SFX.blip(); const sayR=(p,cb)=>say(p,cb,'RAÍZ');
   if(!elderMet){ elderMet=true; save(); sayR(TXT.elderIntro); return; }
   if(lettersCount()>=5&&!lettersGiven){ lettersGiven=true; save(); sayR(RAIZ_LETTERS,()=>giveAmulet('susurro')); return; }
-  if(seeds>=8&&!won){ giveItem(ACORN_GOLD,8,()=>sayR(TXT.elderWin,()=>{ won=true; SFX.fanfare(); bloom(); markDirty(); save(); })); return; }
+  if(seeds>=8&&!won){ startRite('semillas',()=>sayR(TXT.elderWin,()=>{ SFX.fanfare(); save(); })); return; } // las semillas vuelven a la copa y el Roble despierta (15f)
   const seasonCine=(k,cb)=>{ if(typeof playSeasonCinematic==='function') playSeasonCinematic(k,cb); else cb(); };
-  if(hasEmber&&!thawed){ giveItem(EMBER_SPR,1,()=>{ thawed=true; bloom(); save(); seasonCine('primavera',()=>sayR(TXT.thaw,()=>{ SFX.fanfare(); save(); })); }); return; }
-  if(hasTear&&!summered){ giveItem(TEAR_SPR,1,()=>{ summered=true; bloom(); save(); seasonCine('verano',()=>sayR(TXT.summer,()=>{ SFX.fanfare(); save(); })); }); return; }
-  if(hasAmber&&!autumned){ giveItem(AMBER_SPR,1,()=>{ autumned=true; bloom(); markDirty(); save(); seasonCine('otono',()=>sayR(TXT.autumn,()=>{ SFX.fanfare(); save(); })); }); return; }
+  if(hasEmber&&!thawed){ deliverSeason('primavera'); return; }
+  if(hasTear&&!summered){ deliverSeason('verano'); return; }
+  if(hasAmber&&!autumned){ deliverSeason('otono'); return; }
   if(hasFlake&&!cycled&&!autumned){ sayR(["¿El Copo...? Aún no, brote. El OTOÑO sigue preso en el MOLINO de la Ciénaga.","Sin otoño, el invierno no tiene dónde posarse. Tráeme primero la HOJA DE ÁMBAR."]); return; }
-  if(hasFlake&&!cycled){ giveItem(FLAKE_SPR,1,()=>{ cycled=true; bloom(); markDirty(); save(); seasonCine('invierno',()=>sayR(TXT.cycle,()=>{ SFX.fanfare(); save();
-      const toCredits=()=>{ state='credits'; creditsT=0; parts=[]; setTrack('creditos'); }; if(typeof playEnding==='function') playEnding(toCredits); else toCredits(); })); }); return; }
+  if(hasFlake&&!cycled){ deliverSeason('invierno'); return; }
   if(cycled) sayR(["Las cuatro\nestaciones giran.\nEl valle respira.","¿Aún no lo ves,\nbrote? Mírame\nbien. Mira el árbol.","Yo SOY el Roble.\nViejo y plantado,\nsoñando este valle.","Y tú creciste de\nmi última bellota,\nla novena...","...la única que mi\nhermano Viento\nnunca encontró.","Gracias por traer\na casa a tus\nhermanas. ♥"].concat(opened.has('ECO4,12')?[]:["Una cosa más, brote. Desde que el año gira, algo resuena en la GRUTA DE LOS ECOS, bajo los riscos del noroeste.","Son los ecos de quienes guardaron las estaciones. No hablan ni ceden. Si buscas un desafío... baja a verlos."]));
   else if(autumned&&boss3Done) sayR(["¿Ese frío azul en\ntu zurrón...?\n¡El Copo! Tráelo."]);
   else if(autumned) sayR(["Solo queda el INVIERNO, en el pico del norte.","Un VENTISQUERO tapa el Sendero del Último Invierno: tu MOLINILLO lo barrerá.","Necesitarás también bomba, gancho y el farol de Tilo para cruzar el TEMPLO DE LA CIMA. No subas a luchar: sube a recordar."]);
