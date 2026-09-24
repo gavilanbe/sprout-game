@@ -68,6 +68,7 @@ function robleTick(){ // cada fotograma en la plaza
   if(look==='summer'&&(tick%19)===0) parts.push({k:'mote',x:cx(),y:cy()+10,vx:(R()-.5)*.2,vy:-.08-R()*.1,life:110,max:110,sway:R()*6,col:(tick&32)?'#fff7c0':'#ffffff',nog:true});
   if(look==='autumn'&&(tick%13)===0) parts.push({k:'leafF',x:cx(),y:cy(),vx:(R()-.5)*.5,vy:.4,life:120,max:120,sway:R()*6,col:['#e8a040','#c86830','#fcd878'][tick%3],nog:true});
   if(look==='winter'&&(tick%11)===0) parts.push({k:'flake',x:cx(),y:cy(),vx:(R()-.5)*.25,vy:.35,life:120,max:120,r:(tick&8)?1:0,col:'#ffffff',nog:true});
+  if(talk&&(tick%23)===0) parts.push({k:'leafF',x:ROBLE_X+20+R()*46,y:ROBLE_Y+44+R()*8,vx:(R()-.5)*.4,vy:.3,life:90,max:90,sway:R()*6,col:look==='autumn'?'#fcd878':look==='spring'?'#f8c8e0':'#96dc68',nog:true}); // cuando habla, se le caen hojas
   if(ROBLE.breath===300) for(let i=0;i<3;i++) parts.push({k:'leafF',x:cx(),y:cy(),vx:(R()-.5)*.5,vy:.3,life:110,max:110,sway:R()*6,col:look==='autumn'?'#fcd878':'#96dc68',nog:true});
   // la savia de cada altar lleno sube como chispas
   for(const A of ROBLE_ALTARS) if(A.done()&&((tick+A.si*5)%18)===0) parts.push({x:A.tx*16+5+R()*6,y:A.ty*16-2,vx:0,vy:-.3,life:14,col:A.col,nog:true});
@@ -93,7 +94,7 @@ function drawRoble(ox,oy){ const ph=tick*.03, amp=ROBLE.amp, W=ROBLE.wave;
       if(!won&&i<seeds){ ctx.fillStyle='rgba(255,200,90,'+(.35+.3*Math.sin(tick*.08+i)).toFixed(2)+')'; ctx.fillRect(x,y,2,2); } } });
   // la voz: cuando habla Raíz, el hueco del tronco se enciende (y parpadea al compás de las letras)
   if(ROBLE.glow>0){ const typing=state==='dialog'&&dlg&&dlg.chars<(dlg.pages[dlg.page]||'').length, a=ROBLE.glow*(typing&&(tick&4)?.95:.6);
-    glowAt(ox+43,oy+62,7+ROBLE.glow*3,'rgba(255,196,110,'+(a*.45).toFixed(2)+')'); ctx.fillStyle='rgba(255,210,120,'+a.toFixed(2)+')'; ctx.fillRect(ox+42,oy+60,1,4); ctx.fillRect(ox+43,oy+61,1,2); } }
+    glowAt(ox+43,oy+62,9+ROBLE.glow*5,'rgba(255,196,110,'+(a*.6).toFixed(2)+')'); ctx.fillStyle='rgba(255,214,130,'+a.toFixed(2)+')'; ctx.fillRect(ox+42,oy+59,2,6); ctx.fillStyle='rgba(255,246,200,'+a.toFixed(2)+')'; ctx.fillRect(ox+42,oy+61,1,2); } }
 function drawAltarRelic(A,lift){ const x=A.tx*16, y=A.ty*16, bob=Math.round(Math.sin(tick*.06+A.si*1.7)*1.2)-(lift||0);
   glowAt(x+8,y-2,11+Math.sin(tick*.08+A.si)*2,'rgba('+A.rgb+',.32)'); ctx.drawImage(A.spr(),x,y-10+bob); }
 /* la plaza entera: raíces, Roble y reliquias en sus altares (lo llama drawScene) */
