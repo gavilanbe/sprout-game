@@ -80,13 +80,13 @@ function questList(){
   if(hasBlade) q.push({id:'semillas',txt:'Semillas '+Math.min(seeds,8)+'/8',done:seeds>=8});
   if(seeds>=8) q.push({id:'entrega',txt:'Llévalas a RAÍZ',done:won});
   if(won) q.push({id:'cueva',txt:'CUEVA DEL TOPO',done:hasEmber});
-  if(hasEmber) q.push({id:'brasa2',txt:'La BRASA a RAÍZ',done:thawed});
+  if(hasEmber) q.push({id:'brasa2',txt:'La BRASA, a su ALTAR',done:thawed});
   if(thawed) q.push({id:'tronco',txt:'TRONCO HUECO',done:hasTear});
-  if(hasTear) q.push({id:'lagrima2',txt:'LÁGRIMA a RAÍZ',done:summered});
+  if(hasTear) q.push({id:'lagrima2',txt:'La LÁGRIMA, a su ALTAR',done:summered});
   if(summered) q.push({id:'molino',txt:'MOLINO DE LA CIÉNAGA',done:hasAmber});
-  if(hasAmber) q.push({id:'ambar2',txt:'La HOJA DE ÁMBAR a RAÍZ',done:autumned});
+  if(hasAmber) q.push({id:'ambar2',txt:'El ÁMBAR, a su ALTAR',done:autumned});
   if(autumned) q.push({id:'templo',txt:'TEMPLO DEL PICO',done:hasFlake});
-  if(hasFlake) q.push({id:'copo2',txt:'El COPO a RAÍZ',done:cycled});
+  if(hasFlake) q.push({id:'copo2',txt:'El COPO, a su ALTAR',done:cycled});
   if(cycled) q.push({id:'fin',txt:'Valle restaurado',done:true});
   if(hasBlade) q.push({id:'lupa',txt:'LUPA: 10 bayas',done:hasBoomer,side:true});
   const nAm=Object.keys(AMULETS).length;
