@@ -238,7 +238,60 @@ function drawSeasonCine(){ const c=seasonCine; if(!c) return; const S=SC[c.kind]
 
 const SC={
   /* ═════════ semillas ═════════ */
-  // (guion: las ocho semillas vuelven y el valle revive)
+  semillas:{ len:440, title:'EL ROBLE RESPIRA', sub:'las ocho semillas vuelven a casa', titleAt:336,
+    // el Roble toma aire con sus ocho semillas, lo suelta... y el verde sale de él valle abajo, hasta el lago del este.
+    // Todo sobre el mapa del valle (5×3 pantallas de verdad): mustio fuera de la ola, verde dentro.
+    OX:240, OY:200,                                                        // el pie del Roble en el mapa del valle
+    SEEDC:['#f04848','#fffbe8','#f8a0d0','#fff4b0'],                       // las flores que brotan tras la ola
+    prep(c){ const mk=(st,f)=>{ const m=mkCanvas(800,384), g=m.getContext('2d');
+        for(let y=0;y<3;y++) for(let x=0;x<5;x++){ const key=x+','+y, [bio,floor]=scState(key,st), s=scScreen(key,bio,floor,f); if(s) g.drawImage(s,x*160,y*128); } return m; };
+      c.old=[mk({won:false},0),mk({won:false},2)]; c.nu=[mk({won:true},0),mk({won:true},2)]; }, // dos tiempos del agua
+    camX(t){ return caK(t,[[0,160],[64,160],[318,480,'io'],[440,494,'lin']]); },
+    camY(t){ return caK(t,[[0,128],[64,128],[196,150,'io'],[318,132,'io'],[440,128,'lin']]); },
+    R(t){ if(t<46) return 110; const at=this.camX(318)-122; // la ola: crece despacio y, cuando la cámara echa a andar, va siempre un poco por delante
+      return Math.max(110+(t-46)*.4,this.camX(t)-122,t>318?at+(t-318)*2.6:0); },
+    breath(t){ return caK(t,[[0,1.3],[14,1.3],[44,2.8,'in']])+(t>=46?caWob(t,46,3.2,.55,9):0); }, // cuánto se mece la copa: toma aire... y lo suelta
+    cues:{ 6:()=>swish(1.3,.03,160,520,260),
+      46:()=>{ const a=audio(), t=a.currentTime; beep('triangle',104,48,1,.09,t); noise(1,.04,false,t,700); swish(.8,.05,300,1600,500,t+.05); SFX.secret(); },
+      58:()=>SFX.chime(),
+      110:()=>swish(.5,.018,2400,3600,1800), 170:()=>swish(.5,.018,2400,3600,1800), 230:()=>swish(.5,.018,2600,3800,2000), 290:()=>swish(.6,.02,2600,3800,2000) },
+    tick(t,c){ const R=c.rng, cx=this.camX(t), cy=this.camY(t), spd=cx-this.camX(t-1), sx=this.OX-cx, sy=this.OY-cy+12;
+      for(const p of c.parts) if(p.world) p.x-=spd; // lo que brota se queda en el suelo mientras la cámara anda
+      if(t>=14&&t<44&&(t%2)===0){ const a=R()*6.283, d=70+R()*30; c.parts.push({k:'dot',x:sx+Math.cos(a)*d,y:sy-50+Math.sin(a)*d*.6,vx:-Math.cos(a)*d/26,vy:-Math.sin(a)*d*.6/26,t:0,life:24,col:R()<.5?'#d8f8a0':'#fffbe8'}); } // toma aire: el valle le llega
+      if(t===46){ for(let i=0;i<36;i++){ const a=R()*6.283, s=1.2+R()*2.4; c.parts.push({k:'leaf',x:sx+Math.cos(a)*24,y:sy-52+Math.sin(a)*18,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.8,g:.03,fr:.985,t:0,life:70+((R()*30)|0),rot:R()*6,vr:(R()-.5)*.4,col:['#c6f68e','#eaffc8','#96dc68','#fff4b0'][i%4]}); } // hojas claras: se leen sobre la hierba
+        c.parts.push({k:'ring',x:sx,y:sy-50,vx:0,vy:0,r0:10,r1:74,t:0,life:24,col:'#f4ffe0',w:2},{k:'ring',x:sx,y:sy-50,vx:0,vy:0,r0:6,r1:50,t:0,life:20,col:'#fff4b0'}); }
+      // el filo de la ola: hojas que suben, flores que brotan detrás y motas de luz
+      const r=this.R(t); if(t>=46) for(let k=0;k<3;k++){ const y=12+R()*120, dy=cy+(y-12)-this.OY; if(r*r<=dy*dy) continue; const bx=this.OX+Math.sqrt(r*r-dy*dy)-cx; if(bx<-4||bx>164) continue;
+        if(k===0) c.parts.push({k:'leaf',world:1,x:bx-2,y,vx:-.2-R()*.5,vy:-.5-R()*.7,g:.02,fr:.98,t:0,life:40+((R()*20)|0),rot:R()*6,vr:(R()-.5)*.35,col:R()<.5?'#7ed64e':'#c6f68e'});
+        else if(k===1&&(t&1)) c.parts.push({k:'star',world:1,x:bx-6-R()*26,y,vx:0,vy:0,t:0,life:12,s:2,col:this.SEEDC[(R()*4)|0]});
+        else c.parts.push({k:'dot',world:1,x:bx-R()*8,y,vx:-.1,vy:-.35-R()*.3,t:0,life:30,col:'#fffbe8'}); }
+      if(t===325) c.parts=c.parts.filter(p=>!p.world); // tras el corte, lo del camino se queda atrás
+      if(t>318&&(t%5)===0) c.parts.push({k:'leaf',x:-4,y:20+R()*96,vx:.7+R()*.6,vy:.05,g:.004,fr:1,t:0,life:240,rot:R()*6,vr:.06,col:R()<.5?'#96dc68':'#c6f68e'}); }, // una brisa verde al final
+    oak(t,ox,oy){ const amp=this.breath(t), ph=tick*.03, inh=caSeg(t,14,44), ex=t>=46?Math.max(0,1-(t-46)/40):0; // el Roble, pintado aquí: respira a su ritmo
+      roblePaint(ROBLE_ART.base,ox,oy,amp,ph);
+      ROBLE_SEEDS.forEach(([ax,ay],i)=>{ const x=ox+ax+robleSwayOff(ay,amp,ph), y=oy+ay;
+        ctx.fillStyle='#7a4a10'; ctx.fillRect(x,y+1,2,1); ctx.fillStyle=inh>.2||ex>0?'#fff4b0':'#f8c848'; ctx.fillRect(x,y,2,1); ctx.fillStyle='#e0a030'; ctx.fillRect(x+1,y+1,1,1);
+        const s=Math.round(inh*2+ex*5+((((tick>>3)+i*5)%29)===0?1:0)); if(s>0) caStar(x+1,y,s,'#fffbe0'); });
+      if(ex>0) glowAt(ox+43,oy+26,30+ex*20,'rgba(255,250,210,'+(.5*ex).toFixed(2)+')'); }, // el aliento: la copa se enciende
+    draw(t,c){ caCut(t,318,14,()=>this.valley(t,c),()=>this.home(t,c),'iris','#eaffc8'); }, // y de vuelta al Roble, ya en calma
+    valley(t,c){ const cx=Math.round(this.camX(t)), cy=Math.round(this.camY(t)), f=(tick>>4)&1, r=this.R(t), ox=this.OX, oy=this.OY;
+      ctx.drawImage(c.nu[f],-cx,12-cy); // dentro de la ola: el valle verde
+      ctx.save(); ctx.beginPath(); const E=[];
+      for(let y=12;y<132;y++){ const my=cy+y-12, dy=my-oy, h=r*r-dy*dy;
+        if(h<=0){ ctx.rect(0,y,160,1); continue; } const w=Math.sqrt(h)+Math.sin(my*.21+t*.15)*2+Math.sin(my*.07-t*.05)*2, a=Math.round(ox-w-cx), b=Math.round(ox+w-cx);
+        if(a>0) ctx.rect(0,y,Math.min(160,a),1); if(b<160) ctx.rect(Math.max(0,b),y,160-Math.max(0,b),1); E.push([y,a,b]); }
+      ctx.clip(); ctx.drawImage(c.old[f],-cx,12-cy); ctx.restore(); // fuera: aún mustio
+      for(const [y,a,b] of E) for(const x of [a,b]){ if(x<-3||x>162) continue; const d=x===a?1:-1; // el filo de la ola: luz verde que avanza
+        ctx.fillStyle='rgba(200,255,150,.35)'; ctx.fillRect(x+d*3,y,1,1); ctx.fillStyle='rgba(220,255,180,.6)'; ctx.fillRect(x+d*2,y,1,1); ctx.fillStyle=((y+(tick>>1))%5)?'#eaffc8':'#ffffff'; ctx.fillRect(x+d,y,1,1); }
+      // la plaza, mientras está en plano: el Roble respirando y Sprout y Raíz a su pie
+      const px=160-cx, py=128-cy+12; if(px>-100&&px<160){ this.oak(t,px+ROBLE_X,py+ROBLE_Y);
+        const hop=t>=46&&t<58?Math.round(Math.sin((t-46)/12*Math.PI)*3):0; ctx.drawImage(ELDER,px+64,py+64); ctx.drawImage(P_SPRITES[1][0],px+64,py+74-hop); } },
+    home(t,c){ const f=(tick>>4)&1; ctx.drawImage(c.nu[f],-160,12-128); // la plaza, con todo el valle ya verde
+      const k=Math.min(1,Math.max(0,(t-318)/60)); caRays(150,4,10,t*.0015,'#fffbe8',null,.18*k,160); // el sol entra por la copa
+      this.oak(t,ROBLE_X,12+ROBLE_Y); if(((t-318)%96)<40) glowAt(80,36,26+Math.sin((t-318)/40*Math.PI)*10,'rgba(255,248,200,'+(.22*Math.sin(((t-318)%96)/40*Math.PI)).toFixed(2)+')'); // respira, tranquilo
+      const turn=t>=350, hop=t>=362&&t<376?Math.round(Math.sin((t-362)/14*Math.PI)*4):0; // Sprout se da la vuelta y da un brinco de alegría
+      ctx.drawImage(ELDER,64,76); ctx.drawImage(turn?P_SPRITES[0][0]:P_SPRITES[1][0],64,86-hop);
+      drawBirds(0,Math.round(12-(t-318)*.05)); } },
   /* ═════════ primavera ═════════ */
   primavera:{ len:440, title:'VUELVE LA PRIMAVERA', sub:'la Brasa late en su altar', titleAt:306,
     // la cámara sube desde el Roble en flor, por el bosque, hasta el campo helado del norte; el deshielo sube con ella
