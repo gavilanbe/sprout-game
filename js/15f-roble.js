@@ -260,7 +260,81 @@ const SC={
   /* ═════════ verano ═════════ */
   // (guion: vuelve el verano)
   /* ═════════ otono ═════════ */
-  // (guion: vuelve el otoño)
+  otono:{ len:450, title:'VUELVE EL OTOÑO', sub:'la Hoja de Ámbar cae en su altar', titleAt:326,
+    /* Del Roble dorado, la luz ámbar se abre en corro por la plaza; la cámara sigue al este por el valle mientras
+       un frente de tarde lo dora todo (sin pudrir nada), baja por el cabo y llega a la Ciénaga, donde el viejo
+       molino gira en calma y el Ciervo de Ámbar, ya en paz, deja caer sus hojas. Luz baja, hojas que caen despacio. */
+    keys:['1,1','2,1','3,1','4,1','4,2','4,3'],
+    prep(c){ const mk=(st,f)=>{ const m=mkCanvas(640,384), g=m.getContext('2d'); g.fillStyle='#0b1008'; g.fillRect(0,0,640,384);
+        for(const key of this.keys){ const [x,y]=key.split(',').map(Number), [bio,floor]=scState(key,st), s=scScreen(key,bio,floor,f); if(s) g.drawImage(s,(x-1)*160,(y-1)*128); }
+        return m; };
+      const OLD={won:true,thawed:true,summered:true}, NEW={won:true,thawed:true,summered:true,autumned:true};
+      c.old=[mk(OLD,0),mk(OLD,2)]; c.nu=[mk(NEW,0),mk(NEW,2)]; }, // dos tiempos del agua
+    // la cámara (esquina de la vista, en coords del mosaico: la plaza es 0..160 × 0..128; la Ciénaga, 480..640 × 256..384)
+    camX(t){ return caK(t,[[0,0],[58,0],[216,480,'io'],[450,486,'io']]); }, // al final, una deriva lenta
+    camY(t){ return caK(t,[[0,4],[198,4],[304,212,'io']]); },          // acaba con el molino entero en plano
+    // la luz que sale del Roble: un corro en la plaza, luego un frente que corre al este por el valle y otro que baja a la Ciénaga
+    R0(t){ return caK(t,[[6,0],[70,196,'out']]); },
+    Fx(t){ return t<58?0:t<216?this.camX(t)+120:caK(t,[[216,600],[256,700,'io']]); },
+    Fy(t){ return t<200?128:t<304?Math.max(128,this.camY(t)+98):caK(t,[[304,310],[352,420,'io']]); },
+    wobX(y,t){ return Math.round(Math.sin(y*.21+t*.13)*3+Math.sin(y*.047+1)*5); },
+    wobY(x,t){ return Math.round(Math.sin(x*.19+t*.11)*3+Math.sin(x*.053+2)*4); },
+    cues:{ 6:()=>swish(.6,.04,500,1300,420), 62:()=>{ const a=audio(),t=a.currentTime; [69,72,76,81].forEach((m,i)=>beep('triangle',f(m),0,.5,.028,t+i*.11)); },
+      120:()=>noise(1.1,.018,false,undefined,700), 230:()=>noise(1,.016,false,undefined,600),
+      300:()=>{ const a=audio(),t=a.currentTime; beep('triangle',96,72,.5,.05,t); noise(.18,.02,false,t,400); } }, // el molino, que cruje al girar
+    tick(t,c){ const R=c.rng, cx=this.camX(t), cy=this.camY(t), cols=['#e8a040','#c86830','#fcd878','#f0c860','#d88838'];
+      // hojas doradas que caen despacio por todo el plano
+      if(t%4===0) c.parts.push({k:'leaf',x:-6+R()*170,y:10,vx:.18+R()*.35,vy:.22+R()*.22,g:.002,fr:1,t:0,life:230,rot:R()*6,vr:(R()-.5)*.12,col:cols[(R()*cols.length)|0]});
+      // la copa suelta su oro al empezar
+      if(t<70&&t%2===0){ const x=80-cx+(R()-.5)*60, y=12+30-cy+R()*30; c.parts.push({k:'leaf',x,y,vx:(R()-.5)*.9,vy:-.2-R()*.4,g:.012,fr:.99,t:0,life:150,rot:R()*6,vr:(R()-.5)*.3,col:cols[(R()*cols.length)|0]}); }
+      // en el filo de la luz: chispas que suben y hojas que se levantan
+      const Fx=this.Fx(t), Fy=this.Fy(t);
+      if(t>=58&&Fx-cx>-4&&Fx-cx<164&&cy<124&&t%2===0){ const sy=12+R()*Math.min(120,128-cy), y=sy-12+cy, sx=Fx+this.wobX(y,t)-cx;
+        c.parts.push({k:'dot',x:sx,y:sy,vx:-.1-R()*.3,vy:-.3-R()*.4,g:0,t:0,life:26,col:R()<.5?'#fff4c0':'#ffd880'});
+        if(t%6===0) c.parts.push({k:'leaf',x:sx,y:sy,vx:-.4-R()*.5,vy:-.5-R()*.4,g:.02,fr:.99,t:0,life:120,rot:R()*6,vr:(R()-.5)*.3,col:cols[(R()*cols.length)|0]}); }
+      if(t>=200&&Fy<384&&t%2===0){ const sx=R()*160, x=sx+cx, sy=Fy+this.wobY(x,t)-cy+12; if(sy>12&&sy<132){
+        c.parts.push({k:'dot',x:sx,y:sy,vx:(R()-.5)*.3,vy:-.4-R()*.4,g:0,t:0,life:26,col:R()<.5?'#fff4c0':'#ffd880'});
+        if(t%6===0) c.parts.push({k:'leaf',x:sx,y:sy,vx:(R()-.5)*.8,vy:-.6-R()*.3,g:.02,fr:.99,t:0,life:120,rot:R()*6,vr:(R()-.5)*.3,col:cols[(R()*cols.length)|0]}); } }
+      // la Ciénaga, al final: brillos de tarde en el agua
+      if(t>290&&t%9===0) c.parts.push({k:'star',x:20+R()*110,y:60+R()*50,vx:0,vy:0,t:0,life:14,s:2,col:'#fff4d0'}); },
+    draw(t,c){ const cx=Math.round(this.camX(t)), cy=Math.round(this.camY(t)), fr=((t/12)|0)&1, R0=this.R0(t), Fx=this.Fx(t), Fy=this.Fy(t);
+      ctx.drawImage(c.old[fr],-cx,12-cy); // el verano que se va
+      // lo que ya es otoño: el corro del Roble ∪ el frente del valle (filas) ∪ el frente que baja (columnas)
+      ctx.save(); ctx.beginPath();
+      for(let sy=12;sy<132;sy++){ const y=sy-12+cy, dy=y-32;
+        if(Math.abs(dy)<R0){ const w=Math.sqrt(R0*R0-dy*dy); ctx.rect(Math.round(80-w-cx),sy,Math.round(2*w),1); }
+        if(y<128&&Fx>0){ const e=Math.round(Fx+this.wobX(y,t)-cx); if(e>0) ctx.rect(0,sy,Math.min(160,e),1); } }
+      if(Fy>128){ const top=Math.max(12,128-cy+12); for(let sx=0;sx<160;sx++){ const e=Math.min(132,Math.round(Fy+this.wobY(sx+cx,t)-cy+12)); if(e>top) ctx.rect(sx,top,1,e-top); } }
+      ctx.clip(); ctx.drawImage(c.nu[fr],-cx,12-cy); ctx.restore();
+      // el filo de la luz: una raya de oro que brilla y un halo tibio hacia lo ya dorado
+      ctx.fillStyle='rgba(255,226,150,.8)';
+      for(let sy=12;sy<132;sy++){ const y=sy-12+cy, dy=y-32; if(Math.abs(dy)<R0){ const w=Math.sqrt(R0*R0-dy*dy), under=y<128&&Fx>0; // el filo del corro, solo donde aún es la frontera
+        for(const [xc,left] of [[80-w,true],[80+w,false]]){ if(under&&(left||xc<=Fx+this.wobX(y,t))) continue; const x=Math.round(xc-cx)-(left?0:1); if(x>=0&&x<160&&((sy+(tick>>1))%3)) ctx.fillRect(x,sy,1,1); } } }
+      if(Fx>0&&cy<124) for(let sy=12;sy<132;sy++){ const y=sy-12+cy; if(y>=128) break; const x=Math.round(Fx+this.wobX(y,t)-cx), dy=y-32; if(x<-3||x>162) continue;
+        if(Math.abs(dy)<R0&&x+cx<80+Math.sqrt(R0*R0-dy*dy)) continue; // dentro del corro ya es oro: ahí no hay filo
+        ctx.fillStyle='rgba(255,210,120,.28)'; ctx.fillRect(x-5,sy,5,1); ctx.fillStyle=((sy+(tick>>1))%4)?'#ffe8a8':'#ffffff'; ctx.fillRect(x-1,sy,2,1); }
+      if(Fy>128&&Fy<400) for(let sx=0;sx<160;sx++){ const sy=Math.round(Fy+this.wobY(sx+cx,t)-cy+12); if(sy<Math.max(12,128-cy+12)||sy>=132) continue;
+        ctx.fillStyle='rgba(255,210,120,.28)'; ctx.fillRect(sx,sy-5,1,5); ctx.fillStyle=((sx+(tick>>1))%4)?'#ffe8a8':'#ffffff'; ctx.fillRect(sx,sy-1,1,2); }
+      // la plaza: raíces, altares con sus reliquias, el Roble dorado y Sprout con Raíz mirándolo
+      if(cx<160){ const ox=-cx, oy=12-cy; ctx.save(); ctx.translate(ox,oy); ctx.drawImage(ROBLE_ROOTS,0,0);
+        for(const k of ['primavera','verano','otono']){ const A=altarOf(k); rootLight(A,1,.55+.25*Math.sin(tick*.05+A.si),((tick*.7+A.si*40)%150)/150); }
+        ctx.restore(); scOak('autumn',ox,oy);
+        ctx.save(); ctx.translate(ox,oy); for(const k of ['primavera','verano','otono']) drawAltarRelic(altarOf(k)); ctx.restore();
+        ctx.drawImage(ELDER,ox+64,oy+64); ctx.drawImage(P_SPRITES[1][0],ox+64,oy+74); }
+      // la Ciénaga: el viejo molino girando en calma y el Ciervo de Ámbar, ya en paz
+      if(cy>150){ const ox=480-cx, oy=256-cy+12; this.mill(ox,oy,t); this.deer(ox,oy,t); }
+      // luz de tarde: un tinte cálido que crece y, al final, rayos bajos desde el oeste
+      const warm=Math.min(1,t/120)*.07+(t>280?Math.min(1,(t-280)/60)*.05:0); ctx.fillStyle='rgba(255,176,90,'+warm.toFixed(3)+')'; ctx.fillRect(0,12,160,120);
+      if(t>286) caRays(-12,6,11,t*.0006,'#fff0c8',null,Math.min(.16,(t-286)*.004),230); },
+    mill(ox,oy,t){ // el molino de la Ciénaga como en el juego, con las aspas ya reparadas girando despacio
+      ctx.fillStyle='rgba(12,20,12,.3)'; ctx.fillRect(ox+95,oy+31,50,4); ctx.drawImage(windmillBody(),ox+90,oy-28);
+      const hx=ox+120, hy=oy+7, img=windmillSail(true), a=t*.022+.35;
+      for(let i=0;i<4;i++){ ctx.save(); ctx.translate(hx,hy); ctx.rotate(a+i*Math.PI/2); ctx.drawImage(img,-3,-34); ctx.restore(); }
+      ctx.fillStyle=PAL.k; ctx.fillRect(hx-3,hy-3,7,7); ctx.fillStyle='#8a5a2c'; ctx.fillRect(hx-2,hy-2,5,5); ctx.fillStyle='#f8b030'; ctx.fillRect(hx-1,hy-1,3,3); ctx.fillStyle='#fff0a0'; ctx.fillRect(hx-1,hy-1,1,1); },
+    deer(ox,oy,t){ // mirando al molino, respira; de su manto se sueltan hojas
+      const x=ox+11, y=oy+34+(((t>>5)&1)?1:0); ctx.fillStyle='rgba(10,20,10,.3)'; for(let yy=-1;yy<=1;yy++){ const w=Math.round(11*Math.sqrt(1-yy*yy/2.5)); ctx.fillRect(x+16-w,y+31+yy,w*2,1); }
+      ctx.save(); ctx.translate(x+32,y); ctx.scale(-1,1); ctx.drawImage(CIERVO_SPR,0,0); ctx.restore();
+      if(t>300&&((t>>2)%11)===0){ ctx.fillStyle='#fcd878'; ctx.fillRect(x+8+((t>>3)%12),y+8+((t>>1)%10),2,1); } } },
   /* ═════════ invierno ═════════ */
   // (guion: vuelve el invierno y las cuatro estaciones giran)
   /* ═════════ fin ═════════ */
