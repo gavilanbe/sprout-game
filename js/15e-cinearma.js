@@ -293,7 +293,7 @@ function caBars(h){ ctx.fillStyle='#000'; ctx.fillRect(0,0,VW,h); ctx.fillRect(0
 function caBigText(s,col){ const w=textW(s)+2, c=mkCanvas(w+2,14), g=c.getContext('2d'); // texto con contorno grueso, para ponerlo a ×2
   for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1],[1,1],[-1,1],[1,-1],[-1,-1]]) drawText(g,s,2+dx,4+dy,'#0a0806','left',FONT_M);
   drawText(g,s,2,5,'#0a0806','left',FONT_M); drawText(g,s,2,4,col,'left',FONT_M); return c; }
-const CA_BIGTXT=new Map();
+const CA_BIGTXT=new Map(), CA_PHRASE=new Map();
 function caBigText2(s,col){ const key=s+'|'+col; let c=CA_BIGTXT.get(key); if(c) return c; const a=caBigText(s,col); c=mkCanvas(a.width*2,28); const g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(a,0,0,a.width,14,0,0,a.width*2,28); CA_BIGTXT.set(key,c); return c; }
 function caShine(img,x,y,k){ // un brillo en diagonal que cruza las letras
   const w=img.width, h=img.height; CA_BG.clearRect(0,0,w,h); CA_BG.drawImage(img,0,0); CA_BG.globalCompositeOperation='source-atop'; CA_BG.fillStyle='rgba(255,255,255,.9)';
@@ -323,7 +323,11 @@ function caTitle(f,C){ const A=MOMENT_ARMS[C.kind], P=A.pal;
     ctx.globalAlpha=Math.min(1,d*3); if(f>=46&&f<64) caShine(img,x,y,(f-46)/18); else ctx.drawImage(img,x,y); ctx.globalAlpha=1; });
   // la frase, a máquina, en la franja de abajo; cuando está entera, ▼
   const bh=Math.round(26*CA_EASE.out(caSeg(f,2,10))); ctx.fillStyle='#000'; ctx.fillRect(0,VH-bh,VW,bh); ctx.fillStyle=P[1]; if(bh>1) ctx.fillRect(0,VH-bh,VW,1);
-  if(C.chars>0){ let n=Math.floor(C.chars); wrapPx(A.line,150).slice(0,2).forEach((ln,i)=>{ const s=ln.slice(0,Math.max(0,n)); n-=ln.length+1; if(s) txtOL(s,80,VH-22+i*10,'#fffbe8','center','#000'); });
+  if(C.chars>=A.line.length){ let c=CA_PHRASE.get(C.kind); // entera, se pinta una vez y se reutiliza
+    if(!c){ c=mkCanvas(VW,24); const old=ctx; ctx=c.getContext('2d'); try{ wrapPx(A.line,150).slice(0,2).forEach((ln,i)=>txtOL(ln,80,2+i*10,'#fffbe8','center','#000')); } finally{ ctx=old; } CA_PHRASE.set(C.kind,c); }
+    ctx.drawImage(c,0,VH-24); }
+  else if(C.chars>0){ let n=Math.floor(C.chars); wrapPx(A.line,150).slice(0,2).forEach((ln,i)=>{ const s=ln.slice(0,Math.max(0,n)); n-=ln.length+1; if(s) txtOL(s,80,VH-22+i*10,'#fffbe8','center','#000'); }); }
+  if(C.chars>0){
     if(C.chars>=A.line.length&&((f>>4)&1)){ ctx.fillStyle=P[3]; ctx.fillRect(149,VH-7,5,1); ctx.fillRect(150,VH-6,3,1); ctx.fillRect(151,VH-5,1,1); } } }
 function caTitleTick(f,C){ const P=MOMENT_ARMS[C.kind].pal, R=C.rng;
   if(f===1) SFX.momentFreeze(); if(f===9) SFX.fanfare(); if(f===28) SFX.shing();
