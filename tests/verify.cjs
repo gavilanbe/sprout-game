@@ -562,8 +562,8 @@ const server=http.createServer((req,res)=>{
       getItem('ember'); log.push(state,moment===null); itemT=0; __step(2); __skipDialog();
       return log; }),['itemget','cine',true, true, true,'grab', 'dialog',true,true,true, 'play',true, 'itemget',true]);
   });
-  await check('Las ocho cinemáticas de arma se ruedan enteras sin errores',async()=>{
-    eq(await ev(()=>{ const out=[]; for(const k of Object.keys(MOMENT_ARMS)){ startCineArm(k); let n=0; while(cineArm&&n<400){ const done=updCineArm(); draw(); drawCineArm(); n++; if(done) break; } out.push(n===CA_T); cineArm=null; } return out; }),[true,true,true,true,true,true,true,true]);
+  await check('Las ocho cinemáticas de arma se ruedan enteras sin errores (lo que dura cada una: la acción, sus golpes congelados y el título)',async()=>{
+    eq(await ev(()=>{ const out=[]; for(const k of Object.keys(MOMENT_ARMS)){ startCineArm(k); let n=0, done=false; while(cineArm&&n<420){ done=updCineArm(); draw(); drawCineArm(); n++; if(done) break; } out.push(done&&n>=CA_T&&n<=CA_T+30); cineArm=null; } return out; }),[true,true,true,true,true,true,true,true]);
   });
   await check('La consola: la pantalla copia el juego a píxeles exactos, los botones se hunden con el teclado, el LED avisa y el color de carcasa se guarda',async()=>{
     eq(await ev(()=>{ __go(1,1,64,76); draw(); present();
