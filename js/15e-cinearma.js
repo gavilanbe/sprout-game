@@ -485,25 +485,143 @@ const CA_SCRIPT={
       if(head){ const img=bigWeapon('hook'); ctx.drawImage(img,Math.round(head[0]-10),Math.round(head[1]-10)); } } },
 
   /* ═════════ boomer ═════════ */
-  boomer:{ // la vaina voladora: carga, la lanza, da la vuelta a la pantalla entre las hojas y vuelve a su mano
-    cues:{ 24:()=>SFX.charge(), 50:()=>SFX.boomer(), 62:()=>SFX.boomer(), 74:()=>SFX.boomer(), 86:()=>SFX.boomer(), 98:()=>SFX.boomer(), 110:()=>SFX.boomer(), 118:()=>{ SFX.blip(); SFX.chime(); } },
-    tick(t,C){ if(t%7===0) C.parts.push({k:'leaf',x:Math.random()*160,y:10,vx:(Math.random()-.5)*.4,vy:.5,g:.004,fr:1,t:0,life:200,rot:Math.random()*6,vr:.06,col:['#e8a040','#c86830','#f0c860'][t%3]});
-      if(t===118){ C.shake=4; for(let i=0;i<8;i++) caSpark(C.hx||80,C.hy||70,'#fff6c0'); } },
+  boomer:{ // la vaina voladora: la abraza (con cariño), amaga y la lanza; da una vuelta enorme (por detrás de los árboles y rozando la cámara) y vuelve a su mano
+    cues:{ 6:()=>CA_SCRIPT.boomer.snd.pip(), 22:()=>swish(.3,.035,300,900,500), 34:()=>beep('square',2400,3000,.05,.015), 39:()=>swish(.16,.11,800,3800,1600),
+      41:()=>CA_SCRIPT.boomer.snd.whirr(1), 45:()=>CA_SCRIPT.boomer.snd.cut(), 47:()=>CA_SCRIPT.boomer.snd.whirr(.8), 49:()=>CA_SCRIPT.boomer.snd.cut(), 53:()=>CA_SCRIPT.boomer.snd.whirr(.55),
+      59:()=>CA_SCRIPT.boomer.snd.whirr(.3), 65:()=>CA_SCRIPT.boomer.snd.whirr(.4), 68:()=>swish(.3,.03,300,900,500), 76:()=>CA_SCRIPT.boomer.snd.whirr(.35),
+      83:()=>CA_SCRIPT.boomer.snd.whoosh(), 89:()=>SFX.shing(), 91:()=>swish(.14,.1,900,4600,2600), 96:()=>CA_SCRIPT.boomer.snd.whirr(.7), 100:()=>CA_SCRIPT.boomer.snd.whirr(1),
+      112:()=>CA_SCRIPT.boomer.snd.twirl(), 122:()=>SFX.land(), 132:()=>SFX.chime() },
+    hits:{ 41:{stop:2,shake:5,amp:2,dir:[1,0]}, 85:{shake:6,amp:2,dir:[1,.2]}, 104:{stop:3,inv:1,shake:10,amp:3,dir:[-1,.3],sfx:()=>CA_SCRIPT.boomer.snd.grab()} },
+    snd:{ pip(){ const t=audio().currentTime; beep('triangle',880,1320,.09,.03,t); beep('triangle',1320,1760,.08,.022,t+.07); }, // con cariño
+      whirr(v){ const t=audio().currentTime; beep('square',860,540,.05,.026*v,t); beep('square',640,420,.04,.016*v,t+.045); }, // la vaina girando en el aire
+      cut(){ const t=audio().currentTime; swish(.06,.06,4600,5600,3200,t,.9,true); beep('triangle',1600,900,.04,.02,t); }, // corta una hoja
+      whoosh(){ const t=audio().currentTime; swish(.36,.13,380,2800,600,t,.9); noise(.25,.04,false,t,900); }, // pasa rozando la cámara
+      grab(){ const t=audio().currentTime; beep('triangle',210,70,.12,.08,t); noise(.06,.06,false,t,1600); beep('square',1320,1760,.08,.022,t+.03); }, // ¡la atrapa!
+      twirl(){ const t=audio().currentTime; for(let i=0;i<5;i++) beep('square',700+i*120,520+i*120,.045,.016,t+i*.05); } }, // el giro de remate
+    AUT:['#e8a040','#c86830','#f0c860','#a85028'],
+    CU:['#2a1004','#7a3212','#c8642a','#f8c070'], // el fondo del primer plano: otoño, para que la vaina verde resalte
+    /* la vaina, dibujada a cualquier tamaño (sin estirar píxeles): media luna de punta afilada, semillas abultadas y costura */
+    pod(s){ const q=Math.max(.3,Math.round(s*10)/10), M=this._pods||(this._pods=new Map()); let c=M.get(q); if(c) return c;
+      const W=Math.ceil(34*q)+4, H=W, cx=W/2, cy=H/2+11*q, rm=13.5*q, a0=-2.78, a1=-.36, SEED=[-2.5,-2.02,-1.57,-1.12,-.66], pal=['#34420e','#5c7018','#88a02c','#b4cc48','#e2f08a'];
+      c=mkCanvas(W,H); const g=c.getContext('2d');
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const dx=x+.5-cx, dy=y+.5-cy, r=Math.hypot(dx,dy), a=Math.atan2(dy,dx); if(a<a0||a>a1) continue;
+        const u=(a-a0)/(a1-a0), tp=Math.pow(Math.sin(Math.PI*u),.55), bump=Math.max(...SEED.map(sa=>Math.exp(-(((a-sa)/.16)**2)))), half=(3.4*tp+.4)*q, out=half+bump*1.1*q*tp, w=r-rm;
+        if(w<-half||w>out) continue; const ww=clamp(w/(w<0?half:out),-1,1), nx=Math.cos(a)*ww, ny=Math.sin(a)*ww, nz=Math.sqrt(Math.max(0,1-ww*ww));
+        const v=(.42+(-.6*nx-.8*ny)*.42+nz*.34)*4+(BAYER4[y&3][x&3]/16-.5)*.9; g.fillStyle=pal[clamp(Math.round(v),0,4)]; g.fillRect(x,y,1,1); }
+      if(q>=.6){ for(const sa of SEED){ const sx=cx+Math.cos(sa)*(rm+.5*q), sy=cy+Math.sin(sa)*(rm+.5*q), rx=Math.max(1,1.3*q), ry=Math.max(1,1*q); // las semillas
+          g.fillStyle='#4a5a14'; for(let yy=-Math.ceil(ry);yy<=Math.ceil(ry);yy++){ const h=1-(yy/ry)**2; if(h<0) continue; const w=Math.round(rx*Math.sqrt(h)); g.fillRect(Math.round(sx)-w,Math.round(sy)+yy,w*2+1,1); }
+          g.fillStyle='#eef8b0'; g.fillRect(Math.round(sx-.5*q),Math.round(sy-.6*q),1,1); }
+        g.fillStyle='#34420e'; for(let a=a0+.2;a<a1-.2;a+=.7/rm){ const u=(a-a0)/(a1-a0), r=rm-(3.4*Math.pow(Math.sin(Math.PI*u),.55)+.4)*q*.55; g.fillRect(Math.round(cx+Math.cos(a)*r),Math.round(cy+Math.sin(a)*r),1,1); } } // la costura
+      artOutline(g,W,H,'#1c1406'); M.set(q,c); return c; },
+    art(){ return this.pod(1); },
+    podDraw(x,y,s,deg,alpha){ const img=rotArt(this.pod(s),deg); if(alpha!==undefined) ctx.globalAlpha=alpha; ctx.drawImage(img,Math.round(x-img.width/2),Math.round(y-img.height/2)); ctx.globalAlpha=1; },
+    hand(){ return this._hand||(this._hand=(()=>{ const c=mkCanvas(11,11), g=c.getContext('2d'); blobArt(g,0,0,11,11,[{x:5.5,y:5.5,r:3.6,ry:3.2}],BIG_SKIN,{outline:false,grad:.2,dither:.5}); artOutline(g,11,11); return c; })()); },
+    heart(x,y,a){ if(a<=0) return; const H=['.##.##.','#######','#######','.#####.','..###..','...#...']; ctx.globalAlpha=Math.min(1,a);
+      for(const [dx,dy,col] of [[-1,0,'#4a0c1c'],[1,0,'#4a0c1c'],[0,-1,'#4a0c1c'],[0,1,'#4a0c1c'],[0,0,'#f86898']]){ ctx.fillStyle=col; H.forEach((row,j)=>{ for(let i=0;i<7;i++) if(row[i]==='#') ctx.fillRect(x+i+dx,y+j+dy,1,1); }); }
+      ctx.fillStyle='#ffd0e0'; ctx.fillRect(x+1,y+1,1,1); ctx.globalAlpha=1; },
+    /* el campo de otoño por capas, con un hueco entre las montañas y las colinas: por ahí pasa la vaina cuando va lejos */
+    scene(t,scroll,mid){ const P=PARA[2], S=SEASONS[2]; ctx.drawImage(P.sky,0,0); glowAt(118,40,20,'rgba(255,250,220,.35)'); ctx.drawImage(disc(7,S.sun),111,33);
+      const L=(img,sp,y)=>{ const w=img.width, o=((Math.round(scroll*sp)%w)+w)%w; ctx.drawImage(img,-o,y); ctx.drawImage(img,w-o,y); };
+      L(P.clouds,.25,16); L(P.mount,.5,40); if(mid) mid(); L(P.hills,1.2,50); L(P.ground,3,94); ctx.fillStyle=shade(S.ground[1],-.12); ctx.fillRect(0,124,160,20); },
+    rigPt(h,x,y){ const [a,b]=rigXY(h.pose,x,y); return [Math.round(h.x)-32+a,Math.round(h.y)-61+b]; },
     draw(t,C){
-      if(t>=38&&t<48){ caFaceCut(t-38,{eyes:'fierce',mouth:'smile',leaf:6,look:-1},MOMENT_ARMS.boomer.pal); return; }
-      drawSeasonScene(2,t,t*.4);
-      let fx=72, fy=118, pose={eyes:'open',mouth:'smile',arms:[[18,44],[48,44]],leaf:Math.round(Math.sin(t*.08)*5)}, held=true, sx=1, sy=1;
-      if(t>=22&&t<48){ const k=smooth(caSeg(t,22,32)); pose={eyes:'fierce',mouth:'smile',arms:[[20,40],[Math.round(48+8*k),Math.round(44-18*k)]],leaf:-8}; sx=1+.03*k; }
-      else if(t>=48&&t<118){ held=false; pose={eyes:t<60?'fierce':'open',mouth:t<60?'open':'o',arms:[[20,44],[t<60?54:48,t<60?34:44]],leaf:0,look:t<60?1:Math.round(Math.cos((t-56)/62*6.283))}; }
-      else if(t>=118){ pose={eyes:t<124?'closed':'open',mouth:'grin',arms:[[16,44],[48,20]],leaf:Math.round(Math.sin(t*.1)*5)}; if(t<122){ sy=.94; sx=1.05; } }
-      caShadow(fx,fy+1,15);
-      let podBehind=null;
-      if(!held&&t<118){ const k=caSeg(t,50,118), a=k*6.283-1.1, x=80+Math.cos(a)*64, y=62+Math.sin(a)*26, img=rotArt(bigWeapon('boomer'),t*36); podBehind=[x,y,img,Math.sin(a)<0]; }
-      if(podBehind&&podBehind[3]) ctx.drawImage(podBehind[2],Math.round(podBehind[0]-podBehind[2].width/2),Math.round(podBehind[1]-podBehind[2].height/2));
-      const T=caHeroAt(pose,fx,fy,{sx,sy}); const [hx,hy]=T(pose.arms[1][0],pose.arms[1][1]); C.hx=hx; C.hy=hy;
-      if(held){ const img=bigWeapon('boomer'); ctx.drawImage(img,Math.round(hx-8),Math.round(hy-14)); }
-      if(podBehind&&!podBehind[3]){ for(let i=1;i<=3;i++){ const k=caSeg(t-i*2,50,118), a=k*6.283-1.1; ctx.globalAlpha=.25/i; const img=rotArt(bigWeapon('boomer'),(t-i*2)*36); ctx.drawImage(img,Math.round(80+Math.cos(a)*64-img.width/2),Math.round(62+Math.sin(a)*26-img.height/2)); ctx.globalAlpha=1; }
-        ctx.drawImage(podBehind[2],Math.round(podBehind[0]-podBehind[2].width/2),Math.round(podBehind[1]-podBehind[2].height/2)); } } },
+      if(t<66) this.shotA(t);
+      else if(t<90) caCut(t,66,6,()=>this.shotA(t),()=>this.shotB(t),'iris','#fff6d0');
+      else caCut(t,90,6,()=>this.shotB(t),()=>this.shotC(t),'slash','#dcea7a');
+      if(t>=144){ ctx.fillStyle='rgba(255,255,244,'+((t-143)/7).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } },
+    /* plano 1: la abraza, amaga (el brazo detrás de la cabeza) y la lanza; la cámara la sigue y ella se va lejos, por detrás de los árboles */
+    panA(t){ return caK(t,[[0,0],[40,1],[52,4,'io'],[66,-2,'io'],[72,-2.5,'io']]); },
+    heroA(t,noLook){ const x=Math.round(62-this.panA(t)*3.4), fly=t>41&&!noLook, look=t<20?0:t<26?1:!fly?.5:clamp((this.podA(t)[0]-x)/40,-1,1);
+      const eyes=t<20?'closed':t<26?'open':t<41?'fierce':t>=64&&t<68?'wide':'open';
+      return {x,y:118,pose:{eyes,lid:t<20?0:t<26?caK(t,[[20,1],[22,1],[25,0,'out']]):eyes==='fierce'?caK(t,[[26,.3],[36,.5]]):0,
+        brow:eyes==='fierce'?1:t>=56&&t<65?-.7:0,look,
+        mouth:caStep(t,[[0,'smile'],[26,'teeth'],[38,'shout'],[44,'o'],[56,'flat'],[64,'grin']]),
+        arms:[caK(t,[[0,[25,46]],[18,[25,46]],[24,[18,44],'io'],[30,[16,40],'io'],[38,[14,36]],[41,[20,42],'out3'],[52,[18,44],'io']]),
+          caK(t,[[0,[39,46]],[18,[39,46]],[24,[50,42],'io'],[36,[42,12],'io'],[38,[42,10]],[41,[62,34],'out3'],[48,[60,36],'io'],[58,[48,44],'io']])],
+        front:(t>=24&&t<30)||t>=38?[1]:[],
+        leaf:Math.round(Math.sin(t*.08)*4+(t<20?Math.sin(t*.3)*3:0)+caK(t,[[26,0],[36,-12,'io'],[38,-12],[41,14,'out3'],[50,0,'io']])+caWob(t,41,16,.5,8)),
+        sq:caK(t,[[0,1],[7,.96,'io'],[13,1,'io'],[19,.97,'io'],[24,1],[36,.9,'io'],[38,.9],[41,1.1,'out3'],[46,.95,'out'],[52,1,'io']]),
+        lean:caK(t,[[0,0],[10,1.5],[20,-1],[24,0],[36,-4,'io'],[38,-4],[41,6,'out3'],[48,3,'out'],[58,0,'io']])+(t>=48&&fly?clamp(look*1.5,-1.5,1.5):0),
+        feet:t>=30&&t<41?[-1,0,1,-2]:t>=41&&t<50?[0,0,3,0]:[0,0,0,0]}}; },
+    /* la vaina en las manos: abrazada al pecho, pasa a la derecha, se va detrás de la cabeza con el amago */
+    podHeldA(t,h){ const chest=this.rigPt(h,32,45), [hx,hy]=caHand(h.pose,h.x,h.y,1), inHand=[hx,hy-3];
+      const p=t<20?chest:t<24?[lerp(chest[0],inHand[0],smooth((t-20)/4)),lerp(chest[1],inHand[1],smooth((t-20)/4))]:inHand;
+      const deg=t<20?-6+Math.round(Math.sin(t*.3))*6:caK(t,[[20,-6],[24,18,'io'],[36,-96,'io'],[38,-102],[41,40,'out3']]);
+      return [p[0],p[1],deg,t>=30&&t<38]; },
+    podA(t){ const r=this._rel||(this._rel=(()=>{ const h=this.heroA(41,true), [x,y]=caHand(h.pose,h.x,h.y,1); return [x,y-3]; })());
+      return caK(t,[[41,[r[0],r[1],0]],[46,[124,62,.22],'out'],[51,[140,50,.5],'lin'],[56,[132,60,.82],'lin'],[61,[100,64,1],'lin'],[66,[66,60,.86],'lin'],[70,[40,50,.62],'lin'],[76,[18,34,.45],'lin']]); },
+    podFly(t){ for(let i=3;i>=1;i--){ if(t-i<41) continue; const q=this.podA(t-i); this.podDraw(q[0],q[1],1-.62*q[2],(t-i-41)*38,.13*(4-i)); } // la estela: su propio rastro
+      const p=this.podA(t); this.podDraw(p[0],p[1],1-.62*p[2],(t-41)*38); },
+    shotA(t){ const h=this.heroA(t), fly=t>=41, far=fly&&this.podA(t)[2]>.6;
+      this.scene(t,this.panA(t),far?()=>this.podFly(t):null);
+      caShadow(h.x,119,15);
+      const held=fly?null:this.podHeldA(t,h), s=t<20?.8:t<24?lerp(.8,1,(t-20)/4):1;
+      if(held&&held[3]) this.podDraw(held[0],held[1],s,held[2]); // detrás de la cabeza
+      caHeroAt(h.pose,h.x,h.y);
+      if(held&&!held[3]){ if(t>=38) for(const [i,a] of [[2,.22],[1,.45]]){ const q=this.podHeldA(t-i,this.heroA(t-i)); this.podDraw(q[0],q[1],1,q[2],a); } // el latigazo del brazo
+        this.podDraw(held[0],held[1],s,held[2]); }
+      if(t<24) for(const i of [0,1]){ const [hx,hy]=caHand(h.pose,h.x,h.y,i); ctx.drawImage(this.hand(),Math.round(hx)-5,Math.round(hy)-5); } // las manos, abrazándola
+      if(t>=6&&t<26&&held){ const k=(t-6)/20; this.heart(Math.round(held[0]+9+Math.sin(t*.4)*2),Math.round(held[1]-40-(t-6)*.7),(1-k)*1.8); } // con cariño
+      if(fly&&!far) this.podFly(t); },
+    /* plano 2: primer plano; la sigue con los ojos… y le pasa rozando por delante */
+    shotB(t){ const f=t-70, F=caK(f,[[-4,3],[4,3.45,'out'],[22,3.7,'io']]);
+      caFaceCU(f,{pal:this.CU,F,dy:-4-(F-3.4)*9,dx:caK(f,[[-4,3],[22,-2,'io']])+caWob(f,15,3,.9,4),eyes:f>=12&&f<15?'wide':'open',
+        lid:Math.max(caBlinkAt(f,15),f>=18?caK(f,[[18,0],[21,.3,'io']]):0),brow:f<12?0:f<17?-.4:caK(f,[[17,0],[21,.8,'io']]),
+        look:caK(f,[[-4,.3],[10,-1,'io'],[13,-1],[16,.9,'out'],[22,.2,'io']]),mouth:f<12?'smile':f<17?'o':'smirk',
+        leaf:Math.round(-6+Math.sin(f*.5)*6+caWob(f,15,-26,.55,6)),glint:f-19});
+      if(f>=-2&&f<11){ const K=[[-2,[34,18]],[4,[14,32],'lin'],[11,[-18,52],'lin']], [x,y]=caK(f,K); for(let i=2;i>=1;i--){ const [a,b]=caK(f-i,K); this.podDraw(a,b,.6,(t-i)*38,.15*(3-i)); } this.podDraw(x,y,.6,t*38); } // al fondo, girando
+      if(f>=12&&f<19){ const k=(f-12)/6, x=lerp(-60,220,k), y=lerp(120,90,k); // ¡zas! por delante de la cara
+        ctx.fillStyle='rgba(255,246,208,.8)'; for(let i=0;i<7;i++){ const yy=Math.round(y-18+i*6+Math.sin(i*2.1)*3), L=40+(i*23)%50; ctx.fillRect(Math.round(x-L-30),yy,L,1); }
+        for(let i=3;i>=1;i--) this.podDraw(x-i*34,y+i*5,2.4,t*40-i*40,.12*(4-i));
+        this.podDraw(x,y,2.4,t*40); } },
+    /* plano 3: vuelve, la atrapa (¡pam!), giro de remate y la alza */
+    heroC(t){ const x=Math.round(80+caK(t,[[104,0],[106,-3,'out'],[114,0,'io']])), y=Math.round(118+caK(t,[[112,0],[114,1],[118,-6,'out'],[122,0,'in']]));
+      const eyes=caStep(t,[[0,'open'],[100,'fierce'],[105,'closed'],[112,'open'],[126,'fierce']]);
+      return {x,y,pose:{eyes,lid:eyes==='fierce'?Math.max(.3,caBlinkAt(t,140)):eyes==='open'?caBlinkAt(t,114):0,brow:eyes==='fierce'?.8:0,look:t<104?caK(t,[[90,1],[100,.6]]):0,
+        mouth:caStep(t,[[0,'o'],[100,'grin'],[112,'smile'],[118,'grin']]),
+        arms:[caK(t,[[90,[18,44]],[104,[18,44]],[106,[14,40],'out'],[112,[18,44],'io'],[126,[16,44]],[134,[14,40],'back']]),
+          caK(t,[[90,[50,44]],[98,[56,38],'io'],[103,[58,32],'io'],[104,[58,32]],[106,[54,38],'out'],[112,[52,34],'io'],[126,[50,30],'io'],[134,[48,8],'back']])],
+        front:t>=98?[1]:[],
+        leaf:Math.round(Math.sin(t*.08)*4+caWob(t,104,22,.5,8)+caWob(t,122,-14,.5,7)+caWob(t,130,-10,.45,8)),
+        sq:caK(t,[[90,1],[103,1],[104,.84,'out3'],[107,1.08,'out'],[112,1,'io'],[114,.94,'io'],[116,1.06,'out'],[120,1.03],[122,.9,'in'],[125,1.04,'out'],[128,1,'io'],[130,1.06,'back'],[136,1,'io']]),
+        lean:caK(t,[[90,0],[98,2,'io'],[104,2],[106,-5,'out'],[114,0,'io']])+caWob(t,114,1.2,.6,6)+(t>=112&&t<126?Math.sin((t-112)*.45)*1.5:0),
+        feet:t>=104&&t<112?[-2,0,2,0]:[0,0,0,0]}}; },
+    podC(t){ const h=this.heroC(t), [hx,hy]=caHand(h.pose,h.x,h.y,1);
+      if(t<104){ const r=this._catch||(this._catch=(()=>{ const g=this.heroC(104), [a,b]=caHand(g.pose,g.x,g.y,1); return [a,b-4]; })());
+        const [x,y,z]=caK(t,[[90,[196,26,.55]],[96,[154,40,.4],'lin'],[100,[124,62,.2],'out'],[104,[r[0],r[1],0],'in']]); return [x,y,z,(t-41)*38]; }
+      if(t<112) return [hx,hy-4,0,caK(t,[[104,20],[108,-16,'out'],[112,-20,'io']])];
+      if(t<126){ const u=(t-112)/14; return [hx,hy-9,0,-20+720*(1-(1-u)*(1-u))]; }
+      return [hx,hy-9,0,Math.round(Math.sin((t-126)*.12))*6]; },
+    tipC(t){ const [x,y,,d]=this.podC(t), a=d*Math.PI/180; return [x+12.6*Math.cos(a)-6.25*Math.sin(a),y+12.6*Math.sin(a)+6.25*Math.cos(a)]; },
+    swirl(t,x,y){ const k=t<116?(t-112)/4:t>126?(130-t)/4:1; // hojas que giran con ella
+      for(let i=0;i<6;i++){ if(k<1&&((i+t)&1)) continue; const a=t*.42+i*1.047, r=15+Math.sin(t*.2+i)*3, px=Math.round(x+Math.cos(a)*r), py=Math.round(y+Math.sin(a)*r*.55);
+        ctx.fillStyle='#2a1406'; ctx.fillRect(px-1,py-1,4,3); ctx.fillStyle=this.AUT[i%4]; ctx.fillRect(px,py,2,1); ctx.fillRect(px+(Math.cos(a)>0?1:0),py+1,1,1); } },
+    shotC(t){ const h=this.heroC(t), [x,y,z,d]=this.podC(t), s=1-.62*z;
+      this.scene(t,24+(t-90)*.12);
+      if(t>=126){ const k=Math.min(1,(t-126)/10); caRays(x,y,12,t*.004,'#f2f6b4',null,.42*k,20+30*k); glowAt(x,y,22*k,'rgba(242,246,180,.5)'); } // la vaina se enciende
+      caShadow(h.x,119,15);
+      if(t<104&&z<.45){ const w=Math.max(2,Math.round(12*s*(1-z))); ctx.fillStyle='rgba(10,20,10,.22)'; ctx.fillRect(Math.round(x-w/2),119,w,2); } // su sombra, que se acerca
+      caHeroAt(h.pose,h.x,h.y);
+      if(t<104) for(let i=3;i>=1;i--){ if(t-i<90) continue; const q=this.podC(t-i); this.podDraw(q[0],q[1],1-.62*q[2],q[3],.13*(4-i)); }
+      if(t>=112&&t<130) this.swirl(t,x,y);
+      this.podDraw(x,y,s,d); },
+    held(hx,hy,f,C){ const img=rotArt(this.pod(1),-24+Math.round(Math.sin(f*.07)*2)*6); ctx.drawImage(img,Math.round(hx+3-img.width/2),Math.round(hy-8-img.height/2)); C.gx=hx+17; C.gy=hy-7; }, // en el título, en alto y ladeada
+    tick(t,C){ const R=C.rng, AUT=this.AUT;
+      if(t%5===0) C.parts.push({k:'leaf',x:R()*170-5,y:10,vx:(R()-.5)*.5-.15,vy:.45+R()*.35,g:.003,fr:1,t:0,life:220,rot:R()*6,vr:(R()-.5)*.15,col:AUT[(R()*4)|0]}); // el otoño cae
+      for(const tc of [45,49]){ // hojas que la vaina corta en el aire: salen antes para cruzarse con ella justo a tiempo
+        if(t===tc-12){ const [x,y]=this.podA(tc), vx=-.2, vy=.55; C.parts.push({k:'leaf',x:x-vx*12,y:y-vy*12,vx,vy,g:0,fr:1,t:0,life:40,rot:1,vr:.1,col:'#f0c860',cut:tc}); }
+        if(t===tc){ const [x,y]=this.podA(tc); for(const p of C.parts) if(p.cut===tc) p.life=p.t;
+          for(let i=0;i<7;i++){ const a=R()*6.283, s=.6+R()*1.6; C.parts.push({k:'leaf',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,g:.05,fr:.97,t:0,life:26+((R()*14)|0),rot:R()*6,vr:(R()-.5)*.6,col:AUT[i%4]}); }
+          C.parts.push({k:'star',x,y,vx:0,vy:0,t:0,life:9,s:4,col:'#ffffff'}); } }
+      if(t===85) for(let i=0;i<12;i++) C.parts.push({k:'leaf',x:10+R()*140,y:84+R()*30,vx:2.5+R()*2.5,vy:-.8-R()*1.2,g:.05,fr:.96,t:0,life:30+((R()*14)|0),rot:R()*6,vr:(R()-.5)*.6,col:AUT[i%4]}); // la ráfaga al pasar
+      if(t===104){ const [x,y]=this.podC(t); C.parts.push({k:'ring',x,y,r0:3,r1:30,t:0,life:14,col:'#f2f6b4',w:2},{k:'ring',x,y,r0:2,r1:20,t:0,life:11,col:'#8cb442'});
+        for(let i=0;i<6;i++) C.parts.push({k:'star',x:x+(R()-.5)*34,y:y+(R()-.5)*26,vx:0,vy:0,t:0,life:9+((R()*6)|0),s:3+((R()*2)|0),col:'#ffffff'});
+        for(let i=0;i<10;i++){ const a=R()*6.283, s=1+R()*2; C.parts.push({k:'leaf',x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,g:.05,fr:.97,t:0,life:34+((R()*16)|0),rot:R()*6,vr:(R()-.5)*.5,col:AUT[i%4]}); }
+        caDust(this.heroC(t).x,119,6,'#e8d0a0'); }
+      if(t===122) caDust(this.heroC(t).x,119,5,'#e8d0a0');
+      if(t===132){ const [x,y]=this.tipC(t); C.parts.push({k:'star',x,y,vx:0,vy:0,t:0,life:18,s:8,col:'#ffffff'},{k:'ring',x,y,r0:2,r1:22,t:0,life:14,col:'#fffbe0'}); }
+      if(t>=126&&t%3===0){ const [x,y]=this.podC(t); C.parts.push({k:'dot',x:x+(R()-.5)*40,y:y+10+R()*30,vx:(R()-.5)*.4,vy:-.5-R()*.5,g:0,t:0,life:40,col:R()<.5?'#f2f6b4':'#ffffff'}); } } },
+
 
   /* ═════════ lantern ═════════ */
   lantern:{ // el farol de brasa: en plena noche la luz se abre, y ¡llamarada!
