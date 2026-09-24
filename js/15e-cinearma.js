@@ -279,7 +279,9 @@ function caLeafPart(x,y,vx,vy,cols){ cineArm.parts.push({k:'leaf',x,y,vx,vy,g:.0
 function caSpark(x,y,col){ cineArm.parts.push({k:'spark',x,y,vx:0,vy:0,t:0,life:14,col:col||'#ffffff'}); }
 /* partículas: leaf, petal, spark, star, ring (anillo de choque), smoke, streak, dot */
 function caParts(C){ for(const p of C.parts){ const x=Math.round(p.x), y=Math.round(p.y), k=p.t/p.life;
-  if(p.k==='leaf'){ const c=Math.cos(p.rot), s=Math.sin(p.rot); ctx.fillStyle='#10301a'; ctx.fillRect(x-1,y-1,4,3); ctx.fillStyle=p.col; ctx.fillRect(x,y,2,1); ctx.fillRect(x+Math.round(c),y+Math.round(s),1,1); ctx.fillRect(x-Math.round(c),y-Math.round(s),1,1); }
+  if(p.k==='leaf'){ const c=Math.round(Math.cos(p.rot)*1.4), s=Math.round(Math.sin(p.rot)*1.4); // tres píxeles que giran, con una sombra fina solo por debajo
+    ctx.fillStyle='rgba(20,34,18,.5)'; ctx.fillRect(x-c,y-s+1,1,1); ctx.fillRect(x,y+1,1,1); ctx.fillRect(x+c,y+s+1,1,1);
+    ctx.fillStyle=p.col; ctx.fillRect(x-c,y-s,1,1); ctx.fillRect(x,y,1,1); ctx.fillRect(x+c,y+s,1,1); if(!c||!s) ctx.fillRect(x+(s?1:0),y+(c?1:0),1,1); }
   else if(p.k==='petal'){ const f=((p.t>>2)+(p.ph||0))&3; ctx.fillStyle=p.col; if(f===0) ctx.fillRect(x,y,2,1); else if(f===1) ctx.fillRect(x,y,1,2); else if(f===2) ctx.fillRect(x,y,2,2); else ctx.fillRect(x,y,1,1); }
   else if(p.k==='spark'){ const s=Math.round((1-k)*6)+1; ctx.fillStyle=p.col; ctx.fillRect(x-s,y,s*2+1,1); ctx.fillRect(x,y-s,1,s*2+1); if(k<.5){ ctx.fillRect(x-1,y-1,3,3); } }
   else if(p.k==='star') caStar(x,y,Math.round(Math.sin(Math.PI*Math.min(1,k))*(p.s||4)),p.col);
@@ -349,7 +351,7 @@ const CA_CAVE=(()=>{ const c=mkCanvas(160,144), g=c.getContext('2d'); bandSky(g,
   for(const [x,y] of [[18,50],[140,40],[124,96],[30,98],[84,30]]){ g.fillStyle='#1e6a78'; g.fillRect(x,y-3,2,7); g.fillRect(x-2,y-1,6,3); g.fillStyle='#78f0f8'; g.fillRect(x,y-2,1,4); g.fillStyle='#e0ffff'; g.fillRect(x,y-1,1,1); } // cristales
   return c; })();
 const CA_ROCK=(()=>{ const c=mkCanvas(12,11), g=c.getContext('2d'); blobArt(g,0,0,12,11,[{x:6,y:6,r:5,ry:4.2},{x:4.5,y:4.5,r:3}],['#3a3440','#5a5462','#827a88','#aaa2ae','#d6d0d8'],{grad:.3,dither:.4}); return c; })();
-function caWind(t,n,y0,h,sp,col){ ctx.fillStyle=col||'rgba(240,248,255,.75)'; for(let i=0;i<n;i++){ const x=((t*sp+i*61)%220)-40, y=y0+(i*37)%h, w=10+(i%4)*6; ctx.fillRect(Math.round(x),y,w,1); if(i%3===0) ctx.fillRect(Math.round(x)+w,y-1,4,1); } }
+function caWind(t,n,y0,h,sp,col){ ctx.fillStyle=col||'rgba(240,248,255,.75)'; for(let i=0;i<n;i++){ const x=((((t*sp+i*61)%220)+220)%220)-40, y=y0+(i*37)%h, w=10+(i%4)*6; ctx.fillRect(Math.round(x),y,w,1); if(i%3===0) ctx.fillRect(Math.round(x)+w,y-1,4,1); } }
 function caBlast(cx,cy,f){ // la explosión: fogonazo, anillos de fuego y humo que sube
   if(f<0) return; const R=Math.min(44,f*3.2+6);
   if(f<30){ for(const [k,col] of [[1,'#ff5a28'],[.78,'#ffa030'],[.56,'#ffe070'],[.3,'#ffffff']]){ const r=R*k*(f<18?1:1-(f-18)/14); if(r<1) continue; ctx.drawImage(disc(Math.round(r),col),Math.round(cx-r),Math.round(cy-r)); } }
