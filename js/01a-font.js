@@ -157,13 +157,29 @@ function fontAtlas(F,col){ let c=F.cache.get(col); if(!c){ c=tintTo(F.atlas,col)
 function glyphOf(F,ch){ if(F.caps) ch=ch.toUpperCase(); return F.map[ch]||(F.caps?F.map[ch.normalize('NFD')[0]]:null); }
 function textW(s,F){ F=F||FONT_M; let w=0; for(const ch of String(s)){ if(ch===' '){ w+=F.space+1; continue; } const o=glyphOf(F,ch); w+=o?o.w+1:F.space+1; } return Math.max(0,w-1); }
 /* pinta s con la parte alta de la mayúscula en y; align: left|center|right */
+/* las frases que se repiten (menús, carteles, el HUD, los contornos de 8 pasadas) se guardan ya compuestas: un drawImage
+   en vez de uno por letra. Las letras son opacas y no se pisan, así que el resultado es el mismo píxel a píxel; solo se usa
+   a opacidad plena y con el lienzo sin escalas, sombras ni mezclas raras (con transparencia Chrome redondea distinto: ±1). */
+const TEXT_CACHE=new Map(), TEXT_SEEN=new Map();
+function textPlain(g){ if(g.globalAlpha!==1||g.globalCompositeOperation!=='source-over'||(g.filter&&g.filter!=='none')||g.shadowBlur||g.shadowOffsetX||g.shadowOffsetY) return false;
+  const m=g.getTransform?g.getTransform():null; return !m||(m.a===1&&m.b===0&&m.c===0&&m.d===1&&Number.isInteger(m.e)&&Number.isInteger(m.f)); }
 function drawText(g,s,x,y,col,align,F){
   F=F||FONT_M; s=String(s); if(align==='center') x-=textW(s,F)>>1; else if(align==='right') x-=textW(s,F);
-  x=Math.round(x); y=Math.round(y)-F.asc; const A=fontAtlas(F,col||'#fffbe8'), H=F.h+F.asc+1;
+  x=Math.round(x); y=Math.round(y)-F.asc; col=col||'#fffbe8'; const H=F.h+F.asc+1;
+  const key=(F===FONT_S?'s':'m')+col+'\u0001'+s; let c=TEXT_CACHE.get(key);
+  if(!c){ const n=(TEXT_SEEN.get(key)||0)+1; if(n>=3&&s.length>1){ c=textStrip(s,F,col); TEXT_CACHE.set(key,c); if(TEXT_CACHE.size>600) TEXT_CACHE.delete(TEXT_CACHE.keys().next().value); }
+    else { TEXT_SEEN.set(key,n); if(TEXT_SEEN.size>3000) TEXT_SEEN.clear(); } }
+  else { TEXT_CACHE.delete(key); TEXT_CACHE.set(key,c); } // la caché recuerda lo último que se usó
+  if(c&&textPlain(g)){ if(c.width>1||c.adv>0) g.drawImage(c,x,y); return x+c.adv; }
+  const A=fontAtlas(F,col);
   for(const ch of s){ if(ch===' '){ x+=F.space+1; continue; } const o=glyphOf(F,ch); if(!o){ x+=F.space+1; continue; }
     g.drawImage(A,o.x,0,o.w,H,x,y,o.w,H); x+=o.w+1; }
   return x;
 }
+function textStrip(s,F,col){ const A=fontAtlas(F,col), H=F.h+F.asc+1; let adv=0; for(const ch of s){ const o=ch===' '?null:glyphOf(F,ch); adv+=o?o.w+1:F.space+1; }
+  const c=mkCanvas(Math.max(1,adv),H), q=c.getContext('2d'); let x=0;
+  for(const ch of s){ if(ch===' '){ x+=F.space+1; continue; } const o=glyphOf(F,ch); if(!o){ x+=F.space+1; continue; } q.drawImage(A,o.x,0,o.w,H,x,0,o.w,H); x+=o.w+1; }
+  c.adv=adv; return c; }
 /* ajuste de líneas por ancho real en píxeles */
 function wrapPx(s,maxW,F){
   const out=[]; F=F||FONT_M;

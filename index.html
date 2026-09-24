@@ -103,6 +103,7 @@
   .glass{position:relative; line-height:0; background:#0a140c;
     box-shadow:0 0 0 max(1px,calc(var(--u)*.6)) #0c1012, 0 0 0 max(2px,calc(var(--u)*1.1)) rgba(255,255,255,.05)}
   #screen{display:block; touch-action:none}
+  #lcd{position:absolute; left:0; top:0; pointer-events:none} /* la rejilla del LCD: se pinta una vez por tamaño, no en cada fotograma */
   .glass::after{content:""; position:absolute; inset:0; pointer-events:none;
     background:
       linear-gradient(128deg,rgba(255,255,255,.075) 0%,rgba(255,255,255,.02) 26%,rgba(255,255,255,0) 40%),
@@ -209,7 +210,7 @@
     <div class="bezel">
       <div class="bz-top"><i></i><canvas class="px lab" id="labTop"></canvas><i></i></div>
       <div class="led" id="led" data-s="off"><b></b><canvas class="px lab" id="labLed"></canvas></div>
-      <div class="glass"><canvas id="screen" aria-label="SPROUT: aventura del Valle Raíz"></canvas></div>
+      <div class="glass"><canvas id="screen" aria-label="SPROUT: aventura del Valle Raíz"></canvas><canvas id="lcd" aria-hidden="true"></canvas></div>
       <canvas class="px bz-logo" id="bzLogo" aria-label="SPROUT y las 8 semillas"></canvas>
     </div>
   </div>

@@ -115,14 +115,17 @@ const SEED_HALO=(()=>{ const c=mkCanvas(40,40), g=c.getContext('2d');
 /* ---------- la tierra de perfil (la bajada) ---------- */
 const SOIL_H=430;
 const SOIL_ROOTS=[]; // venas de savia que laten al fondo: [[x,y],...]
-const SOIL=(()=>{ const c=mkCanvas(VW,SOIL_H), g=c.getContext('2d'), R=wRng(4242);
-  const bands=['#503a24','#48321e','#402c1a','#382616','#312114','#2a1c11','#24180f','#1f150d'].map(hex2rgb);
-  const img=g.createImageData(VW,SOIL_H), D=img.data;
-  for(let y=0;y<SOIL_H;y++) for(let x=0;x<VW;x++){ const w=y+3*Math.sin(x*.07+y*.013)+2*Math.sin(x*.19+y*.05);
+/* la tierra de la bajada: se genera a tramos de filas en los ratos libres (soilStep) y, si hace falta antes, soilArt() la acaba de golpe */
+let SOIL_C=null, SOIL_JOB=null;
+function soilStep(){ if(SOIL_C) return true;
+  if(!SOIL_JOB){ const c=mkCanvas(VW,SOIL_H), g=c.getContext('2d'); SOIL_JOB={c,g,img:g.createImageData(VW,SOIL_H),y:0,bands:['#503a24','#48321e','#402c1a','#382616','#312114','#2a1c11','#24180f','#1f150d'].map(hex2rgb)}; }
+  const J=SOIL_JOB, D=J.img.data, bands=J.bands, y1=Math.min(SOIL_H,J.y+40);
+  for(let y=J.y;y<y1;y++) for(let x=0;x<VW;x++){ const w=y+3*Math.sin(x*.07+y*.013)+2*Math.sin(x*.19+y*.05);
     let b=Math.floor(w/52); b=Math.max(0,Math.min(bands.length-1,b)); const edge=((w%52)+52)%52<2&&((x+y)&1)===0;
     const n=((x*73856093^y*19349663)>>>0)%9-4, c0=bands[Math.min(bands.length-1,b+(edge?1:0))];
     const i=(y*VW+x)*4; D[i]=Math.max(0,c0[0]+n); D[i+1]=Math.max(0,c0[1]+n); D[i+2]=Math.max(0,c0[2]+(n>>1)); D[i+3]=255; }
-  g.putImageData(img,0,0);
+  J.y=y1; if(J.y<SOIL_H) return false;
+  const c=J.c, g=J.g, R=wRng(4242); g.putImageData(J.img,0,0);
   const px=(x,y,col)=>{ g.fillStyle=col; g.fillRect(x|0,y|0,1,1); };
   // piedras
   for(let i=0;i<70;i++){ const x=R()*VW, y=R()*(SOIL_H-120), w=2+R()*4|0, h=1+R()*3|0, lit=y<200;
@@ -144,7 +147,9 @@ const SOIL=(()=>{ const c=mkCanvas(VW,SOIL_H), g=c.getContext('2d'), R=wRng(4242
   const big=[[path(-6,300,166,332,4,1),9],[path(-6,372,166,350,5,2),11],[path(20,280,70,420,3,3),6],[path(150,286,96,424,3,4),7],[path(-6,338,60,400,2,5),5],[path(166,316,112,398,2,6),5]];
   for(const [p,th] of big){ root(p,th); SOIL_ROOTS.push(p.filter((_,i)=>i%2===0)); }
   for(let i=0;i<14;i++){ const x=R()*VW, y=250+R()*60; root(path(x,y,x+(R()-.5)*40,y+14+R()*20,2,R()*6),2); }
-  return c; })();
+  SOIL_C=c; SOIL_JOB=null; return true; }
+function soilArt(){ while(!soilStep()); return SOIL_C; }
+function soilPrewarm(){ for(let i=0;i<=Math.ceil(SOIL_H/40);i++) idleTask(soilStep); }
 
 /* ============================================================
    1) EN EL CAMPO: marchitarse
@@ -243,7 +248,7 @@ const DESC_Y=70; // la semilla, en pantalla
 function drawDescent(W){ const T=W.T, k=clamp((W.t-T.dark)/(T.sinkB-T.dark),0,1), depth=eIO(k)*W.depth;
   ctx.fillStyle='#07050a'; ctx.fillRect(-4,-4,VW+8,VH+8);
   const sy=Math.round(DESC_Y-(SOIL_H-100-W.depth)-depth); // al final, la semilla queda en y=SOIL_H-100 del corte (entre raíces)
-  ctx.drawImage(SOIL,0,sy);
+  ctx.drawImage(soilArt(),0,sy);
   // savia en las venas del fondo
   const glow=clamp((k-.55)/.45,0,1);
   if(glow>0){ ctx.fillStyle='#ffc860'; for(const p of SOIL_ROOTS) for(let i=0;i<p.length;i++){ const ph=(i*.35-W.t*.25)%6.283; if(Math.sin(ph)>.8){ ctx.globalAlpha=glow*.8; ctx.fillRect(p[i][0]|0,(p[i][1]+sy)|0,1,1); } } ctx.globalAlpha=1; }
@@ -274,27 +279,29 @@ function dreamPalKey(){ const r=regionOf(sx,sy);
   if(r==='eco') return 'ciclo';
   const ch=chapterIdx(); return ['mustio','primavera','verano','otono','invierno','ciclo'][ch]||'mustio'; }
 const DREAM_C={x:80,y:70};
-let dreamCv=null, dreamImg=null, DR_D=null, DR_A=null;
+let dreamCv=null, dreamImg=null, DR_D=null, DR_A=null, DR_SA=null, DR_CA=null, DR_SB=null, DR_CB=null;
 function dreamInit(){ if(DR_D) return; dreamCv=mkCanvas(VW,VH); dreamImg=dreamCv.getContext('2d').createImageData(VW,VH);
   DR_D=new Float32Array(VW*VH); DR_A=new Float32Array(VW*VH);
-  for(let y=0;y<VH;y++) for(let x=0;x<VW;x++){ const dx=x-DREAM_C.x, dy=(y-DREAM_C.y)*1.12, i=y*VW+x; DR_D[i]=Math.hypot(dx,dy); DR_A[i]=Math.atan2(dy,dx); } }
+  for(let y=0;y<VH;y++) for(let x=0;x<VW;x++){ const dx=x-DREAM_C.x, dy=(y-DREAM_C.y)*1.12, i=y*VW+x; DR_D[i]=Math.hypot(dx,dy); DR_A[i]=Math.atan2(dy,dx); }
+  // las dos ondas de los anillos: su parte fija por píxel (seno y coseno), así cada fotograma solo gira la fase (sin(A-τ)=sinA·cosτ-cosA·sinτ)
+  DR_SA=new Float64Array(VW*VH); DR_CA=new Float64Array(VW*VH); DR_SB=new Float64Array(VW*VH); DR_CB=new Float64Array(VW*VH);
+  for(let i=0;i<VW*VH;i++){ const d=DR_D[i], a=DR_A[i], A=a*5+d*.06, B=a*9-d*.03; DR_SA[i]=Math.sin(A); DR_CA[i]=Math.cos(A); DR_SB[i]=Math.sin(B); DR_CB[i]=Math.cos(B); } }
 const RING_LV=[0,1,2,3,4,3,2,1];
 function drawDreamBg(D){ dreamInit(); const t=D.t, data=dreamImg.data, key=D.pal, bright=D.phase==='yes'?Math.min(2,D.pt/16):0;
   const shift=D.ring, fade=D.phase==='no'?1-D.fade:1, pl=key==='ciclo'?null:DREAM_PALS[key];
   const seas=['primavera','verano','otono','invierno'], night=DREAM_PALS.noche, breath=1+.035*Math.sin(t*.025);
-  for(let i=0;i<VW*VH;i++){ const d=DR_D[i], a=DR_A[i];
-    const w=d*breath+2.6*Math.sin(a*5+d*.06-t*.015)+1.3*Math.sin(a*9-d*.03+t*.02);
-    const ring=Math.floor(w/5-shift), band=Math.floor(ring/3); let lv=RING_LV[((ring%8)+8)%8]+Math.round(bright);
-    if(d>64) lv--; if(d>88) lv--;
-    if(d<20+D.pulse*6) lv++;
-    lv=lv<0?0:lv>4?4:lv;
-    const P=(band&1)?night:(pl||DREAM_PALS[seas[(((band>>1)%4)+4)%4]]), c=P[lv];
-    data[i*4]=c[0]*fade; data[i*4+1]=c[1]*fade; data[i*4+2]=c[2]*fade; data[i*4+3]=255; }
+  const amp=D.phase==='yes'?1.2:2.4, pb=Math.round(bright), c1=Math.cos(t*.015), s1=Math.sin(t*.015), c2=Math.cos(t*.02), s2=Math.sin(t*.02);
+  for(let y=0,i=0;y<VH;y++){ const o=Math.round(amp*Math.sin(y*.11+t*.06))*((y&1)?-1:1); // cada fila, desplazada o píxeles y dando la vuelta
+    for(let x=0;x<VW;x++,i++){ const d=DR_D[i], a=DR_A[i];
+      const w=d*breath+2.6*(DR_SA[i]*c1-DR_CA[i]*s1)+1.3*(DR_SB[i]*c2+DR_CB[i]*s2);
+      const ring=Math.floor(w/5-shift), band=Math.floor(ring/3); let lv=RING_LV[((ring%8)+8)%8]+pb;
+      if(d>64) lv--; if(d>88) lv--;
+      if(d<20+D.pulse*6) lv++;
+      lv=lv<0?0:lv>4?4:lv;
+      const P=(band&1)?night:(pl||DREAM_PALS[seas[(((band>>1)%4)+4)%4]]), c=P[lv], j=(y*VW+(((x+o)%VW)+VW)%VW)*4;
+      data[j]=c[0]*fade; data[j+1]=c[1]*fade; data[j+2]=c[2]*fade; data[j+3]=255; } }
   dreamCv.getContext('2d').putImageData(dreamImg,0,0);
-  const amp=D.phase==='yes'?1.2:2.4;
-  for(let y=0;y<VH;y++){ const o=Math.round(amp*Math.sin(y*.11+t*.06))*((y&1)?-1:1);
-    ctx.drawImage(dreamCv,0,y,VW,1,o,y,VW,1);
-    if(o>0) ctx.drawImage(dreamCv,VW-o,y,o,1,0,y,o,1); else if(o<0) ctx.drawImage(dreamCv,0,y,-o,1,VW+o,y,-o,1); }
+  ctx.drawImage(dreamCv,0,0); // una sola vez (antes, 144-288 tiras por fotograma: el mismo resultado)
 }
 /* raíces que bajan del Roble hasta la semilla, con raicillas */
 function makeRoots(seed){ const R=wRng(seed), out=[], C=DREAM_C;
@@ -310,13 +317,18 @@ function makeRoots(seed){ const R=wRng(seed), out=[], C=DREAM_C;
     out.push({pts,kids,delay:k*5+R()*12|0,pulses:[],next:30+R()*50|0,i:k}); });
   return out; }
 function rootShown(D,r){ return Math.floor(r.pts.length*eOut(clamp((D.t-r.delay)/60,0,1))); }
+let DREAM_RB=null; function dreamRootBuf(){ if(!DREAM_RB) DREAM_RB=pxBuf(VW+16,VH+16); else DREAM_RB.d.fill(0); return DREAM_RB; }
 function drawDreamRoots(D){
   const th=(r,i)=>i<r.pts.length*.3?3:i<r.pts.length*.68?2:1;
   const col=[D.phase==='yes'&&D.pt>6?'#2a1608':'#140b05', D.phase==='yes'&&D.pt>6?'#7a5028':'#4a2e16', D.phase==='yes'&&D.pt>6?'#b07838':'#6e4624'];
+  // opacas y en orden: a un búfer (con 8 px de margen) y de una vez; los mismos píxeles que con cientos de fillRect
+  const B=pxPlain(ctx)&&col.every(c=>pxCol(c)!==null)?dreamRootBuf():null, M=8, BW=VW+2*M;
+  const fill=(x,y,w,h,c)=>{ if(!B){ ctx.fillStyle=c; ctx.fillRect(x,y,w,h); return; } const v=pxCol(c), x0=Math.max(0,x+M), y0=Math.max(0,y+M), x1=Math.min(BW,x+w+M), y1=Math.min(VH+2*M,y+h+M); for(let yy=y0;yy<y1;yy++) for(let xx=x0;xx<x1;xx++) B.d[yy*BW+xx]=v; };
   for(let pass=0;pass<3;pass++) for(const r of D.roots){ const n=rootShown(D,r);
-    const stamp=(x,y,t)=>{ const h=t>>1; if(pass===0){ ctx.fillStyle=col[0]; ctx.fillRect((x-h-1)|0,(y-h-1)|0,t+2,t+2); } else if(pass===1){ ctx.fillStyle=col[1]; ctx.fillRect((x-h)|0,(y-h)|0,t,t); } else if(t>=2){ ctx.fillStyle=col[2]; ctx.fillRect((x-h)|0,(y-h)|0,1,1); } };
+    const stamp=(x,y,t)=>{ const h=t>>1; if(pass===0) fill((x-h-1)|0,(y-h-1)|0,t+2,t+2,col[0]); else if(pass===1) fill((x-h)|0,(y-h)|0,t,t,col[1]); else if(t>=2) fill((x-h)|0,(y-h)|0,1,1,col[2]); };
     for(let i=0;i<n;i++) stamp(r.pts[i][0],r.pts[i][1],th(r,i));
     for(const kd of r.kids) if(n>kd.at){ const m=Math.min(kd.pts.length,n-kd.at); for(let i=0;i<m;i++) stamp(kd.pts[i][0],kd.pts[i][1],1); } }
+  if(B) B.into(ctx,-M,-M);
   // la savia que baja
   for(const r of D.roots) for(const p of r.pulses){ if(p<0) continue; const i=Math.min(r.pts.length-1,p|0), q=r.pts[i];
     for(let k=3;k>=1;k--){ const j=Math.max(0,i-k*2), b=r.pts[j]; ctx.globalAlpha=.25*(4-k)/3; ctx.fillStyle='#ffd070'; ctx.fillRect((b[0]-1)|0,(b[1]-1)|0,2,2); }

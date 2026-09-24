@@ -14,6 +14,10 @@ const SEASONS=[
 ];
 /* degradado en bandas con tramado entre ellas (sin suavizado) */
 function bandSky(g,w,h,cols){ const n=cols.length-1;
+  if(pxPlain(g)&&cols.every(c=>pxCol(c)!==null)){ const B=pxBuf(w,h); // de una vez (los mismos píxeles)
+    for(let y=0;y<h;y++){ const t=y/(h-1)*n, i=Math.min(n-1,t|0), f=t-i, a=pxCol(cols[i]), b=pxCol(cols[i+1]), row=BAYER4[y&3];
+      for(let x=0;x<w;x++) B.d[y*w+x]=f>row[x&3]/16?b:a; }
+    B.into(g,0,0); return; }
   for(let y=0;y<h;y++){ const t=y/(h-1)*n, i=Math.min(n-1,t|0), f=t-i;
     for(let x=0;x<w;x++){ const pick=f>BAYER4[y&3][x&3]/16?cols[i+1]:cols[i]; g.fillStyle=pick; g.fillRect(x,y,1,1); } } }
 /* ---------- capas del paralaje, precalculadas por estación (320 px de ancho: repiten) ---------- */
@@ -25,29 +29,29 @@ const PARA=SEASONS.map((S,si)=>{
     for(let i=0;i<5;i++){ const x=10+i*64+((rnd()*20)|0), y=4+((rnd()*18)|0);
       blobArt(g,x,y,40,16,[{x:10,y:10,r:7},{x:20,y:7,r:8},{x:30,y:10,r:6.5},{x:20,y:11,r:7}],[shade(S.cloud,-.18),shade(S.cloud,-.08),S.cloud,S.cloud,'#ffffff'],{outline:false,grad:.8,dither:.6}); } }
   // montañas lejanas: crestas por suma de senos, con nieve en las cumbres
-  const mount=mkCanvas(320,60); { const g=mount.getContext('2d');
+  const mount=mkCanvas(320,60); { const g=pxCtx(mount);
     for(let x=0;x<320;x++){ const a=x/320*6.283; const h=Math.round(30+Math.sin(a*2)*12+Math.sin(a*5+1)*7+Math.sin(a*11)*3);
       for(let y=60-h;y<60;y++){ const d=y-(60-h); const lit=(Math.sin(a*2)*12+Math.sin(a*5+1)*7)-(Math.sin((a+.02)*2)*12+Math.sin((a+.02)*5+1)*7)>0;
-        g.fillStyle=d<(si===3?9:4)?S.mount[2]:(lit?S.mount[1]:S.mount[0]); g.fillRect(x,y,1,1); } } }
+        g.fillStyle=d<(si===3?9:4)?S.mount[2]:(lit?S.mount[1]:S.mount[0]); g.fillRect(x,y,1,1); } } g.done(); }
   // colinas con árboles del bioma
-  const hills=mkCanvas(320,48); { const g=hills.getContext('2d'); const G=BIOMES[S.hill].grass;
+  const hills=mkCanvas(320,48); { const g=pxCtx(hills); const G=BIOMES[S.hill].grass;
     for(let x=0;x<320;x++){ const a=x/320*6.283; const h=Math.round(18+Math.sin(a*3+.5)*6+Math.sin(a*7)*2);
       for(let y=48-h;y<48;y++){ const d=y-(48-h); g.fillStyle=d===0?G[3]:d<3?G[0]:(((x+y)&1)&&d<5)?G[0]:G[1]; g.fillRect(x,y,1,1); } }
     for(let i=0;i<14;i++){ const x=(i*23+((i*37)%11))%320, a=x/320*6.283, top=48-Math.round(18+Math.sin(a*3+.5)*6+Math.sin(a*7)*2);
-      const t=treeArt(S.hill,i&1); g.drawImage(t,x-8,top-16); if(x<16) g.drawImage(t,x+320-8,top-16); } }
+      const t=treeArt(S.hill,i&1); g.drawImage(t,x-8,top-16); if(x<16) g.drawImage(t,x+320-8,top-16); } g.done(); }
   // suelo cercano: hierba con matas, flores y postes de valla
-  const ground=mkCanvas(320,30); { const g=ground.getContext('2d'); const G=S.ground, F=S.flowers;
+  const ground=mkCanvas(320,30); { const g=pxCtx(ground); const G=S.ground, F=S.flowers;
     g.fillStyle=G[0]; g.fillRect(0,4,320,26); g.fillStyle=G[3]; g.fillRect(0,4,320,1); g.fillStyle=G[1]; g.fillRect(0,5,320,1);
     for(let x=0;x<320;x+=2){ const h=hash(x,si)%4; if(h===0){ g.fillStyle=G[0]; g.fillRect(x,3,1,1); g.fillRect(x+1,2,1,2); } }
     const rnd=seeded(77+si);
     for(let i=0;i<40;i++){ const x=(rnd()*318)|0, y=8+((rnd()*20)|0); g.fillStyle=G[1]; g.fillRect(x,y,1,1); g.fillRect(x+2,y,1,1); g.fillStyle=G[2]; g.fillRect(x+1,y+1,1,1); }
     for(let i=0;i<16;i++){ const x=(rnd()*316)|0, y=9+((rnd()*18)|0), c=F[i%3]; g.fillStyle=c; g.fillRect(x+1,y,1,1); g.fillRect(x,y+1,3,1); g.fillRect(x+1,y+2,1,1); g.fillStyle=C.flowerC; g.fillRect(x+1,y+1,1,1); }
-    for(let x=6;x<320;x+=80){ g.fillStyle=PAL.k; g.fillRect(x,0,4,14); g.fillStyle=si===3?'#9a8a78':'#a06a38'; g.fillRect(x+1,1,2,12); g.fillStyle=si===3?'#ffffff':'#c89058'; g.fillRect(x+1,1,1,12); if(si===3){ g.fillStyle='#ffffff'; g.fillRect(x,0,4,2); } } }
+    for(let x=6;x<320;x+=80){ g.fillStyle=PAL.k; g.fillRect(x,0,4,14); g.fillStyle=si===3?'#9a8a78':'#a06a38'; g.fillRect(x+1,1,2,12); g.fillStyle=si===3?'#ffffff':'#c89058'; g.fillRect(x+1,1,1,12); if(si===3){ g.fillStyle='#ffffff'; g.fillRect(x,0,4,2); } } g.done(); }
   // primer plano: matas altas que pasan rápidas por delante
-  const fore=mkCanvas(320,30); { const g=fore.getContext('2d'); const G=S.ground, dk=shade(G[2],-.25);
+  const fore=mkCanvas(320,30); { const g=pxCtx(fore); const G=S.ground, dk=shade(G[2],-.25);
     for(let c=0;c<6;c++){ const cx=20+c*53+(hash(c,si)%20);
       for(let i=0;i<9;i++){ const x=cx+i*2-8, h=18+((hash(i,c+si)%11)); g.fillStyle=dk; g.fillRect(x,30-h,2,h); g.fillStyle=G[2]; g.fillRect(x,30-h,1,h-2); g.fillStyle=G[1]; g.fillRect(x,30-h,1,2); }
-      if(si===3){ g.fillStyle='#ffffff'; g.fillRect(cx-8,14,18,2); } } }
+      if(si===3){ g.fillStyle='#ffffff'; g.fillRect(cx-8,14,18,2); } } g.done(); }
   return {sky,clouds,mount,hills,ground,fore};
 });
 const STARS=(()=>{ const r=seeded(5), out=[]; for(let i=0;i<70;i++) out.push([(r()*160)|0,(r()*100)|0,r()<.12,(r()*60)|0]); return out; })();
@@ -68,16 +72,17 @@ const OAK_SEASON=(()=>{ const to=[
     ['#10302a','#1c5a3a','#2e7a4a','#8ab8a0','#dce8f0','#ffffff']];  // invierno: nieve en la copa
   return to.map(t=>{ if(!t) return OAK_GRAND; const m={}; OAK_LEAF.forEach((c,i)=>m[c]=t[i]); return recolor(OAK_GRAND,m); }); })();
 /* la colina y el prado de delante (96 px: el selector de partida baja la cámara y lo enseña) */
-const TITLE_HILL=SEASONS.map((S,si)=>{ const c=mkCanvas(160,96), g=c.getContext('2d'), G=S.ground, r=seeded(9+si);
+const TITLE_HILL=SEASONS.map((S,si)=>{ const c=mkCanvas(160,96), g=pxCtx(c), G=S.ground, r=seeded(9+si);
   for(let x=0;x<160;x++){ const top=Math.round(14+Math.pow(Math.abs(x-80)/80,1.6)*18);
     for(let y=top;y<96;y++){ const d=y-top; g.fillStyle=d===0?G[3]:(d<5&&((x+y)&1)&&d>2)?G[3]:G[0]; g.fillRect(x,y,1,1); } }
   for(let i=0;i<12;i++){ const cx=(r()*160)|0, cy=44+((r()*48)|0), rw=7+((r()*12)|0); // manchas de hierba en sombra
     for(let y=-3;y<=3;y++) for(let x=-rw;x<=rw;x++) if((x*x)/(rw*rw)+(y*y)/10<1&&(((x+y)&1)||(x*x)/(rw*rw)+(y*y)/10<.45)){ g.fillStyle=G[1]; g.fillRect(cx+x,cy+y,1,1); } }
   for(let i=0;i<70;i++){ const x=(r()*156)|0, y=24+((r()*70)|0); g.fillStyle=G[3]; g.fillRect(x,y,1,1); g.fillRect(x+2,y,1,1); g.fillStyle=G[1]; g.fillRect(x,y+1,1,1); g.fillRect(x+2,y+1,1,1); g.fillStyle=G[2]; g.fillRect(x+1,y+2,1,1); }
   for(let i=0;i<30;i++){ const x=(r()*154)|0, y=26+((r()*68)|0), col=S.flowers[i%3]; g.fillStyle=col; g.fillRect(x+1,y,1,1); g.fillRect(x,y+1,3,1); g.fillRect(x+1,y+2,1,1); g.fillStyle=C.flowerC; g.fillRect(x+1,y+1,1,1); g.fillStyle=G[2]; g.fillRect(x+1,y+3,1,1); }
-  return c; });
+  return g.done(); });
 /* el Roble se mece: la copa va en tiras de 2 px con un vaivén que se apaga hacia el tronco */
-function drawOakSway(img,x,y){ const A=1.4+tiOakAmp(); for(let yy=0;yy<img.height;yy+=2){ const k=Math.max(0,1-yy/52), off=Math.round(Math.sin(tick*.03+yy*.09)*A*k); ctx.drawImage(img,0,yy,img.width,2,x+off,y+yy,img.width,2); } }
+function drawOakSway(img,x,y){ const A=1.4+tiOakAmp(), H=img.height, off=yy=>Math.round(Math.sin(tick*.03+yy*.09)*A*Math.max(0,1-yy/52)), join=ctx.globalAlpha===1&&ctx.globalCompositeOperation==='source-over'; // tiras de 2 px; a opacidad plena, las seguidas con el mismo desplazamiento, juntas
+  for(let yy=0;yy<H;){ const o=off(yy); let y2=yy+2; while(join&&y2<H&&off(y2)===o) y2+=2; const h=Math.min(y2,H)-yy; ctx.drawImage(img,0,yy,img.width,h,x+o,y+yy,img.width,h); yy=y2; } }
 function godRays(cx,cy,warm){ ctx.save(); ctx.globalCompositeOperation='lighter';
   for(let i=0;i<5;i++){ const a=2.05+i*.2+Math.sin(tick*.004+i*1.7)*.03, w=.035+(i&1)*.02, L=220;
     ctx.fillStyle=warm?'rgba(255,236,190,.05)':'rgba(255,252,230,.045)'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(a-w)*L,cy+Math.sin(a-w)*L); ctx.lineTo(cx+Math.cos(a+w)*L,cy+Math.sin(a+w)*L); ctx.fill(); }

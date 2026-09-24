@@ -183,7 +183,7 @@ function drawMidboss(){
   if(m.type==='drone'&&m.st!=='stunned'){ ctx.fillStyle='rgba(10,10,20,.3)'; ctx.beginPath(); ctx.ellipse(m.x+12,104,9,3,0,0,6.283); ctx.fill(); }
 }
 function drawScene(){
-  if(bgDirty) rebuildBg();
+  if(bgDirty) rebuildBg(); bgEnsure(bgFrame());
   ctx.drawImage(bgCanvas[bgFrame()],0,0); if(sx===1&&sy===1&&typeof riteBgOld==='function') riteBgOld(); drawScorches();
   if(sx===1&&sy===1){
     if(typeof drawPlaza==='function') drawPlaza(); else drawGreatOak(37,-2); // el Roble vivo, sus raíces y los altares (15f)

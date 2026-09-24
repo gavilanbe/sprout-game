@@ -33,7 +33,7 @@ window.addEventListener('keydown',e=>{
   if(nk==='m'&&KEYMAP.m===undefined){ if(!e.repeat) toggleMusic(); return; } // la tecla M = el botón MÚSICA de la consola (16a)
   const k=KEYMAP[nk]; if(!k) return; e.preventDefault();
   if(ONESHOT.has(k)){ if(!e.repeat) keys[k]=true; } else keys[k]=true;
-  if(k==='fire') keys.fireHeld=true; if(k==='alt') keys.altHeld=true; if(k==='menu') keys.menuHeld=true; audio();
+  if(k==='fire') keys.fireHeld=true; if(k==='alt') keys.altHeld=true; if(k==='menu') keys.menuHeld=true; audio(true);
 });
 window.addEventListener('keyup',e=>{ const k=KEYMAP[normKey(e.key)]; if(!k) return; if(k==='fire') keys.fireHeld=false; if(k==='alt') keys.altHeld=false; if(k==='menu') keys.menuHeld=false; if(!ONESHOT.has(k)) keys[k]=false; });
 window.addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; });
@@ -62,7 +62,7 @@ function pollGamepad(){
   const ax=gp.axes[0]||0, ay=gp.axes[1]||0, D=.4, btn=i=>!!(gp.buttons[i]&&gp.buttons[i].pressed);
   const dir={left:ax<-D||btn(14), right:ax>D||btn(15), up:ay<-D||btn(12), down:ay>D||btn(13)};
   for(const k in dir){ if(dir[k]){ if(!gpHeld[k]){ gpHeld[k]=true; keys[k]=true; } } else if(gpHeld[k]){ gpHeld[k]=false; keys[k]=false; } }
-  for(const k in GP_ONESHOT){ const p=GP_ONESHOT[k].some(btn); if(p&&!gpPrev[k]){ keys[k]=true; try{ audio(); }catch(_){} } if((k==='fire'||k==='alt')&&(p||gpPrev[k])) keys[k+'Held']=p; gpPrev[k]=p; }
+  for(const k in GP_ONESHOT){ const p=GP_ONESHOT[k].some(btn); if(p&&!gpPrev[k]){ keys[k]=true; try{ audio(true); }catch(_){} } if((k==='fire'||k==='alt')&&(p||gpPrev[k])) keys[k+'Held']=p; gpPrev[k]=p; }
 }
 /* ---------- AJUSTES (pestaña del zurrón) ---------- */
 const OPT_ROWS=['texto','temblor','musica','efectos','dificultad','vibracion','consola','controles','titulo'];

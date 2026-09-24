@@ -34,7 +34,8 @@ function applyVolumes(){ if(!AC) return; const o=audioOpts(), t=AC.currentTime;
   musicBus.gain.setTargetAtTime(volCurve(o.musVol??7)*2.1,t,.05); sfxBus.gain.setTargetAtTime(volCurve(o.sfxVol??8)*1.45,t,.03); }
 /* con el zurrón abierto la música suena amortiguada, como oída desde dentro de la bolsa */
 function musicMuffle(on){ if(!AC||!musicLP) return; const t=AC.currentTime; musicLP.frequency.cancelScheduledValues(t); musicLP.frequency.setTargetAtTime(on?1300:22000,t,on?.07:.12); }
-function audio(){
+let acResumeT=0;
+function audio(force){
   if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)();
     master=AC.createDynamicsCompressor(); master.threshold.value=-14; master.knee.value=12; master.ratio.value=5; master.attack.value=.004; master.release.value=.12;
     const vol=AC.createGain(); vol.gain.value=.9; master.connect(vol).connect(AC.destination);
@@ -52,7 +53,8 @@ function audio(){
       VOICE[k]=g; }
     WAVES.p125=pulseWave(.125); WAVES.p25=pulseWave(.25); WAVES.p50=null; // 50% = square nativo
     applyVolumes(); startMusic(); }
-  else if(AC.state!=='running'&&AC.state!=='closed') AC.resume(); // también «interrupted» (iOS al volver de otra app)
+  else if(AC.state!=='running'&&AC.state!=='closed'){ // también «interrupted» (iOS al volver de otra app)
+    const now=performance.now(); if(force||now-acResumeT>300){ acResumeT=now; try{ const p=AC.resume(); if(p&&p.catch) p.catch(()=>{}); }catch(_){} } } // sin pedirlo en cada sonido: en los gestos (force) siempre
   return AC;
 }
 function f(m){ return 440*Math.pow(2,(m-69)/12); }

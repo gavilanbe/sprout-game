@@ -58,13 +58,31 @@ function renderOpts(){ return {bio:screenBiome(sx,sy),style:screenStyle(sx,sy),f
 function openChestSet(){ const s=new Set(); for(const id of opened) if(id.startsWith('CH'+sx+','+sy+':')) s.add(id.slice(('CH'+sx+','+sy+':').length)); return s; }
 const BG_FRAMES=4;
 function bgFrame(){ return (tick>>3)&3; }   // agua, hierba alta y antorchas: 4 fotogramas de 8 ticks
+/* el fondo se pinta por fotogramas y cuando hace falta: al cambiar de pantalla solo el que se ve (y el 0 para la miniatura);
+   los demás, en los ratos libres o, como tarde, cuando les toque. Se pintan de una foto del mapa tomada al reconstruir,
+   así salen igual que si se hubieran pintado todos a la vez */
+let bgJob=null;
 function rebuildBg(){
-  const o=renderOpts();
-  for(let f=0;f<BG_FRAMES;f++){ if(!bgCanvas[f]){ bgCanvas[f]=mkCanvas(160,128); fgCanvas[f]=mkCanvas(160,128); }
-    const g=bgCanvas[f].getContext('2d'), fg=fgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128); renderScreenTo(g,grid,0,0,o,f,fg); }
+  bgJob={o:renderOpts(),rows:grid.map(r=>r.slice()),ready:[false,false,false,false]};
   bgDirty=false;
-  const r=regionOf(sx,sy); if(r==='valle'||r==='norte'||r==='marisma') thumbOf(sx+','+sy,bgCanvas[0]);
+  bgEnsure(bgFrame());
+  const r=regionOf(sx,sy); if(r==='valle'||r==='norte'||r==='marisma'){ bgEnsure(0); thumbOf(sx+','+sy,bgCanvas[0]); }
+  idleTask(bgWarm); warmNeighbors();
 }
+function bgEnsure(f){ const J=bgJob; if(!J||J.ready[f]) return; J.ready[f]=true;
+  if(!bgCanvas[f]){ bgCanvas[f]=mkCanvas(160,128); fgCanvas[f]=mkCanvas(160,128); }
+  const g=bgCanvas[f].getContext('2d'), fg=fgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128); renderScreenTo(g,J.rows,0,0,J.o,f,fg); }
+function bgEnsureAll(){ for(let f=0;f<BG_FRAMES;f++) bgEnsure(f); }
+function bgWarm(){ const J=bgJob; if(!J) return; const f=J.ready.indexOf(false); if(f<0) return; bgEnsure(f); if(J===bgJob&&J.ready.indexOf(false)>=0) idleTask(bgWarm); }
+/* las pantallas de al lado se pintan una vez en borrador (en los ratos libres): así sus baldosas ya están hechas cuando llegues */
+let WARM_CV=null;
+function warmNeighbors(){ for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=sx+dx, ny=sy+dy, key=nx+','+ny; if(!MAPS[key]) continue;
+  const bio=screenBiome(nx,ny), style=screenStyle(nx,ny); for(let f=0;f<BG_FRAMES;f++) idleTask(()=>warmScreen(nx,ny,bio,style,f),'warm|'+key+'|'+bio+'|'+style+'|'+f); } } // cada una, una sola vez
+function warmScreen(nx,ny,bio,style,f){ if(!WARM_CV) WARM_CV=[mkCanvas(160,128),mkCanvas(160,128)];
+  const key=nx+','+ny, r=regionOf(nx,ny), rows=MAPS[key].map(row=>[...row].map(ch=>(ENEMY_MARK[ch]||MIDBOSS_MARK[ch]||BOSS_MARK[ch]||ITEM_MARK[ch]||/[1-8]/.test(ch))?'.':ch));
+  const floor=r==='norte'?((thawed&&ny===-1)?'.':'n'):r==='marisma'?(summered?'.':'·'):(r==='cueva'||r==='tronco'||r==='templo'||r==='molino'||r==='gruta'||r==='secreto')?'q':r==='casa'?'o':'.';
+  const g=WARM_CV[0].getContext('2d'), fg=WARM_CV[1].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128);
+  renderScreenTo(g,rows,0,0,{bio,style,floor,sx:nx,sy:ny,crystal:crystalOn,openChests:new Set()},f,fg); }
 /* miniatura de una pantalla para el mapa (18×14, sin actores) */
 function thumbOf(key,src){
   if(!THUMBS[key]) THUMBS[key]=mkCanvas(18,14);

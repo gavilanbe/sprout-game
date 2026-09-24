@@ -24,14 +24,18 @@ const BIG_FOOT=['#1c0e06','#3c1e0c','#66381a','#865028','#a66a38'];
 const BIG_LEAF=['#103816','#226e2a','#46a63c','#7ed64e','#c6f68e'];
 const BIG_INK='#1a1410', BIG_MOUTH='#3a1208';
 const BIG_W=80, BIG_H=72, BIG_OX=8, BIG_OY=8; // el lienzo lleva margen: el muñeco (0..64) cae en (8..72)
-const BIG_CACHE=new Map();
+const BIG_CACHE=new Map(); let BIG_SCR=null, BIG_ID=null;
+function bigRecycle(){ if(BIG_CACHE.size<320) return mkCanvas(BIG_W,BIG_H); const k0=BIG_CACHE.keys().next().value, c=BIG_CACHE.get(k0); BIG_CACHE.delete(k0); c.getContext('2d').clearRect(0,0,BIG_W,BIG_H); return c; } // el más viejo, limpio, para el nuevo
 function bigLeaf(g,x0,y0,len,wid,ang,pal){ // hoja con punta, nervio y haz más claro, girada `ang` grados
   const a=ang*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), R=Math.ceil(len)+2;
+  // opaca y sin transformaciones raras: los píxeles a un búfer del tamaño de la hoja y de una vez (los mismos que con un fillRect por píxel)
+  const fast=pal.every(c=>pxCol(c)!==null)&&pxPlain(g), bx=Math.round(x0-R)-1, by=Math.round(y0-R)-1, bw=2*R+3, B=fast?pxBuf(bw,bw):null;
   for(let y=-R;y<=R;y++) for(let x=-R;x<=R;x++){ const u=x*ca+y*sa, v=-x*sa+y*ca; if(u<0||u>len) continue;
     const t=u/len, w=wid*Math.pow(Math.sin(Math.PI*Math.min(1,t*1.02+.02)),.75)*(1-.25*t); if(Math.abs(v)>w) continue;
     const d=v/Math.max(.5,w); let c=Math.abs(v)<.55?pal[1]:d<-.45?pal[4]:d<0?pal[3]:d<.6?pal[2]:pal[1];
     if(Math.abs(v)>=.55&&(((u-Math.abs(v)*1.3)%4)+4)%4<.9&&Math.abs(v)<w-.8) c=d<0?pal[3]:pal[1]; // nervios laterales
-    g.fillStyle=c; g.fillRect(Math.round(x0+x),Math.round(y0+y),1,1); } }
+    if(B) B.set(Math.round(x0+x)-bx,Math.round(y0+y)-by,c); else { g.fillStyle=c; g.fillRect(Math.round(x0+x),Math.round(y0+y),1,1); } }
+  if(B) B.into(g,bx,by); }
 /* aplastar/estirar e inclinar: del punto del muñeco al punto dibujado (s y n ya redondeados) */
 function rigMap(s,n,x,y){ const wx=Math.pow(s,-.8), yy=61-(61-y)*s; return [32+(x-32)*wx+Math.round(n*(61-yy)/50),yy]; }
 function rigQS(P){ return [Math.round(clamp(P.sq||1,.7,1.3)*50)/50,Math.round((P.lean||0)*2)/2]; }
@@ -77,7 +81,7 @@ function bigSprout(pose){
   const s=q.s, wx=Math.pow(s,-.8), O=BIG_OX, OY=BIG_OY, X=x=>32+(x-32)*wx+O, Y=y=>61-(61-y)*s+OY, P=(x,y)=>[Math.round(X(x)),Math.round(Y(y))];
   const L=(x,y,r,ry)=>({x:X(x),y:Y(y),r:r*wx,ry:(ry||r)*s});
   // 1) el cuerpo, derecho y ya aplastado o estirado (en la geometría: los píxeles salen limpios)
-  const B=mkCanvas(BIG_W,BIG_H), g=B.getContext('2d'), ID=g.createImageData(BIG_W,BIG_H), D=ID.data;
+  const B=BIG_SCR||(BIG_SCR=mkCanvas(BIG_W,BIG_H)), g=B.getContext('2d'), ID=BIG_ID||(BIG_ID=g.createImageData(BIG_W,BIG_H)), D=ID.data; D.fill(0); // el lienzo de trabajo, reutilizado (putImageData lo pisa entero)
   blobID(D,BIG_W,BIG_H,[L(25+q.ft[0],58+q.ft[1],5.5,3.2),L(39+q.ft[2],58+q.ft[3],5.5,3.2)],BIG_FOOT,{grad:.3,dither:.5}); // los pies
   blobID(D,BIG_W,BIG_H,[L(32,48,15.5,9)],BIG_PETO,{grad:.45,dither:.35}); // el faldón
   blobID(D,BIG_W,BIG_H,[L(32,33,17.5,15.5),L(32,19.5,6,4.5)],BIG_SKIN,{grad:.25,dither:.35}); // el bulbo
@@ -92,14 +96,14 @@ function bigSprout(pose){
   const [tx,ty]=P(31,11); g.fillStyle=BIG_LEAF[1]; g.fillRect(tx,ty,2,Math.max(3,Math.round(6*s))); g.fillStyle=BIG_LEAF[3]; g.fillRect(tx,ty,1,Math.max(2,Math.round(5*s))); // el tallo
   const [l1x,l1y]=P(31,12), [l2x,l2y]=P(33,11); bigLeaf(g,l1x,l1y,15,6,-150+q.lf[0],BIG_LEAF); bigLeaf(g,l2x,l2y,15,6,-32+q.lf[1],BIG_LEAF);
   // 2) inclinado: cada fila se corre un poco más cuanto más arriba; las manos van aparte (detrás o delante)
-  c=mkCanvas(BIG_W,BIG_H); const h=c.getContext('2d');
+  c=bigRecycle(); const h=c.getContext('2d');
   const hand=i=>{ const [hx,hy]=rigMap(s,q.n,q.a[i*2],q.a[i*2+1]), x0=Math.round(hx+O)-5, y0=Math.round(hy+OY)-5;
     blobArt(h,x0,y0,11,11,[{x:hx+O-x0,y:hy+OY-y0,r:3.6,ry:3.2}],BIG_SKIN,{outline:false,grad:.2,dither:.5}); };
   if(!q.f.includes('0')) hand(0); if(!q.f.includes('1')) hand(1);
-  for(let y=0;y<BIG_H;y++) h.drawImage(B,0,y,BIG_W,1,Math.round(q.n*(61-(y-OY))/50),y,BIG_W,1);
+  for(let y=0;y<BIG_H;){ const o=Math.round(q.n*(61-(y-OY))/50); let y2=y+1; while(y2<BIG_H&&Math.round(q.n*(61-(y2-OY))/50)===o) y2++; h.drawImage(B,0,y,BIG_W,y2-y,o,y,BIG_W,y2-y); y=y2; } // las filas con el mismo desplazamiento, juntas
   for(const ch of q.f) hand(+ch);
   artOutline(h,BIG_W,BIG_H);
-  BIG_CACHE.set(key,c); if(BIG_CACHE.size>320) BIG_CACHE.delete(BIG_CACHE.keys().next().value);
+  BIG_CACHE.set(key,c);
   return c; }
 
 /* ---------- las armas en grande (y giradas sin perder el píxel); el guion de cada arma puede traer su propio dibujo (art) ---------- */
@@ -169,27 +173,36 @@ function caSeg(t,a,b){ return clamp((t-a)/(b-a),0,1); }
 
 /* ---------- píxeles nítidos: rayos, líneas de concentración y barridos (nada de bordes suavizados) ---------- */
 const CA_POLAR=new Map(), CA_BUF=mkCanvas(VW,VH), CA_BG=CA_BUF.getContext('2d'); let CA_IMG=null;
-function caPolar(cx,cy){ const key=cx+','+cy; let m=CA_POLAR.get(key); if(m) return m;
-  const A=new Float32Array(VW*VH), D=new Float32Array(VW*VH);
-  for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ const dx=x+.5-cx, dy=y+.5-cy; A[i]=Math.min(.99999,Math.atan2(dy,dx)/6.283185+.5); D[i]=Math.hypot(dx,dy); }
-  m={A,D}; CA_POLAR.set(key,m); if(CA_POLAR.size>40) CA_POLAR.delete(CA_POLAR.keys().next().value); return m; }
+/* el ángulo y la distancia de cada píxel a (cx,cy) solo dependen de (x-cx, y-cy): un mapa grande calculado una vez sirve para
+   cualquier centro entero en pantalla (se copian sus filas, los mismos valores); los arrays que salen de la caché se reutilizan */
+let CA_PBIG=null; const PBW=2*VW+1, PBH=2*VH+1;
+function caPolarBig(){ if(CA_PBIG) return CA_PBIG; const A=new Float32Array(PBW*PBH), D=new Float32Array(PBW*PBH);
+  for(let v=-VH,i=0;v<=VH;v++) for(let u=-VW;u<=VW;u++,i++){ const dx=u+.5, dy=v+.5; A[i]=Math.min(.99999,Math.atan2(dy,dx)/6.283185+.5); D[i]=Math.hypot(dx,dy); }
+  return CA_PBIG={A,D}; }
+function caPolar(cx,cy){ const key=cx+','+cy; let m=CA_POLAR.get(key); if(m){ CA_POLAR.delete(key); CA_POLAR.set(key,m); return m; }
+  let A, D; if(CA_POLAR.size>=40){ const k0=CA_POLAR.keys().next().value, old=CA_POLAR.get(k0); CA_POLAR.delete(k0); A=old.A; D=old.D; } else { A=new Float32Array(VW*VH); D=new Float32Array(VW*VH); }
+  if(cx>=0&&cx<=VW&&cy>=0&&cy<=VH){ const P=caPolarBig(); for(let y=0;y<VH;y++){ const o=(y-cy+VH)*PBW+(VW-cx); A.set(P.A.subarray(o,o+VW),y*VW); D.set(P.D.subarray(o,o+VW),y*VW); } }
+  else for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ const dx=x+.5-cx, dy=y+.5-cy; A[i]=Math.min(.99999,Math.atan2(dy,dx)/6.283185+.5); D[i]=Math.hypot(dx,dy); }
+  m={A,D}; CA_POLAR.set(key,m); return m; }
 const CA_RC=new Map(); // los últimos fondos calculados: rayos y líneas repiten muchos fotogramas seguidos
+let CA_IMG32=null;
 function caRaster(fn,alpha,key){ let c=key&&CA_RC.get(key);
-  if(!c){ if(!CA_IMG) CA_IMG=CA_BG.createImageData(VW,VH); fn(CA_IMG.data); CA_BG.putImageData(CA_IMG,0,0); c=CA_BUF;
+  if(!c){ if(!CA_IMG){ CA_IMG=CA_BG.createImageData(VW,VH); CA_IMG32=new Uint32Array(CA_IMG.data.buffer); } fn(CA_IMG.data,CA_IMG32); CA_BG.putImageData(CA_IMG,0,0); c=CA_BUF;
     if(key){ const k0=CA_RC.size>=6?CA_RC.keys().next().value:null, old=k0?CA_RC.get(k0):null; if(k0) CA_RC.delete(k0); c=old||mkCanvas(VW,VH); const g=c.getContext('2d'); g.clearRect(0,0,VW,VH); g.drawImage(CA_BUF,0,0); CA_RC.set(key,c); } }
   if(alpha!==undefined){ ctx.globalAlpha=clamp(alpha,0,1); ctx.drawImage(c,0,0); ctx.globalAlpha=1; } else ctx.drawImage(c,0,0); }
 /* rayos que giran desde (cx,cy): n rayos, rot en vueltas, el borde tramado; colB null = transparente; rmax: se apagan (tramados) antes de ese radio */
-function caRays(cx,cy,n,rot,colA,colB,alpha,rmax){ const {A,D}=caPolar(Math.round(cx),Math.round(cy)), a=hex2rgb(colA), b=colB?hex2rgb(colB):null;
-  caRaster(d=>{ for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ let u=((A[i]+rot)*n)%1; if(u<0) u+=1;
-    const m=Math.min(Math.abs(u-.5),u,1-u), sw=m<.06&&BAYER4[y&3][x&3]/16<(1-m/.06)*.5; let c=((u<.5)!==sw)?a:b; const p=i*4;
-    if(rmax&&c===a){ const e=(D[i]-rmax*.55)/(rmax*.45); if(e>=1||(e>0&&BAYER4[y&3][x&3]/16<e)) c=b; }
-    if(c){ d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } else d[p+3]=0; } },alpha,['r',Math.round(cx),Math.round(cy),n,Math.round(rot*n*96),colA,colB,rmax?Math.round(rmax):0].join()); }
+function caRays(cx,cy,n,rot,colA,colB,alpha,rmax){ const {A,D}=caPolar(Math.round(cx),Math.round(cy)), a=hex2rgb(colA), b=colB?hex2rgb(colB):null, a32=rgb32(a), b32=b?rgb32(b):0;
+  caRaster((d,d32)=>{ for(let y=0,i=0;y<VH;y++){ const row=BAYER4[y&3]; for(let x=0;x<VW;x++,i++){ let u=((A[i]+rot)*n)%1; if(u<0) u+=1;
+    const m=Math.min(Math.abs(u-.5),u,1-u), sw=m<.06&&row[x&3]/16<(1-m/.06)*.5; let isA=(u<.5)!==sw;
+    if(rmax&&isA){ const e=(D[i]-rmax*.55)/(rmax*.45); if(e>=1||(e>0&&row[x&3]/16<e)) isA=false; }
+    d32[i]=isA?a32:b32; } } },alpha,['r',Math.round(cx),Math.round(cy),n,Math.round(rot*n*96),colA,colB,rmax?Math.round(rmax):0].join()); }
 /* líneas de concentración (las del manga): cuñas finas que apuntan a (cx,cy) y cambian cada 2 fotogramas */
 function caFocus(t,cx,cy,base,cols,n){ const {A,D}=caPolar(Math.round(cx),Math.round(cy)), B=hex2rgb(base), C0=hex2rgb(cols[0]), C1=hex2rgb(cols[1]||cols[0]);
   const N=720, thr=new Float32Array(N).fill(1e9), which=new Uint8Array(N), r=seeded(((t>>1)+3)*7919);
   for(let i=0;i<(n||70);i++){ const a=(r()*N)|0, w=1+((r()*3)|0), r0=30+r()*56, c=r()<.3?1:0;
     for(let j=0;j<w;j++){ const k=(a+j)%N, v=r0+Math.abs(j-(w-1)/2)*10; if(v<thr[k]){ thr[k]=v; which[k]=c; } } }
-  caRaster(d=>{ for(let i=0,p=0;i<VW*VH;i++,p+=4){ const k=(A[i]*N)|0, c=D[i]>thr[k]?(which[k]?C1:C0):B; d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } },undefined,['f',t>>1,Math.round(cx),Math.round(cy),base,cols.join('/'),n||70].join()); }
+  const B32=rgb32(B), C032=rgb32(C0), C132=rgb32(C1);
+  caRaster((d,d32)=>{ for(let i=0;i<VW*VH;i++){ const k=(A[i]*N)|0; d32[i]=D[i]>thr[k]?(which[k]?C132:C032):B32; } },undefined,['f',t>>1,Math.round(cx),Math.round(cy),base,cols.join('/'),n||70].join()); }
 /* barridos entre planos: fila a fila, lo que ya enseña el plano nuevo (k de 0 a 1) */
 function caWipeSpans(k,kind){ const out=[];
   for(let y=0;y<VH;y++){
@@ -217,10 +230,12 @@ function ringArt(r,col,w){ w=w||1; const key=r+'|'+col+'|'+w; let c=RING_C.get(k
    se acerca de verdad (F sube) sin que engorden los píxeles; ojos, párpados, cejas, boca y hojas se animan.
    o = { pal, F, dx, dy, eyes:'open'|'wide'|'happy', lid, brow, look, mouth, leaf, glint (fotograma del destello; <0 nada), tint, sweat } */
 const CU_BASE=new Map(), CU_LEAF=new Map();
-function cuBase(F){ const q=Math.round(F*20)/20; let c=CU_BASE.get(q); if(c) return c;
-  c=mkCanvas(170,180); const g=c.getContext('2d'), ID=g.createImageData(170,180); // el centro del bulbo cae en (85,104)
+function cuBase(F){ const q=Math.round(F*20)/20; let c=CU_BASE.get(q); if(c){ CU_BASE.delete(q); CU_BASE.set(q,c); return c; } // lo recién usado nunca es lo primero en reciclarse
+  if(CU_BASE.size>=24){ const k0=CU_BASE.keys().next().value; c=CU_BASE.get(k0); CU_BASE.delete(k0); } else c=mkCanvas(170,180); // el más viejo, reciclado
+  const g=c.getContext('2d'), ID=CU_ID||(CU_ID=g.createImageData(170,180)); ID.data.fill(0); // el centro del bulbo cae en (85,104)
   blobID(ID.data,170,180,[{x:85,y:104,r:17.5*q,ry:15.5*q},{x:85,y:104-13.5*q,r:6*q,ry:4.5*q}],BIG_SKIN,{grad:.2,dither:.45}); g.putImageData(ID,0,0);
-  artOutline(g,170,180); CU_BASE.set(q,c); if(CU_BASE.size>24) CU_BASE.delete(CU_BASE.keys().next().value); return c; }
+  artOutline(g,170,180); CU_BASE.set(q,c); return c; }
+let CU_ID=null;
 function cuLeaf(F,ang){ const q=Math.round(F*10)/10, a=Math.round(ang/3)*3, key=q+'|'+a; let c=CU_LEAF.get(key); if(c) return c;
   const len=15*q, R=Math.ceil(len)+3; c=mkCanvas(R*2+1,R*2+1); const g=c.getContext('2d'); bigLeaf(g,R,R,len,6*q,a,BIG_LEAF); artOutline(g,c.width,c.height);
   CU_LEAF.set(key,c); if(CU_LEAF.size>90) CU_LEAF.delete(CU_LEAF.keys().next().value); return c; }
@@ -312,9 +327,13 @@ function caTitleHero(f,C){ const S=CA_SCRIPT[C.kind]||{}; if(S.heroTitle) return
   caShadow(80,125,air?9:16);
   const T=caHeroAt(pose,80,fy), [hx,hy]=T(pose.arms[1][0],pose.arms[1][1]); caHeld(C.kind,hx,hy,f);
   const g=(f-(L0+13))/14; if(g>=0&&g<1){ ctx.fillStyle='#ffffff'; for(let i=0;i<8;i++){ const a=i/8*6.283+.2, r0=5+g*12, r1=r0+7*(1-g); for(let r=r0;r<r1;r++) ctx.fillRect(Math.round(C.gx+Math.cos(a)*r),Math.round(C.gy+Math.sin(a)*r),1,1); } caStar(C.gx,C.gy,Math.round((1-g)*7),'#ffffff'); } } // ¡destello al alzarla!
+let CA_LINES=null; function caLinesBuf(){ if(!CA_LINES) CA_LINES=pxBuf(VW+16,VH+16); else CA_LINES.d.fill(0); return CA_LINES; } // 8 px de margen: con el temblor, lo de fuera también se ve
 function caTitle(f,C){ const A=MOMENT_ARMS[C.kind], P=A.pal;
   caRays(80,86,14,(f>>1)*.0036,P[1],shade(P[1],-.28));
-  ctx.fillStyle=P[2]; for(let i=0;i<24;i++){ const a=i/24*6.283+(i%3)*.05, r0=44+((i*7+f)%9); for(let r=r0;r<120;r+=2) ctx.fillRect(Math.round(80+Math.cos(a)*r),Math.round(86+Math.sin(a)*r*.9),1,1); } // líneas de velocidad
+  { const v=pxCol(P[2]), B=v!==null&&pxPlain(ctx)?caLinesBuf():null; if(!B) ctx.fillStyle=P[2]; // líneas de velocidad (unos 900 píxeles: de una vez si se puede)
+    for(let i=0;i<24;i++){ const a=i/24*6.283+(i%3)*.05, r0=44+((i*7+f)%9); for(let r=r0;r<120;r+=2){ const x=Math.round(80+Math.cos(a)*r), y=Math.round(86+Math.sin(a)*r*.9);
+      if(B){ if(x>=-8&&y>=-8&&x<VW+8&&y<VH+8) B.d[(y+8)*(VW+16)+x+8]=v; } else ctx.fillRect(x,y,1,1); } }
+    if(B) B.into(ctx,-8,-8); }
   caTitleHero(f,C);
   // el nombre, enorme: cada línea cae de golpe, rebota un poco y un brillo lo cruza
   const N=CA_NAMES[C.kind]||[ITEM_NAMES[C.kind]||''];

@@ -120,9 +120,29 @@ function leafPx(x,y,big,sway){ // hojita de 3 o 5 píxeles que se mece
   const s=sway?Math.round(Math.sin(tick*.08+x*.3)):0; ctx.fillStyle=PAL.k;
   if(big){ ctx.fillRect(x-1+s,y-1,5,4); ctx.fillStyle='#4aa040'; ctx.fillRect(x+s,y,3,2); ctx.fillStyle='#a8e870'; ctx.fillRect(x+s,y,1,1); ctx.fillStyle='#2e7a30'; ctx.fillRect(x+1+s,y+1,2,1); }
   else { ctx.fillRect(x-1+s,y-1,4,3); ctx.fillStyle='#78d838'; ctx.fillRect(x+s,y,2,1); } }
+/* el marco se compone una vez por sitio y tamaño y se pega de un golpe (antes, ~500 fillRect por fotograma); en vivo quedan la sombra,
+   que se mezcla con lo de debajo, y lo que se mueve (las hojas de la enredadera, las runas que laten). A opacidad plena: el mismo resultado */
+const FRAME_CACHE=new Map();
 function drawFrame(x,y,w,h,st){
   const F=FRAMES[st]||FRAMES.normal;
   roundBox(x-1,y+2,w+4,h+3,'rgba(0,0,0,.35)');                       // sombra
+  if(Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(w)&&Number.isInteger(h)&&ctx.globalAlpha===1&&pxPlain(ctx)){
+    const key=st+'|'+x+'|'+y+'|'+w+'|'+h; let c=FRAME_CACHE.get(key);
+    if(!c){ c=mkCanvas(w+64,h+64); const keep=ctx; ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false; ctx.translate(32-x,32-y); try{ frameBody(x,y,w,h,st,F); } finally { ctx=keep; } // 32 px de margen: hay adornos que asoman (las franjas de la carta, las líneas de la piedra)
+      FRAME_CACHE.set(key,c); if(FRAME_CACHE.size>48) FRAME_CACHE.delete(FRAME_CACHE.keys().next().value); }
+    else { FRAME_CACHE.delete(key); FRAME_CACHE.set(key,c); }
+    ctx.drawImage(c,x-32,y-32); }
+  else frameBody(x,y,w,h,st,F);
+  frameLive(x,y,w,h,st,F); return F; }
+function frameLive(x,y,w,h,st,F){
+  if(st==='stone'){ const glow=.5+.5*Math.sin(tick*.08); ctx.globalAlpha=.5+glow*.5; ctx.fillStyle=F.key;
+    for(const [cx,cy] of [[x+2,y+2],[x+w-7,y+2],[x+2,y+h-7],[x+w-7,y+h-7]]){ ctx.fillRect(cx+2,cy,1,5); ctx.fillRect(cx,cy+2,5,1); ctx.fillRect(cx,cy,1,1); ctx.fillRect(cx+4,cy+4,1,1); }
+    ctx.globalAlpha=1; }
+  else if(!FRAMES[st]||st==='normal'){ frameSheen(x,y,w,h,false); for(let xx=x+7;xx<x+w-4;xx+=15) leafPx(xx,y-3+Math.round(Math.sin(xx*.33)),((xx-x)/15|0)%2===0,true);
+    leafPx(x-2,y-2,true,true); leafPx(x+w-2,y+h-1,true,true); leafPx(x+w-4,y-3,false,true); } }
+function frameSheen(x,y,w,h,inside){ ctx.fillStyle='rgba(255,255,255,.07)';
+  for(let xx=x+6;xx<x+w-4;xx+=16){ for(let k=0;k<h-4;k+=2){ const px=xx+(k>>1), py=y+2+k; if((px<x+w)===inside) ctx.fillRect(px,py,1,1); } } }
+function frameBody(x,y,w,h,st,F){
   if(st==='wood'){ // tablones con clavos
     roundBox(x-3,y-3,w+6,h+6,PAL.k); roundBox(x-2,y-2,w+4,h+4,F.border);
     ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h);
@@ -133,9 +153,7 @@ function drawFrame(x,y,w,h,st){
     roundBox(x-3,y-3,w+6,h+6,PAL.k); roundBox(x-2,y-2,w+4,h+4,F.border);
     ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h);
     for(let yy=y;yy<y+h;yy+=10){ ctx.fillStyle=F.border; ctx.fillRect(x,yy+9,w,1); const off=((yy-y)/10)&1?14:0; for(let xx=x+off;xx<x+w;xx+=28){ ctx.fillRect(xx,yy,1,9); ctx.fillStyle=F.inner; ctx.fillRect(xx+1,yy,26,1); ctx.fillStyle=F.border; } }
-    const glow=.5+.5*Math.sin(tick*.08); ctx.globalAlpha=.5+glow*.5; ctx.fillStyle=F.key;
-    for(const [cx,cy] of [[x+2,y+2],[x+w-7,y+2],[x+2,y+h-7],[x+w-7,y+h-7]]){ ctx.fillRect(cx+2,cy,1,5); ctx.fillRect(cx,cy+2,5,1); ctx.fillRect(cx,cy,1,1); ctx.fillRect(cx+4,cy+4,1,1); }
-    ctx.globalAlpha=1; return F; }
+    return F; } // las runas que laten van en vivo (frameLive)
   if(st==='paper'){ // pergamino de bordes tostados e irregulares
     for(let xx=-2;xx<w+2;xx++){ const t=hash(xx,1)%3, b=hash(xx,2)%3; ctx.fillStyle=PAL.k; ctx.fillRect(x+xx,y-3+t,1,h+6-t-b); ctx.fillStyle=F.border; ctx.fillRect(x+xx,y-2+t,1,h+4-t-b); }
     ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h); ctx.fillStyle=F.bg2; for(let yy=y+2;yy<y+h;yy+=9) ctx.fillRect(x+2,yy,w-4,1);
@@ -156,13 +174,11 @@ function drawFrame(x,y,w,h,st){
   ctx.fillStyle='#8a5c30'; for(let xx=x+1;xx<x+w;xx+=5) ctx.fillRect(xx,y-1,2,1);
   ctx.fillStyle=PAL.k; ctx.fillRect(x,y,w,h);
   const top=F.bg, bot=F.bg2; for(let yy=1;yy<h-1;yy++){ const k=yy/h; ctx.fillStyle=k<.45?top:k>.6?bot:(((yy&1))?top:bot); ctx.fillRect(x+1,y+yy,w-2,1); }
-  ctx.fillStyle='rgba(255,255,255,.07)'; for(let xx=x+6;xx<x+w-4;xx+=16){ for(let k=0;k<h-4;k+=2) ctx.fillRect(xx+(k>>1),y+2+k,1,1); }
+  frameSheen(x,y,w,h,true); // el brillo en diagonal; lo que se sale del marco va en vivo (frameLive): semitransparente sobre la escena
   ctx.fillStyle='#3e7a4a'; ctx.fillRect(x+1,y+1,w-2,1);
   // enredadera por el borde de arriba, con hojas que se mecen
   ctx.fillStyle='#2e7a30'; for(let xx=x-1;xx<x+w+1;xx++){ const vy=y-2+Math.round(Math.sin(xx*.33)); ctx.fillRect(xx,vy,1,1); }
-  for(let xx=x+7;xx<x+w-4;xx+=15) leafPx(xx,y-3+Math.round(Math.sin(xx*.33)),((xx-x)/15|0)%2===0,true);
-  leafPx(x-2,y-2,true,true); leafPx(x+w-2,y+h-1,true,true); leafPx(x+w-4,y-3,false,true);
-  return F;
+  return F; // las hojas que se mecen van en vivo (frameLive)
 }
 /* texto con palabras clave (MAYÚSCULAS, números) que ondulan y brillan; cada letra nueva cae en su sitio */
 function drawRichLine(ln,x,y,budget,F,live){

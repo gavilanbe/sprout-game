@@ -15,7 +15,7 @@ numerados — datos primero, lógica después, arranque al final.
 | Módulo | Qué vive aquí |
 |---|---|
 | `js/00-version.js` | `GAME_VERSION` (la escribe `scripts/version.cjs`; sale en el arranque) |
-| `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL` (sprites) y `C` (mundo), utilidades (`hash`, `mkCanvas`, `mix`, `shade`) |
+| `js/01-core.js` | Canvas, constantes (`TILE`, `VW/VH`…), paletas `PAL` (sprites) y `C` (mundo), utilidades (`hash`, `mkCanvas`, `mix`, `shade`), `blobArt`, el arte a búfer (`pxBuf`, `pxCtx`, `pxStamp`, `pxPlain`) y la cola de los ratos libres (`idleTask`, `runIdle`) |
 | `js/01a-font.js` | Tipografía de píxel propia: `FONT_M` (proporcional, mayúsculas de 7 px, tildes) y `FONT_S` (versalitas de 5 px). `drawText`, `textW`, `wrapPx`. Atlas en blanco + tintado cacheado |
 | `js/02-sprites.js` | `spr`/`sprN` (filas de texto → canvas), héroe (4 direcciones, 2 fotogramas, ataque, alzar objeto), vecinos, criaturas (`E_SPR`), minijefes 24 px y guardianes 32 px (`BOSS_SPR`), objetos, amuletos, iconos, logo y Gran Roble |
 | `js/03-tiles.js` | Arte de tiles procedural con caché (`cached`), paletas por bioma (`BIOMES`), **autotiles** (agua, acantilado, muro, camino, arena, barro), leyenda (`GROUND`, `SOLID`, `ENEMY_MARK`…) y `renderScreenTo()` |
@@ -23,7 +23,7 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/05-texts.js` | `TXT`, `AMULETS`, `DIARY`, `RUNAS`, `NPC_TALK`, `CINE`, treguas, `MID_INTRO`, `ROOM_HINTS`, `CREDITS` — todo el guion |
 | `js/06-audio.js` | Chiptune WebAudio: buses de música y efectos (`musicBus`/`sfxBus`, volúmenes de `opts` con `applyVolumes`), un bus por voz con paneo y eco, `beep`/`noise`/`note`, batería `DRUMS`, `SFX.*` y `TRACKS` (19 pistas; cada vuelta varía: octava con arpegio, dúo armonizado, redobles). `setTrack` ignora pistas desconocidas; `musicIntensity(0-2)` acelera y espesa las pistas `adaptive` (jefes); `musicAmbush(on)` pone `emboscada` y devuelve la anterior |
 | `js/07-state.js` | Estado global (flags de progreso, `player`, inventario, amuletos), `hurt()`, `say()`/`ask()` y `paginate()` |
-| `js/08-world.js` | Regiones y biomas (`regionOf`, `screenBiome`), `loadScreen()` (spawnea la pantalla), fondo pre-renderizado (`rebuildBg`/`markDirty`), colisiones, partículas |
+| `js/08-world.js` | Regiones y biomas (`regionOf`, `screenBiome`), `loadScreen()` (spawnea la pantalla), fondo pre-renderizado por fotogramas y cuando hace falta (`rebuildBg`/`bgEnsure`/`markDirty`; las pantallas vecinas se precalientan con `warmNeighbors`), colisiones, partículas |
 | `js/08a-fx.js` | Efectos: partículas con tipo (`dust`, `spark`, `smoke`, `blade`, `mote`, `leafF`, `firefly`, `ripple`), `stepDust`, `hitSpark`, `deathPoof`, `bladeBits`, `collectBurst`, ambiente por lugar, destello de pantalla y viñeta de daño |
 | `js/09-player.js` | Movimiento con deslizamiento en esquinas, Hoja, remolino, empujar bloques, cortar, cristales, antorchas, `interact()` (todo lo que se hace con Z), objetos de X (`useItem`), gancho, vaina, salto, tiendas |
 | `js/10-progress.js` | Guardado (3 slots), `newGame()`, `questList()` (derivada del estado), entregas visibles, `bloom()` |
@@ -47,7 +47,7 @@ numerados — datos primero, lógica después, arranque al final.
 | `js/16-input.js` | Teclado reasignable (`opts.keys`, `assignKey` intercambia si choca, `resetKeys`; WASD/espacio/Esc como alternativas; `keys.menuHeld`), mando con vibración (`rumble`) y la lógica de la pestaña AJUSTES (`OPT_ROWS`, `updOptions`, `updRemap`); se dibuja en `drawOptions`/`drawRemap` de 15b |
 | `js/16a-shell.js` | La consola de la página: `present()` copia `cv` (160×144, oculto) a `#screen` con píxeles exactos (escala entera directa; si no, múltiplo entero y suavizado) más la rejilla LCD (`lcdGrid`); `fit()` elige consola horizontal o vertical y la escala (entera en escritorio; en móvil, a pantalla completa con mandos de pulgar); etiquetas, logotipo gavilanbe y logo de SPROUT pintados con la fuente del juego (`pixCanvas`, `textArt`, `shellLabels`); mandos por puntero (cruceta que se desliza en 8 sentidos, botones con captura, vibración), botones que se hunden con teclado o mando y el LED de la savia (`shellFeedback`), colores de carcasa (`SHELL_THEMES`, `applyShellTheme`), MÚSICA (`toggleMusic`) y pantalla completa. El arranque «gavilanbe®» (`GAVI_GLYPHS`, `drawBoot`) vive en 15-ui |
 | `js/16b-pwa.js` | La aplicación: registra `sw.js` (`updateViaCache:'none'`), avisos en píxeles (`showNotice`: versión nueva, actualizado, listo sin red, instalar, pista de iPhone), actualizaciones (`controllerchange` → se aplica sola en arranque/título/partidas; jugando, aviso y al volver al título; guarda antes con `pwaApply`), `beforeinstallprompt`, pantalla encendida (`wakeLock`), pausa + guardado + audio suspendido al ocultarse la app, almacenamiento persistente |
-| `js/17-boot.js` | API de debug `window.__sprout`, arranque y bucle a 60 Hz |
+| `js/17-boot.js` | API de debug `window.__sprout`, arranque (encola en los ratos libres el arte que hará falta pronto) y bucle a 60 Hz: pinta solo si el juego avanzó y aprovecha lo que sobra del fotograma para `runIdle` |
 
 Regla de oro: **los datos no llaman a la lógica**. Sprites, tiles, mapas y
 textos (02–05) son declarativos; la lógica (08–13) los consume. Si un texto
@@ -140,6 +140,33 @@ mapas, puzles, objetos, jefes y guardado.
 - `sw.js`: precarga atómica por versión (`sprout-<versión>`), el juego arranca siempre de la caché, lo demás red primero con copia (`sprout-runtime`). Se activa al instalarse; la página decide cuándo recargar (16b).
 - `scripts/version.cjs`: la versión es la fecha del último cambio más un hash del contenido de todo lo precargado; reescribe `VERSION` y la lista `PRECACHE` de `sw.js` (desde los `<script>` de `index.html`) y `js/00-version.js`. **Ejecútalo antes de cada commit** (`npm run bump`); `--check` lo usa una prueba.
 - `.nojekyll`: GitHub Pages sirve los ficheros tal cual.
+
+
+## Rendimiento
+
+El juego pinta a 160×144 en un lienzo pequeño que el navegador rasteriza en la
+CPU, así que lo que cuesta es el **número de órdenes de dibujo**, no su tamaño.
+Reglas que sigue el código (y que conviene mantener):
+
+- **Arte píxel a píxel → búfer.** `pxBuf(w,h)`, `pxCtx(canvas)` (un contexto de
+  bolsillo con `fillStyle`/`fillRect`/`drawImage`) y `pxStamp` en `01-core.js`:
+  los píxeles opacos van a un búfer de 32 bits y se vuelcan de una vez. `blobArt`,
+  `artOutline`, `bandSky`, las capas del paralaje, la colina del título, la corteza
+  de la intro, las hojas y las raíces del sueño ya lo usan.
+- **Solo a opacidad plena.** Con `globalAlpha<1` o colores semitransparentes, un
+  bloque y muchos píxeles sueltos redondean distinto (±1): ahí se pinta como
+  siempre. `pxPlain(g)` dice si un contexto admite el atajo.
+- **Cachés que reciclan.** `drawText` guarda las frases que se repiten; `drawFrame`
+  compone el marco una vez por sitio y tamaño; `bigSprout` y `cuBase` reutilizan el
+  lienzo que sale de la caché; `caPolar` copia filas de un mapa polar común.
+- **Los ratos libres** (`idleTask`, `runIdle` en el bucle de `17-boot.js`): arte que
+  se necesitará pronto (la tormenta del título, la tierra, las armas), los
+  fotogramas del fondo que aún no se ven (`bgEnsure`) y las pantallas vecinas
+  (`warmNeighbors`). Una tarea debe ser corta (unos milisegundos en un móvil).
+- **Pintar solo si el juego avanza** (`loop`) y la rejilla LCD en su capa (`#lcd`).
+
+Para medir y comprobar: [tools/perf/README.md](tools/perf/README.md)
+(`npm run perf` mide; `npm run perf:pixels` demuestra que no cambió ni un píxel).
 
 ## El tráiler
 

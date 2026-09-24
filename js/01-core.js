@@ -67,6 +67,44 @@ function rgb2hex(r,g,b){return '#'+[r,g,b].map(v=>Math.round(clamp(v,0,255)).toS
 function mix(a,b,k){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(lerp(A[0],B[0],k),lerp(A[1],B[1],k),lerp(A[2],B[2],k));}
 function shade(h,k){ return k<0?mix(h,'#101018',-k):mix(h,'#ffffff',k); }
 const BAYER4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+/* ---------- píxeles a mano, deprisa ----------
+   El arte se genera píxel a píxel; miles de fillRect de 1×1 son lentos. pxBuf guarda los píxeles en un búfer
+   de 32 bits y los vuelca de una vez: con colores opacos el resultado es idéntico al de fillRect. */
+const PX_LE=new Uint8Array(new Uint32Array([1]).buffer)[0]===1, PX_COL=new Map();
+function pxCol(c){ let v=PX_COL.get(c); if(v!==undefined) return v; // '#rrggbb' → el entero de 32 bits del píxel; null si no es opaco
+  const m=typeof c==='string'&&/^#[0-9a-fA-F]{6}$/.test(c)?parseInt(c.slice(1),16):null;
+  v=m===null?null:PX_LE?(0xff000000|((m&0xff)<<16)|(m&0xff00)|((m>>16)&0xff))>>>0:((m<<8)|0xff)>>>0; PX_COL.set(c,v); return v; }
+function rgb32(c){ return PX_LE?(0xff000000|(c[2]<<16)|(c[1]<<8)|c[0])>>>0:((c[0]<<24)|(c[1]<<16)|(c[2]<<8)|0xff)>>>0; } // [r,g,b] → el píxel opaco de 32 bits
+function pxBuf(w,h,bg){ const img=new ImageData(w,h), d=new Uint32Array(img.data.buffer); if(bg) d.fill(pxCol(bg));
+  return {w,h,d,img,
+    set(x,y,c){ if(x>=0&&y>=0&&x<w&&y<h) d[y*w+x]=pxCol(c); },
+    rect(x,y,rw,rh,c){ const v=pxCol(c), x0=Math.max(0,x), y0=Math.max(0,y), x1=Math.min(w,x+rw), y1=Math.min(h,y+rh); for(let yy=y0;yy<y1;yy++) d.fill(v,yy*w+x0,yy*w+x1); },
+    canvas(){ const c=mkCanvas(w,h); c.getContext('2d').putImageData(img,0,0); return c; },
+    into(g,ox,oy){ pxStamp(g,img,ox||0,oy||0); } }; }
+/* vuelca un ImageData sobre g con source-over (lo transparente no toca lo que hay debajo): a través de un lienzo auxiliar */
+let PX_SCR=null;
+function pxStamp(g,img,ox,oy){ if(!PX_SCR||PX_SCR.width<img.width||PX_SCR.height<img.height) PX_SCR=mkCanvas(Math.max(img.width,PX_SCR?PX_SCR.width:0),Math.max(img.height,PX_SCR?PX_SCR.height:0));
+  PX_SCR.getContext('2d').putImageData(img,0,0); g.drawImage(PX_SCR,0,0,img.width,img.height,ox,oy,img.width,img.height); }
+/* un contexto de bolsillo para generar arte: fillStyle/fillRect/drawImage como los de verdad, pero los rectángulos
+   opacos van al búfer y se vuelcan juntos (en orden: cualquier otra cosa vuelca primero lo pendiente) */
+function pxCtx(c){ const real=c.getContext('2d'), w=c.width, h=c.height, plain=pxPlain(real); let B=null, dirty=false, style='#000000', v=pxCol(style);
+  const flush=()=>{ if(dirty){ pxStamp(real,B.img,0,0); B.d.fill(0); dirty=false; } };
+  return { canvas:c,
+    get fillStyle(){ return style; }, set fillStyle(s){ style=s; v=pxCol(s); },
+    fillRect(x,y,rw,rh){ if(plain&&v!==null&&Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(rw)&&Number.isInteger(rh)&&rw>0&&rh>0){
+        if(!B) B=pxBuf(w,h); const x0=Math.max(0,x), y0=Math.max(0,y), x1=Math.min(w,x+rw), y1=Math.min(h,y+rh); for(let yy=y0;yy<y1;yy++) if(x1>x0) B.d.fill(v,yy*w+x0,yy*w+x1); dirty=true; }
+      else { flush(); real.fillStyle=style; real.fillRect(x,y,rw,rh); } },
+    drawImage(...a){ flush(); real.drawImage(...a); },
+    done(){ flush(); return c; } }; }
+/* ¿pintar en g con drawImage da lo mismo que con fillRect? (sin transparencia global, sin mezclas raras, sin escalas ni giros, sin sombras) */
+function pxPlain(g){ if(g.globalAlpha!==1||g.globalCompositeOperation!=='source-over'||(g.filter&&g.filter!=='none')||g.shadowBlur||g.shadowOffsetX||g.shadowOffsetY) return false;
+  const m=g.getTransform?g.getTransform():null; return !m||(m.a===1&&m.b===0&&m.c===0&&m.d===1&&Number.isInteger(m.e)&&Number.isInteger(m.f)); }
+/* ---------- trabajo para los ratos libres ----------
+   Tareas cortas (generar arte, preparar la pantalla de al lado...) que el bucle hace cuando al fotograma le sobra
+   tiempo, para que no lo tenga que hacer de golpe el fotograma que lo necesita. key: no repetir la misma tarea. */
+const IDLE_Q=[], IDLE_KEYS=new Set();
+function idleTask(fn,key){ if(key!==undefined){ if(IDLE_KEYS.has(key)) return; IDLE_KEYS.add(key); } IDLE_Q.push(fn); }
+function runIdle(until){ while(IDLE_Q.length&&performance.now()<until){ const fn=IDLE_Q.shift(); try{ fn(); }catch(e){ console.error(e); } } }
 /* ---------- volúmenes por lóbulos: copas, arbustos, rocas ----------
    Cada lóbulo es una esfera; el de delante gana. La luz viene de
    arriba-izquierda; entre lóbulos hay sombra de contacto; el paso
@@ -76,15 +114,18 @@ function blobArt(g,ox,oy,w,h,lobes,pal,o){
   for(let y=0;y<h;y++) for(let x=0;x<w;x++) for(let i=lobes.length-1;i>=0;i--){ const L=lobes[i], dx=(x+.5-L.x)/L.r, dy=(y+.5-L.y)/(L.ry||L.r); if(dx*dx+dy*dy<=1){ own[y*w+x]=i; break; } }
   const at=(x,y)=>x<0||y<0||x>=w||y>=h?-1:own[y*w+x];
   const lx=-.5, ly=-.72, lz=.48, dith=o.dither===undefined?.9:o.dither, bias=o.bias||0, grad=o.grad===undefined?.35:o.grad;
+  // la vía rápida: colores opacos, origen entero y un lienzo sin transformaciones raras → a un búfer y de una vez
+  const PC=pal.map(pxCol), fast=Number.isInteger(ox)&&Number.isInteger(oy)&&PC.every(v=>v!==null)&&(o.outline===false||pxCol(o.outline||PAL.k)!==null)&&pxPlain(g), B=fast?pxBuf(w+2,h+2):null;
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=own[y*w+x]; if(i<0) continue;
     const L=lobes[i], nx=(x+.5-L.x)/L.r, ny=(y+.5-L.y)/(L.ry||L.r), nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
     let d=nx*lx+ny*ly+nz*lz+bias-(y/h-.5)*grad;
     // sombra de contacto bajo/tras los lóbulos de delante
     if(at(x,y-1)>i||at(x-1,y)>i) d-=.55; else if(at(x,y-2)>i||at(x+1,y)>i) d-=.28;
     const v=(d+.9)/1.8*(n-1)+(BAYER4[y&3][x&3]/16-.47)*dith;
-    const c=clamp(Math.round(v),0,n-1); g.fillStyle=pal[c]; g.fillRect(ox+x,oy+y,1,1); }
-  if(o.outline!==false){ g.fillStyle=o.outline||PAL.k;
-    for(let y=-1;y<=h;y++) for(let x=-1;x<=w;x++){ if(at(x,y)>=0) continue; if(at(x+1,y)>=0||at(x-1,y)>=0||at(x,y+1)>=0||at(x,y-1)>=0) g.fillRect(ox+x,oy+y,1,1); } }
+    const c=clamp(Math.round(v),0,n-1); if(B) B.d[(y+1)*(w+2)+x+1]=PC[c]; else { g.fillStyle=pal[c]; g.fillRect(ox+x,oy+y,1,1); } }
+  if(o.outline!==false){ const oc=o.outline||PAL.k, ov=B?pxCol(oc):0; if(!B) g.fillStyle=oc;
+    for(let y=-1;y<=h;y++) for(let x=-1;x<=w;x++){ if(at(x,y)>=0) continue; if(at(x+1,y)>=0||at(x-1,y)>=0||at(x,y+1)>=0||at(x,y-1)>=0){ if(B) B.d[(y+1)*(w+2)+x+1]=ov; else g.fillRect(ox+x,oy+y,1,1); } } }
+  if(B) B.into(g,ox-1,oy-1); // de una vez: los mismos píxeles que con un fillRect por píxel
   return own;
 }
 function shadowBlob(g,cx,cy,rx,ry,a){ g.fillStyle='rgba(18,26,14,'+(a||.26)+')'; for(let y=-ry;y<=ry;y++){ const w=Math.round(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry)))); g.fillRect(cx-w,cy+y,w*2,1); } }

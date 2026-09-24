@@ -22,9 +22,16 @@ window.__sprout={
 /* ---------- ARRANQUE ---------- */
 loadScreen(9,9); setTrack('silencio'); // el tema del título entra en la intro (15h), al posarse la bellota
 let lastT=null, acc=0; const STEP=1000/60;
+// lo que el título y el juego necesitarán pronto, preparado en los ratos libres mientras sale el logo de gavilanbe
+tiPrewarm(); soilPrewarm(); if(typeof MOMENT_ARMS!=='undefined') for(const k of Object.keys(MOMENT_ARMS)) idleTask(()=>bigWeapon(k),'arma|'+k);
+idleTask(caPolarBig,'polar'); // el mapa de ángulos de los rayos de las cinemáticas
 function loop(now){
+  const dt=lastT===null?STEP:now-lastT;
   if(lastT===null) lastT=now; acc+=Math.min(now-lastT,100); lastT=now; pollGamepad();
   let n=0; while(acc>=STEP&&n<4){ if(!window.__manual) update(); acc-=STEP; n++; } if(acc>=STEP) acc=0;
-  draw(); present(); requestAnimationFrame(loop); // present(): de `cv` a la pantalla de la consola (16a)
+  // solo se pinta si el juego avanzó: en pantallas de 90-144 Hz no se repite el mismo fotograma (present: de `cv` a la consola, 16a)
+  if(n>0||needPresent||window.__manual){ needPresent=false; draw(); present(); }
+  if(IDLE_Q.length) runIdle(now+clamp(dt*.6,4,10)); // lo que sobre del fotograma, para tareas cortas (arte, fondos, la pantalla de al lado)
+  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

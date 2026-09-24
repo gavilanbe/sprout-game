@@ -5,10 +5,11 @@ function startTransition(dx,dy){
   if(!MAPS[nx+','+ny]){ return; }
   if(!elderMet&&introDone&&inTown(sx,sy)&&!inTown(nx,ny)){
     pendingSay=["(Tus raíces se\nclavan en el\nsuelo...","La voz del GRAN\nROBLE aún te\nreclama. Ve a la\nplaza.)"]; return; }
-  if(bgDirty) rebuildBg();
+  if(bgDirty) rebuildBg(); bgEnsure(bgFrame());
   const a=mkCanvas(160,128); { const g=a.getContext('2d'); g.drawImage(bgCanvas[bgFrame()],0,0); g.drawImage(fgCanvas[bgFrame()],0,0); }
   const oldEnemies=enemies.map(e=>({...e})), oldNpcs=npcs.slice(), oldElder=elderPos;
   loadScreen(nx,ny); rebuildBg();
+  bgEnsure(bgFrame());
   const b=mkCanvas(160,128); { const g=b.getContext('2d'); g.drawImage(bgCanvas[bgFrame()],0,0); g.drawImage(fgCanvas[bgFrame()],0,0); }
   trans={dx,dy,t:0,dur:dx?28:24,a,b};
   state='trans';
@@ -50,7 +51,7 @@ function update(){
   if(state==='boot'){
     bootT++;
     if(bootGo>0){ bootGo--; if(bootGo===0){ state='title'; titleT=0; parts=[]; } return; }
-    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(); SFX.gbDing(); bootGo=66; if(bootT<BOOT_LAND) bootT=BOOT_LAND; } // la música no suena hasta que la bellota se posa en el logo (15h)
+    if((keys.fire||keys.alt)&&fontsReady){ keys.fire=false; keys.alt=false; audio(true); SFX.gbDing(); bootGo=66; if(bootT<BOOT_LAND) bootT=BOOT_LAND; } // la música no suena hasta que la bellota se posa en el logo (15h)
     return;
   }
   if(state==='title'){ updTitle(); return; }

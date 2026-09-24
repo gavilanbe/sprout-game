@@ -286,6 +286,15 @@ npm install && npx playwright install chromium && npm test
 | `npm run bump` | Calcula la versión (fecha y hash del contenido) y la escribe en `sw.js` y `js/00-version.js`; las pruebas fallan si se te olvida |
 | `npm run icons` | Redibuja los iconos y las pantallas de arranque de iOS con los sprites del juego |
 | `npm run trailer` | Renderiza el tráiler en 16:9 y 9:16 con el propio juego |
+| `npm run perf` | Mide el coste de cada fotograma en ~30 escenas (`--throttle 4`: como en un móvil medio) |
+| `npm run perf:pixels` | Comprueba que el juego pinta exactamente lo mismo que el último commit |
+
+**Rendimiento.** El juego pinta solo cuando avanza, prepara en los ratos libres lo
+que va a necesitar (el arte del título, la pantalla de al lado) y agrupa las
+órdenes de dibujo. `npm run perf` mide unas treinta escenas (también con la CPU
+4× más lenta) y `npm run perf:pixels` comprueba, fotograma a fotograma, que una
+optimización no cambia ni un píxel. Detalles en
+[tools/perf/README.md](tools/perf/README.md).
 
 **Experimento aparte:** [La primera semilla](slice.html) es una demo independiente
 de tres pantallas con sprites generados por imagen, a 320 × 288 con escalado

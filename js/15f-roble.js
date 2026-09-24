@@ -75,7 +75,8 @@ function robleTick(){ // cada fotograma en la plaza
 }
 /* la copa en tiras de 2 px con un vaivén que se apaga hacia el tronco */
 function robleSwayOff(yy,amp,ph){ const k=Math.max(0,1-yy/56); return Math.round(Math.sin(ph+yy*.09)*amp*k); }
-function roblePaint(img,x,y,amp,ph,clip){ for(let yy=0;yy<img.height;yy+=2){ if(clip&&!clip(yy)) continue; ctx.drawImage(img,0,yy,img.width,2,x+robleSwayOff(yy,amp,ph),y+yy,img.width,2); } }
+function roblePaint(img,x,y,amp,ph,clip){ const H=img.height, join=ctx.globalAlpha===1&&ctx.globalCompositeOperation==='source-over'; // tiras de 2 px; a opacidad plena, las seguidas con el mismo desplazamiento se copian juntas (con transparencia Chrome redondea distinto)
+  for(let yy=0;yy<H;){ if(clip&&!clip(yy)){ yy+=2; continue; } const o=robleSwayOff(yy,amp,ph); let y2=yy+2; while(join&&y2<H&&(!clip||clip(y2))&&robleSwayOff(y2,amp,ph)===o) y2+=2; const h=Math.min(y2,H)-yy; ctx.drawImage(img,0,yy,img.width,h,x+o,y+yy,img.width,h); yy=y2; } }
 function drawRoble(ox,oy){ const ph=tick*.03, amp=ROBLE.amp, W=ROBLE.wave;
   if(W&&W.k<1&&W.from!==W.to){ // una estación que se extiende desde el tronco por la copa
     roblePaint(ROBLE_ART[W.from],ox,oy,amp,ph);
@@ -118,7 +119,7 @@ function startRite(kind,cb){ const A=altarOf(kind)||null;
   state='rite'; toast=null; player.dir=0; player.atk=player.spin=player.charge=0; }
 /* el momento en que la estación vuelve de verdad: se marca, se guarda y el Roble cambia */
 function riteCommit(R){ if(R.done) return; R.done=true;
-  if(bgDirty||!bgCanvas[0]) rebuildBg(); R.bgOld=bgCanvas.map(c=>{ const k=mkCanvas(160,128); if(c) k.getContext('2d').drawImage(c,0,0); return k; }); // la plaza de antes
+  if(bgDirty||!bgCanvas[0]) rebuildBg(); bgEnsureAll(); R.bgOld=bgCanvas.map(c=>{ const k=mkCanvas(160,128); if(c) k.getContext('2d').drawImage(c,0,0); return k; }); // la plaza de antes
   if(R.kind==='semillas'){ won=true; bloom(); } else if(R.kind==='primavera') thawed=true; else if(R.kind==='verano') summered=true; else if(R.kind==='otono') autumned=true; else { cycled=true; SEASON_T0=tick; }
   for(const k in THUMBS) delete THUMBS[k]; // el mapa se repinta con la estación nueva
   markDirty(); save(); R.tCommit=R.t;

@@ -19,21 +19,22 @@
      rojo con poca vida. Cuatro colores de carcasa en AJUSTES.
    ============================================================ */
 const SHELL=document.getElementById('console'), SCR=document.getElementById('screen'), SG=SCR.getContext('2d');
-const DPAD=document.getElementById('dpad'), LED=document.getElementById('led');
+const DPAD=document.getElementById('dpad'), LED=document.getElementById('led'), LCD=document.getElementById('lcd');
 const TOUCH=window.matchMedia('(pointer: coarse)').matches;
 if(TOUCH) document.body.classList.add('touch');
 const SHELL_THEMES=[['marfil','MARFIL','#e6dcc5'],['salvia','SALVIA','#b5cca1'],['baya','BAYA','#d2495f'],['uva','UVA','#6f5bbd']];
-let MID=null, MIDG=null, midN=0, GRID=null, gridN=0, shellU=4, shellLay='wide', selT=0;
+let MID=null, MIDG=null, midN=0, GRID=null, gridN=0, shellU=4, shellLay='wide', selT=0, needPresent=true; // needPresent: repintar aunque el juego no haya avanzado (p. ej. tras cambiar de tamaño, que borra el lienzo)
 const SHELL_T0=performance.now();
 
 /* ---------- la pantalla: píxeles iguales a cualquier tamaño, con rejilla LCD ---------- */
-function lcdGrid(W,H){ // la rejilla, a píxeles físicos exactos en cada borde entre píxeles del juego (sin muaré al reescalar)
-  const key=W+'x'+H; if(GRID&&gridN===key) return GRID; gridN=key; GRID=mkCanvas(W,H); const g=GRID.getContext('2d'), k=W/VW;
-  if(k<3) return GRID;
+function lcdGrid(W,H,into){ // la rejilla, a píxeles físicos exactos en cada borde entre píxeles del juego (sin muaré al reescalar)
+  const key=W+'x'+H; if(!into&&GRID&&gridN===key) return GRID; let g;
+  if(into){ g=into.getContext('2d'); g.clearRect(0,0,W,H); } else { gridN=key; GRID=mkCanvas(W,H); g=GRID.getContext('2d'); }
+  const k=W/VW; if(k<3) return into||GRID;
   g.fillStyle='rgba(0,0,0,'+(k>=6?.09:k>=4?.07:.05)+')';
   for(let i=1;i<=VW;i++) g.fillRect(Math.round(i*W/VW)-1,0,1,H); for(let j=1;j<=VH;j++) g.fillRect(0,Math.round(j*H/VH)-1,W,1);
   g.fillStyle='rgba(255,255,255,.03)'; for(let j=0;j<VH;j++) g.fillRect(0,Math.round(j*H/VH),W,1);
-  return GRID; }
+  return into||GRID; }
 function present(){
   const W=SCR.width, H=SCR.height;
   if(W&&H){ const N=Math.max(1,Math.ceil(W/VW-1e-6));
@@ -41,7 +42,7 @@ function present(){
     else { if(!MID||midN!==N){ midN=N; MID=mkCanvas(VW*N,VH*N); MIDG=MID.getContext('2d'); }
       MIDG.imageSmoothingEnabled=false; MIDG.drawImage(cv,0,0,VW*N,VH*N);
       SG.imageSmoothingEnabled=true; SG.imageSmoothingQuality='high'; SG.drawImage(MID,0,0,W,H); }
-    SG.drawImage(lcdGrid(W,H),0,0); }
+    if(!LCD) SG.drawImage(lcdGrid(W,H),0,0); } // la rejilla va en su propia capa (#lcd), pintada una sola vez en fit()
   shellFeedback(); }
 
 /* ---------- pintar con los píxeles del juego en la página ---------- */
@@ -104,7 +105,8 @@ function fit(){
     V={bt:8,bs:11,bb:13,bp:6*u,brandh:18*u,ctrlh:62*u,dp:34*u,ab:15*u,pw:12*u,ph:3.6*u,padw:46*u};
   }
   const W=Math.max(VW,Math.round(VW*u*dpr)), H=Math.round(W*VH/VW); u=W/dpr/VW; // la pantalla, a píxeles físicos enteros
-  SCR.width=W; SCR.height=H; SCR.style.width=(W/dpr)+'px'; SCR.style.height=(H/dpr)+'px';
+  SCR.width=W; SCR.height=H; SCR.style.width=(W/dpr)+'px'; SCR.style.height=(H/dpr)+'px'; needPresent=true;
+  if(LCD){ LCD.width=W; LCD.height=H; LCD.style.width=SCR.style.width; LCD.style.height=SCR.style.height; lcdGrid(W,H,LCD); }
   shellU=u; shellLay=lay; SHELL.className='console '+lay+(TOUCH?' m':'')+(SHELL.classList.contains('ready')?' ready':'');
   const S=SHELL.style, px=v=>(+v).toFixed(2)+'px';
   S.setProperty('--u',px(u)); S.setProperty('--bt',px(V.bt*u)); S.setProperty('--bs',px(V.bs*u)); S.setProperty('--bb',px(V.bb*u)); S.setProperty('--bp',px(V.bp));
@@ -121,7 +123,7 @@ function toggleMusic(){ musicOn=!musicOn; try{ localStorage.setItem('sprout.musi
 function shellSelect(){ selT=10; }
 function bindBtn(id,k,fn){ const el=document.getElementById(id); if(!el) return; let pid=null;
   el.addEventListener('pointerdown',e=>{ e.preventDefault(); if(pid!==null) return; pid=e.pointerId; try{ el.setPointerCapture(pid); }catch(_){}
-    try{ audio(); }catch(_){} if(fn) fn(); else press(k,true); buzz(10); });
+    try{ audio(true); }catch(_){} if(fn) fn(); else press(k,true); buzz(10); });
   const up=e=>{ if(e.pointerId!==pid) return; pid=null; if(!fn) press(k,false); };
   el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up); el.addEventListener('lostpointercapture',up); }
 bindBtn('tA','fire'); bindBtn('tB','alt'); bindBtn('tM','menu'); bindBtn('tS',null,toggleMusic);
@@ -136,12 +138,12 @@ function dpDir(e){ const r=DPAD.getBoundingClientRect(), x=e.clientX-(r.left+r.w
 function dpSet(dx,dy){ const want={left:dx<0,right:dx>0,up:dy<0,down:dy>0}; let moved=false;
   for(const k in want) if(want[k]!==dpHeld[k]){ dpHeld[k]=want[k]; keys[k]=want[k]; if(want[k]) moved=true; }
   if(moved) buzz(6); }
-DPAD.addEventListener('pointerdown',e=>{ e.preventDefault(); if(dpId!==null) return; dpId=e.pointerId; try{ DPAD.setPointerCapture(dpId); }catch(_){} try{ audio(); }catch(_){} dpSet(...dpDir(e)); });
+DPAD.addEventListener('pointerdown',e=>{ e.preventDefault(); if(dpId!==null) return; dpId=e.pointerId; try{ DPAD.setPointerCapture(dpId); }catch(_){} try{ audio(true); }catch(_){} dpSet(...dpDir(e)); });
 DPAD.addEventListener('pointermove',e=>{ if(e.pointerId===dpId) dpSet(...dpDir(e)); });
 const dpUp=e=>{ if(e.pointerId!==dpId) return; dpId=null; dpSet(0,0); };
 DPAD.addEventListener('pointerup',dpUp); DPAD.addEventListener('pointercancel',dpUp); DPAD.addEventListener('lostpointercapture',dpUp);
 /* en el arranque, tocar la pantalla vale por Z */
-SCR.addEventListener('pointerdown',e=>{ if(state==='boot'){ e.preventDefault(); keys.fire=true; try{ audio(); }catch(_){} } });
+SCR.addEventListener('pointerdown',e=>{ if(state==='boot'){ e.preventDefault(); keys.fire=true; try{ audio(true); }catch(_){} } });
 /* pantalla completa (donde el navegador la deja) */
 (function(){ const b=document.getElementById('fsBtn'); if(!b) return;
   if(!document.fullscreenEnabled){ b.remove(); return; }

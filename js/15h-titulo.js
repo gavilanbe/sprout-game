@@ -80,47 +80,55 @@ function tiPlink(i){ if(!AC) return; const t=AC.currentTime; beep('p125',f([81,8
 /* ---------- el arte de la tormenta (se prepara la primera vez) ---------- */
 let TI_ART=null;
 const TI_K='#07080f';
-function tiArt(){ if(TI_ART) return TI_ART; const A={};
-  A.sky=mkCanvas(160,144); { const g=A.sky.getContext('2d'); bandSky(g,160,112,['#05051a','#0b0b26','#151434','#211e40']); g.fillStyle='#211e40'; g.fillRect(0,112,160,32); }
-  const cloud=(seed,pal,h)=>{ const c=mkCanvas(320,h), g=c.getContext('2d'), r=seeded(seed);
-    for(let i=0;i<9;i++){ const x=((i*36+r()*14)|0)-10, y=((r()*h*.25)|0)-4, L=[{x:18,y:14,r:12,ry:8},{x:34,y:10,r:14,ry:9},{x:50,y:15,r:11,ry:7},{x:32,y:19,r:17,ry:7}];
-      for(const ox of [x,x-320]) blobArt(g,ox,y,70,h,L,pal,{outline:false,grad:.7,dither:.6}); }
-    return c; };
-  A.cf=cloud(3,['#0b0b22','#10102c','#161636','#1c1c40','#23234a'],40); A.cn=cloud(8,['#06061a','#0a0a20','#0e0e28','#131330','#191938'],34);
-  A.cfL=cloud(3,['#39406c','#525c8a','#707eac','#94a4d0','#c0ccee'],40); A.cnL=cloud(8,['#252a50','#323a64','#44507c','#5a6694','#7886b2'],34);
-  const P=PARA[1]; A.mount=proNightArt(P.mount,'#3c4474'); A.hills=proNightArt(P.hills,'#303a64'); A.hill=proNightArt(TITLE_HILL[1],'#303a64');
-  A.oak=proNightArt(OAK_SEASON[1],'#4a5890'); A.oakG=proNightArt(proGreyArt(OAK_SEASON[1]),'#5a6078');
-  A.sMount=tintTo(P.mount,TI_K); A.sHills=tintTo(P.hills,TI_K); A.sHill=tintTo(TITLE_HILL[1],TI_K); A.sOak=tintTo(OAK_SEASON[1],TI_K);
-  const G=windArt({s:3,mood:'storm'}); A.giantS=tintTo(G,'#3c4680'); A.giant=tintTo(G,'#232a54');
-  A.bark=tiBarkArt();
-  return TI_ART=A; }
+/* el arte de la tormenta va por piezas: el arranque las prepara en los ratos libres (tiPrewarm) y el título no se atasca al empezar */
+function tiCloud(seed,pal,h){ const c=mkCanvas(320,h), g=c.getContext('2d'), r=seeded(seed);
+  for(let i=0;i<9;i++){ const x=((i*36+r()*14)|0)-10, y=((r()*h*.25)|0)-4, L=[{x:18,y:14,r:12,ry:8},{x:34,y:10,r:14,ry:9},{x:50,y:15,r:11,ry:7},{x:32,y:19,r:17,ry:7}];
+    for(const ox of [x,x-320]) blobArt(g,ox,y,70,h,L,pal,{outline:false,grad:.7,dither:.6}); }
+  return c; }
+const TI_A={}, TI_PARTS=[
+  A=>{ A.sky=mkCanvas(160,144); const g=A.sky.getContext('2d'); bandSky(g,160,112,['#05051a','#0b0b26','#151434','#211e40']); g.fillStyle='#211e40'; g.fillRect(0,112,160,32); },
+  A=>{ A.cf=tiCloud(3,['#0b0b22','#10102c','#161636','#1c1c40','#23234a'],40); },
+  A=>{ A.cn=tiCloud(8,['#06061a','#0a0a20','#0e0e28','#131330','#191938'],34); },
+  A=>{ A.cfL=tiCloud(3,['#39406c','#525c8a','#707eac','#94a4d0','#c0ccee'],40); },
+  A=>{ A.cnL=tiCloud(8,['#252a50','#323a64','#44507c','#5a6694','#7886b2'],34); },
+  A=>{ const P=PARA[1]; A.mount=proNightArt(P.mount,'#3c4474'); A.hills=proNightArt(P.hills,'#303a64'); A.hill=proNightArt(TITLE_HILL[1],'#303a64'); },
+  A=>{ A.oak=proNightArt(OAK_SEASON[1],'#4a5890'); A.oakG=proNightArt(proGreyArt(OAK_SEASON[1]),'#5a6078'); },
+  A=>{ const P=PARA[1]; A.sMount=tintTo(P.mount,TI_K); A.sHills=tintTo(P.hills,TI_K); A.sHill=tintTo(TITLE_HILL[1],TI_K); A.sOak=tintTo(OAK_SEASON[1],TI_K); },
+  A=>{ const G=windArt({s:3,mood:'storm'}); A.giantS=tintTo(G,'#3c4680'); A.giant=tintTo(G,'#232a54'); },
+  A=>{ A.bark=tiBarkArt(); }];
+const TI_DONE=TI_PARTS.map(()=>false);
+function tiArtPart(i){ if(TI_DONE[i]) return; TI_PARTS[i](TI_A); TI_DONE[i]=true; }
+function tiArt(){ if(TI_ART) return TI_ART; for(let i=0;i<TI_PARTS.length;i++) tiArtPart(i); return TI_ART=TI_A; }
+function tiPrewarm(){ TI_PARTS.forEach((_,i)=>idleTask(()=>tiArtPart(i),'ti'+i)); }
 const TI_SIL=new Map(); // las siluetas negras del Viento (por fotograma)
 function tiBlack(img){ let c=TI_SIL.get(img); if(!c){ c=tintTo(img,TI_K); TI_SIL.set(img,c); if(TI_SIL.size>40) TI_SIL.delete(TI_SIL.keys().next().value); } return c; }
 
 /* la corteza del Roble de cerca, gris y de noche, con el hueco donde late la semilla y las venas de savia */
 const TI_KNOT=[80,74];
-function tiBarkArt(){ const W=160, H=176, c=mkCanvas(W,H), g=c.getContext('2d'), r=seeded(77), [kx,ky]=TI_KNOT;
+function tiBarkArt(){ const W=160, H=176, r=seeded(77), [kx,ky]=TI_KNOT, B=pxBuf(W,H,'#090a14'); // a un búfer: los mismos píxeles, sin 28 000 fillRect
   const P=['#06070d','#0e1019','#171a26','#222636','#2e3448','#3d455e','#515c7a','#6a7896'];
-  g.fillStyle='#090a14'; g.fillRect(0,0,W,H);
   const cr=[]; for(let x=20;x<142;x+=6+((r()*7)|0)) cr.push([x,r()*6.28,1+r()*2.6,.025+r()*.035,r()<.5?1:-1]);
   const edges=y=>{ const fl=y>118?Math.pow((y-118)/58,2)*46:0; return [16-fl,144+fl]; };
-  for(let y=0;y<H;y++){ const [L,R]=edges(y);
+  const nc=cr.length, base=new Float64Array(nc);
+  for(let y=0;y<H;y++){ const [L,R]=edges(y), k=(y>118?(y-118)/58*.55:0);
+    for(let j=0;j<nc;j++){ const [cx,ph,a,fq]=cr[j]; base[j]=cx+Math.sin(y*fq+ph)*a; } // lo que no depende de x, una vez por fila (misma cuenta, mismo orden)
     for(let x=Math.max(0,Math.floor(L));x<Math.min(W,Math.ceil(R));x++){
-      const u=(x-L)/(R-L), cyl=Math.cos((u-.42)*Math.PI*.92);
-      let d=99; for(const [cx,ph,a,fq] of cr){ const gx=cx+Math.sin(y*fq+ph)*a+(x-80)*(y>118?(y-118)/58*.55:0); if(Math.abs(x-gx)<Math.abs(d)) d=x-gx; }
+      const u=(x-L)/(R-L), cyl=Math.cos((u-.42)*Math.PI*.92), sk=(x-80)*k;
+      let d=99; for(let j=0;j<nc;j++){ const gx=base[j]+sk; if(Math.abs(x-gx)<Math.abs(d)) d=x-gx; }
       let v=1.2+cyl*4.6;
       if(Math.abs(d)<.9) v=0; else if(Math.abs(d)<1.9) v=Math.min(v,1.4); else if(d>0&&d<3.2) v+=.9; else if(d<0&&d>-3) v-=.6; // la grieta, su labio al sol y su sombra
       if(((hash(x>>1,y>>3)&63)===0)) v-=1.4;           // nudos pequeños
       v+=BAYER4[y&3][x&3]/16-.45;
-      g.fillStyle=P[clamp(Math.round(v),0,7)]; g.fillRect(x,y,1,1); }
-    if(L>0){ g.fillStyle=P[0]; g.fillRect(Math.floor(L),y,1,1); } if(R<W){ g.fillStyle=P[0]; g.fillRect(Math.ceil(R)-1,y,1,1); } }
-  for(let i=0;i<7;i++){ const y=12+((r()*120)|0), x0=24+((r()*90)|0), w=6+((r()*14)|0); g.fillStyle=P[0]; g.fillRect(x0,y,w,1); g.fillStyle=P[5]; g.fillRect(x0+1,y+1,w-2,1); } // grietas de través
+      B.set(x,y,P[clamp(Math.round(v),0,7)]); }
+    if(L>0) B.set(Math.floor(L),y,P[0]); if(R<W) B.set(Math.ceil(R)-1,y,P[0]); }
+  for(let i=0;i<7;i++){ const y=12+((r()*120)|0), x0=24+((r()*90)|0), w=6+((r()*14)|0); B.rect(x0,y,w,1,P[0]); B.rect(x0+1,y+1,w-2,1,P[5]); } // grietas de través
   // el suelo: hierba gris bajo la lluvia y charcos
-  for(let y=152;y<H;y++) for(let x=0;x<W;x++){ const [L,R]=edges(y); if(x>L&&x<R) continue; g.fillStyle=((x*7+y*3)&7)?'#161a24':'#20263a'; g.fillRect(x,y,1,1); }
-  for(let i=0;i<30;i++){ const x=(r()*W)|0, y=150+((r()*24)|0); g.fillStyle='#2a3248'; g.fillRect(x,y,1,2); }
+  for(let y=152;y<H;y++) for(let x=0;x<W;x++){ const [L,R]=edges(y); if(x>L&&x<R) continue; B.set(x,y,((x*7+y*3)&7)?'#161a24':'#20263a'); }
+  for(let i=0;i<30;i++){ const x=(r()*W)|0, y=150+((r()*24)|0); B.rect(x,y,1,2,'#2a3248'); }
   // el hueco: labio claro, dentro oscuro
   for(let y=-15;y<=15;y++) for(let x=-13;x<=13;x++){ const e=(x*x)/(10.5*10.5)+(y*y)/(13.5*13.5)+((hash(x+40,y+40)&7)-3.5)*.02; if(e>1.2) continue;
-    g.fillStyle=e>.95?(x<-2||y<-8?P[7]:P[4]):e>.82?P[1]:y>8?'#0c0808':'#030305'; g.fillRect(kx+x,ky+y,1,1); }
+    B.set(kx+x,ky+y,e>.95?(x<-2||y<-8?P[7]:P[4]):e>.82?P[1]:y>8?'#0c0808':'#030305'); }
+  const c=B.canvas();
   // las venas: desde el hueco, siguiendo las grietas (se encienden con cada latido)
   const veins=[]; [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].forEach(([dx,dy],vi)=>{ const v=[], rr=seeded(300+vi); let x=kx+dx*10, y=ky+dy*13;
     for(let n=0;n<110&&x>6&&x<154&&y>2&&y<H-2;n++){ v.push([x|0,y|0]);
@@ -354,7 +362,7 @@ function updTitle(){
   // las flechas: Sprout mira hacia allí y da un saltito
   const d=keys.left?2:keys.right?3:keys.up?1:keys.down?0:-1;
   if(d!==TI.lastDir){ TI.lastDir=d; if(d>=0&&t>=TITLE_MENU){ TI.look={dir:d,t:tick}; if(AC) beep('square',520+d*60,700+d*60,.06,.02); } }
-  if(keys.fire||keys.alt){ keys.fire=false; keys.alt=false; audio();
+  if(keys.fire||keys.alt){ keys.fire=false; keys.alt=false; audio(true);
     if(t<TITLE_MENU) tiSkip();
     else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; fileT=0; fileWake[fileSel]=tick+12; fileSpotX=FILE_POT_X[fileSel];
       TI.go=tick; for(let i=0;i<7;i++) tiHop(TI.hops,i,6,12); for(let i=0;i<14;i++){ const a=i/14*6.283; parts.push({k:'leafF',x:80+Math.cos(a)*20,y:120,vx:Math.cos(a)*1.6,vy:-1-Math.random()*1.4,life:60,max:60,nog:false,sway:Math.random()*6,col:i&1?'#78d838':'#d0f890'}); }

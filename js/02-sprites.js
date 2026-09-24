@@ -115,7 +115,9 @@ function artPix(g,rows,map,ox,oy){ rows.forEach((r,y)=>{ for(let x=0;x<r.length;
   g.fillStyle=(map&&map[ch])||PAL[ch]||'#ff00ff'; g.fillRect((ox||0)+x,(oy||0)+y,1,1); } }); }
 function artOutline(g,w,h,col){ // contorno de 1 px alrededor de todo lo opaco
   const d=g.getImageData(0,0,w,h).data, A=(x,y)=>x>=0&&y>=0&&x<w&&y<h&&d[(y*w+x)*4+3]>40;
-  g.fillStyle=col||PAL.k; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1))) g.fillRect(x,y,1,1); }
+  col=col||PAL.k; const v=pxCol(col), B=v!==null&&pxPlain(g)?pxBuf(w,h):null; // opaco: al búfer y de una vez (los mismos píxeles)
+  if(!B) g.fillStyle=col; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(!A(x,y)&&(A(x+1,y)||A(x-1,y)||A(x,y+1)||A(x,y-1))){ if(B) B.d[y*w+x]=v; else g.fillRect(x,y,1,1); }
+  if(B) B.into(g,0,0); }
 function artClip(g,rects,fn){ g.save(); g.beginPath(); for(const [x,y,w,h] of rects) g.rect(x,y,w,h); g.clip(); fn(); g.restore(); }
 const GOLD5=['#6a4210','#b07818','#e0a830','#f8d848','#fff8c0'];
 const IRON5=['#26262e','#4a4a58','#76768a','#a8a8bc','#e0e0f0'];
