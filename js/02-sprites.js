@@ -1037,28 +1037,78 @@ const WASP_SPR=mkTile(g=>{ // LA REINA AVISPA: alas de cristal, tiara, abdomen a
   artPix(g,["y.Y.y","yyRyy"],{y:'#f8d848',Y:'#fff8c0',R:'#58c8e8'},14,0);    // tiara
   artOutline(g,32,32);
 },32,32);
-const WIND_SPR=mkTile(g=>{ // EL VIENTO DEL NORTE: nube de tormenta con cara y cola en remolino (32×32)
-  const CL=['#5a7898','#8aaccc','#b8d4ec','#e4f2ff','#ffffff'];
-  blobArt(g,1,1,30,22,[{x:15,y:13,r:13,ry:8.5},{x:8,y:9,r:6.5},{x:16,y:7,r:7.5},{x:24,y:9,r:6},{x:5,y:14,r:4.5},{x:26,y:14,r:4.5}],CL,{outline:false,grad:.5});
-  // cola en remolino
-  g.fillStyle='#b8d4ec'; const tail=[[14,23],[13,24],[12,25],[12,26],[13,27],[15,27],[16,26],[16,25],[18,24],[20,24],[22,25],[23,26],[23,28],[22,29],[20,29]];
-  for(const [x,y] of tail){ g.fillRect(x,y,2,1); } g.fillStyle='#e4f2ff'; for(const [x,y] of tail.slice(0,8)) g.fillRect(x,y,1,1);
-  g.fillStyle='#8aaccc'; for(const [x,y] of [[4,24],[5,25],[7,26],[26,22],[28,23],[29,25],[9,29],[11,30]]) g.fillRect(x,y,2,1);
-  // cara: cejas de tormenta, ojos con brillo, boca que sopla
-  artPix(g,["kk.......kk","..kk...kk.."],null,10,8);
-  artPix(g,["kkk.....kkk","kWk.....kWk","kkk.....kkk"],{W:'#ffffff'},10,10);
-  blobArt(g,13,14,6,5,[{x:3,y:2.5,r:2.6,ry:2.2}],['#0a1a30','#1a3050','#2a4a78','#3a5a8a','#5a7aa8'],{outline:false,dither:0});
-  g.fillStyle='#a8c4e0'; g.fillRect(8,13,2,1); g.fillRect(21,13,2,1);   // mejillas frías
-  artOutline(g,32,32,'#1a2a44');
-  g.fillStyle='#ffffff'; g.fillRect(9,4,3,1); g.fillRect(15,2,3,1); g.fillRect(8,5,1,1);
-},32,32);
+/* ============================================================
+   EL VIENTO DEL NORTE, hermano del Roble. Si Raíz lleva corona de hojas y barba de musgo,
+   él lleva corona de carámbanos y una barba de nube que se deshace en corrientes de aire.
+   Se dibuja por piezas a cualquier tamaño (s) sin estirar píxeles, con su cara según el ánimo:
+   'storm' (tormenta) · 'howl' (aúlla) · 'blow' (sopla, mofletes hinchados) · 'sad' (solo) ·
+   'calm' (en paz, ojos cerrados) · 'happy' (el de antes, jugando). f: fotograma 0..7 (nube y barba),
+   blink 0..1 (párpado), flip (mira/viaja hacia la derecha).
+   ============================================================ */
+const WIND_PAL={
+  storm:['#1c2748','#34487a','#5a74ae','#94b0dc','#dbe8fa'], howl:['#1a2240','#30406e','#5468a2','#8ca6d6','#d4e2f8'],
+  blow:['#243562','#3e5a96','#6a8ccc','#a8c8f0','#eaf4ff'], sad:['#2e3654','#4a5680','#7482aa','#a8b4d4','#e2e8f6'],
+  calm:['#46548a','#6e82ba','#9fb4e2','#d0defa','#ffffff'], happy:['#2e5698','#4a7cc6','#7cacec','#bcdcff','#ffffff']};
+const WIND_CACHE=new Map();
+function windArt(o){ o=o||{}; const s=o.s||1, mood=o.mood||'storm', f=((o.f||0)%8+8)%8, bl=Math.round((o.blink||0)*4)/4, key=[s,mood,f,bl,o.flip?1:0,o.white?1:0].join('|');
+  let c=WIND_CACHE.get(key); if(c) return c;
+  if(o.white){ c=whiten(windArt(Object.assign({},o,{white:false}))); WIND_CACHE.set(key,c); return c; }
+  if(o.flip){ c=flipH(windArt(Object.assign({},o,{flip:false}))); WIND_CACHE.set(key,c); return c; }
+  const W=Math.round(52*s), H=Math.round(48*s); c=mkCanvas(W,H); const g=c.getContext('2d'), P=WIND_PAL[mood]||WIND_PAL.storm;
+  const X=x=>x*s, Y=y=>y*s, R=v=>Math.max(1,Math.round(v*s)), ph=f/8*6.283, K='#141c34';
+  const wob=(i,a)=>Math.sin(ph+i*1.7)*a; // la nube respira: cada mechón a su compás
+  const px=(x,y,w,h,col)=>{ g.fillStyle=col; g.fillRect(Math.round(X(x)),Math.round(Y(y)),R(w),R(h)); };
+  // 1) corrientes de aire alrededor de la cola (finas, con su rizo)
+  const nStreams=mood==='storm'||mood==='howl'?3:mood==='calm'?1:2;
+  [[30,40,40,46,49,40],[35,31,44,30,49,24],[27,44,34,47,42,46]].slice(0,nStreams).forEach(([x0,y0,x1,y1,x2,y2],si)=>{ const n=Math.round(30*s);
+    for(let i=0;i<=n;i++){ const t=i/n, u=1-t, x=u*u*x0+2*u*t*x1+t*t*x2, y=u*u*y0+2*u*t*y1+t*t*y2+Math.sin(ph*1.4+t*4+si)*.8; if((i&3)===3&&t<.4) continue; px(x,y,.9,.9,t>.7?'#ffffff':P[3]); }
+    for(let k=0;k<11;k++){ const a=k/11*4.6+ph*.4, r=2.6-k*.16; px(x2+Math.cos(a)*r,y2+Math.sin(a)*r*.8,.9,.9,k<5?P[3]:'#ffffff'); } });
+  // 2) la barba: una cola de nube que baja de la barbilla y se enrosca hacia un lado (como una coma)
+  const blow=mood==='blow', lobes=[];
+  for(let i=0;i<=16;i++){ const t=i/16, u=1-t, x=u*u*22+2*u*t*27+t*t*46, y=u*u*27+2*u*t*42+t*t*33, w=Math.sin(ph+t*5)*t*1.2; // una cola continua que adelgaza
+    lobes.push({x:X(x+w*.4),y:Y(y+w),r:X(6.6-t*5)}); }
+  // la cabeza: mechones de nube detrás, la cara delante (y los mofletes, si sopla)
+  lobes.push({x:X(13+wob(0,.4)),y:Y(10.5),r:X(5.4)},{x:X(19.5),y:Y(7+wob(1,.35)),r:X(6)},{x:X(26.5),y:Y(7.4+wob(2,.35)),r:X(5.6)},{x:X(32.4+wob(3,.4)),y:Y(11.4),r:X(5)},
+    {x:X(9.4+wob(4,.35)),y:Y(17),r:X(4.2)},{x:X(34.6+wob(5,.35)),y:Y(18),r:X(4)},{x:X(22),y:Y(17),r:X(11.4),ry:Y(10.2)});
+  if(blow) lobes.push({x:X(14.6),y:Y(20.4),r:X(4.4)},{x:X(29.4),y:Y(20.4),r:X(4.4)});
+  blobArt(g,0,0,W,H,lobes,P,{outline:false,grad:.45,dither:.55});
+  // 3) la corona de carámbanos
+  for(const [x,y,h] of [[15,6.5,4],[19,3.6,5.4],[23,2,7.2],[27,3.6,5.4],[31,6.5,4]]){ const hh=R(h), w=R(2.8);
+    for(let i=0;i<hh;i++){ const ww=Math.max(1,Math.round(w*(1-i/hh))); g.fillStyle=i<hh*.4?'#e6f8ff':'#8ed2f2'; g.fillRect(Math.round(X(x)-ww/2),Math.round(Y(y+2)-i),ww,1); }
+    g.fillStyle='#ffffff'; g.fillRect(Math.round(X(x))-1,Math.round(Y(y+2)-hh+1),1,1); }
+  // 4) la cara
+  const brow={storm:1,howl:.9,blow:.7,sad:-1,calm:-.2,happy:-.4}[mood]||0;
+  for(const [ex,d] of [[17,1],[27,-1]]) for(let j=0;j<=6;j++){ const k=j/6, x=ex-3.6*d+j*d*1.15, y=10.2+k*brow*2.4-(brow<0?-brow*1.4:0); // cejas de escarcha, pobladas
+    px(x,y,1.3,1.8,j<1?P[3]:'#ffffff'); if(j>1&&j<6) px(x,y+1.6,1.3,.7,P[2]); }
+  const eyeH={storm:2.6,howl:3.8,blow:1,sad:2.2,calm:1,happy:3.4}[mood]||3, shut=mood==='calm'||mood==='blow'||bl>=.75;
+  for(const ex of [17,27]){
+    if(shut){ for(let j=-2;j<=2;j++){ const y=mood==='calm'?15.8-(4-j*j)*.2:15.3+Math.abs(j)*.28; px(ex+j*.9,y,1,1,K); } continue; } // en paz (‿) o apretados al soplar
+    const h=eyeH*(1-bl), top=15.6-h/2; px(ex-1.8,top,3.6,Math.max(.6,h),K);
+    px(ex-.9,top+.4,1.4,Math.max(.5,Math.min(h-.6,1.7)),mood==='storm'||mood==='howl'?'#9ef0ff':'#ffffff');
+    if(mood==='sad') px(ex-1.9,top,3.8,.9,P[2]); }
+  if(mood==='storm'||mood==='howl') for(const ex of [17,27]){ g.fillStyle='rgba(150,236,255,.28)'; g.fillRect(Math.round(X(ex-2.8)),Math.round(Y(13)),R(5.6),R(5)); } // el hielo le brilla en los ojos
+  px(20.8,17.8,2.6,2,P[4]); px(21.2,19.4,1.8,.8,P[2]); // la nariz
+  if(mood==='happy'||mood==='calm'){ g.fillStyle='rgba(244,170,200,.75)'; g.fillRect(Math.round(X(12.6)),Math.round(Y(18.8)),R(2.6),R(1.2)); g.fillRect(Math.round(X(28.8)),Math.round(Y(18.8)),R(2.6),R(1.2)); }
+  // el bigote: dos bucles blancos que se abren hacia arriba (con su sombra debajo, separado de la boca)
+  for(const d of [-1,1]) for(let j=0;j<7;j++){ const k=j/6, x=22+d*(.8+j*1.05), y=21.2+Math.sin(k*2.6)*.7-k*k*2; px(x,y+.9,1.1,.7,P[1]); px(x,y,1.1,1.1,'#ffffff'); }
+  // la boca, bajo el bigote
+  if(mood==='howl'||mood==='storm'){ const hh=mood==='howl'?4.6:2.6; px(20,23,4.2,hh,K); px(20.6,23.2+hh*.45,3,hh*.5,'#3a1830'); }
+  else if(blow){ px(21.2,23,1.8,1.8,K); px(21.6,23.4,1,1,P[1]); }
+  else if(mood==='sad'){ for(let j=-2;j<=2;j++) px(22+j,24.2-(4-j*j)*.22,1,1,K); }
+  else if(mood==='happy'){ for(let j=-2;j<=2;j++) px(22+j,23.2+(4-j*j)*.26,1,1,K); px(21,23.6,2,.8,'#ffffff'); }
+  else { for(let j=-1;j<=1;j++) px(22+j,23.6+(1-j*j)*.3,1,1,K); }
+  artOutline(g,W,H,K);
+  WIND_CACHE.set(key,c); if(WIND_CACHE.size>260) WIND_CACHE.delete(WIND_CACHE.keys().next().value); return c; }
+/* el retrato del diálogo: la cara, de cerca */
+function windPortrait(mood){ const src=windArt({s:1.1,mood}), c=mkCanvas(32,32), g=c.getContext('2d'); g.drawImage(src,Math.round(-6*1.1),Math.round(-1*1.1)); return c; }
+const WIND_SPR=(()=>{ const src=windArt({s:.66,mood:'storm'}), c=mkCanvas(32,32); c.getContext('2d').drawImage(src,0,1); return c; })(); // (compatibilidad) el Viento de 32 px
 const BOSS_SPR={topo:TOPO_SPR,avispa:WASP_SPR,viento:WIND_SPR,king:KING_BEETLE,drone:DRONE,iceguard:ICE_GUARD};
 const BOSS_WHITE={}; for(const k in BOSS_SPR) BOSS_WHITE[k]=whiten(BOSS_SPR[k]);
 BOSS_SPR.kingL=flipH(KING_BEETLE); BOSS_WHITE.kingL=whiten(BOSS_SPR.kingL);
 /* retratos del diálogo (a lo Golden Sun): el sprite del hablante, en grande */
 const PORTRAITS={
   'RAÍZ':ELDER,'PETRA':PETRA_SPR,'LUPA':LUPA_SPR,'MOSS':MOSS_SPR,'TILO':TILO_SPR,'CORTEZA':CORTEZA_SPR,
-  'EL VIENTO':WIND_SPR,'EL TOPO REAL':TOPO_SPR,'LA REINA':WASP_SPR,'SPROUT':H_DOWN_A,
+  'EL VIENTO':windPortrait('sad'),'EL TOPO REAL':TOPO_SPR,'LA REINA':WASP_SPR,'SPROUT':H_DOWN_A,
 };
 /* un remolino de viento en píxeles: embudo ancho arriba y fino abajo que se cimbrea, con franjas
    en hélice que corren al girar (ph) y contorno. pal: [contorno, borde, medio, cuerpo, brillo] */
