@@ -624,25 +624,174 @@ const CA_SCRIPT={
 
 
   /* ═════════ lantern ═════════ */
-  lantern:{ // el farol de brasa: en plena noche la luz se abre, y ¡llamarada!
-    cues:{ 32:()=>SFX.torch(), 56:()=>SFX.brazier(), 64:()=>noise(.5,.05,false,undefined,900), 112:()=>SFX.chime() },
-    tick(t,C){ if(t>=32&&t%4===0) C.parts.push({k:'dot',x:(C.lx||80)+(Math.random()-.5)*6,y:(C.ly||60),vx:(Math.random()-.5)*.5,vy:-.6-Math.random()*.6,g:0,t:0,life:40,col:Math.random()<.5?'#ffd060':'#ff8a30'});
-      if(t>=56&&t<92&&t%2===0) for(let i=0;i<2;i++) C.parts.push({k:'dot',x:(C.lx||80)+20+Math.random()*90,y:(C.ly||60)+(Math.random()-.5)*20,vx:1+Math.random(),vy:-.8-Math.random(),g:0,t:0,life:30,col:Math.random()<.5?'#ffe070':'#ff6a28'}); },
+  lantern:{ // el Farol de Brasa: a oscuras en una galería solo se ven los ojos de Sprout (y los de algún bicho); la brasa chisporrotea y la luz
+            // se abre y descubre el pasillo; primer plano iluminado desde abajo, con la llama en los ojos; alza el farol, ¡llamarada!, y una chispa
+            // enciende las antorchas una tras otra hasta el fondo (la cámara la sigue); pose final con el farol en alto
+    VPX:104, VPY:60, FOC:100, ZEND:13.6, // el pasillo: punto de fuga, focal y dónde acaba
+    TORCH:[[-1,2],[1,3.3],[-1,4.6],[1,5.9],[-1,7.2],[1,8.5],[-1,9.8]], IGN:[101,104,107,110,113,116,119], BRAZ:121, // soportes (lado, fondo) y cuándo prenden
+    CRYS:[[-1,.2,2.7],[1,.28,4.1],[-1,-.3,6.3],[1,.12,7.8]], // cristales en las paredes (lado, alto, fondo)
+    BUGS:[[-.55,.42,7.5,4],[.4,.5,10,9],[.62,-.35,6.2,13],[-.3,-.22,11.5,17],[.12,.46,5.4,21]], // ojos de bicho al fondo (x, y, fondo, cuándo aparecen)
+    RAMP:['#040308','#0b0912','#16111c','#241a26','#35262e','#4c3534','#684838','#8c6040','#b27c4c','#d8a060'].map(hex2rgb), // piedra: de la sombra fría a la luz de brasa
+    cues:Object.assign({ 4:()=>beep('triangle',92,64,.9,.03), 22:()=>CA_SCRIPT.lantern.sfxCrackle(0), 25:()=>CA_SCRIPT.lantern.sfxCrackle(1), 27:()=>CA_SCRIPT.lantern.sfxCrackle(2),
+      30:()=>SFX.torch(), 34:()=>SFX.brazier(), 39:()=>CA_SCRIPT.lantern.sfxChitter(), 56:()=>swish(.28,.05,500,1600,900), 72:()=>SFX.shing(), 80:()=>swish(.14,.09,900,4200,2400),
+      88:()=>SFX.charge(), 98:()=>swish(.3,.07,400,2400,1200), 121:()=>SFX.brazier(), 134:()=>SFX.chime() },
+      Object.fromEntries([101,104,107,110,113,116,119].map((t,i)=>[t,()=>CA_SCRIPT.lantern.sfxIgnite(i)]))),
+    hits:{ 34:{shake:6,amp:2,dir:[0,1]}, 97:{stop:3,inv:1,shake:9,amp:3,dir:[0,1],sfx:()=>CA_SCRIPT.lantern.sfxFlare()} }, // la luz que se abre · ¡llamarada!
+    sfxCrackle(i){ const t=audio().currentTime; noise(.05,.05,true,t,3800+i*500); beep('square',1600+i*300,900,.02,.02,t); },
+    sfxChitter(){ const t=audio().currentTime; for(let i=0;i<4;i++) beep('square',1400+((i*37)%5)*90,1900,.03,.012,t+i*.045); },
+    sfxFlare(){ const t=audio().currentTime; noise(.55,.09,false,t,760); noise(.25,.05,true,t+.02,3200); beep('sawtooth',170,55,.34,.045,t); beep('triangle',260,900,.3,.04,t+.03); },
+    sfxIgnite(i){ const t=audio().currentTime; noise(.14,.035,true,t,2600+i*260); beep('triangle',300+i*55,760+i*80,.13,.03,t); },
+    /* ---- el pasillo: cada píxel sabe qué pared, suelo o techo ve y a qué fondo (se calcula una vez) ---- */
+    geo(){ if(this._g) return this._g; const N=VW*VH, Z=new Float32Array(N), X=new Float32Array(N), Y=new Float32Array(N), S=new Uint8Array(N), F=this.FOC;
+      for(let y=0,i=0;y<VH;y++){ const dy=y+.5-this.VPY, zf=dy>.001?.62*F/dy:dy<-.001?-.8*F/dy:1e9;
+        for(let x=0;x<VW;x++,i++){ const dx=x+.5-this.VPX, zw=Math.abs(dx)>.001?F/Math.abs(dx):1e9; let z, s;
+          if(zw<zf){ z=zw; s=dx<0?1:2; } else { z=zf; s=dy>0?3:4; } if(z>this.ZEND){ z=this.ZEND; s=5; }
+          Z[i]=z; X[i]=dx*z/F; Y[i]=dy*z/F; S[i]=s; } }
+      return this._g={Z,X,Y,S}; },
+    /* sillares con llagas, costillas de piedra cada tanto, losas en el suelo; la luz de cada fuente cae con la distancia (tramada) */
+    corridor(cz,amb,L){ const G=this.geo(), R=this.RAMP, F=this.FOC, n=L.length, zE=this.ZEND-cz; // el fondo está quieto en el mundo: la cámara se le acerca
+      caRaster(d=>{ for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ let z=G.Z[i], s=G.S[i], X=G.X[i], Y=G.Y[i];
+        if(z>zE){ z=zE; s=5; X=(x+.5-this.VPX)*z/F; Y=(y+.5-this.VPY)*z/F; }
+        const u=z+cz; let tone=0;
+        if(s<=2){ const row=(Y+5)/.19, rf=row-Math.floor(row);
+          if(rf<z/F/.19) tone=-2; else { const br=u/.46+((Math.floor(row)&1)?.5:0), bf=br-Math.floor(br); tone=bf<z*z/F/.46?-2:(hash(Math.floor(br),Math.floor(row))%5===0?-1:0); }
+          const rb=u/2.3-Math.floor(u/2.3); if(rb<.13) tone=rb<z*z/F/2.3?-2:1; }
+        else if(s===3){ const a=u/.6-Math.floor(u/.6), bx=(X+5)/.5, b=bx-Math.floor(bx); tone=(a<z*z/(.62*F)/.6||b<z/F/.5)?-2:(hash(Math.floor(u/.6),Math.floor(bx))%4===0?-1:0); }
+        else if(s===4){ const rb=u/2.3-Math.floor(u/2.3); tone=rb<.13?0:-2; }
+        else tone=(Math.abs(X)<.36&&Y>-.34)?-9:-1; // al fondo, una puerta negra
+        let b=amb*(z<1?1:Math.max(0,1-(z-1)/13));
+        for(let k=0;k<n;k++){ const l=L[k], dX=X-l.X, dY=Y-l.Y, du=u-l.u, d2=dX*dX+dY*dY+du*du; if(d2<l.r2) b+=l.a*(1-d2/l.r2); }
+        const c=R[clamp(Math.round(b*9+tone+BAYER4[y&3][x&3]/16-.5),0,9)], p=i*4; d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } }); },
+    proj(X,Y,u,cz){ const z=u-cz; if(z<.3) return null; const s=this.FOC/z; return [this.VPX+X*s,this.VPY+Y*s,s/100,z]; },
+    litLv(i,t){ return t<100?0:t>=this.BRAZ?1:t<this.IGN[i]?0:Math.min(1,(t-this.IGN[i]+1)/4); },
+    torchSpr([sx,sy,sc],lit,t,i){ const w=Math.max(1,Math.round(3*sc)), h=Math.max(2,Math.round(9*sc)), cw=Math.max(2,Math.round(7*sc)), ch=Math.max(1,Math.round(3*sc)), X=Math.round(sx), Y=Math.round(sy);
+      ctx.fillStyle='#07060c'; ctx.fillRect(X-(w>>1)-1,Y-1,w+2,h+2); ctx.fillRect(X-(cw>>1)-1,Y-ch-1,cw+2,ch+2);
+      ctx.fillStyle=lit>0?'#8a6a58':'#3a3242'; ctx.fillRect(X-(w>>1),Y,w,h); ctx.fillStyle=lit>0?'#b88a64':'#4e4458'; ctx.fillRect(X-(cw>>1),Y-ch,cw,ch); // el palo y la copa
+      if(lit>0){ const H=Math.max(3,Math.min(26,Math.round(16*sc*lit))), fr=flameSpr(H,((t>>2)+i)&3); ctx.drawImage(fr,X-(fr.width>>1),Y-ch-fr.height+2); }
+      else { ctx.fillStyle='#16121c'; ctx.fillRect(X-1,Y-ch-1,2,1); } }, // la mecha, apagada
+    crystal([sx,sy,sc],lum){ const h=Math.max(2,Math.round(8*sc)), w=Math.max(1,Math.round(3*sc)), c=lum>.45?['#1e6a78','#78f0f8','#e0ffff']:lum>.12?['#123a48','#2e8a98','#78c8d8']:['#08101a','#0e2a36','#16404c'], X=Math.round(sx-w/2), Y=Math.round(sy-h/2);
+      ctx.fillStyle='#050408'; ctx.fillRect(X-1,Y,w+2,h); ctx.fillRect(X,Y-1,w,h+2); ctx.fillStyle=c[1]; ctx.fillRect(X,Y,w,h); ctx.fillStyle=c[2]; ctx.fillRect(X,Y,1,Math.max(1,h>>1)); ctx.fillStyle=c[0]; ctx.fillRect(X+w-1,Y+(h>>1),1,h-(h>>1)); },
+    brazier([sx,sy,sc],t){ const w=Math.max(3,Math.round(24*sc)), X=Math.round(sx), Y=Math.round(sy); ctx.fillStyle='#07060c'; ctx.fillRect(X-(w>>1)-1,Y-3,w+2,4); ctx.fillStyle='#5a4e60'; ctx.fillRect(X-(w>>1),Y-2,w,2);
+      if(t>=this.BRAZ){ const H=Math.max(4,Math.min(20,Math.round(38*sc*Math.min(1,(t-this.BRAZ+1)/5)))), fr=flameSpr(H,(t>>2)&3); ctx.drawImage(fr,X-(fr.width>>1),Y-2-fr.height+2); } },
+    props(cz,t,L){ const lum=(X,Y,u)=>{ let b=0; for(const l of L){ const dX=X-l.X, dY=Y-l.Y, du=u-l.u, d2=dX*dX+dY*dY+du*du; if(d2<l.r2) b+=l.a*(1-d2/l.r2); } return b; };
+      const pb=this.proj(0,.55,13,cz); if(pb) this.brazier(pb,t); // el brasero del fondo
+      const items=this.TORCH.map(([X,u],i)=>[u,0,X,i]).concat(this.CRYS.map(([X,Y,u],i)=>[u,1,X,i,Y])).sort((a,b)=>b[0]-a[0]); // de lejos a cerca
+      for(const it of items){ if(it[1]===0){ const p=this.proj(it[2]*.97,-.08,it[0],cz); if(p&&p[3]>.45) this.torchSpr(p,this.litLv(it[3],t),t,it[3]); }
+        else { const p=this.proj(it[2]*.99,it[4],it[0],cz); if(p&&p[3]>.45) this.crystal(p,lum(it[2],it[4],it[0])); } } },
+    /* ---- la oscuridad: todo negro menos un círculo de luz con el borde tramado ---- */
+    mask(cx,cy,R){ if(R>=160) return; const r0=R*.55, r1=Math.max(1,R), a2=r0*r0, b2=r1*r1;
+      caRaster(d=>{ for(let y=0,i=0;y<VH;y++){ const dy=y+.5-cy; for(let x=0;x<VW;x++,i++){ const dx=x+.5-cx, q=dx*dx+dy*dy, p=i*4;
+        const dark=q<=a2?false:q>=b2?true:BAYER4[y&3][x&3]/16<(Math.sqrt(q)-r0)/(r1-r0);
+        if(dark){ d[p]=3; d[p+1]=2; d[p+2]=8; d[p+3]=255; } else d[p+3]=0; } } }); },
+    bugs(t){ this.BUGS.forEach(([X,Y,u,t0],i)=>{ const gone=36+i*2; if(t<t0||t>=gone+3) return; // aparecen, parpadean y, cuando llega la luz, se cierran y se van
+      const p=this.proj(X,Y,u+(t>=36?(t-36)*.15:0),0); if(!p) return; const x=Math.round(p[0]), y=Math.round(p[1]), shut=t>=gone||t===t0||hash(i,(t+i*7)>>3)%9===0;
+      ctx.fillStyle=i%2?'#ffd060':'#ff4030';
+      if(shut){ ctx.fillRect(x-2,y,2,1); ctx.fillRect(x+1,y,2,1); } else { ctx.fillRect(x-2,y-1,2,2); ctx.fillRect(x+1,y-1,2,2); ctx.fillStyle='#fff6e0'; ctx.fillRect(x-2,y-1,1,1); ctx.fillRect(x+1,y-1,1,1); } }); },
+    darkEyes(pose,x,y,gx,gy,R){ const X0=Math.round(x)-32, Y0=Math.round(y)-61, lk=Math.round((pose.look||0)*2); // en lo oscuro, los ojos de Sprout: dos óvalos blancos
+      for(const ex of [25+lk,39+lk]){ const [a,b]=rigXY(pose,ex,34), sx=Math.round(X0+a), sy=Math.round(Y0+b); if(Math.hypot(sx-gx,sy-gy)<R*.55) continue;
+        ctx.fillStyle='#f4efe4'; if((pose.lid||0)>=.85) ctx.fillRect(sx-2,sy+1,5,1); else { const h=pose.eyes==='wide'?8:7; ctx.fillRect(sx-2,sy-(h>>1)+1,5,h-2); ctx.fillRect(sx-1,sy-(h>>1),3,h); } } },
+    /* ---- el farol: cuelga del asa, se balancea (girado sin perder el píxel) y la llama siempre apunta arriba ---- */
+    lampBody(lit){ const k=lit?'_on':'_off'; if(this[k]) return this[k]; const c=mkCanvas(16,24), g=c.getContext('2d'); // 16×24: el asa arriba en (8,1)
+      g.fillStyle='#2e2e36'; for(let a=0;a<=Math.PI;a+=.1) g.fillRect(Math.round(7.5+Math.cos(a)*3.5),Math.round(4.6-Math.sin(a)*3.6),1,1); // el asa
+      g.fillStyle='#3c3c48'; g.fillRect(2,4,12,3); g.fillStyle='#62626e'; g.fillRect(2,4,12,1); g.fillRect(6,3,4,1); // la tapa
+      for(let y=7;y<18;y++) for(let x=3;x<13;x++){ const d=Math.hypot((x+.5-8)/5,(y+.5-12.5)/5.8); g.fillStyle=lit?(d<.32?'#fff6c8':d<.55?'#ffd060':d<.8?'#f09030':'#b8501c'):(d<.4?'#2a1e26':'#18121c'); g.fillRect(x,y,1,1); } // el cristal
+      if(!lit){ g.fillStyle='#4a4058'; g.fillRect(5,9,1,3); g.fillRect(6,8,1,1); } // un reflejo frío
+      g.fillStyle='#2e2e36'; g.fillRect(3,7,1,11); g.fillRect(12,7,1,11); g.fillRect(7,7,2,1); // los barrotes
+      g.fillStyle='#3c3c48'; g.fillRect(2,18,12,3); g.fillStyle='#62626e'; g.fillRect(2,18,12,1); g.fillRect(4,21,8,2); artOutline(g,16,24);
+      return this[k]=c; },
+    art(){ return this.lampBody(true); },
+    lamp(px,py,deg,st,t){ const img=rotArt(this.lampBody(st>=1),deg), a=deg*Math.PI/180, s=Math.sin(a), c=Math.cos(a), gx=px-s*11.5, gy=py+c*11.5; // st: 0 apagado · 0..1 brasa · 1 encendido
+      ctx.drawImage(img,Math.round(px-s*11-img.width/2),Math.round(py+c*11-img.height/2));
+      if(st>=1){ const fr=flameSpr(6,(t>>2)&3); ctx.drawImage(fr,Math.round(gx-fr.width/2),Math.round(gy-5)); }
+      else if(st>0){ ctx.fillStyle=(t&2)?'#ffd060':'#ff8a30'; const z=st>.5?2:1; ctx.fillRect(Math.round(gx),Math.round(gy)+2,z,z); } // la brasa
+      return [gx,gy]; },
+    glassOf(pose,x,y,deg){ const [hx,hy]=caHand(pose,x,y,1), a=deg*Math.PI/180; return [hx-Math.sin(a)*11.5,hy+Math.cos(a)*11.5]; },
+    rim(pose,x,y,col){ const ti=tintCached(bigSprout(pose),col), X0=Math.round(x)-32-BIG_OX, Y0=Math.round(y)-61-BIG_OY; // la luz cálida en el borde
+      ctx.globalAlpha=.85; for(const [ox,oy] of [[-1,0],[1,0],[0,-1]]) ctx.drawImage(ti,X0+ox,Y0+oy); ctx.globalAlpha=1; },
+    lightAt(gx,gy,cz,Rw,a){ return {X:(gx-this.VPX)*1.05/this.FOC,Y:(gy-this.VPY)*1.05/this.FOC,u:cz+1.05,r2:Rw*Rw,a}; }, // una luz de la pantalla (a la altura de Sprout) al mundo del pasillo
+    /* ---- planos 1 y 2: a oscuras; la brasa; la luz se abre ---- */
+    pose12(t){ return {eyes:caStep(t,[[0,'open'],[22,'wide'],[42,'closed'],[48,'open']]),lid:Math.max(caBlinkAt(t,8),caBlinkAt(t,29),caBlinkAt(t,53)),brow:t<34?-.5:0,
+        look:caStep(t,[[0,0],[12,-1],[17,1],[23,0]]),mouth:caStep(t,[[0,'flat'],[22,'o'],[42,'grin']]),
+        arms:[caK(t,[[0,[20,44]],[34,[20,44]],[37,[12,32],'out'],[48,[18,44],'io']]),caK(t,[[0,[50,32]],[34,[50,32]],[37,[53,22],'out'],[48,[50,28],'io']])],
+        leaf:Math.round((t<34?6+Math.sin(t*.9)*2:6*Math.exp(-(t-34)/6))+caWob(t,34,-22,.45,9)+(t>=48?Math.sin(t*.1)*3:0)),
+        sq:t<34?.97:caK(t,[[34,.92],[38,1.05,'out'],[44,1,'io']]),lean:t<34?0:caK(t,[[34,-4],[40,1,'out'],[46,0,'io']])+caWob(t,46,1,.5,6)}; },
+    deg12(t){ return Math.sin(t*.12)*3+caWob(t,34,14,.5,8); },
+    R12(t){ if(t<22) return 0; if(t<34) return [7,6,2,0,9,8,4,6,10,12,11,12][t-22]; return caK(t,[[34,12],[40,86,'out'],[47,76,'io']])+Math.sin(t*.7)*2; },
+    shot12(t){ const x=46, y=121, pose=this.pose12(t), deg=this.deg12(t), R=this.R12(t), [hx,hy]=caHand(pose,x,y,1), [gx,gy]=this.glassOf(pose,x,y,deg), cz=t<34?0:caK(t,[[34,0],[62,.3,'io']]);
+      if(R>0){ const L=[this.lightAt(gx,gy,cz,t<34?R/30:R/21,t<34?.6:1)]; this.corridor(cz,t<34?0:.06,L); this.props(cz,t,L);
+        caShadow(x,122,15); caHeroAt(pose,x,y); this.lamp(hx,hy,deg,t<34?.7:1,t); }
+      this.mask(gx,gy,t<34?R:R+10);
+      if(t<42) this.bugs(t); if(R<60) this.darkEyes(pose,x,y,gx,gy,R); },
+    /* ---- plano 3: primer plano, la luz le da desde abajo y la llama se le refleja en los ojos ---- */
+    underLight(){ caRaster(d=>{ for(let y=0,i=0;y<VH;y++){ const e=clamp((80-y)/64,0,1)*.8; for(let x=0;x<VW;x++,i++){ const p=i*4; if(BAYER4[y&3][x&3]/16<e){ d[p]=20; d[p+1]=4; d[p+2]=8; d[p+3]=255; } else d[p+3]=0; } } });
+      ctx.fillStyle='rgba(255,150,60,.09)'; ctx.fillRect(0,88,VW,44); ctx.fillStyle='rgba(255,176,80,.08)'; ctx.fillRect(0,108,VW,24); },
+    shot3(t){ const f=t-56, F=caK(f,[[0,3],[6,3.5,'out'],[30,3.8,'io']]), dx=caK(f,[[0,-4],[30,3,'io']]), dy=(3.4-F)*1.5, look=caK(f,[[0,.5],[6,0,'io']]), eyes=f<12?'wide':'open', lid=Math.max(caBlinkAt(f,9),caK(f,[[12,0],[18,.32,'io']]));
+      caFaceCU(f,{pal:MOMENT_ARMS.lantern.pal,F,dx,dy,eyes,lid,brow:caK(f,[[12,0],[18,1,'io']]),look,mouth:f<14?'o':'smirk',leaf:Math.round(-4+Math.sin(f*.4)*6),glint:f-16});
+      this.underLight();
+      if(lid<.85){ const fx=80+dx, fy=96+dy, lk=look*1.2*F; [[fx-7*F+lk,fy+1.5*F],[fx+7*F+lk,fy+1.5*F]].forEach(([x,y],i)=>{ const fr=flameSpr(Math.max(4,Math.round(F*1.9)),((t>>2)+i)&3); // la llama, en cada ojo
+        ctx.drawImage(fr,Math.round(x+.9*F-fr.width/2),Math.round(y+(eyes==='wide'?3.4:3)*F-fr.height)); }); }
+      if(f<3){ ctx.fillStyle='rgba(255,226,140,'+(.6-f*.2).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } },
+    /* ---- plano 4: lo alza de golpe: ¡llamarada! y sale una chispa hacia el pasillo ---- */
+    pose4(t){ return {eyes:caStep(t,[[0,'fierce'],[97,'wide'],[100,'fierce']]),lid:t<97?caK(t,[[86,.35],[92,.5],[96,.3]]):0,brow:t<97?1:.5,
+        mouth:caStep(t,[[0,'flat'],[86,'teeth'],[94,'shout'],[99,'grin']]),
+        arms:[caK(t,[[80,[18,42]],[86,[18,42]],[93,[22,40],'io'],[96,[13,30],'out3'],[100,[16,38],'io']]),caK(t,[[80,[50,28]],[86,[50,28]],[93,[43,38],'io'],[96,[48,-2],'out3']])],
+        leaf:Math.round(caK(t,[[80,-4],[86,-4],[93,-14,'io'],[96,20,'out3']])+caWob(t,96,10,.5,8)+Math.sin(t*.1)*3),
+        sq:caK(t,[[80,1],[86,1],[93,.88,'io'],[96,1.12,'out3'],[100,.97,'out']]),lean:caK(t,[[80,0],[86,0],[93,-3,'io'],[96,2,'out3'],[100,0,'io']])}; },
+    deg4(t){ return caWob(t,93,12,.5,7)+caWob(t,96,-18,.5,8)+Math.sin(t*.1)*2; },
+    R4(t){ return caK(t,[[80,76],[96,76],[97,150,'out'],[104,94,'io']])+Math.sin(t*.7)*2; },
+    flare(gx,gy,t){ const k=(t-97)/5; if(k<0||k>=1) return; // ¡llamarada!: un abanico de llamas que se abre hacia arriba
+      for(let i=0;i<11;i++){ const e=Math.abs(i-5), ang=(-90+(i-5)*19)*Math.PI/180, dd=8+CA_EASE.out(k)*(34-e*3), H=Math.max(4,Math.round((12+(5-e)*3)*(1-k*.55))), fr=flameSpr(H,(t+i)&3);
+        ctx.drawImage(fr,Math.round(gx+Math.cos(ang)*dd-fr.width/2),Math.round(gy+Math.sin(ang)*dd-fr.height+4)); }
+      const big=flameSpr(Math.round(26*(1-k*.4)),t&3); ctx.drawImage(big,Math.round(gx-big.width/2),Math.round(gy-big.height+6)); },
+    shot4a(t){ const x=46, y=121, pose=this.pose4(t), deg=this.deg4(t), R=this.R4(t), [hx,hy]=caHand(pose,x,y,1), [gx,gy]=this.glassOf(pose,x,y,deg), cz=.3, L=[this.lightAt(gx,gy,cz,R/28,.95)];
+      this.corridor(cz,.05,L); this.props(cz,t,L);
+      caShadow(x,122,15); if(t>=96) this.rim(pose,x,y,'#ffb45a'); caHeroAt(pose,x,y); this.lamp(hx,hy,deg,1,t);
+      this.mask(gx,gy,R);
+      this.flare(gx,gy,t);
+      if(t>=98){ const k=clamp((t-98)/3,0,1), wx=lerp(gx,this.VPX+6,k), wy=lerp(gy-6,this.VPY-2,k)-Math.sin(Math.PI*k)*10, r=Math.max(1,Math.round(4-k*2)); // la chispa sale disparada
+        ctx.drawImage(disc(r+1,'#ff8a30'),Math.round(wx-r-1),Math.round(wy-r-1)); ctx.drawImage(disc(r,'#fff6c8'),Math.round(wx-r),Math.round(wy-r)); } },
+    /* ---- plano 5: la cámara sigue a la chispa por el pasillo y las antorchas prenden una tras otra ---- */
+    cz4(t){ return caK(t,[[100,0],[121,4.4,'io']]); },
+    wispW(t){ const P=[[-.3,.2,.9,99]].concat(this.TORCH.map(([X,u],i)=>[X*.9,-.14,u,this.IGN[i]]),[[0,.32,13,this.BRAZ]]);
+      for(let i=1;i<P.length;i++){ const [X1,Y1,u1,t1]=P[i]; if(t<=t1){ const [X0,Y0,u0,t0]=P[i-1], k=CA_EASE.io(clamp((t-t0)/(t1-t0),0,1)); return [lerp(X0,X1,k),lerp(Y0,Y1,k)-Math.sin(Math.PI*k)*.18,lerp(u0,u1,k)]; } }
+      return null; },
+    wispScreen(t){ const w=this.wispW(t); return w?this.proj(w[0],w[1],w[2],this.cz4(t)):null; },
+    torchLights(t,L){ this.TORCH.forEach(([X,u],i)=>{ const lv=this.litLv(i,t); if(lv>0) L.push({X:X*.9,Y:-.1,u,r2:4,a:.85*lv*(.92+.08*Math.sin(t*.9+i))}); }); if(t>=this.BRAZ) L.push({X:0,Y:.25,u:13,r2:9,a:Math.min(1,(t-this.BRAZ+1)/5)}); },
+    shot4b(t){ const cz=this.cz4(t), w=this.wispW(t), L=[]; this.torchLights(t,L); if(w) L.push({X:w[0],Y:w[1],u:w[2],r2:1.8,a:.95});
+      this.corridor(cz,.02,L); this.props(cz,t,L);
+      if(w){ const p=this.proj(w[0],w[1],w[2],cz); if(p){ const r=Math.max(2,Math.min(6,Math.round(6*p[2]))), fr=flameSpr(r*2+3,(t>>1)&3); // la chispa: una llamita con halo
+        ctx.drawImage(disc(r+2,'#b8501c'),Math.round(p[0]-r-2),Math.round(p[1]-r-2)); ctx.drawImage(disc(r+1,'#ff8a30'),Math.round(p[0]-r-1),Math.round(p[1]-r-1)); ctx.drawImage(fr,Math.round(p[0]-fr.width/2),Math.round(p[1]+r-fr.height+1)); ctx.drawImage(disc(Math.max(1,r-1),'#fff6c8'),Math.round(p[0]-r+1),Math.round(p[1]-r+2)); } } },
+    /* ---- plano 6: pose final, el farol en alto, el pasillo encendido detrás ---- */
+    pose5(t){ return {eyes:caStep(t,[[0,'fierce'],[132,'open']]),lid:t<132?.3:caBlinkAt(t,139),brow:t<132?1:0,mouth:'grin',
+        arms:[[16,40],caK(t,[[121,[48,-3]],[150,[49,-1]]])],leaf:Math.round(-6+Math.sin(t*.13)*5+caWob(t,121,8,.4,10)),sq:1+Math.round(Math.sin(t*.09))*.02,lean:Math.sin(t*.05)}; },
+    deg5(t){ return Math.sin(t*.09)*7; },
+    shot5(t){ const x=50, y=121, pose=this.pose5(t), deg=this.deg5(t), cz=caK(t,[[121,.6],[150,.15,'io']]), [hx,hy]=caHand(pose,x,y,1), [gx,gy]=this.glassOf(pose,x,y,deg), L=[this.lightAt(gx,gy,cz,2.1,.5)];
+      this.torchLights(t,L); this.corridor(cz,.07,L); this.props(cz,t,L);
+      caShadow(x,122,15); this.rim(pose,x,y,'#ffb45a'); caHeroAt(pose,x,y); this.lamp(hx,hy,deg,1,t); },
+    tick(t,C){ const R=C.rng, ember=(x,y)=>C.parts.push({k:'dot',x:x+(R()-.5)*4,y,vx:(R()-.5)*.5,vy:-.5-R()*.7,g:-.004,t:0,life:28+((R()*20)|0),col:R()<.5?'#ffd060':'#ff8a30'});
+      if([22,25,27,30].includes(t)){ const [gx,gy]=this.glassOf(this.pose12(t),46,121,this.deg12(t)); for(let i=0;i<(t===30?9:5);i++) C.parts.push({k:'dot',x:gx,y:gy+2,vx:(R()-.5)*1.6,vy:-R()*1.6-.3,g:.06,t:0,life:10+((R()*8)|0),col:R()<.5?'#ffe070':'#ff8a30'}); } // chisporroteo
+      if(t===34){ const [gx,gy]=this.glassOf(this.pose12(t),46,121,this.deg12(t)); C.parts.push({k:'ring',x:gx,y:gy,r0:6,r1:74,t:0,life:16,col:'#ffe28c',w:2},{k:'ring',x:gx,y:gy,r0:3,r1:46,t:0,life:12,col:'#e2682a'});
+        for(let i=0;i<8;i++) C.parts.push({k:'star',x:gx+(R()-.5)*60,y:gy+(R()-.5)*44,vx:0,vy:0,t:0,life:10+((R()*6)|0),s:2+((R()*3)|0),col:'#ffe28c'}); } // la luz se abre
+      if(t>=34&&t<56&&t%3===0){ const [gx,gy]=this.glassOf(this.pose12(t),46,121,this.deg12(t)); ember(gx,gy-4); }
+      if(t>=58&&t<84&&t%2===0) C.parts.push({k:'dot',x:R()*160,y:134,vx:(R()-.5)*.4,vy:-.8-R()*1.1,g:0,t:0,life:70,col:R()<.5?'#ffe28c':'#e2682a',s:R()<.3?2:1}); // ascuas por delante del primer plano
+      if(t>=86&&t<97&&t%3===0){ const [gx,gy]=this.glassOf(this.pose4(t),46,121,this.deg4(t)); ember(gx,gy-4); }
+      if(t===97){ const [gx,gy]=this.glassOf(this.pose4(t),46,121,this.deg4(t)); // ¡llamarada!
+        C.parts.push({k:'ring',x:gx,y:gy,r0:8,r1:70,t:0,life:7,col:'#ffe28c',w:2},{k:'ring',x:gx,y:gy,r0:4,r1:44,t:0,life:6,col:'#e2682a'}); // (cortas: no pasan al plano siguiente)
+        for(let i=0;i<12;i++){ const a=R()*6.283, s=1.5+R()*3; C.parts.push({k:'dot',x:gx,y:gy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,g:.05,t:0,life:6+((R()*3)|0),col:R()<.5?'#fff6c8':'#ffb040',s:2}); }
+        for(let i=0;i<6;i++) C.parts.push({k:'star',x:gx+(R()-.5)*70,y:gy-10+(R()-.5)*50,vx:0,vy:0,t:0,life:6+((R()*3)|0),s:3+((R()*3)|0),col:'#fff6c8'}); }
+      this.IGN.forEach((ti,i)=>{ if(t!==ti) return; const [X,u]=this.TORCH[i], p=this.proj(X*.97,-.08,u,this.cz4(t)); if(!p) return; const y=p[1]-3*p[2]*4; // la antorcha prende
+        C.parts.push({k:'ring',x:p[0],y,r0:2,r1:Math.max(6,Math.round(26*p[2])),t:0,life:12,col:'#ffe28c'}); for(let k=0;k<5;k++) C.parts.push({k:'dot',x:p[0],y,vx:(R()-.5)*2,vy:-R()*2,g:.08,t:0,life:12,col:R()<.5?'#ffe070':'#ff8a30'}); });
+      if(t>=100&&t<121){ const w=this.wispScreen(t); if(w) C.parts.push({k:'dot',x:w[0]+(R()-.5)*2,y:w[1],vx:(R()-.5)*.6,vy:-.3-R()*.5,g:0,t:0,life:12,col:R()<.5?'#ffd060':'#ff8a30',s:2}); } // la estela de la chispa
+      if(t===121){ const p=this.proj(0,.55,13,this.cz4(t)); if(p) C.parts.push({k:'ring',x:p[0],y:p[1]-4,r0:2,r1:18,t:0,life:14,col:'#ffe28c'}); }
+      if(t>=124&&t%3===0){ const [gx,gy]=this.glassOf(this.pose5(t),50,121,this.deg5(t)); ember(gx,gy-4); }
+      if(t===134){ const [gx,gy]=this.glassOf(this.pose5(t),50,121,this.deg5(t)); C.parts.push({k:'star',x:gx,y:gy,vx:0,vy:0,t:0,life:18,s:8,col:'#ffffff'},{k:'ring',x:gx,y:gy,r0:3,r1:22,t:0,life:14,col:'#ffe28c'}); } },
     draw(t,C){
-      if(t>=44&&t<54){ caFaceCut(t-44,{eyes:'wide',mouth:'o',leaf:4},MOMENT_ARMS.lantern.pal,'rgba(255,140,40,.16)'); return; }
-      ctx.drawImage(NIGHT,0,-10); ctx.fillStyle='#10121e'; for(let x=0;x<160;x++){ const h=Math.round(26+Math.sin(x*.05)*6+Math.sin(x*.17)*2); ctx.fillRect(x,144-h,1,h); }
-      let fx=70, fy=118, pose={eyes:'closed',mouth:'smile',arms:[[18,44],[48,48]],leaf:0}, lamp=[48,48], flame=0;
-      if(t>=30&&t<56){ const k=smooth(caSeg(t,30,40)); pose={eyes:'wide',mouth:'o',arms:[[18,44],[Math.round(48-2*k),Math.round(48-28*k)]],leaf:0}; lamp=[Math.round(48-2*k),Math.round(48-28*k)]; }
-      else if(t>=56&&t<92){ pose={eyes:'fierce',mouth:'open',arms:[[20,40],[56,34]],front:[1],leaf:10}; lamp=[56,34]; flame=caSeg(t,56,64)*(1-caSeg(t,82,92)); }
-      else if(t>=92){ pose={eyes:t<104?'closed':'open',mouth:'grin',arms:[[18,44],[46,20]],leaf:Math.round(Math.sin(t*.08)*4)}; lamp=[46,20]; }
-      caShadow(fx,fy+1,15);
-      const T=caHeroAt(pose,fx,fy); const [lx,ly]=T(lamp[0],lamp[1]); C.lx=lx; C.ly=ly-8;
-      const img=bigWeapon('lantern'); ctx.drawImage(img,Math.round(lx-10),Math.round(ly-24));
-      if(flame>0){ glowAt(lx+50,ly-12,50*flame,'rgba(255,150,50,.35)'); for(let i=0;i<8;i++){ const x=lx+14+i*12, H=Math.round((14+i*3)*flame*(0.8+.2*Math.sin(t*.7+i))), fr=flameSpr(Math.max(3,H),(t>>1)+i); ctx.drawImage(fr,Math.round(x-fr.width/2),Math.round(ly-8-H*.7+Math.sin(i+t*.3)*2)); } }
-      // la oscuridad, con el círculo de luz del farol
-      const R=t<30?9+Math.sin(t*.5):t<40?9+60*smooth(caSeg(t,30,40)):66+Math.sin(t*.4)*2+(flame>0?16*flame:0);
-      const g=ctx.createRadialGradient(lx,ly-10,R*.35,lx,ly-10,R); g.addColorStop(0,'rgba(8,8,20,0)'); g.addColorStop(1,'rgba(8,8,20,.93)'); ctx.fillStyle=g; ctx.fillRect(0,0,VW,VH);
-      glowAt(lx,ly-10,R*.55,'rgba(255,170,70,.22)'); } },
+      if(t<86) caCut(t,56,6,()=>this.shot12(t),()=>caCut(t,80,6,()=>this.shot3(t),()=>this.shot4a(t),'slash','#ffe28c'),'iris','#ffe28c');
+      else if(t<100) this.shot4a(t);
+      else caCut(t,121,5,()=>this.shot4b(t),()=>this.shot5(t),'slash','#ffe28c');
+      if(t===100||t===101){ ctx.fillStyle='rgba(255,226,140,'+(t===100?.7:.35)+')'; ctx.fillRect(0,0,VW,VH); } // el corte, con el fogonazo de la llamarada
+      if(t>=144){ ctx.fillStyle='rgba(255,255,244,'+((t-143)/7).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } },
+    held(hx,hy,f,C){ const [gx,gy]=this.lamp(hx,hy,caWob(f,27,-9,.45,12)+Math.sin(f*.06)*4,1,f); C.gx=gx; C.gy=gy-2; } }, // en el título: colgando de la mano, encendido
 
   /* ═════════ feather ═════════ */
   feather:{ // el vilano: desde el risco nevado salta y planea despacio entre las nubes
