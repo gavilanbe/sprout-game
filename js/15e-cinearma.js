@@ -375,6 +375,7 @@ const CA_SCRIPT={
     tick(t,C){ const R=C.rng;
       if(t%5===0) C.parts.push({k:'petal',x:-4,y:16+R()*84,vx:.9+R()*.8,vy:.1+R()*.25,g:.002,fr:1,t:0,life:210,ph:(R()*4)|0,col:R()<.6?'#f8a8d0':'#fff4f8'}); // pétalos de primavera
       if(t<25&&t%4===0) caDust(this.runX(t)-4,119,2,'#e8dcb8');
+      if(t<24&&t%2===0) C.parts.push({k:'streak',x:this.runX(t)-14-R()*20,y:72+R()*44,vx:-3.2,vy:0,t:0,life:8,len:6+((R()*8)|0),col:'#ffffff'}); // velocidad
       if(t>=27&&t<33) caDust(this.runX(t)+(t&1?8:-8),119,3,'#e8dcb8'); // el frenazo
       if(t===85){ const cx=this.strikeX(t), cy=88; // el tajo: hojas por el aire, anillos y chispas
         for(let i=0;i<30;i++){ const a=-2.6+R()*3.6, s=1.2+R()*2.6; caLeafPart(cx+Math.cos(a)*30,cy+Math.sin(a)*22,Math.cos(a)*s,Math.sin(a)*s-1.1,['#46a63c','#7ed64e','#c6f68e','#226e2a']); }
@@ -427,10 +428,14 @@ const CA_SCRIPT={
       if(t>=122){ const [tx,ty]=this.tip(t), k=Math.min(1,(t-122)/12); caRays(tx,ty,14,t*.004,'#fffbe8',null,.5*k,30+46*k); glowAt(tx,ty,26*k,'rgba(255,252,220,.55)'); } // la punta se enciende: un sol pequeño
       caShadow(x,119,15);
       if(t>=82&&t<97){ const a1=Math.min(deg,168); caSmear(x,88,Math.max(-142,a1-150)*Math.PI/180,a1*Math.PI/180,t<86?1:1-caSeg(t,86,97)); } // la estela: el tramo que acaba de barrer la punta
+      if(t>=85&&t<91){ const k=(t-85)/6; // el aire cortado: dos rayas que cruzan por detrás y se cierran desde las puntas
+        for(const [cx,cy,th,col] of [[x-4,82,t<88?2:1,t<87?'#ffffff':'#e8ffd0'],[x+2,90,1,'#c6f68e']]){ ctx.fillStyle=col;
+          for(let i=-92;i<=92;i++){ if(Math.abs(i)>92*(1-k)) continue; ctx.fillRect(Math.round(cx+i),Math.round(cy-i*.42),1,th); } } }
       const behind=!pose.front.includes(1); if(behind) drawBlade(hx,hy,deg);
       caHeroAt(pose,x,118);
       if(!behind) drawBlade(hx,hy,deg);
       if(t===78||t===79) caStar(hx+Math.cos(a)*30,hy+Math.sin(a)*30,3,'#fffbe0'); // el filo brilla antes del tajo
+
       if(t>=126&&t<136){ const r=4+(t-126)/10*28; caStar(hx+Math.cos(a)*r,hy+Math.sin(a)*r,2,'#ffffff'); } } }, // la luz recorre la hoja
   /* ═════════ bomb ═════════ */
   bomb:{ // la bellota-bomba: en la cueva enciende la mecha, la lanza, se tapa los oídos y ¡BUM!
