@@ -47,7 +47,7 @@ function drawPlayer(){
   if(idle&&((tick+37)%210)<7) s=P_BLINK[player.dir];                 // parpadeo
   if(player.atk>0&&player.atk>4) s=P_ATK[player.dir];
   if(player.spin>0) s=P_ATK[spinFacing()];                           // en el Remolino, Sprout gira con su Hoja
-  if(state==='itemget') s=H_LIFT;
+  if(state==='itemget'&&!(typeof moment!=='undefined'&&moment&&moment.phase==='grab'&&moment.t<M_CATCH)) s=H_LIFT; // tras la cinemática, alza los brazos al atraparla
   if(player.inv>54&&state==='play'&&!rebornInv) s=P_WHITE[player.dir]; // destello al recibir daño (al rebrotar no: 15c)
   // estirar y encoger: el golpe estira, el aterrizaje y el daño aplastan; en reposo respira
   let sq=player.squash||0; if(idle&&((tick>>5)&1)&&(tick&31)<10) sq-=.06;
