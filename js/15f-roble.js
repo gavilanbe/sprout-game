@@ -223,7 +223,7 @@ function updSeasonCine(){ const c=seasonCine; if(!c){ state='play'; return; } co
   const cue=S.cues&&S.cues[c.t]; if(cue) try{ cue(c); }catch(_){}
   if(S.tick) S.tick(c.t,c);
   if(c.t===(S.titleAt||c.len-160)){ if(AC) SFX.fanfare(); }
-  for(const p of c.parts){ p.x+=p.vx; p.y+=p.vy; p.vy+=p.g||0; if(p.fr){ p.vx*=p.fr; p.vy*=p.fr; } if(p.k==='petal') p.vx+=Math.sin((p.t+(p.ph||0)*9)*.15)*.03; p.t++; if(p.rot!==undefined) p.rot+=p.vr||0; }
+  for(const p of c.parts){ p.x+=p.vx||0; p.y+=p.vy||0; p.vy+=p.g||0; if(p.fr){ p.vx*=p.fr; p.vy*=p.fr; } if(p.k==='petal') p.vx+=Math.sin((p.t+(p.ph||0)*9)*.15)*.03; p.t++; if(p.rot!==undefined) p.rot+=p.vr||0; }
   c.parts=c.parts.filter(p=>p.t<p.life&&p.y<VH+8&&p.x>-20&&p.x<VW+20);
   if(keys.fire&&c.t>30){ keys.fire=false; c.t=Math.max(c.t,c.len-20); }
   if(c.t>=c.len){ const cb=c.cb; seasonCine=null; state='play'; parts=[]; fadeIn=24; if(cb) cb(); } }
