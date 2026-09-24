@@ -21,6 +21,7 @@ let overUD=0;
 function playerOnTile(){ const [tx,ty]=playerTile(); return grid[ty]&&grid[ty][tx]; }
 function update(){
   tick++;
+  if(sx===1&&sy===1&&typeof robleTick==='function'&&(state==='play'||state==='dialog'||state==='rite')) robleTick(); // el Gran Roble respira (15f)
   if(shake>0)shake--;
   if(hitStop>0){ hitStop--; return; }
   tickFx();
@@ -60,6 +61,7 @@ function update(){
     updParts(); const end=creditsT>CREDITS.length*22+80;
     if(keys.fire&&end){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } else if(keys.fire){ keys.fire=false; creditsT+=40; } return; }
   if(state==='seasoncine'){ updSeasonCine(); return; }
+  if(state==='rite'){ updRite(); return; } // la entrega en la plaza (15f)
   if(state==='ending'){ updEnding(); return; }
   if(state==='cine'){
     cineT++; cineParts();
@@ -176,11 +178,11 @@ function update(){
   updExits();
 }
 function weather(){
-  const ph=inValleyScr(sx,sy)?seasonPhase():-1, r=regionOf(sx,sy);
+  const ph=inValleyScr(sx,sy)&&won?valleySeason():-1, r=regionOf(sx,sy);
   if(r==='norte'&&!(thawed&&sy===-1)&&!(boss&&boss.type==='viento')){ const mask=(sy===-3&&boss3Done)?15:3;
     if((tick&mask)===0) parts.push({k:'flake',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.5+Math.random()*.4,life:90,max:90,r:(tick&8)?1:0,col:(tick&4)?'#dff0ff':'#ffffff',nog:true}); }
   if(r==='marisma'&&!summered&&(tick&7)===0) parts.push({k:'leafF',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.3,life:110,max:110,sway:Math.random()*6,col:(tick&8)?'#c87830':'#e8a040',nog:true});
-  if(sx===1&&sy===1&&summered&&ph<0&&(tick&31)===0) parts.push({x:20+Math.random()*120,y:20+Math.random()*70,vx:(Math.random()-.5)*.2,vy:-Math.random()*.15,life:50,col:'#fff7c0',nog:true});
+  if(ph===1&&(tick&23)===0) parts.push({k:'mote',x:Math.random()*160,y:30+Math.random()*90,vx:(Math.random()-.5)*.15,vy:-.1-Math.random()*.12,life:120,max:120,sway:Math.random()*6,col:(tick&32)?'#fff7c0':'#ffffff',nog:true}); // verano: polen y luz
   if(ph===0&&(tick&15)===0) parts.push({k:'petal',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.4+.15,vy:.35,life:100,max:100,sway:Math.random()*6,col:(tick&16)?'#f8c8e0':C.flower2,nog:true});
   if(ph===2&&(tick&7)===0) parts.push({k:'leafF',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.6,vy:.4,life:110,max:110,sway:Math.random()*6,col:(tick&8)?'#c87830':'#e8a040',nog:true});
   if(ph===3&&(tick&5)===0) parts.push({k:'flake',x:Math.random()*160,y:-4,vx:(Math.random()-.5)*.3,vy:.4,life:110,max:110,r:(tick&8)?1:0,col:'#ffffff',nog:true});

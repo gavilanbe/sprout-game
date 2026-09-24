@@ -3,6 +3,11 @@
 const inTown=(x,y)=>(x===1&&y===1)||(x===0&&y===1);
 const inValleyScr=(x,y)=>x>=0&&x<=4&&y>=0&&y<=2;
 function seasonPhase(){ return cycled?(((tick/3000)|0)%4):-1; } // post-final: las estaciones giran (~50s cada una)
+/* la estación del valle: la última que volvió a su altar junto al Roble (tras el Copo, giran solas).
+   -1: el año sigue atascado (el Roble respira, pero aún no ha vuelto ninguna) · 0 primavera · 1 verano · 2 otoño · 3 invierno */
+let SEASON_FORCE=null; // las cinemáticas pintan el valle en una estación concreta (15f)
+function valleySeason(){ if(SEASON_FORCE!==null) return SEASON_FORCE; if(cycled) return seasonPhase(); if(autumned) return 2; if(summered) return 1; if(thawed) return 0; return -1; }
+function seasonBio(s){ return s===1?'summer':s===2?'autumn':s===3?'snow':'valley'; }
 function regionOf(nx,ny){
   if(ny===12) return 'eco';   // post-juego: el Eco de los Guardianes
   if(ny===9&&nx>=7&&nx<=9) return 'casa';
@@ -20,12 +25,11 @@ function regionOf(nx,ny){
 function dungeonOf(nx,ny){ const r=regionOf(nx,ny); return (r==='cueva'||r==='tronco'||r==='templo'||r==='molino')?r:null; }
 function screenBiome(nx,ny){ // qué estación se VE en una pantalla
   const r=regionOf(nx,ny);
-  if(r==='norte') return (thawed&&ny===-1)?'valley':'snow';
-  if(r==='marisma') return summered?'valley':'autumn';
+  if(r==='norte') return (thawed&&ny===-1)?seasonBio(valleySeason()):'snow'; // el deshielo baja del Roble: las laderas siguen al valle
+  if(r==='marisma') return summered?seasonBio(valleySeason()):'autumn';        // sin verano, un otoño viejo que se pudre
   if(r==='valle'){
     if(!won) return 'wilt';
-    const ph=inValleyScr(nx,ny)?seasonPhase():-1;
-    return ph===1?'summer':ph===2?'autumn':ph===3?'snow':'valley';
+    return inValleyScr(nx,ny)?seasonBio(valleySeason()):'valley';
   }
   return 'valley';
 }

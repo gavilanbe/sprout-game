@@ -403,7 +403,7 @@ function startMusic(){
     if(nextNoteT<AC.currentTime-.1) nextNoteT=AC.currentTime+.05; // tras una pausa larga no hay atracón de notas
     const t=TRACKS[curTrack]; if(!t) return;
     const I=t.adaptive?mIntTarget:0, EI=t.EI/(1+.07*I);
-    const duck=(state==='dialog'||state==='cine'||state==='itemget'||state==='pause'||state==='shop'||state==='give')?0.45:1;
+    const duck=(state==='dialog'||state==='cine'||state==='itemget'||state==='pause'||state==='shop'||state==='give'||state==='rite')?0.45:1;
     OUT=VOICE.drum;
     while(nextNoteT<AC.currentTime+.18){
       const i=musicStep%t.len, pass=(musicStep/t.len)|0, varn=t.vary===false?0:pass%3, S=t.steps, bar=(i/S)|0, inBar=i%S;

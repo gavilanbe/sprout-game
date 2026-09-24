@@ -395,53 +395,7 @@ function fileParts(){
   if((tick%(si===3?5:11))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si===2?.4:.1)+(Math.random()-.5)*.3,vy:.3+Math.random()*.35,life:260,max:260,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
   if((tick%14)===0) parts.push({k:'mote',x:fileSpotX-10+Math.random()*20,y:20+Math.random()*60,vx:0,vy:.12,life:90,max:90,sway:Math.random()*6,col:'#fff6c0',nog:true});
 }
-/* ============================================================
-   CINEMÁTICA DE ESTACIÓN: al devolver cada reliquia, el valle
-   cambia ante tus ojos. Primavera y verano llegan floreciendo
-   desde la copa del Roble; otoño e invierno, con el Viento.
-   playSeasonCinematic('primavera'|'verano'|'otono'|'invierno', cb)
-   ============================================================ */
-let seasonCine=null;
-const SEASON_KIND={primavera:0,verano:1,otono:2,invierno:3};
-const SEASON_TITLE={primavera:'VUELVE LA PRIMAVERA',verano:'VUELVE EL VERANO',otono:'VUELVE EL OTOÑO',invierno:'VUELVE EL INVIERNO'};
-const SEASON_SUB={primavera:'la Brasa late en su altar',verano:'la Lágrima brilla en su altar',otono:'la Hoja de Ámbar cae en su altar',invierno:'el Copo no se derrite'};
-const SEASON_DUR=330;
-function relicSprite(kind){ return kind==='primavera'?EMBER_SPR:kind==='verano'?TEAR_SPR:kind==='otono'?(typeof AMBER_SPR!=='undefined'?AMBER_SPR:ACORN_GOLD):FLAKE_SPR; }
-function playSeasonCinematic(kind,cb){
-  seasonCine={kind:kind in SEASON_KIND?kind:'primavera',t:0,cb:cb||null}; state='seasoncine'; parts=[]; toast=null;
-  if(AC){ if(typeof TRACKS!=='undefined'&&TRACKS.estacion) setTrack('estacion'); SFX.chime(); }
-}
-function updSeasonCine(){
-  const c=seasonCine; if(!c){ state='play'; return; } c.t++;
-  const si=SEASON_KIND[c.kind], S=SEASONS[si];
-  if(c.t>70&&(tick%(si===3?3:5))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si>=2?-.6:.1)+(Math.random()-.5)*.3,vy:.35+Math.random()*.35,life:220,max:220,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
-  if(c.t===64){ for(let i=0;i<24;i++){ const a=i/24*6.283; parts.push({k:'shard',x:80,y:44,vx:Math.cos(a)*2.2,vy:Math.sin(a)*2.2,life:26,max:26,col:i&1?'#ffffff':'#fff6c0',nog:true}); } if(AC) SFX.fanfare(); }
-  updParts();
-  if(keys.fire&&c.t>40){ keys.fire=false; c.t=Math.max(c.t,SEASON_DUR-20); }
-  if(c.t>=SEASON_DUR){ const cb=c.cb; seasonCine=null; state='play'; parts=[]; fadeIn=24; if(cb) cb(); }
-}
-function drawSeasonCine(){
-  const c=seasonCine; if(!c) return; const si=SEASON_KIND[c.kind], prev=(si+3)%4, t=c.t;
-  // el valle: antes, la estación que se va; desde t=70, la nueva entra como la trae su dueño
-  const k=clamp((t-70)/40,0,1);
-  if(k<=0) drawTitleScene(prev,1,0,false);
-  else if(k>=1) drawTitleScene(si,1,0,false);
-  else { drawTitleScene(prev,1,0,false);
-    if(si<=1){ const r=Math.round(k*k*190); ctx.save(); ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.strokeStyle='rgba(255,255,240,.9)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(80,64,r,0,6.283); ctx.stroke(); }
-    else { const wx=Math.round(166-k*190); ctx.save(); ctx.beginPath(); ctx.rect(wx,0,200,144); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); ctx.fillStyle='rgba(235,245,255,.8)'; ctx.fillRect(wx,0,1,144);
-      ctx.save(); ctx.translate(wx+6,40+Math.sin(tick*.12)*4); ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore(); } }
-  // la reliquia sube desde la plaza y estalla en luz
-  if(t<70){ const e=easeOutBack(clamp(t/50,0,1)), y=Math.round(110-e*66); glowAt(80,y+8,18+Math.sin(tick*.2)*3,'rgba(255,240,180,.55)'); ctx.drawImage(relicSprite(c.kind),72,y); }
-  else if(t<90){ const a=1-(t-70)/20; ctx.globalAlpha=a; ctx.fillStyle='#fffbe8'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-  drawParts();
-  // Sprout y Raíz lo miran desde abajo
-  const bob=((tick>>4)&1); drawShadow(52,132,7); ctx.drawImage(P_SPRITES[1][0],0,0,16,16,36,100+bob,32,32);
-  // franjas y rótulo
-  const lb=Math.min(1,t/20,(SEASON_DUR-t)/20), h=Math.round(12*lb); ctx.fillStyle='#000'; ctx.fillRect(0,0,160,h); ctx.fillRect(0,144-h,160,h);
-  if(t>96){ const a=Math.min(1,(t-96)/16,(SEASON_DUR-t)/16), y=Math.round(20-(1-easeOutBack(Math.min(1,(t-96)/18)))*12);
-    ctx.globalAlpha=a; ribbon(80,y,textW(SEASON_TITLE[c.kind])+14,SEASON_TITLE[c.kind]); txtSO(SEASON_SUB[c.kind].toUpperCase(),80,137,'#fff6d0','center','#1a1408'); ctx.globalAlpha=1; }
-  if(t<24){ ctx.globalAlpha=1-t/24; ctx.fillStyle='#000'; ctx.fillRect(0,0,160,144); ctx.globalAlpha=1; }
-}
+/* la cinemática de estación (cuando vuelve cada reliquia) vive ahora en 15f-roble.js: el valle cambia de verdad */
 /* ============================================================
    EL FINAL: cuatro planos antes de los créditos.
    playEnding(cb) — Z pasa de plano; cb al terminar (créditos)
