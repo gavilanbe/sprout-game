@@ -485,6 +485,7 @@ function draw(){
   if(state==='dialog'&&zLore&&dlg){ drawPause(); drawDialog(); ctx.restore(); return; } // un recuerdo leído desde el zurrón
   drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
   if(state==='rite') drawRite(); // la entrega en la plaza (15f)
+  if(state==='door') drawDoor(); // la travesía por una puerta, cueva o escalera (15g)
   if(state==='itemget'&&moment) drawMoment(); // el momento del arma (15d)
   else if(state==='itemget'){ const bob=Math.sin(tick*.15)*1.5; drawRays(player.x+8,player.y-9,Math.min(1,(120-itemT)/14)); ctx.drawImage(itemSpr||BLADE_SPR,(player.x+(itemSpr&&itemSpr.width===12?2:0))|0,(player.y-17+bob)|0);
     if(itemCardName){ const a=Math.min(1,(120-itemT)/12); ctx.globalAlpha=a; const y=player.y+8>56?8:88; ctx.fillStyle='rgba(5,10,7,.92)'; ctx.fillRect(8,y,144,24); ctx.strokeStyle=C.flowerC; ctx.strokeRect(8.5,y+.5,143,23);

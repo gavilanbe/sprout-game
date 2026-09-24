@@ -62,6 +62,7 @@ function update(){
     if(keys.fire&&end){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } else if(keys.fire){ keys.fire=false; creditsT+=40; } return; }
   if(state==='seasoncine'){ updSeasonCine(); return; }
   if(state==='rite'){ updRite(); return; } // la entrega en la plaza (15f)
+  if(state==='door'){ updDoor(); return; } // entrar y salir por puertas, cuevas y escaleras (15g)
   if(state==='ending'){ updEnding(); return; }
   if(state==='cine'){
     cineT++; cineParts();
