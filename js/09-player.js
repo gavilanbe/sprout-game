@@ -306,8 +306,11 @@ function startJump(){
   const d=Math.hypot(dx,dy); jumpDir=[dx/d,dy/d]; jumpT=26; SFX.jump(); player.atk=0; player.charge=0; glideT=0; glideUsed=false;
   puff(player.x+8,player.y+14,'#e8e8d8',5,.8);
 }
+/* cambiar de sitio por una puerta, cueva o escalera: en pleno juego, la travesía entera (15g); si no, al momento */
+function placeAtNow(nx,ny,px,py,dir){ loadScreen(nx,ny); player.x=px; player.y=py; player.dir=dir; lastEntry={sx:nx,sy:ny,x:px,y:py}; }
 function placeAt(nx,ny,px,py,dir){
-  loadScreen(nx,ny); player.x=px; player.y=py; player.dir=dir; lastEntry={sx:nx,sy:ny,x:px,y:py}; fadeIn=18; noise(.12,.03,false);
+  if(state==='play'&&typeof startDoor==='function'&&startDoor(nx,ny,px,py,dir)) return;
+  placeAtNow(nx,ny,px,py,dir); fadeIn=18; noise(.12,.03,false);
 }
 function enterHouse(){ placeAt(9,9,76,90,1); }
 function exitHouse(){ placeAt(0,1,44,42,0); }

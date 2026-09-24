@@ -273,15 +273,17 @@ const ROOM_HINTS={
 /* ============================================================
    SEGUNDA PASADA: más principio, más lore
    ============================================================ */
-/* prólogo ilustrado (cada página lleva su viñeta: ver drawCinePanel) */
+/* prólogo ilustrado: una página por plano (ver drawCineScene en 15a). Tres líneas como mucho;
+   sin destripar el final: nadie dice quién plantó la semilla ni quién es el brote */
 CINE.splice(0,CINE.length,
   "Hace mucho, la Tierra plantó dos hermanos: el GRAN ROBLE y el VIENTO DEL NORTE.",
-  "El Roble traía la primavera y el verano. El Viento, el otoño y el invierno. Y así giraba el año.",
-  "Pero el valle solo cantaba al Roble. Del Viento, nadie recordaba el nombre.",
-  "Una noche, el Viento aulló de pena y arrancó al Roble sus OCHO SEMILLAS DORADAS.",
-  "Las estaciones se atascaron. El valle se fue apagando, gris y callado.",
-  "Pero el Roble había escondido una NOVENA semilla. La que el Viento nunca encontró.",
-  "Y esta mañana, tres primaveras después... la novena semilla abrió los ojos."
+  "Con sus SEMILLAS DORADAS, el Roble traía primavera y verano; el Viento, otoño e invierno.",
+  "Pero el valle cantaba al Roble y olvidó al Viento, que pasó MIL INVIERNOS solo en su pico.",
+  "Una noche, de pura pena, bajó en tormenta y le arrancó al Roble sus OCHO SEMILLAS DORADAS.",
+  "Las sembró por todo el valle y dejó presa cada ESTACIÓN. El invierno se lo llevó a su pico.",
+  "Sin sus semillas, el Roble dejó de respirar. El año se atascó, y el valle se fue quedando GRIS.",
+  "Pero en su savia quedó una semilla que el Viento no encontró. Alguien la plantó en una maceta...",
+  "Esperó TRES PRIMAVERAS. Y esta mañana... un pequeño brote abrió los ojos."
 );
 /* Petra te despierta */
 const PETRA_WAKE=[

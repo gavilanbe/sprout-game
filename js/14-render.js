@@ -32,6 +32,7 @@ function drawSmear(cx,cy,a0,a1,ph){
   ctx.globalAlpha=1;
 }
 function drawPlayer(){
+  if(state==='door'&&typeof drawDoorPlayer==='function'&&drawDoorPlayer()) return; // cruzando una puerta: recortado por el hueco (15g)
   if(state==='dying') return; // lo pinta drawWilt (15c), por encima del mundo que se apaga
   if(state==='fall'){ const k=1-deathT/40; ctx.save(); ctx.translate(player.x+8,player.y+10); ctx.rotate(k*6); ctx.scale(1-k,1-k); ctx.drawImage(P_SPRITES[0][0],-8,-8); ctx.restore(); return; }
   if(inBed){ ctx.drawImage(wakeT>25?H_SLEEP:H_WAKE,(player.x+4)|0,(player.y+2)|0); return; }
@@ -160,10 +161,9 @@ function drawBoss(){
   } else {
     const resting=b.st==='rest';
     if(resting) glowAt(b.x+16,b.y+16,26,'rgba(120,232,120,'+(0.28+0.18*Math.sin(tick*.3))+')');
-    const img=b.flash>5?BOSS_WHITE.viento:BOSS_SPR.viento;
-    ctx.save(); ctx.translate(b.x+16,b.y+16);
-    if(b.st==='sweep') ctx.scale(1.3,0.8); else if(resting){ const g=Math.sin(tick*.4)*.05; ctx.scale(1+g,1-g); } else { const w=Math.sin(tick*.18)*.1; ctx.scale(1+w,1-w); }
-    ctx.globalAlpha=b.st==='float'?0.65:1; ctx.drawImage(img,-16,-16); ctx.globalAlpha=1; ctx.restore();
+    const mood=b.st==='sweep'?'howl':b.st==='aim'?'blow':b.st==='drop'||resting?'sad':(((tick>>5)&3)===0?'howl':'storm'); // aúlla, sopla, se derrumba
+    const flip=b.st==='sweep'?b.vx>0:player.x+8>b.x+16, bob=resting?Math.round(Math.sin(tick*.08)):Math.round(Math.sin(tick*.12)*2);
+    ctx.globalAlpha=b.st==='float'?.82:1; drawWind(b.x+16,b.y+13+bob,{s:1,mood,f:(tick>>2)&7,flip,white:b.flash>5,blink:mood==='storm'&&((tick+17)%150)<6?1:0}); ctx.globalAlpha=1;
     if(b.st==='aim'){ ctx.fillStyle='rgba(232,80,80,'+(0.25+0.2*Math.sin(tick*.4))+')'; ctx.fillRect(0,(b.row+14)|0,160,4); }
     if(resting&&b.hp<=2&&(tick&31)<20) txtO('Z',(b.x+14)|0,(b.y-18)|0);
   }
@@ -199,7 +199,8 @@ function drawScene(){
   if(elderPos) L.push({y:elderPos[1]*16+16,f:()=>{ const sway=Math.sin(tick*.04)>0?0:1; drawShadow(elderPos[0]*16+7,elderPos[1]*16+15,6); ctx.drawImage(ELDER,elderPos[0]*16,elderPos[1]*16+sway+1);
     if((tick%85)===0) parts.push({x:elderPos[0]*16+14,y:elderPos[1]*16+4,vx:(Math.random()-.5)*.2,vy:-.25,life:22,col:PAL.l}); }});
   for(const n of npcs) L.push({y:n.y*16+16,f:()=>{ const sway=Math.sin(tick*.05+n.x)>0?0:1;
-    if(n.guest){ const img=BOSS_SPR[n.guest]; drawShadow(n.x*16+8,n.y*16+16,10); ctx.drawImage(img,n.x*16-8,n.y*16-14+sway); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-24); }
+    if(n.guest==='viento'){ drawShadow(n.x*16+8,n.y*16+16,10); drawWind(n.x*16+8,n.y*16-2+sway,{s:.86,mood:'calm',f:(tick>>3)&7,flip:player.x>n.x*16}); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-26); } // el Viento, en paz, en su pico
+    else if(n.guest){ const img=BOSS_SPR[n.guest]; drawShadow(n.x*16+8,n.y*16+16,10); ctx.drawImage(img,n.x*16-8,n.y*16-14+sway); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-24); }
     else { drawShadow(n.x*16+8,n.y*16+15,5); ctx.drawImage(NPCS[n.ch].img,n.x*16,n.y*16+sway); } }});
   for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
   if(boss) L.push({y:boss.y+32,f:()=>{ if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});

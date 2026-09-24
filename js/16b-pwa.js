@@ -19,7 +19,7 @@
 const PWA={reg:null,updateReady:false,install:null,notice:null,noticeT:0,dismissed:{}};
 function pwaStandalone(){ return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true; }
 function pwaIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); }
-function pwaCanSave(){ return introDone&&!['boot','title','file','cine','dying','over','ending','seasoncine','rite','credits'].includes(state); }
+function pwaCanSave(){ return introDone&&!['boot','title','file','cine','dying','over','ending','seasoncine','rite','door','credits'].includes(state); }
 function pwaCalm(){ return ['boot','title','file'].includes(state); } // aquí recargar no pierde nada
 function pwaApply(){ if(pwaCanSave()) try{ save(); }catch(_){} try{ sessionStorage.setItem('sprout.updated',GAME_VERSION); }catch(_){} location.reload(); }
 
