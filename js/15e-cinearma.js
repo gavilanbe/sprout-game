@@ -39,6 +39,20 @@ function rigXY(P,x,y){ const [s,n]=rigQS(P); return rigMap(s,n,x,y); }
 function bigQ(P){ const A=P.arms||[[18,44],[46,44]], r=Math.round, lf=Array.isArray(P.leaf)?P.leaf:[P.leaf||0,P.leaf||0], [s,n]=rigQS(P), e=P.eyes||'open';
   return {a:[r(A[0][0]),r(A[0][1]),r(A[1][0]),r(A[1][1])],f:(P.front||[]).join(''),e,l:r(clamp(P.lid??(e==='fierce'?.35:0),0,1)*8)/8,
     b:r(clamp(P.brow??(e==='fierce'?1:0),-1,1)*4)/4,k:r((P.look||0)*2)/2,m:P.mouth||'smile',lf:[r(lf[0]/3)*3,r(lf[1]/3)*3],s,n,ft:(P.feet||[0,0,0,0]).map(v=>r(v))}; }
+/* blobArt sin fillRect: los mismos volúmenes, sombras de contacto y tramas, escritos en un ImageData y solo dentro
+   de la caja de los lóbulos (el muñeco se redibuja casi cada fotograma: así cuesta la cuarta parte) */
+const PAL_RGB=new WeakMap();
+function palRGB(pal){ let r=PAL_RGB.get(pal); if(!r){ r=pal.map(hex2rgb); PAL_RGB.set(pal,r); } return r; }
+function blobID(D,W,H,lobes,pal,o){ const n=pal.length, RGB=palRGB(pal), own=new Int16Array(W*H).fill(-1);
+  let x0=W, y0=H, x1=0, y1=0; for(const L of lobes){ x0=Math.min(x0,Math.floor(L.x-L.r)-1); x1=Math.max(x1,Math.ceil(L.x+L.r)+1); const ry=L.ry||L.r; y0=Math.min(y0,Math.floor(L.y-ry)-1); y1=Math.max(y1,Math.ceil(L.y+ry)+1); }
+  x0=Math.max(0,x0); y0=Math.max(0,y0); x1=Math.min(W-1,x1); y1=Math.min(H-1,y1);
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) for(let i=lobes.length-1;i>=0;i--){ const L=lobes[i], dx=(x+.5-L.x)/L.r, dy=(y+.5-L.y)/(L.ry||L.r); if(dx*dx+dy*dy<=1){ own[y*W+x]=i; break; } }
+  const at=(x,y)=>x<0||y<0||x>=W||y>=H?-1:own[y*W+x], dith=o.dither===undefined?.9:o.dither, bias=o.bias||0, grad=o.grad===undefined?.35:o.grad;
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){ const i=own[y*W+x]; if(i<0) continue;
+    const L=lobes[i], nx=(x+.5-L.x)/L.r, ny=(y+.5-L.y)/(L.ry||L.r), nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny));
+    let d=nx*-.5+ny*-.72+nz*.48+bias-(y/H-.5)*grad;
+    if(at(x,y-1)>i||at(x-1,y)>i) d-=.55; else if(at(x,y-2)>i||at(x+1,y)>i) d-=.28;
+    const c=RGB[clamp(Math.round((d+.9)/1.8*(n-1)+(BAYER4[y&3][x&3]/16-.47)*dith),0,n-1)], p=(y*W+x)*4; D[p]=c[0]; D[p+1]=c[1]; D[p+2]=c[2]; D[p+3]=255; } }
 function bigEye(g,cx,top,tall,lid,e,side,skin){ g.fillStyle=BIG_INK;
   if(e==='closed'){ const y=top+2; g.fillRect(cx-1,y,3,1); g.fillRect(cx-2,y+1,1,2); g.fillRect(cx+2,y+1,1,2); return; } // contento: ^
   if(lid>=.85){ const y=top+Math.round(tall*.6); g.fillRect(cx-2,y,5,1); g.fillRect(side?cx+3:cx-3,y-1,1,1); return; } // el parpadeo
@@ -63,10 +77,11 @@ function bigSprout(pose){
   const s=q.s, wx=Math.pow(s,-.8), O=BIG_OX, OY=BIG_OY, X=x=>32+(x-32)*wx+O, Y=y=>61-(61-y)*s+OY, P=(x,y)=>[Math.round(X(x)),Math.round(Y(y))];
   const L=(x,y,r,ry)=>({x:X(x),y:Y(y),r:r*wx,ry:(ry||r)*s});
   // 1) el cuerpo, derecho y ya aplastado o estirado (en la geometría: los píxeles salen limpios)
-  const B=mkCanvas(BIG_W,BIG_H), g=B.getContext('2d');
-  blobArt(g,0,0,BIG_W,BIG_H,[L(25+q.ft[0],58+q.ft[1],5.5,3.2),L(39+q.ft[2],58+q.ft[3],5.5,3.2)],BIG_FOOT,{outline:false,grad:.3,dither:.5}); // los pies
-  blobArt(g,0,0,BIG_W,BIG_H,[L(32,48,15.5,9)],BIG_PETO,{outline:false,grad:.45,dither:.35}); // el faldón
-  blobArt(g,0,0,BIG_W,BIG_H,[L(32,33,17.5,15.5),L(32,19.5,6,4.5)],BIG_SKIN,{outline:false,grad:.25,dither:.35}); // el bulbo
+  const B=mkCanvas(BIG_W,BIG_H), g=B.getContext('2d'), ID=g.createImageData(BIG_W,BIG_H), D=ID.data;
+  blobID(D,BIG_W,BIG_H,[L(25+q.ft[0],58+q.ft[1],5.5,3.2),L(39+q.ft[2],58+q.ft[3],5.5,3.2)],BIG_FOOT,{grad:.3,dither:.5}); // los pies
+  blobID(D,BIG_W,BIG_H,[L(32,48,15.5,9)],BIG_PETO,{grad:.45,dither:.35}); // el faldón
+  blobID(D,BIG_W,BIG_H,[L(32,33,17.5,15.5),L(32,19.5,6,4.5)],BIG_SKIN,{grad:.25,dither:.35}); // el bulbo
+  g.putImageData(ID,0,0);
   g.fillStyle='#6a3a1c'; for(let x=18;x<=46;x++){ const [px,py]=P(x,45-Math.pow((x-32)/14,2)*3.2); g.fillRect(px,py,1,1); } // la costura
   const skin=g.getImageData(0,0,BIG_W,BIG_H); // la piel limpia: los párpados la vuelven a poner encima del ojo
   const lk=q.k*2, tall=q.e==='wide'?9:8, E=[25+lk,39+lk].map(x=>P(x,31-(tall-8)));
@@ -158,20 +173,23 @@ function caPolar(cx,cy){ const key=cx+','+cy; let m=CA_POLAR.get(key); if(m) ret
   const A=new Float32Array(VW*VH), D=new Float32Array(VW*VH);
   for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ const dx=x+.5-cx, dy=y+.5-cy; A[i]=Math.min(.99999,Math.atan2(dy,dx)/6.283185+.5); D[i]=Math.hypot(dx,dy); }
   m={A,D}; CA_POLAR.set(key,m); if(CA_POLAR.size>40) CA_POLAR.delete(CA_POLAR.keys().next().value); return m; }
-function caRaster(fn,alpha){ if(!CA_IMG) CA_IMG=CA_BG.createImageData(VW,VH); fn(CA_IMG.data); CA_BG.putImageData(CA_IMG,0,0);
-  if(alpha!==undefined){ ctx.globalAlpha=clamp(alpha,0,1); ctx.drawImage(CA_BUF,0,0); ctx.globalAlpha=1; } else ctx.drawImage(CA_BUF,0,0); }
+const CA_RC=new Map(); // los últimos fondos calculados: rayos y líneas repiten muchos fotogramas seguidos
+function caRaster(fn,alpha,key){ let c=key&&CA_RC.get(key);
+  if(!c){ if(!CA_IMG) CA_IMG=CA_BG.createImageData(VW,VH); fn(CA_IMG.data); CA_BG.putImageData(CA_IMG,0,0); c=CA_BUF;
+    if(key){ const k0=CA_RC.size>=6?CA_RC.keys().next().value:null, old=k0?CA_RC.get(k0):null; if(k0) CA_RC.delete(k0); c=old||mkCanvas(VW,VH); const g=c.getContext('2d'); g.clearRect(0,0,VW,VH); g.drawImage(CA_BUF,0,0); CA_RC.set(key,c); } }
+  if(alpha!==undefined){ ctx.globalAlpha=clamp(alpha,0,1); ctx.drawImage(c,0,0); ctx.globalAlpha=1; } else ctx.drawImage(c,0,0); }
 /* rayos que giran desde (cx,cy): n rayos, rot en vueltas, el borde tramado; colB null = transparente; rmax: se apagan (tramados) antes de ese radio */
 function caRays(cx,cy,n,rot,colA,colB,alpha,rmax){ const {A,D}=caPolar(Math.round(cx),Math.round(cy)), a=hex2rgb(colA), b=colB?hex2rgb(colB):null;
   caRaster(d=>{ for(let y=0,i=0;y<VH;y++) for(let x=0;x<VW;x++,i++){ let u=((A[i]+rot)*n)%1; if(u<0) u+=1;
     const m=Math.min(Math.abs(u-.5),u,1-u), sw=m<.06&&BAYER4[y&3][x&3]/16<(1-m/.06)*.5; let c=((u<.5)!==sw)?a:b; const p=i*4;
     if(rmax&&c===a){ const e=(D[i]-rmax*.55)/(rmax*.45); if(e>=1||(e>0&&BAYER4[y&3][x&3]/16<e)) c=b; }
-    if(c){ d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } else d[p+3]=0; } },alpha); }
+    if(c){ d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } else d[p+3]=0; } },alpha,['r',Math.round(cx),Math.round(cy),n,Math.round(rot*n*96),colA,colB,rmax?Math.round(rmax):0].join()); }
 /* líneas de concentración (las del manga): cuñas finas que apuntan a (cx,cy) y cambian cada 2 fotogramas */
 function caFocus(t,cx,cy,base,cols,n){ const {A,D}=caPolar(Math.round(cx),Math.round(cy)), B=hex2rgb(base), C0=hex2rgb(cols[0]), C1=hex2rgb(cols[1]||cols[0]);
   const N=720, thr=new Float32Array(N).fill(1e9), which=new Uint8Array(N), r=seeded(((t>>1)+3)*7919);
   for(let i=0;i<(n||70);i++){ const a=(r()*N)|0, w=1+((r()*3)|0), r0=30+r()*56, c=r()<.3?1:0;
     for(let j=0;j<w;j++){ const k=(a+j)%N, v=r0+Math.abs(j-(w-1)/2)*10; if(v<thr[k]){ thr[k]=v; which[k]=c; } } }
-  caRaster(d=>{ for(let i=0,p=0;i<VW*VH;i++,p+=4){ const k=(A[i]*N)|0, c=D[i]>thr[k]?(which[k]?C1:C0):B; d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } }); }
+  caRaster(d=>{ for(let i=0,p=0;i<VW*VH;i++,p+=4){ const k=(A[i]*N)|0, c=D[i]>thr[k]?(which[k]?C1:C0):B; d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } },undefined,['f',t>>1,Math.round(cx),Math.round(cy),base,cols.join('/'),n||70].join()); }
 /* barridos entre planos: fila a fila, lo que ya enseña el plano nuevo (k de 0 a 1) */
 function caWipeSpans(k,kind){ const out=[];
   for(let y=0;y<VH;y++){
@@ -200,8 +218,8 @@ function ringArt(r,col,w){ w=w||1; const key=r+'|'+col+'|'+w; let c=RING_C.get(k
    o = { pal, F, dx, dy, eyes:'open'|'wide'|'happy', lid, brow, look, mouth, leaf, glint (fotograma del destello; <0 nada), tint, sweat } */
 const CU_BASE=new Map(), CU_LEAF=new Map();
 function cuBase(F){ const q=Math.round(F*20)/20; let c=CU_BASE.get(q); if(c) return c;
-  c=mkCanvas(170,180); const g=c.getContext('2d'); // el centro del bulbo cae en (85,104)
-  blobArt(g,0,0,170,180,[{x:85,y:104,r:17.5*q,ry:15.5*q},{x:85,y:104-13.5*q,r:6*q,ry:4.5*q}],BIG_SKIN,{outline:false,grad:.2,dither:.45});
+  c=mkCanvas(170,180); const g=c.getContext('2d'), ID=g.createImageData(170,180); // el centro del bulbo cae en (85,104)
+  blobID(ID.data,170,180,[{x:85,y:104,r:17.5*q,ry:15.5*q},{x:85,y:104-13.5*q,r:6*q,ry:4.5*q}],BIG_SKIN,{grad:.2,dither:.45}); g.putImageData(ID,0,0);
   artOutline(g,170,180); CU_BASE.set(q,c); if(CU_BASE.size>24) CU_BASE.delete(CU_BASE.keys().next().value); return c; }
 function cuLeaf(F,ang){ const q=Math.round(F*10)/10, a=Math.round(ang/3)*3, key=q+'|'+a; let c=CU_LEAF.get(key); if(c) return c;
   const len=15*q, R=Math.ceil(len)+3; c=mkCanvas(R*2+1,R*2+1); const g=c.getContext('2d'); bigLeaf(g,R,R,len,6*q,a,BIG_LEAF); artOutline(g,c.width,c.height);
@@ -293,14 +311,14 @@ function caTitleHero(f,C){ const S=CA_SCRIPT[C.kind]||{}; if(S.heroTitle) return
   const T=caHeroAt(pose,80,fy), [hx,hy]=T(pose.arms[1][0],pose.arms[1][1]); caHeld(C.kind,hx,hy,f);
   const g=(f-(L0+13))/14; if(g>=0&&g<1){ ctx.fillStyle='#ffffff'; for(let i=0;i<8;i++){ const a=i/8*6.283+.2, r0=5+g*12, r1=r0+7*(1-g); for(let r=r0;r<r1;r++) ctx.fillRect(Math.round(C.gx+Math.cos(a)*r),Math.round(C.gy+Math.sin(a)*r),1,1); } caStar(C.gx,C.gy,Math.round((1-g)*7),'#ffffff'); } } // ¡destello al alzarla!
 function caTitle(f,C){ const A=MOMENT_ARMS[C.kind], P=A.pal;
-  caRays(80,86,14,f*.0018,P[1],shade(P[1],-.28));
+  caRays(80,86,14,(f>>1)*.0036,P[1],shade(P[1],-.28));
   ctx.fillStyle=P[2]; for(let i=0;i<24;i++){ const a=i/24*6.283+(i%3)*.05, r0=44+((i*7+f)%9); for(let r=r0;r<120;r+=2) ctx.fillRect(Math.round(80+Math.cos(a)*r),Math.round(86+Math.sin(a)*r*.9),1,1); } // líneas de velocidad
   caTitleHero(f,C);
   // el nombre, enorme: cada línea cae de golpe, rebota un poco y un brillo lo cruza
   const N=CA_NAMES[C.kind]||[ITEM_NAMES[C.kind]||''];
-  N.forEach((s,i)=>{ const f0=16+i*6, d=caSeg(f,f0,f0+8); if(d<=0) return; const img=caBigText2(s,i?P[3]:'#fffbe8'), x=Math.round(80-img.width/2);
-    const y=Math.round(16+i*16-(1-CA_EASE.out3(d))*34+(d>=1?caWob(f,f0+8,-3,.9,3):0));
-    if(f>=46&&f<64) caShine(img,x,y,(f-46)/18); else ctx.drawImage(img,x,y); });
+  N.forEach((s,i)=>{ const f0=18+i*6, d=caSeg(f,f0,f0+6); if(d<=0) return; const img=caBigText2(s,i?P[3]:'#fffbe8'), x=Math.round(80-img.width/2);
+    const y=Math.round(16+i*16-(1-CA_EASE.in(d))*30+(d>=1?caWob(f,f0+6,-3,.9,3):0)); // cae acelerando y golpea
+    ctx.globalAlpha=Math.min(1,d*3); if(f>=46&&f<64) caShine(img,x,y,(f-46)/18); else ctx.drawImage(img,x,y); ctx.globalAlpha=1; });
   // la frase, a máquina, en la franja de abajo; cuando está entera, ▼
   const bh=Math.round(26*CA_EASE.out(caSeg(f,2,10))); ctx.fillStyle='#000'; ctx.fillRect(0,VH-bh,VW,bh); ctx.fillStyle=P[1]; if(bh>1) ctx.fillRect(0,VH-bh,VW,1);
   if(C.chars>0){ let n=Math.floor(C.chars); wrapPx(A.line,150).slice(0,2).forEach((ln,i)=>{ const s=ln.slice(0,Math.max(0,n)); n-=ln.length+1; if(s) txtOL(s,80,VH-22+i*10,'#fffbe8','center','#000'); });
