@@ -538,20 +538,173 @@ const CA_SCRIPT={
         const r=rotArt(CA_ROCK,f*40); ctx.globalAlpha=f>30?1-(f-30)/10:1; ctx.drawImage(r,Math.round(x-r.width/2),Math.round(y-r.height/2)); ctx.globalAlpha=1; } } },
 
   /* ═════════ molinillo ═════════ */
-  molinillo:{ // el molinillo: coge aire, sopla y la hojarasca sale volando
-    cues:{ 24:()=>swish(.5,.05,300,900,1400), 50:()=>SFX.swoosh(), 56:()=>noise(1,.04,false,undefined,1600), 70:()=>noise(.8,.035,false,undefined,2400), 112:()=>SFX.chime() },
-    tick(t,C){ if(t>=52&&t<110&&t%2===0) C.parts.push({k:'leaf',x:-4+Math.random()*60,y:112+Math.random()*10,vx:2.5+Math.random()*2.5,vy:-1.4-Math.random()*1.6,g:.03,fr:.995,t:0,life:80,rot:Math.random()*6,vr:.3,col:['#e8a040','#c86830','#f0c860','#a85028'][t%4]}); },
+  molinillo:{ // el molinillo: el viento del otoño sopla en contra y un montón de hojarasca tapa el camino; Sprout coge aire (primer plano: los mofletes se hinchan), sopla, las aspas zumban, su ráfaga de colores revienta el montón en un remolino y, con el camino abierto, da un salto y lo alza girando
+    C4:['#c02838','#d8a010','#2878c8','#389838'], L4:['#f05858','#f8d850','#68b0f0','#78d060'], // las aspas: tono oscuro y claro
+    AUT:['#e8a040','#c86830','#f0c860','#a85028','#7a3014','#fce07a'], AUTB:['#b87830','#9a5024','#c0a048','#803c1c','#5a2410','#c8b060'], // hojas de otoño (y las de detrás del remolino)
+    LP:[['#4a1008','#8a2410','#c03c1c','#e8683a','#ffb080'],['#5a2408','#9a4a10','#d8781e','#f0a040','#ffd890'],['#5a4008','#9a7a14','#d8b030','#f0d858','#fff4b0'],['#2e1606','#5a3010','#8a5020','#b07838','#d8a868']], // hojas grandes: roja, naranja, amarilla, parda
+    snd:{ // sus sonidos: el viento que aúlla, la ráfaga, coger aire, el «pop» de los mofletes, soplar, el zumbido de las aspas y el montón que revienta
+      wind(){ const t=audio().currentTime; noise(1.9,.035,false,t,520); swish(1.9,.03,260,620,380,t,.7); },
+      gust(){ const t=audio().currentTime; swish(.5,.06,500,1900,700,t,1); noise(.35,.025,true,t,2600); },
+      inhale(){ const t=audio().currentTime; swish(.55,.045,260,900,1700,t,1.5); },
+      pop(){ const t=audio().currentTime; beep('triangle',240,560,.08,.05,t); beep('square',990,1480,.05,.014,t+.02); },
+      blow(){ const t=audio().currentTime; swish(.8,.09,2200,1100,420,t,.8); noise(.55,.045,false,t,1500); },
+      whir(d,v){ const t=audio().currentTime; v=v||.016; beep('p25',80,300,d||1,v,t); beep('p25',84,318,d||1,v*.7,t+.012); },
+      burst(){ const t=audio().currentTime; beep('triangle',120,36,.42,.11,t); noise(.5,.08,false,t,900); swish(.6,.06,3200,1300,600,t+.03,1.2); for(let i=0;i<6;i++) swish(.12,.025,4400,3000,2000,t+.08+i*.07,1.6); } },
+    cues:{ 1:()=>CA_SCRIPT.molinillo.snd.wind(), 20:()=>CA_SCRIPT.molinillo.snd.gust(), 30:()=>SFX.ping(), 43:()=>CA_SCRIPT.molinillo.snd.inhale(), 56:()=>CA_SCRIPT.molinillo.snd.pop(), 57:()=>SFX.shing(),
+      66:()=>swish(.12,.08,900,4600,2600), 72:()=>{ CA_SCRIPT.molinillo.snd.blow(); CA_SCRIPT.molinillo.snd.whir(); }, 88:()=>swish(.5,.05,2600,1400,700), 103:()=>SFX.jump(), 113:()=>SFX.land(),
+      118:()=>swish(.22,.05,600,2200,1400), 126:()=>{ SFX.chime(); CA_SCRIPT.molinillo.snd.whir(.7,.01); }, 136:()=>SFX.shing() },
+    hits:{ 72:{stop:2,shake:5,amp:2,dir:[1,0]}, 84:{stop:4,inv:1,shake:12,amp:3,dir:[1,.3],sfx:()=>CA_SCRIPT.molinillo.snd.burst()} },
+    tick(t,C){ const R=C.rng, S=this, leafP=(x,y,vx,vy,g,life)=>C.parts.push({k:'petal',x,y,vx,vy,g,fr:.998,t:0,life,ph:(R()*4)|0,col:S.AUT[(R()*6)|0]});
+      if(t<14) S.faceBase(3,t*.1); // el primer plano se prepara mientras camina (cada moflete, una vez)
+      if((t<28||(t>=60&&t<72))&&t%2===0) leafP(166,18+R()*96,-2.6-R()*1.8,(R()-.5)*.5,.004,80); // el viento en contra trae hojas
+      if(t>=8&&t<34&&t%4===0){ const px=S.pileX(t); leafP(px-20+R()*40,72+R()*10,-1.4-R()*1.5,-.6-R()*.6,.02,60); } // el montón pierde hojas
+      if(t===20) for(let i=0;i<10;i++) C.parts.push({k:'leaf',x:150+R()*20,y:40+R()*70,vx:-4-R()*2.5,vy:(R()-.5),g:.01,fr:.995,t:0,life:50,rot:R()*6,vr:.4,col:S.AUT[(R()*6)|0]}); // la ráfaga
+      if(t===36) C.parts=C.parts.filter(p=>p.k!=='leaf'&&p.k!=='petal'); // en el primer plano, las hojas pasan grandes (se pintan en el plano)
+      if(t>=72&&t<98){ const [hx,hy]=S.headPos(t); for(let i=0;i<2;i++){ const j=(R()*4)|0; C.parts.push({k:'streak',x:hx+8,y:hy+(R()-.5)*14,vx:5+R()*3,vy:(R()-.5)*.5,len:8+((R()*8)|0),t:0,life:22,col:R()<.5?S.C4[j]:S.L4[j]}); } } // su viento, de colores
+      if(t===84){ const px=S.pileX(t); // ¡revienta el montón!
+        C.parts.push({k:'ring',x:px,y:98,r0:10,r1:60,t:0,life:16,col:'#fff0f8',w:2},{k:'ring',x:px,y:98,r0:6,r1:40,t:0,life:12,col:'#f0c860'});
+        for(let i=0;i<10;i++) C.parts.push({k:'smoke',x:px+(R()-.5)*60,y:108+R()*10,vx:(R()-.2)*1.4,vy:-.3-R()*.7,t:0,life:26+((R()*12)|0),r0:3,r1:8+((R()*4)|0),col:R()<.5?'#c89060':'#e0b880',a:.7});
+        for(let i=0;i<20;i++){ const a=-Math.PI/2+(R()-.5)*2.4, s=1.8+R()*3; C.parts.push({k:'leaf',x:px+(R()-.5)*50,y:96+R()*18,vx:Math.cos(a)*s+1.4,vy:Math.sin(a)*s,g:.05,fr:.985,t:0,life:50+((R()*24)|0),rot:R()*6,vr:(R()-.5)*.5,col:S.AUT[(R()*6)|0]}); }
+        for(let i=0;i<16;i++){ const a=-Math.PI/2+(R()-.5)*2.8, s=1+R()*2.6; leafP(px+(R()-.5)*60,100+R()*14,Math.cos(a)*s+1,Math.sin(a)*s,.03,60); }
+        for(let i=0;i<6;i++) C.parts.push({k:'star',x:px+(R()-.5)*70,y:92+(R()-.5)*40,vx:0,vy:0,t:0,life:10+((R()*8)|0),s:3+((R()*3)|0),col:'#ffffff'}); }
+      if(t===113) caDust(S.heroX(t),119,6,'#e8c890'); // aterriza en el camino ya abierto
+      if(t>=100&&t%8===0) leafP(R()*160,12,(R()-.3)*.7,.45+R()*.35,0,150); // la hojarasca vuelve a caer, despacio
+      if(t>=128&&t%3===0){ const [hx,hy]=S.headPos(t), j=(R()*4)|0; C.parts.push({k:'star',x:hx+(R()-.5)*36,y:hy+(R()-.5)*32,vx:0,vy:-.2,t:0,life:12,s:2+((R()*3)|0),col:R()<.5?S.L4[j]:'#ffffff'}); } }, // chispas de sus colores
     draw(t,C){
-      if(t>=40&&t<50){ caFaceCut(t-40,{eyes:'closed',mouth:'o',leaf:-8},MOMENT_ARMS.molinillo.pal); return; }
-      drawSeasonScene(2,t,t*.3); ctx.fillStyle='#b86a30'; for(let i=0;i<30;i++){ const x=(i*29)%160, y=116+(i*7)%10; if(t<52||x>(t-52)*5) ctx.fillRect(x,y,3,2); }
-      let fx=70, fy=118, pose={eyes:'open',mouth:'smile',arms:[[18,44],[48,26]],leaf:Math.round(Math.sin(t*.08)*5)}, sx=1, sy=1, spin=t*3;
-      if(t>=22&&t<50){ pose={eyes:'closed',mouth:'o',arms:[[18,44],[48,26]],leaf:0}; sy=1+.04*smooth(caSeg(t,22,38)); sx=1-.02*smooth(caSeg(t,22,38)); }
-      else if(t>=50&&t<110){ pose={eyes:'fierce',mouth:'o',arms:[[18,42],[48,24]],leaf:Math.round(18+Math.sin(t*.9)*6)}; spin=t*3+(t-50)*(t-50)*.9; caWind(t,14,20,96,6,'rgba(255,248,230,.7)'); }
-      else if(t>=110){ pose={eyes:'closed',mouth:'grin',arms:[[18,44],[48,26]],leaf:Math.round(Math.sin(t*.1)*6)}; spin=t*3+60*60*.9+(t-110)*8; }
-      caShadow(fx,fy+1,15);
-      const T=caHeroAt(pose,fx,fy,{sx,sy}); const [hx,hy]=T(pose.arms[1][0],pose.arms[1][1]);
-      ctx.fillStyle='#1a1008'; ctx.fillRect(Math.round(hx)-1,Math.round(hy)-18,3,20); ctx.fillStyle='#b88048'; ctx.fillRect(Math.round(hx),Math.round(hy)-17,1,18);
-      const head=rotArt(bigWeapon('molinillo'),spin); ctx.drawImage(head,Math.round(hx-head.width/2),Math.round(hy-18-head.height/2)); } },
+      if(t<66) caCut(t,34,7,()=>this.shotA(t),()=>this.shotB(t),'iris','#fff0f8');
+      else caCut(t,66,6,()=>this.shotB(t),()=>this.shotC(t),'slash','#ffffff');
+      if(t>=144){ ctx.fillStyle='rgba(255,255,244,'+((t-143)/7).toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } },
+    /* --- la geografía: la cámara (en unidades de paralaje: el suelo corre ×3), el montón y Sprout --- */
+    cam(t){ return caK(t,[[0,0],[34,8,'io']])+caK(t,[[84,0],[98,2,'out']])+caK(t,[[103,0],[114,3,'io']]); },
+    pileX(t){ return 164-this.cam(t)*3; },
+    heroX(t){ return t<66?Math.round(caK(t,[[0,32],[20,44,'lin'],[24,37,'out'],[34,42,'io']])):Math.round(38-3*caK(t,[[84,0],[98,2,'out']])+caK(t,[[103,0],[113,40,'io']])); },
+    heroY(t){ return t<66?118-(t<20?Math.round(Math.abs(Math.sin(t*.4))):0):118-Math.round(Math.sin(Math.PI*caSeg(t,103,113))*14); }, // el salto de alegría
+    /* las aspas: velocidad por fotograma (la que se dibuja no pasa de 34°: con cuatro aspas, más rápido parecería ir hacia atrás; el resto lo cuenta el borrón) */
+    speed(u){ return u<34?16:u<66?-3:u<72?2:u<84?caK(u,[[72,4],[84,44,'in']]):u<100?caK(u,[[84,44],[92,58,'io'],[100,40,'io']]):u<118?caK(u,[[100,40],[118,22,'io']]):caK(u,[[118,22],[128,42,'io']]); },
+    spinAt(t){ if(!this._spin){ const a=[0]; for(let u=0;u<160;u++) a.push(a[u]+Math.min(34,this.speed(u))); this._spin=a; } return this._spin[clamp(t|0,0,160)]; }, // el giro acumulado, tabulado una vez
+    headPos(t){ const A=t<66, p=A?this.poseA(t):this.poseC(t), [hx,hy]=caHand(p,this.heroX(t),this.heroY(t),1), d=(A?this.stickA(t):this.stickC(t))*Math.PI/180;
+      return [hx+Math.sin(d)*20,hy-Math.cos(d)*20]; },
+    /* plano 1: el viento en contra; Sprout avanza tapándose la cara, una ráfaga lo echa atrás… y mira el molinillo: ¡idea! */
+    poseA(t){ const walking=t<20, gust=t>=20&&t<27, p=t*.4;
+      return {eyes:t<30?'open':'wide',lid:walking?.55:gust?1:t<30?caK(t,[[27,.8],[30,.2]]):0,brow:walking?.8:gust?-.6:t<30?0:-.3,
+        mouth:walking?'teeth':gust?'o':t<30?'flat':'o',look:t<30?0:caStep(t,[[30,1],[35,.6]]),
+        arms:[caK(t,[[0,[24,34]],[20,[24,34]],[23,[13,32],'out'],[29,[18,44],'io'],[33,[20,44]]]),caK(t,[[0,[52,50]],[20,[52,50]],[23,[56,46],'out'],[29,[52,50],'io'],[33,[52,42],'back']])],
+        front:walking?[0]:[],
+        leaf:Math.round(walking?-26+Math.sin(t*.9)*6:gust?caK(t,[[20,-26],[23,-40,'out'],[27,-30]])+Math.sin(t*1.4)*4:-30*Math.exp(-(t-27)/6)+caWob(t,27,18,.5,8)+caWob(t,30,-8,.7,5)),
+        sq:walking?.95+.03*Math.cos(p*2):gust?caK(t,[[20,.95],[23,.88,'out'],[27,1.02,'io']]):caK(t,[[27,1.02],[30,1,'io']])+caWob(t,30,.06,.8,4),
+        lean:walking?5:gust?caK(t,[[20,5],[23,-4,'out'],[27,-1,'io']]):caK(t,[[27,-1],[32,1,'io'],[36,0,'io']]),
+        feet:walking?[Math.round(Math.cos(p)*1.5),Math.min(0,Math.round(Math.sin(p)*2.5)),Math.round(-Math.cos(p)*1.5),Math.min(0,Math.round(-Math.sin(p)*2.5))]:gust?[-3,0,1,0]:[0,0,0,0]}; },
+    stickA(t){ return caK(t,[[0,40],[20,40],[23,22,'out'],[29,40,'io'],[33,30,'back']]); },
+    shotA(t){ const cam=this.cam(t); drawSeasonScene(2,t,cam); this.ground(cam); this.groundLeaves(t,cam); this.pile(t);
+      const x=this.heroX(t), y=this.heroY(t), p=this.poseA(t), [hx,hy]=caHand(p,x,y,1);
+      caShadow(x,119,15); caHeroAt(p,x,y); this.wheel(hx,hy,this.stickA(t),this.spinAt(t),this.speed(t));
+      if(t>=30) this.bang(x+9,t-30);
+      this.windLines(t,-1,16,'rgba(250,244,230,.6)',7); this.fore(cam); },
+    /* plano 2: primer plano; coge aire, se le hinchan los mofletes (se redibujan, no se estiran) y abre los ojos, decidido */
+    faceBase(F,puff){ const q=Math.round(clamp(puff,0,1.2)*10)/10, key=F+'|'+q; this._fb=this._fb||new Map(); let c=this._fb.get(key); if(c) return c;
+      c=mkCanvas(170,180); const g=c.getContext('2d'), rx=(2.6+2.3*q)*F, ry=(2.3+1.9*q)*F, L=[{x:85,y:104,r:17.5*F,ry:15.5*F},{x:85,y:104-13.5*F,r:6*F,ry:4.5*F}];
+      if(q>0) L.push({x:85-(12+1.4*q)*F,y:104+(7+.5*q)*F,r:rx,ry},{x:85+(12+1.4*q)*F,y:104+(7+.5*q)*F,r:rx,ry}); // los mofletes: dos bolas de piel delante del bulbo
+      blobArt(g,0,0,170,180,L,BIG_SKIN,{outline:false,grad:.2,dither:.45}); artOutline(g,170,180); this._fb.set(key,c); return c; },
+    shotB(t){ const f=t-34, P=MOMENT_ARMS.molinillo.pal, F=3;
+      const puff=caK(f,[[0,0],[9,0],[22,1.15,'io'],[26,1,'io']]), trem=f>=23?Math.round(Math.sin(f*2.9)*.7):0; // aguanta el aire: tiembla
+      const fx=70+Math.round(caK(f,[[0,-3],[38,2,'io']]))+trem, fy=90+Math.round(caK(f,[[0,3],[9,3],[22,-3,'io']]));
+      caFocus(f,fx,fy-4,P[1],[P[2],P[3]]);
+      const base=this.faceBase(F,puff), bx=Math.round(fx-85), by=Math.round(fy-104); ctx.drawImage(base,bx,by);
+      // el tallo y las hojas: al coger aire se levantan y tiemblan; al soltarse, rebotan
+      const up=caK(f,[[0,-6],[9,-6],[22,16,'io']])+(f>=9&&f<23?Math.sin(f*1.7)*4:0)+caWob(f,23,-10,.7,5), lf=[Math.round(up+Math.sin(f*.6)*3),Math.round(-up+Math.sin(f*.6+1)*3)];
+      const sx=Math.round(fx-F), sy=Math.round(fy-22*F), sw=Math.round(2*F), sh=Math.round(6*F);
+      ctx.fillStyle=BIG_INK; ctx.fillRect(sx-1,sy-1,sw+2,sh+1); ctx.fillStyle=BIG_LEAF[1]; ctx.fillRect(sx,sy,sw,sh); ctx.fillStyle=BIG_LEAF[3]; ctx.fillRect(sx,sy,Math.max(1,Math.round(F*.8)),sh-2);
+      [[-1,-21,-150,0],[1,-22,-32,1]].forEach(([ox,oy,a0,i])=>{ const img=cuLeaf(F,a0+lf[i]), R=(img.width-1)/2; ctx.drawImage(img,Math.round(fx+ox*F-R),Math.round(fy+oy*F-R)); });
+      // los ojos: ven el molinillo (idea), se cierran fuerte al coger aire y se abren decididos
+      const shut=f>=9&&f<22, eyes=f<9?'wide':'open', lid=shut?caK(f,[[9,.2],[11,1,'out']]):f<22?0:caK(f,[[22,1],[24,.3,'out']]);
+      const look=f<9?caK(f,[[0,0],[4,.7,'out']]):f<22?0:caK(f,[[22,0],[28,.35]]), lk=look*1.2*F, E=[[fx-7*F+lk,fy+1.5*F],[fx+7*F+lk,fy+1.5*F]];
+      E.forEach(([x,y],i)=>cuEye(x,y,F,lid,eyes,i,base,bx,by));
+      const brow=f<9?-.4:f<22?-.7:1; E.forEach(([x,y],i)=>cuBrow(x,y-(eyes==='wide'?4.4:4)*F,F,brow,i));
+      for(const s of [-1,1]){ const x=fx+s*(12+1.4*puff)*F+lk*.4, y=fy+(6.5+.8*puff)*F; cuDisc(x,y,(2.6+1.3*puff)*F,(1.05+.7*puff)*F,'rgba(240,112,112,.7)'); ctx.fillStyle='rgba(255,228,228,.85)'; ctx.fillRect(Math.round(x-(1.3+.6*puff)*F),Math.round(y-(.5+.4*puff)*F),Math.round(F*.8),Math.max(1,Math.round(F*.3))); }
+      if(puff<.3) cuMouth(fx+lk*.8,fy+9*F,F,'o'); else { const mx=Math.round(fx+lk*.8), my=Math.round(fy+9.2*F); cuDisc(mx,my,.6*F,.65*F,BIG_MOUTH); ctx.fillStyle='#f4a0a0'; ctx.fillRect(mx-1,my-Math.round(.65*F)-1,3,1); } // la boca, fruncida
+      if(f>=23&&f<32) caStar(E[0][0]-.85*F,E[0][1]-1.8*F,[1,3,5,7,6,4,3,2,1][f-23],'#ffffff');
+      // el molinillo, grande y delante, abajo a la derecha: al coger aire gira un poco hacia atrás
+      const w=rotArt(this.bigWheelArt(20),this.spinAt(t)), wx=141+Math.round(caK(f,[[0,8],[8,0,'out']])), wy=112+Math.round(caWob(f,22,-2,.8,4));
+      for(let i=0;i<30;i++){ const x=wx-3-Math.round(i*.3), y=wy+i; ctx.fillStyle='#1a1008'; ctx.fillRect(x-2,y,5,1); ctx.fillStyle=i%5?'#b88048':'#e0b070'; ctx.fillRect(x-1,y,3,1); }
+      ctx.drawImage(w,Math.round(wx-w.width/2),Math.round(wy-w.height/2));
+      // hojas grandes que cruzan delante de la cámara: el viento no para
+      for(let i=0;i<3;i++){ const u=f*5-i*60, x=176-u, y=26+i*38+Math.sin(u*.05+i*2)*8; if(x<-24||x>180) continue; bigLeaf(ctx,Math.round(x),Math.round(y),13,5,(Math.round(u*5+i*80)%360+360)%360,this.LP[i%3]); } },
+    bigWheelArt(R){ this._bw=this._bw||{}; if(this._bw[R]) return this._bw[R]; const S=R*2+4, c=mkCanvas(S,S), g=c.getContext('2d'), m=S/2; // el molinillo, redibujado grande (para el primer plano)
+      for(let y=0;y<S;y++) for(let x=0;x<S;x++){ const dx=x+.5-m, dy=y+.5-m, r=Math.hypot(dx,dy); if(r>R||r<R*.08) continue; const a=(Math.atan2(dy,dx)+6.283)%6.283, q=Math.floor(a/(Math.PI/2))%4, f=(a%(Math.PI/2))/(Math.PI/2), edge=R*(1-f*.55);
+        if(r>edge) continue; const lit=f<.45; let col=lit?this.L4[q]:this.C4[q]; if(!lit&&r>edge-1.5) col=shade(col,-.22); if(lit&&(f<.05||r>edge-1.2)) col=shade(col,.35); g.fillStyle=col; g.fillRect(x,y,1,1); }
+      g.fillStyle='#fff8e8'; g.fillRect(m-2,m-2,4,4); g.fillStyle='#8a6a48'; g.fillRect(m-1,m,2,1); artOutline(g,S,S); return this._bw[R]=c; },
+    /* plano 3: ¡sopla! las aspas zumban, el viento se da la vuelta y el montón revienta en remolino; el camino queda abierto: salta de alegría y lo alza, girando */
+    poseC(t){ const blow=t>=72&&t<98, air=t>=105&&t<112;
+      return {eyes:caStep(t,[[0,'open'],[98,'wide'],[106,'closed'],[113,'open'],[118,'closed'],[128,'open']]),lid:t<72?.35:t<98?.55:caBlinkAt(t,140),brow:t<98?1:caK(t,[[98,1],[102,0]]),
+        mouth:caStep(t,[[0,'o'],[98,'open'],[104,'grin'],[118,'smile'],[124,'grin']]),look:t>=98&&t<106?caK(t,[[98,0],[101,1,'out'],[104,1],[106,0,'io']]):0,
+        arms:[caK(t,[[66,[20,44]],[72,[20,44]],[74,[16,40],'out'],[98,[16,40]],[103,[18,42],'io'],[106,[10,32],'out'],[112,[14,36]],[116,[20,48],'io'],[124,[14,40],'back']]),
+          caK(t,[[66,[54,52]],[98,[54,52]],[103,[54,48],'io'],[106,[54,38],'out'],[112,[52,40]],[116,[50,56],'io'],[124,[44,4],'back']])],
+        front:[1],
+        leaf:Math.round(t<72?-20+Math.sin(t*.9)*5:caK(t,[[72,-20],[76,12,'out'],[98,10],[103,0]])+(blow?Math.sin(t*1.1)*5:0)+caWob(t,98,-10,.5,8)+caWob(t,103,16,.5,6)+caWob(t,113,-14,.5,7)+caWob(t,124,-12,.45,9)+Math.sin(t*.08)*3),
+        sq:caK(t,[[66,1.06],[71,1.07],[73,.9,'out3'],[80,.94,'io'],[96,.95],[100,1.05,'out'],[103,.9,'io'],[105,1.12,'out'],[111,1.06],[113,.86,'in'],[116,.94,'out'],[118,.92],[124,1.07,'back'],[130,1,'io']])+(t>=130?Math.round(Math.sin((t-130)*.1))*.02:0),
+        lean:caK(t,[[66,-2],[71,-3],[73,3,'out3'],[96,2],[100,-1,'out'],[103,-2,'io'],[106,3,'out'],[113,2],[116,-1,'io'],[120,0,'io']])+caWob(t,124,1,.5,6),
+        feet:blow?[-2,0,2,0]:air?[-1,-3,1,-3]:[0,0,0,0]}; },
+    stickC(t){ return caK(t,[[66,50],[98,50],[103,40,'io'],[108,20,'io'],[116,26,'io'],[124,0,'back']]); },
+    shotC(t){ const cam=this.cam(t); drawSeasonScene(2,t,cam); this.ground(cam); this.groundLeaves(t,cam);
+      if(t<72) this.windLines(t,-1,12,'rgba(250,244,230,.45)',7); // aún sopla el de ellos…
+      else { const a=.55*caSeg(t,72,78)*(1-caSeg(t,100,116)); if(a>0) this.windLines(t,1,14,'rgba(255,250,240,'+a.toFixed(2)+')',8); } // …hasta que el suyo le da la vuelta
+      this.pile(t); this.whirl(t);
+      const [ex,ey]=this.headPos(t); if(t>=124){ const k=Math.min(1,(t-124)/10); caRays(ex,ey,10,t*.006,'#fff4fa',null,.45*k,26+26*k); glowAt(ex,ey,24*k,'rgba(255,180,230,.5)'); } // en alto: brilla
+      const x=this.heroX(t), y=this.heroY(t), p=this.poseC(t), [hx,hy]=caHand(p,x,y,1); caShadow(x,119,y<118?11:15);
+      caHeroAt(p,x,y); if(t>=72&&t<98) this.breath(t,x,y,ex,ey); this.wheel(hx,hy,this.stickC(t),this.spinAt(t),this.speed(t));
+      if(t>=72&&t<104) this.colorWind(t,ex,ey,caSeg(t,72,76)*(1-caSeg(t,94,104))); },
+    /* --- piezas --- */
+    wheel(hx,hy,deg,spin,speed){ const d=deg*Math.PI/180, L=20, ex=hx+Math.sin(d)*L, ey=hy-Math.cos(d)*L; // el palo, y las aspas en la punta
+      ctx.fillStyle='#1a1008'; for(let i=0;i<=L;i++) ctx.fillRect(Math.round(hx+Math.sin(d)*i)-1,Math.round(hy-Math.cos(d)*i)-1,3,3);
+      for(let i=0;i<=L;i++){ ctx.fillStyle=i%4?'#b88048':'#e0b070'; ctx.fillRect(Math.round(hx+Math.sin(d)*i),Math.round(hy-Math.cos(d)*i),1,1); }
+      const head=bigWeapon('molinillo'), b=clamp((speed-24)/22,0,.85), X=v=>Math.round(ex-v.width/2), Y=v=>Math.round(ey-v.height/2);
+      if(b>0){ const bl=rotArt(this.blurArt(),spin*1.3); ctx.globalAlpha=b; ctx.drawImage(bl,X(bl),Y(bl)); for(const [da,al] of [[-14,.35],[-28,.18]]){ const g=rotArt(head,spin+da); ctx.globalAlpha=al*b; ctx.drawImage(g,X(g),Y(g)); } } // el borrón de las aspas
+      const h=rotArt(head,spin); ctx.globalAlpha=1-b*.55; ctx.drawImage(h,X(h),Y(h)); ctx.globalAlpha=1;
+      ctx.fillStyle='#fff8e8'; ctx.fillRect(Math.round(ex)-1,Math.round(ey)-1,2,2); return [ex,ey]; },
+    blurArt(){ if(this._blur) return this._blur; const c=mkCanvas(29,29), g=c.getContext('2d'); // las cuatro aspas a toda velocidad: una rueda de sus colores, fundidos con trama
+      for(let y=0;y<29;y++) for(let x=0;x<29;x++){ const dx=x+.5-14.5, dy=y+.5-14.5, r=Math.hypot(dx,dy); if(r>13) continue; if(r<1.6){ g.fillStyle='#fff8ec'; g.fillRect(x,y,1,1); continue; }
+        const a=(Math.atan2(dy,dx)+6.283)%6.283, q=a/(Math.PI/2), i=Math.floor(q)%4, f=q-Math.floor(q), pick=f>BAYER4[y&3][x&3]/16?(i+1)%4:i; g.fillStyle=(r<7?this.L4:this.C4)[pick]; g.fillRect(x,y,1,1); }
+      artOutline(g,29,29); return this._blur=c; },
+    pileArt(){ if(this._pile) return this._pile; const W=86,H=54, c=mkCanvas(W,H), g=c.getContext('2d'); // el montón de hojarasca que tapa el camino: cientos de hojas, de atrás (arriba) hacia delante
+      const own=blobArt(g,0,0,W,H,[{x:15,y:45,r:13,ry:8},{x:71,y:46,r:13,ry:7},{x:31,y:32,r:17,ry:18},{x:55,y:29,r:18,ry:21},{x:43,y:44,r:29,ry:9}],['#4a1c08','#7a3210','#a04c18','#c46a24','#e0923a'],{outline:false,grad:.5,dither:.8});
+      const r=seeded(214), L=[];
+      for(let i=0;i<240;i++){ const x=2+r()*(W-4), y=3+r()*(H-6); if(own[(y|0)*W+(x|0)]<0) continue; L.push([x,y,this.LP[(r()*4)|0],4+r()*3.5,1.6+r()*1.3,r()*360]); }
+      L.sort((a,b)=>a[1]-b[1]);
+      for(const [x,y,pal,len,wid,ang] of L){ const a=ang*Math.PI/180; bigLeaf(g,x-Math.cos(a)*len/2,y-Math.sin(a)*len/2,len,wid,ang,pal); }
+      artOutline(g,W,H); return this._pile=c; },
+    pile(t){ const img=this.pileArt(), x0=Math.round(this.pileX(t)-43), y0=122-img.height, k=t<84?0:caK(t,[[84,0],[90,.8,'out'],[100,1,'io']]); if(k>=1) return;
+      ctx.fillStyle='rgba(40,16,4,.28)'; for(let y=-2;y<=2;y++){ const w=Math.round(42*(1-k*.6)*Math.sqrt(1-(y*y)/6.5)); ctx.fillRect(x0+43-w,121+y,w*2,1); } // su sombra
+      const jit=t>=76&&t<84?((t&1)?1:-1):0, cut=Math.round(img.height*k); // la ráfaga lo sacude y, al reventar, se vacía de golpe desde arriba
+      ctx.drawImage(img,0,cut,img.width,img.height-cut,x0+jit,y0+cut,img.width,img.height-cut); },
+    pathArt(){ if(this._path) return this._path; const W=320,H=10, c=mkCanvas(W,H), g=c.getContext('2d'), r=seeded(77); // el camino de tierra, que se repite
+      for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const e=Math.min(y,H-1-y); if(e===0&&((x+y)&1)) continue; if(e===1&&((x>>1)+y)%3===0) continue; g.fillStyle=e<2?'#b88a50':((x*7+y*13)%11===0?'#c89a5c':'#d8b070'); g.fillRect(x,y,1,1); }
+      for(let i=0;i<30;i++){ g.fillStyle=r()<.5?'#a07848':'#f0d49a'; g.fillRect((r()*W)|0,2+((r()*6)|0),2,1); }
+      return this._path=c; },
+    ground(cam){ const img=this.pathArt(), o=Math.round(cam*3)%320; ctx.drawImage(img,-o,112); ctx.drawImage(img,320-o,112); },
+    fore(cam){ const F=PARA[2].fore, o=Math.round(cam*4.4)%320; ctx.drawImage(F,-o,114); ctx.drawImage(F,320-o,114); },
+    groundLeaves(t,cam){ const o=cam*3, hx=this.heroX(t)+30; // hojas por el suelo: tiemblan con el viento en contra; su ráfaga se las lleva
+      for(let i=0;i<14;i++){ let x=((i*71+13)%300)-10-o, y=113+(i*5)%8; if(t<72) x+=Math.round(Math.sin(t*.9+i));
+        else if(x>hx){ const u=t-(74+(x-hx)/7); if(u>0){ x+=u*u*.35+u*1.5; y-=u*1.1; } }
+        if(x<-4||x>VW||y<14) continue; this.leafAt(Math.round(x),Math.round(y),this.AUT[i%6],(i+(t>>2))&3); } },
+    leafAt(x,y,col,s){ ctx.fillStyle='rgba(42,18,6,.6)'; ctx.fillRect(x,y+1,s===1?1:3,1); ctx.fillStyle=col;
+      if(s===0) ctx.fillRect(x,y,3,1); else if(s===1) ctx.fillRect(x,y-1,1,2); else if(s===2){ ctx.fillRect(x,y,2,1); ctx.fillRect(x+2,y-1,1,1); } else { ctx.fillRect(x,y,2,1); ctx.fillRect(x,y-1,1,1); } },
+    windLines(t,dir,n,col,sp){ ctx.fillStyle=col; for(let i=0;i<n;i++){ const L=8+(i%4)*6, y=18+((i*37)%104), u=(t*sp+i*53)%240, x=Math.round(dir<0?200-u:u-60);
+      ctx.fillRect(x,y,L,1); if(i%3===0) ctx.fillRect(dir<0?x-4:x+L,y+(dir<0?1:-1),4,1); } },
+    breath(t,x,y,ex,ey){ const my=y-19; ctx.fillStyle='rgba(255,255,255,.85)'; for(let i=0;i<4;i++){ const u=((t*4+i*7)%26)/26, px=Math.round(lerp(x+4,ex-12,u)), py=Math.round(lerp(my,ey,u)+Math.sin(u*9+t)*1.5); ctx.fillRect(px,py,3,1); ctx.fillRect(px+1,py-1,1,1); } }, // el soplido, de la boca a las aspas
+    colorWind(t,ex,ey,k){ if(k<=0) return; // la ráfaga de colores que sale de las aspas y se abre hacia el montón
+      for(let j=0;j<8;j++){ const col=j%2?this.L4[j>>1]:this.C4[j>>1];
+        for(let s=0;s<5;s++){ const d=(t*7+s*37+j*11)%120, x=ex+10+d; if(x>VW) continue; const spread=1.8+d*.05, y=Math.round(ey+(j-3.5)*spread+Math.sin((x-t*4)*.07+j)*2), L=6+((s+j)%3)*4;
+          ctx.globalAlpha=Math.max(0,k*(1-d/130)); ctx.fillStyle=col; ctx.fillRect(Math.round(x),y,L,1); } }
+      ctx.globalAlpha=1; },
+    whirl(t){ const k=t-84; if(k<0||k>52) return; const cx=this.pileX(t)-18+k*.35, base=119, H=Math.min(90,k*4.5), fade=k<30?1:Math.max(0,1-(k-30)/16); // el remolino: un embudo de hojas que gira, crece y se deshace
+      if(H>=8&&fade>0) for(let j=0;j<7;j++){ const h=H*(j+.5)/7, r=5+h*.4, y=base-h, a0=k*.6+j*1.1; // sus anillos: la mitad de atrás tenue, la de delante clara
+        for(let s=0;s<24;s++){ const a=a0+s*.262, sn=Math.sin(a); if(sn<0&&(s&1)) continue; ctx.fillStyle=sn<0?'rgba(255,240,220,'+(.3*fade).toFixed(2)+')':'rgba(255,252,244,'+(.85*fade).toFixed(2)+')'; ctx.fillRect(Math.round(cx+Math.cos(a)*r),Math.round(y+sn*r*.25),2,1); } }
+      for(let i=0;i<90;i++){ const h0=((i*37)%100)/100, h=h0*H, r=4+h*.4+(i%3), sp=.34+(1-h0)*.25, a=i*2.39996+k*sp, out=k-(26+(i%16)); if(out>16) continue;
+        let x=cx+Math.cos(a)*r, y=base-h+Math.sin(a)*r*.25; if(out>0){ x+=Math.cos(a)*out*2.4+out*1.4; y-=out*1.8; } if(y<14||x<-4||x>164) continue;
+        const back=Math.sin(a)<0; this.leafAt(Math.round(x),Math.round(y),(back?this.AUTB:this.AUT)[i%6],(i+(k>>1))&3); } },
+    bang(x,k){ if(k>=14) return; const y=Math.round(50-caK(k,[[0,-6],[3,2,'out'],[6,0,'io']])); ctx.globalAlpha=k<10?1:1-(k-10)/4; // ¡la idea!
+      ctx.fillStyle=BIG_INK; ctx.fillRect(x-2,y-1,5,10); ctx.fillRect(x-2,y+10,5,4); ctx.fillStyle='#fff6c0'; ctx.fillRect(x-1,y,3,8); ctx.fillRect(x-1,y+11,3,2); ctx.globalAlpha=1; },
+    held(hx,hy,f,C){ const [ex,ey]=CA_SCRIPT.molinillo.wheel(hx,hy,0,f*14,18); C.gx=ex; C.gy=ey; } }, // en el título, girando
   /* ═════════ fin ═════════ */
 };
 /* la estela grande de la Hoja: media luna verde con el filo blanco (respeta el temblor y los barridos) */
