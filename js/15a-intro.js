@@ -179,7 +179,7 @@ function drawSeasonWorld(cam){
     ctx.save(); ctx.beginPath(); ctx.rect(wx,0,200,144); ctx.clip(); drawTitleScene(si,1,cam); ctx.restore();
     ctx.fillStyle='rgba(235,245,255,.75)'; ctx.fillRect(wx,0,1,144);
     for(let i=0;i<9;i++){ const y=(i*17+tick*3)%130, L=8+(i%3)*7; ctx.fillStyle='rgba(235,245,255,'+(.4+(i%2)*.3)+')'; ctx.fillRect(wx+2+((i*13)%20),y,L,1); }
-    ctx.save(); ctx.globalAlpha=.95; const by=hy-18+Math.sin(tick*.12)*4; ctx.translate(wx+6,by); ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore(); }
+    drawWind(wx+12,Math.round(hy-18+Math.sin(tick*.12)*4),{s:.8,mood:'blow',f:(tick>>2)&7}); } // el Viento trae la estación soplando
 }
 /* ---------- plano C: las 8 semillas vuelven a la copa ---------- */
 function drawSeedsHome(){
@@ -430,7 +430,7 @@ function drawEnding(){
   } else if(e.shot===1){ // los hermanos: el Viento baja y rodea al Roble, manso
     drawTitleScene(3,1,0,false); const k=clamp(t/160,0,1), a=t*.02;
     const wx=80+Math.cos(a)*44*(1-k*.3), wy=18+k*22+Math.sin(a)*8;
-    ctx.save(); ctx.globalAlpha=.95; ctx.translate(Math.round(wx),Math.round(wy)); if(Math.cos(a)<0) ctx.scale(-1,1); ctx.drawImage(WIND_SPR,-16,-16); ctx.restore();
+    drawWind(wx,wy,{s:.9,mood:t<130?'calm':'happy',f:(tick>>3)&7,flip:Math.sin(a)<0,blink:((t+30)%140)<5?1:0});
     if(t>150&&(tick&7)<4) sparkle(80+(Math.random()-.5)*60,40+(Math.random()-.5)*30,'#fff6d0');
   } else if(e.shot===2){ // el año gira, con todos mirando (barrido nítido desde la copa)
     const si=((t/75)|0)%4, w=t%75; drawTitleScene((si+3)%4,1,0,false);

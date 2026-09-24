@@ -513,7 +513,8 @@ const SC={
         // el Viento del Norte sobre su pico: aúlla y sopla... suspira... y se calma
         const wy=12-sy, calm=t>=64, bob=calm?Math.round(Math.sin(t*.05)*2):Math.round(Math.sin(t*.3)*1), sh=!calm&&(t&2)?1:0;
         if(wy+36<132&&wy+36+32>12){ if(calm) glowAt(80,wy+52,20+Math.sin(t*.06)*3,'rgba(220,236,255,'+(.35*Math.min(1,(t-64)/30)).toFixed(2)+')');
-          ctx.drawImage(calm?this.calmArt():WIND_SPR,64+sh,wy+36+bob); if(t>=64&&t<72){ ctx.globalAlpha=.9-(t-64)*.11; ctx.drawImage(BOSS_WHITE.viento,64,wy+36+bob); ctx.globalAlpha=1; } } // el suspiro: un destello blanco en su silueta
+          const mood=t<64?(((t>>4)&1)?'howl':'storm'):t<96?'sad':'calm', o={s:1.2,mood,f:(t>>2)&7};
+          drawWind(80+sh,wy+50+bob,o); if(t>=64&&t<72){ ctx.globalAlpha=.9-(t-64)*.11; drawWind(80+sh,wy+50+bob,Object.assign({white:true},o)); ctx.globalAlpha=1; } } // el suspiro: un destello blanco en su silueta
         // la plaza: el Roble se nieva cuando le llega la línea; Sprout y Raíz lo miran; las reliquias en su sitio
         const oy=512-sy+12; if(oy<132){ const cut=Math.round(fy-sy+12);
           ctx.save(); ctx.beginPath(); ctx.rect(0,Math.max(0,cut),160,144); ctx.clip(); scOak('autumn',0,oy); ctx.restore();

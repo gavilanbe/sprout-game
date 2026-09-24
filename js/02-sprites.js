@@ -1099,6 +1099,8 @@ function windArt(o){ o=o||{}; const s=o.s||1, mood=o.mood||'storm', f=((o.f||0)%
   else { for(let j=-1;j<=1;j++) px(22+j,23.6+(1-j*j)*.3,1,1,K); }
   artOutline(g,W,H,K);
   WIND_CACHE.set(key,c); if(WIND_CACHE.size>260) WIND_CACHE.delete(WIND_CACHE.keys().next().value); return c; }
+/* pinta el Viento con la CABEZA centrada en (x,y) (con flip, la cabeza queda a la derecha del lienzo) */
+function drawWind(x,y,o){ const img=windArt(o), s=o.s||1, hx=o.flip?img.width-22*s:22*s; ctx.drawImage(img,Math.round(x-hx),Math.round(y-17*s)); return img; }
 /* el retrato del diálogo: la cara, de cerca */
 function windPortrait(mood){ const src=windArt({s:1.1,mood}), c=mkCanvas(32,32), g=c.getContext('2d'); g.drawImage(src,Math.round(-6*1.1),Math.round(-1*1.1)); return c; }
 const WIND_SPR=(()=>{ const src=windArt({s:.66,mood:'storm'}), c=mkCanvas(32,32); c.getContext('2d').drawImage(src,0,1); return c; })(); // (compatibilidad) el Viento de 32 px
