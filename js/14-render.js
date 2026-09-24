@@ -32,6 +32,7 @@ function drawSmear(cx,cy,a0,a1,ph){
   ctx.globalAlpha=1;
 }
 function drawPlayer(){
+  if(state==='door'&&typeof drawDoorPlayer==='function'&&drawDoorPlayer()) return; // cruzando una puerta: recortado por el hueco (15g)
   if(state==='dying') return; // lo pinta drawWilt (15c), por encima del mundo que se apaga
   if(state==='fall'){ const k=1-deathT/40; ctx.save(); ctx.translate(player.x+8,player.y+10); ctx.rotate(k*6); ctx.scale(1-k,1-k); ctx.drawImage(P_SPRITES[0][0],-8,-8); ctx.restore(); return; }
   if(inBed){ ctx.drawImage(wakeT>25?H_SLEEP:H_WAKE,(player.x+4)|0,(player.y+2)|0); return; }
