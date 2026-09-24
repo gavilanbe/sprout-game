@@ -119,7 +119,7 @@ function startRite(kind,cb){ const A=altarOf(kind)||null;
 /* el momento en que la estación vuelve de verdad: se marca, se guarda y el Roble cambia */
 function riteCommit(R){ if(R.done) return; R.done=true;
   if(bgDirty||!bgCanvas[0]) rebuildBg(); R.bgOld=bgCanvas.map(c=>{ const k=mkCanvas(160,128); if(c) k.getContext('2d').drawImage(c,0,0); return k; }); // la plaza de antes
-  if(R.kind==='semillas'){ won=true; bloom(); } else if(R.kind==='primavera') thawed=true; else if(R.kind==='verano') summered=true; else if(R.kind==='otono') autumned=true; else cycled=true;
+  if(R.kind==='semillas'){ won=true; bloom(); } else if(R.kind==='primavera') thawed=true; else if(R.kind==='verano') summered=true; else if(R.kind==='otono') autumned=true; else { cycled=true; SEASON_T0=tick; }
   for(const k in THUMBS) delete THUMBS[k]; // el mapa se repinta con la estación nueva
   markDirty(); save(); R.tCommit=R.t;
   ROBLE.wave={from:R.from,to:robleLook(),k:0,col:R.A?R.A.col:'#fff4b0',seeds:R.kind==='semillas'?8:undefined}; ROBLE.shake=3.5; }

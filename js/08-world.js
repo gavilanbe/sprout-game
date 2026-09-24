@@ -2,7 +2,8 @@
 /* ---------- REGIONES, BIOMAS Y CARGA DE PANTALLA ---------- */
 const inTown=(x,y)=>(x===1&&y===1)||(x===0&&y===1);
 const inValleyScr=(x,y)=>x>=0&&x<=4&&y>=0&&y<=2;
-function seasonPhase(){ return cycled?(((tick/3000)|0)%4):-1; } // post-final: las estaciones giran (~50s cada una)
+let SEASON_T0=0; // cuándo empezó a girar el año (el Copo): la rueda arranca en invierno
+function seasonPhase(){ return cycled?((((tick-SEASON_T0)/3000)|0)+3)%4:-1; } // post-final: las estaciones giran (~50s cada una), empezando por el invierno
 /* la estación del valle: la última que volvió a su altar junto al Roble (tras el Copo, giran solas).
    -1: el año sigue atascado (el Roble respira, pero aún no ha vuelto ninguna) · 0 primavera · 1 verano · 2 otoño · 3 invierno */
 let SEASON_FORCE=null; // las cinemáticas pintan el valle en una estación concreta (15f)
