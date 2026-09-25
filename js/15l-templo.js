@@ -35,6 +35,8 @@ function tlGlyph(ch,pal){ const key=ch+'|'+pal[1]; let c=TL_GLYPH.get(key); if(c
   for(let y=HH-2;y>=0;y--) for(let x=0;x<W;x++) if(D[(y*W+x)*4+3]>40&&D[((y+1)*W+x)*4+3]<=40) g.fillRect(x,y+1,1,1);
   c.adv=(w+1)*2; TL_GLYPH.set(key,c); return c; }
 function tlLineW(s){ let w=0; for(const ch of s) w+=ch===' '?(FONT_M.space+1)*2:tlGlyph(ch,TL_ICE).adv; return w-2; }
+/* dónde va el título (dos líneas y el subtítulo): arriba del todo no (ahí está el jefe); abajo, donde menos tape a Sprout */
+function tlTitleY(a){ const A=[a,96,121], B=[92,110,131], top=player.y+2, bot=player.y+16, ov=L=>Math.max(0,Math.min(bot,L[1]+16)-Math.max(top,L[0])); return ov(B)<ov(A)?B:A; }
 /* una línea de letras de hielo centrada en cx; fx(i) → {dy,dx,a} o null (la letra aún no está) */
 function tlBigLine(s,cx,y,pal,fx){ let x=Math.round(cx-tlLineW(s)/2), i=0;
   for(const ch of s){ if(ch===' '){ x+=(FONT_M.space+1)*2; i++; continue; } const g=tlGlyph(ch,pal), e=fx?fx(i):{dy:0,dx:0,a:1};
@@ -139,7 +141,8 @@ DNG_CARD.templo={ dur:TL_DNG_FULL, shortDur:92,
 const TL_IG_CH=6; // trozos de 6×6 del sprite de 24×24
 function tlIgT(t,P){ return P.short?tlMap(t,[[0,96],[16,112],[62,172],[82,200]]):t; }
 BOSS_INTRO.iceguard={ dur:200, shortDur:82,
-  start(P){ const m=midboss; P.st.m=m?{x:m.x,y:m.y}:{x:76,y:44}; P.st.pT=P.short?95:0; bossHidden=true; if(!P.short) setTrack('silencio'); },
+  start(P){ const m=midboss; P.st.m=m?{x:m.x,y:m.y}:{x:76,y:44}; P.st.pT=P.short?95:0; bossHidden=true; if(!P.short) setTrack('silencio');
+    P.st.ty=tlTitleY(78); P.st.away=Math.atan2(P.st.m.y+12-(player.y+10),P.st.m.x+12-(player.x+8)); }, // los trozos llegan desde el lado contrario a Sprout: nunca le cruzan por encima
   tick(t,P){ const T=tlIgT(t,P), M=P.st.m;
     if(tlCross(P,T,4)) tlGust(1.4,.04);
     for(let i=0;i<16;i++){ const th=34+i*3.4+14; if(tlCross(P,T,th)) tlClink(i); }
@@ -160,7 +163,7 @@ BOSS_INTRO.iceguard={ dur:200, shortDur:82,
     const img=BOSS_SPR.iceguard, drop=T<112?Math.round(Math.max(0,4-(T-100)*.8)):0, stomp=T>=112&&T<118?Math.round(Math.sin((T-112)/6*Math.PI)*2):0;
     drawShadow(cx,fy,Math.round(10*presentSeg(T,40,100)));
     for(let j=0;j<16;j++){ const ix=(j%4)*TL_IG_CH, iy=((j/4)|0)*TL_IG_CH, t0=34+j*3.4, k=presentSeg(T,t0,t0+14); if(k<=0) continue;
-      const a=j*2.39+.6, R=90*(1-presentEase.out(k)), sx=Math.cos(a)*R, sy=Math.sin(a)*R*.7-Math.sin(k*Math.PI)*10;
+      const a=P.st.away+((j*7)%16/15-.5)*2.2, R=90*(1-presentEase.out(k)), sx=Math.cos(a)*R, sy=Math.sin(a)*R*.7-Math.sin(k*Math.PI)*10;
       ctx.drawImage(img,ix,iy,TL_IG_CH,TL_IG_CH,Math.round(M.x+ix+sx),Math.round(M.y+iy+sy)-drop+stomp,TL_IG_CH,TL_IG_CH);
       if(k<1&&(j+t)%3===0){ ctx.fillStyle='#e8f8ff'; ctx.fillRect(Math.round(M.x+ix+sx+3-Math.cos(a)*5),Math.round(M.y+iy+sy+3-Math.sin(a)*4),1,1); } }
     if(T>=100&&T<112){ const k=(T-100)/12; ctx.globalAlpha=1-k; ctx.drawImage(BOSS_WHITE.iceguard,M.x,M.y-drop); ctx.globalAlpha=1; } // se enciende de golpe
@@ -168,10 +171,10 @@ BOSS_INTRO.iceguard={ dur:200, shortDur:82,
     if(T>=104&&T<150){ const k=(T-104)/46; for(const ex of [9,13]){ ctx.fillStyle='#58e8f8'; ctx.fillRect(M.x+ex,M.y+3-drop+stomp,2,2); if(k<.4) tlStar(M.x+ex+1,M.y+4,Math.round(3-k*7),'#e8ffff'); } } // los ojos
     presentBars(bars,16);
     // el título
-    if(T>=116){ const lines=['EL GUARDIÁN','DE HIELO']; lines.forEach((s,li)=>{ const t0=116+li*10, y0=li?96:78;
+    if(T>=116){ const lines=['EL GUARDIÁN','DE HIELO']; lines.forEach((s,li)=>{ const t0=116+li*10, y0=li?P.st.ty[1]:P.st.ty[0];
       tlBigLine(s,80,y0,TL_ICE,i=>{ const u=T-(t0+i*1.2); if(u<0) return null; const k=presentEase.back(Math.min(1,u/7)); return {dy:-(1-k)*14,a:Math.min(1,u/3)}; });
       if(T>=150+li*5&&T<172+li*5) tlShine(s,80,y0,(T-150-li*5)/22); });
-      if(T>=140){ const n=Math.floor((T-140)*1.4), s='roca que no siente'; txtOL(s.slice(0,n),80,121,'#a8e0ff','center','#0a1428'); } }
+      if(T>=140){ const n=Math.floor((T-140)*1.4), s='roca que no siente'; txtOL(s.slice(0,n),80,P.st.ty[2],'#a8e0ff','center','#0a1428'); } }
   },
   end(P){ bossHidden=false; } };
 
@@ -186,6 +189,7 @@ function tlPuff(i,eco){ const key=i+(eco?'e':''); let c=TL_PUFFS.get(key); if(c)
 function tlVT(t,P){ return P.short?tlMap(t,[[0,104],[18,124],[70,250],[100,300]]):t; }
 BOSS_INTRO.viento={ dur:300, shortDur:100,
   start(P){ const b=boss; P.st.b={x:b?b.x:56,y:b?b.y:8}; P.st.pT=P.short?103:0; P.st.eco=!!P.Q.echo; bossHidden=true; if(!P.short) setTrack('silencio');
+    const B=P.st.b, pcx=player.x+8, pcy=player.y+10; let low=22; while(low>0&&Math.hypot(B.x+16-pcx,B.y+13+low-pcy)<46) low-=2; B.low=low; P.st.ty=tlTitleY(76); // baja a formarse, pero nunca encima de Sprout
     for(let f=0;f<8;f++) idleTask(()=>windArt({s:2,mood:'howl',f}),'tl-cu'+f); }, // el primer plano, preparado en los ratos libres
   tick(t,P){ const T=tlVT(t,P), B=P.st.b;
     if(tlCross(P,T,2)) tlGust(2.2,.05);
@@ -231,14 +235,14 @@ BOSS_INTRO.viento={ dur:300, shortDur:100,
       drawWind(hx,hy+Math.round(Math.sin(T*.12)*2),{s:1,mood:T<250?'howl':'storm',f:(T>>2)&7}); ctx.globalAlpha=1; if(eco) glowAt(hx,hy,30,'rgba(170,140,255,.25)'); }
     presentBars(bars,T>=140&&T<192?20:16);
     if(T>=196){ const pal=eco?TL_ECO:TL_ICE, L=eco?['ECO DEL','VIENTO']:['EL VIENTO','DEL NORTE'], a=1-out;
-      L.forEach((s,li)=>{ const t0=196+li*14, y0=li?96:76; // entran con la ventisca, de derecha a izquierda
+      L.forEach((s,li)=>{ const t0=196+li*14, y0=li?P.st.ty[1]:P.st.ty[0]; // entran con la ventisca, de derecha a izquierda
         tlBigLine(s,80,y0,pal,i=>{ const u=T-(t0+i*1.1); if(u<0) return null; const k=presentEase.out(Math.min(1,u/8)); return {dx:(1-k)*120,dy:0,a:Math.min(1,u/2)*a}; });
         if(T>=t0&&T<t0+14){ ctx.fillStyle='rgba(255,255,255,.7)'; const w=tlLineW(s); for(let j=0;j<5;j++) ctx.fillRect(Math.round(80+w/2+(1-(T-t0)/14)*120-10+j*9),y0-6+j*5,14-j*2,1); }
         if(T>=236+li*5&&T<258+li*5) tlShine(s,80,y0,(T-236-li*5)/22); });
-      if(T>=226){ const n=Math.floor((T-226)*1.3), s=eco?'lo que el viento recuerda':'hermano del Roble'; ctx.globalAlpha=a; txtOL(s.slice(0,n),80,121,eco?'#d0b8ff':'#a8e0ff','center','#0a1428'); ctx.globalAlpha=1; } }
+      if(T>=226){ const n=Math.floor((T-226)*1.3), s=eco?'lo que el viento recuerda':'hermano del Roble'; ctx.globalAlpha=a; txtOL(s.slice(0,n),80,P.st.ty[2],eco?'#d0b8ff':'#a8e0ff','center','#0a1428'); ctx.globalAlpha=1; } }
   },
   end(P){ bossHidden=false; } };
-function tlVY(T,B){ const low=B.y+13+22; return T<250?low:Math.round(low+(B.y+13-low)*presentEase.io(presentSeg(T,250,290))); } // más bajo durante la entrada; sube a flotar
+function tlVY(T,B){ const low=B.y+13+(B.low===undefined?22:B.low); return T<250?low:Math.round(low+(B.y+13-low)*presentEase.io(presentSeg(T,250,290))); } // más bajo durante la entrada; sube a flotar
 
 /* ============================================================
    4) LA SALIDA: con el Copo, la nieve te envuelve en un cristal y el Viento te lleva al Templo
@@ -248,7 +252,7 @@ BOSS_OUTRO.viento={ dur:230, swap:112, dest:TL_OUT_DEST,
   start(P){ P.st.p0=[player.x,player.y]; P.st.pT=0; player.dir=0; },
   tick(t,P){ const T=t;
     if(T===2) tlGust(2.4,.05);
-    if(T===24){ if(typeof tiHowl==='function') tiHowl(.9,.05); }
+    if(T===36) tlChime(3,.03); // se vuelve a juntar: campanillas, no aullido
     if(T===52) tlChime(5,.035);
     if(T===70) tlCrack(.04);
     if(T===82) tlGust(1.6,.08);
@@ -256,8 +260,8 @@ BOSS_OUTRO.viento={ dur:230, swap:112, dest:TL_OUT_DEST,
     if(T===176){ tlShatter(); shake=Math.max(shake,4); const d=TL_OUT_DEST; for(let i=0;i<18;i++){ const a=i/18*6.283; parts.push({x:d.x+8,y:d.y+8,vx:Math.cos(a)*1.8,vy:Math.sin(a)*1.4-.6,life:26,col:i&1?'#ffffff':'#a8e0ff',star:(i%3)===0}); } }
     if(T===200) tlChime(3,.03);
     // Sprout, dentro del cristal: se esconde del mundo (lo pinta la salida) y aparece al romperse
-    if(T>=66&&T<112) player.y=-400;
-    if(P.swapped){ if(T<176){ player.x=TL_OUT_DEST.x; player.y=-400; } else if(T===176){ player.x=TL_OUT_DEST.x; player.y=TL_OUT_DEST.y; player.squash=.35; } }
+    playerHidden=(T>=66&&T<112)||(P.swapped&&T<176); // dentro del cristal lo pinta la salida (15i lo repone al acabar)
+    if(P.swapped&&T===176){ player.x=TL_OUT_DEST.x; player.y=TL_OUT_DEST.y; player.squash=.35; }
     P.st.pT=T; },
   draw(t,P){ const T=t, before=T<112, p0=P.st.p0, d=TL_OUT_DEST;
     const cx=before?p0[0]+8:d.x+8, cy0=before?p0[1]+8:d.y+8;
@@ -270,8 +274,13 @@ BOSS_OUTRO.viento={ dur:230, swap:112, dest:TL_OUT_DEST,
     if(swirl>0) for(let i=0;i<36;i++){ const a=i/36*6.283*2+T*.16, R=(28-14*presentSeg(T,0,60))*(1+(i%3)*.25)+(before?0:presentSeg(T,112,160)*-6), k=((i*7)%10)/10;
       const x=Math.round(cx+Math.cos(a)*R), y=Math.round(cy+Math.sin(a)*R*.5-(k*18-6)), w=i%5===0?2:1; ctx.globalAlpha=swirl; ctx.fillStyle='#2a5a90'; ctx.fillRect(x,y+1,w,1); ctx.fillStyle=i%3?'#ffffff':'#8cc8f0'; ctx.fillRect(x,y,w,1); } ctx.globalAlpha=1; // copos con su sombra: se ven sobre la nieve
     // el Viento, ya en paz: llega, sopla y se lleva el cristal (y al otro lado lo deja y se despide)
-    if(before&&T>=16){ const k=presentEase.out(presentSeg(T,16,48)), x=Math.round(180-(180-(cx+30))*k), y=Math.round(cy0-40+(1-k)*-20+Math.sin(T*.1)*2);
-      const lift=presentSeg(T,70,104), wy=y-lift*120; drawWind(x,wy,{s:1,mood:T<44?'happy':T<70?'blow':'calm',f:(T>>2)&7,flip:false});
+    if(before&&T>=12){ const x=Math.round(cx+30), y=Math.round(cy0-40+Math.sin(T*.1)*2), lift=presentSeg(T,70,104), wy=y-lift*120, form=presentSeg(T,26,40);
+      // vuelve como brisa amiga: los copos en que se deshizo se juntan otra vez en él
+      if(T<42) for(let i=0;i<28;i++){ const h=hash(i,77), a=(h%628)/100, R0=40+(h>>8)%30, k=presentEase.in(presentSeg(T,12+(i%6),34+(i%5))), R=R0*(1-k), px=x+Math.cos(a+T*.05)*R, py=y+Math.sin(a+T*.05)*R*.6;
+        if(k<1){ ctx.fillStyle='#2a5a90'; ctx.fillRect(Math.round(px),Math.round(py)+1,1,1); ctx.fillStyle=i%3?'#ffffff':'#bcdcff'; ctx.fillRect(Math.round(px),Math.round(py),1,1); } }
+      if(T>=26&&T<42){ ctx.globalAlpha=form; }
+      if(T>=26) drawWind(x,wy,{s:1,mood:T<44?'happy':T<70?'blow':'calm',f:(T>>2)&7,flip:false,white:T<30});
+      ctx.globalAlpha=1; if(T>=36&&T<44) ctx.drawImage(ringArt(Math.round(6+(T-36)*3),'#ffffff'),Math.round(x-6-(T-36)*3),Math.round(y-6-(T-36)*3));
       if(T>=44&&T<70) for(let j=0;j<6;j++){ const u=(T*3+j*11)%26; ctx.fillStyle=j&1?'#4a90d0':'#8cc8f0'; ctx.fillRect(Math.round(x-14-u),Math.round(wy+5+Math.sin(j*1.7+T*.2)*3),4,1); } }
     if(!before&&T>=140){ const a=presentEase.out(presentSeg(T,140,164)), k=presentEase.in(presentSeg(T,180,228)), x=Math.round(d.x+34+k*110+(1-a)*60), y=Math.round(d.y+36-k*30+Math.sin(T*.1)*2); drawWind(x,y,{s:1,mood:T<176?'blow':'happy',f:(T>>2)&7,flip:true}); } // sobre el lago: la deja y se despide
     // el cristal de hielo (un rombo tallado) con Sprout dentro
@@ -294,3 +303,116 @@ BOSS_OUTRO.viento={ dur:230, swap:112, dest:TL_OUT_DEST,
     const bk=Math.min(presentSeg(T,0,14),1-presentSeg(T,212,230)); if(before) presentBars(bk,12); else { const h=Math.round(12*bk); ctx.fillStyle='#000'; ctx.fillRect(-4,VH-h,VW+8,h+4); } // al llegar, solo la de abajo: la puerta queda arriba
   },
   end(P){ player.x=TL_OUT_DEST.x; player.y=TL_OUT_DEST.y; player.dir=0; } };
+
+/* ============================================================
+   5) LAS DESPEDIDAS
+   · El Viento, en paz: se calma, sonríe, sopla una brisa tibia, sube y se deshace en copos que suben
+     en espiral mientras el cielo se abre un instante; donde estaba, destella el Copo. (Su eco: en violeta.)
+   · El Guardián de Hielo: se agrieta, las grietas brillan, se tensa y estalla en esquirlas; los trozos
+     salen lejos de Sprout, botan y se derriten en charcos.
+   ============================================================ */
+/* la disolución: el dibujo se deshace píxel a píxel, de la cola a la cabeza, tramado, con un borde que brilla.
+   Un lienzo propio del tamaño exacto (nada de auxiliares compartidos: ver pxStamp) */
+let TL_DIS=null;
+function tlDisTh(x,y,H){ return .78*(1-y/H)+BAYER4[y&3][x&3]/16*.22; } // el umbral de cada píxel: los de abajo, antes
+function tlDisSrc(src){ const W=src.width, H=src.height;
+  if(!TL_DIS||TL_DIS.W!==W||TL_DIS.H!==H){ const cv=mkCanvas(W,H); TL_DIS={cv,cx:cv.getContext('2d'),W,H,src:null}; }
+  const D=TL_DIS; if(D.src!==src){ D.src=src; D.data=src.getContext('2d').getImageData(0,0,W,H).data; D.out=new ImageData(W,H); D.pix=[];
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(D.data[(y*W+x)*4+3]>40) D.pix.push([x,y,tlDisTh(x,y,H)]); }
+  return D; }
+function tlDissolve(src,k,eco){ const D=tlDisSrc(src), W=D.W, H=D.H, s=D.data, o=D.out.data;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i=(y*W+x)*4, th=tlDisTh(x,y,H);
+    if(s[i+3]===0||th<k){ o[i+3]=0; continue; }
+    let r=s[i], g=s[i+1], b=s[i+2];
+    if(eco){ r=Math.round(r*.6+80); g=Math.round(g*.6+70); b=Math.round(b*.6+102); }
+    if(k>0&&th<k+.05){ r=eco?240:255; g=eco?228:255; b=255; } // el borde que se deshace brilla
+    o[i]=r; o[i+1]=g; o[i+2]=b; o[i+3]=s[i+3]; }
+  D.cx.putImageData(D.out,0,0); return D.cv; }
+const TL_BYE_D0=86, TL_BYE_D1=146; // la disolución del Viento
+function tlByeT(t,P){ return P.st.eco?tlMap(t,[[0,0],[14,40],[30,72],[110,150],[140,200]]):t; } // el eco: sin la sonrisa larga ni el cielo
+BOSS_BYE.viento={ dur:200,
+  start(P){ const b=boss; P.st.eco=!!P.Q.echo; if(P.st.eco) P.dur=140; P.st.b={x:b?b.x:56,y:b?b.y:40}; P.st.flip=player.x+8>P.st.b.x+16; P.st.pT=0; bossHidden=true;
+    const B=P.st.b; player.dir=Math.abs(B.x+16-(player.x+8))>Math.abs(B.y+13-(player.y+10))?(B.x+16>player.x+8?3:2):(B.y+13>player.y+10?0:1); player.atk=0; // Sprout lo mira
+    P.st.src=windArt({s:1,mood:P.st.eco?'calm':'happy',f:0,flip:P.st.flip}); },
+  tick(t,P){ const T=tlByeT(t,P), B=P.st.b, eco=P.st.eco;
+    if(tlCross(P,T,18)) tlChime(2,.025);
+    if(tlCross(P,T,44)&&!eco){ tlGust(1.3,.03); tlChime(3,.03); }
+    if(tlCross(P,T,72)) tlChime(5,.035);
+    for(let i=0;i<6;i++){ if(tlCross(P,T,TL_BYE_D0+i*10)) tlClink(i*2+1); }
+    if(tlCross(P,T,124)&&!eco&&AC){ const t0=AC.currentTime; [79,83,86,91].forEach((m,i)=>beep('triangle',f(m),0,.9,.03,t0+i*.09)); } // el cielo se abre
+    if(tlCross(P,T,166)&&!eco){ tlChime(6,.04); for(let i=0;i<10;i++){ const a=i/10*6.283; parts.push({x:B.x+16,y:B.y+16,vx:Math.cos(a)*1.2,vy:Math.sin(a)*1.2-.3,life:22,col:i&1?'#ffffff':'#bcdcff',star:(i%3)===0,nog:true}); } }
+    if(eco&&tlCross(P,T,150)){ screenFlash(8,'#e8e0ff'); shake=Math.max(shake,4); tlShatter(); }
+    if(T>=40&&T<84&&!eco&&(t&3)===0) parts.push({x:B.x+16+(P.st.flip?8:-8),y:B.y+14+Math.random()*8,vx:(P.st.flip?1:-1)*(1+Math.random()*.6),vy:-.05,life:34,col:(t&4)?'#fff0c0':'#ffffff',nog:true}); // la brisa tibia, hacia Sprout
+    P.st.pT=T; },
+  draw(t,P){ const T=tlByeT(t,P), B=P.st.b, eco=P.st.eco, hx=B.x+16, bars=presentSeg(t,0,14); // las franjas se quedan hasta el final: tapan la barra de vida del jefe que se va
+    const rise=presentEase.io(presentSeg(T,70,96))*Math.min(10,Math.max(0,B.y-16)), hy=Math.round(B.y+13-rise+Math.sin(T*.08)*1.5);
+    // la penumbra de la tormenta que queda… y que se abre cuando él se va
+    const dim=presentSeg(T,0,24)*(1-presentSeg(T,eco?130:112,eco?160:150)); if(dim>0){ ctx.fillStyle=eco?'rgba(40,20,80,'+(dim*.4).toFixed(3)+')':'rgba(24,40,80,'+(dim*.36).toFixed(3)+')'; ctx.fillRect(-4,-4,VW+8,VH+8); }
+    tlSnow(T,24,.6,.5,57,eco?['#e8e0ff','#c8b0ff']:['#ffffff','#dff0ff'],false);
+    // el cielo se abre un instante: una columna de luz pálida sobre donde estaba
+    if(!eco){ const o=presentSeg(T,118,136)*(1-presentSeg(T,160,186)); if(o>0){
+      for(let x=-16;x<=16;x++){ const w=1-Math.abs(x)/17, a=o*w*w*(.34+.08*Math.sin(T*.2+x*.5)); ctx.fillStyle='rgba(255,226,150,'+a.toFixed(3)+')'; ctx.fillRect(Math.round(hx+x+Math.sin(T*.05)*2),-4,1,hy+26); }
+      glowAt(hx,hy+10,26,'rgba(255,244,210,'+(o*.35).toFixed(2)+')');
+      for(let i=0;i<8;i++){ const h=hash(i,313), y=((h%120)+T*(.6+((h>>9)&3)*.2))%(hy+20), x=hx-10+(h>>4)%20; if(((T+i*5)>>2)&1) tlStar(x,y,1,'#fff8e0'); } } }
+    // el Viento: triste → en paz → sonríe → sube → se deshace
+    if(T<TL_BYE_D0){ const mood=T<16?'sad':(T<40||eco)?'calm':'happy', hop=T>=40&&T<56&&!eco?Math.round(-Math.sin((T-40)/16*Math.PI)*3):0;
+      if(eco) glowAt(hx,hy,30,'rgba(170,140,255,.3)'); else if(T>=40) glowAt(hx,hy,24,'rgba(255,240,200,'+(.18*presentSeg(T,40,60)).toFixed(2)+')');
+      if(eco) ctx.globalAlpha=.85; drawWind(hx,hy+hop,{s:1,mood,f:(T>>2)&7,flip:P.st.flip}); ctx.globalAlpha=1;
+      if(T>=24&&T<40&&((T>>2)&1)) tlStar(hx+(P.st.flip?6:-6),hy-10,1,'#ffffff');
+      if(T>=72&&T<86) ctx.drawImage(ringArt(Math.round(6+(T-72)*2.2),eco?'#e8e0ff':'#ffffff'),Math.round(hx-6-(T-72)*2.2),Math.round(hy-6-(T-72)*2.2)); }
+    else { const k=presentEase.in(presentSeg(T,TL_BYE_D0,TL_BYE_D1)), src=P.st.src, D=tlDisSrc(src), ox=P.st.flip?src.width-22:22;
+      if(k<1){ const cv=tlDissolve(src,k,eco); ctx.drawImage(cv,Math.round(hx-ox),Math.round(hy-17)); }
+      // los copos en que se deshace: cada uno nace cuando se va su píxel y sube girando (puro en T)
+      const L=D.pix; if(L.length) for(let i=0;i<56;i++){ const p=L[hash(i,7)%L.length], tb=TL_BYE_D0+Math.cbrt(Math.min(1,p[2]))*(TL_BYE_D1-TL_BYE_D0), u=T-tb; if(u<0||u>70) continue;
+        const a=i*.9+u*.13, R=2+u*.28, x=hx-ox+p[0]+Math.cos(a)*R, y=hy-17+p[1]-u*.75+Math.sin(a)*R*.4, fade=u>50?1-(u-50)/20:1;
+        ctx.globalAlpha=fade; ctx.fillStyle=eco?'#7a58d0':'#2a5a90'; ctx.fillRect(Math.round(x),Math.round(y)+1,1,1); ctx.fillStyle=eco?(i%3?'#f0e8ff':'#c8b0ff'):(i%3?'#ffffff':'#bcdcff'); ctx.fillRect(Math.round(x),Math.round(y),i%7===0?2:1,1);
+        if(i%9===0&&u<20&&((u>>1)&1)) tlStar(x,y,1,'#ffffff'); ctx.globalAlpha=1; } }
+    // donde estaba, destella el Copo (el framework lo suelta al acabar, en boss.x+8, boss.y+8)
+    if(!eco&&T>=150){ const k=presentSeg(T,150,170), cx=B.x+16, cy=B.y+16, s=Math.round(1+k*4+(T>=170?Math.sin(T*.4):0));
+      glowAt(cx,cy,10+k*8,'rgba(200,236,255,'+(.3+.2*k).toFixed(2)+')'); tlStar(cx,cy,s,'#ffffff');
+      if(T>=166&&T<182) ctx.drawImage(ringArt(Math.round(4+(T-166)*2),'#dff0ff'),Math.round(cx-4-(T-166)*2),Math.round(cy-4-(T-166)*2)); }
+    presentBars(bars,12); },
+  end(P){ bossHidden=false; } };
+
+/* el Guardián de Hielo cae: las grietas, el estallido, los trozos que se derriten */
+const TL_CRACKS=[[[12,2],[11,6],[13,9],[10,13],[12,17],[11,21]],[[11,6],[7,8],[4,7]],[[13,9],[17,11],[20,10]],[[10,13],[6,15],[3,18]],[[12,17],[16,19],[19,22]],[[12,4],[15,3]]]; // en coordenadas del sprite (24×24)
+const TL_CRACK_PIX=(()=>{ const out=[]; TL_CRACKS.forEach((L,li)=>{ let n=0; for(let i=1;i<L.length;i++){ const [a,b]=L[i-1],[c,d]=L[i], m=Math.max(Math.abs(c-a),Math.abs(d-b)); for(let j=0;j<m;j++){ out.push([Math.round(a+(c-a)*j/m),Math.round(b+(d-b)*j/m),li*.12+n*.018]); n++; } } }); return out; })();
+const TL_IGB_BOOM=64;
+function tlIgChunk(j,T,M,P){ // cada trozo de 6×6: sale disparado lejos de Sprout, bota y se queda
+  const ix=(j%4)*TL_IG_CH, iy=((j/4)|0)*TL_IG_CH, a=P.st.away+((j*5)%16/15-.5)*3.4, sp=1.2+(hash(j,17)%10)/9, u=Math.max(0,T-TL_IGB_BOOM);
+  const tl=Math.min(u,18), dist=sp*tl*1.3+(u>18?Math.min(u-18,10)*sp*.25:0);
+  const x=clamp(M.x+ix+Math.cos(a)*dist,14,140), fy=clamp(M.y+iy+Math.sin(a)*dist*.55,18,100) /* dentro de la sala: contra el muro, se paran */, z=u<18?Math.sin(u/18*Math.PI)*(10+(j%3)*5):u<28?Math.sin((u-18)/10*Math.PI)*3:0;
+  return [ix,iy,x,fy-z,fy]; }
+BOSS_BYE.iceguard={ dur:132,
+  start(P){ const m=midboss; P.st.m=m?{x:m.x,y:m.y}:{x:68,y:40}; P.st.pT=0; bossHidden=true;
+    P.st.away=Math.atan2(P.st.m.y+12-(player.y+10),P.st.m.x+12-(player.x+8)); },
+  tick(t,P){ const T=t, M=P.st.m, cx=M.x+12, cy=M.y+12;
+    if(T===1){ tlCrack(.07); shake=Math.max(shake,5); }
+    if(T===16||T===30||T===42) tlCrack(.05+T*.0008);
+    if(T===50) tlChime(4,.03);
+    if(T>=50&&T<TL_IGB_BOOM&&(t&1)===0){ const a=Math.random()*6.283; parts.push({x:cx+Math.cos(a)*20,y:cy+Math.sin(a)*14,vx:-Math.cos(a)*1.4,vy:-Math.sin(a),life:12,col:'#e8ffff',nog:true}); } // el frío se recoge dentro
+    if(T===TL_IGB_BOOM){ tlShatter(); tlThud(.16); shake=Math.max(shake,9); screenFlash(6,'#e8f8ff');
+      for(let i=0;i<22;i++){ const a=i/22*6.283, s=1+Math.random()*1.6; parts.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.7-.6,life:22+(i%8),col:i%3?'#ffffff':'#a8e0ff',star:(i%4)===0}); }
+      for(let i=0;i<10;i++){ const a=i/10*6.283; parts.push({k:'smoke',x:cx+Math.cos(a)*6,y:cy+8,vx:Math.cos(a)*.9,vy:Math.sin(a)*.3-.25,life:22,max:26,r:2+(i%3),col:i&1?'#e8f8ff':'#bcdcf0',nog:true}); } }
+    if(T===TL_IGB_BOOM+18||T===TL_IGB_BOOM+20) tlClink(T);
+    if(T===118) tlChime(3,.03);
+    if(T>96&&(t&3)===0){ for(let j=0;j<16;j+=5){ const c=tlIgChunk(j,T,M,P); parts.push({x:c[2]+3,y:c[4]+2,vx:(Math.random()-.5)*.2,vy:-.3,life:14,col:'#dff0ff',nog:true}); } } // vaho al derretirse
+    P.st.pT=T; },
+  draw(t,P){ const T=t, M=P.st.m, img=BOSS_SPR.iceguard, bars=presentSeg(t,0,10);
+    if(T<TL_IGB_BOOM){ const tr=T<50?Math.round(Math.sin(T*1.7)*presentSeg(T,4,50)*1.5):((T&1)?1:-1), x=M.x+tr, y=M.y;
+      drawShadow(M.x+12,M.y+23,10);
+      ctx.drawImage(T<4?BOSS_WHITE.iceguard:img,x,y);
+      // las grietas crecen y brillan (a 1 px, sobre el sprite de verdad)
+      const k=presentSeg(T,2,56), glow=presentSeg(T,20,62);
+      for(const [px,py,th] of TL_CRACK_PIX){ if(th>k) continue; ctx.fillStyle='#0a1428'; ctx.fillRect(x+px+1,y+py,1,1); ctx.fillStyle=glow>.5&&((T+px)&2)?'#ffffff':'#58e8f8'; ctx.fillRect(x+px,y+py,1,1); }
+      if(glow>0) glowAt(M.x+12,M.y+12,10+glow*12,'rgba(88,232,248,'+(.12+glow*.3).toFixed(2)+')');
+      if(T>=52){ ctx.globalAlpha=(T-52)/12*.8; ctx.drawImage(BOSS_WHITE.iceguard,x,y); ctx.globalAlpha=1; } } // se tensa: se pone blanco
+    else { const u=T-TL_IGB_BOOM;
+      if(u<10) ctx.drawImage(ringArt(Math.round(6+u*4),'#e8f8ff'),Math.round(M.x+12-6-u*4),Math.round(M.y+12-6-u*4));
+      for(let j=0;j<16;j++){ const [ix,iy,x,y,fy]=tlIgChunk(j,T,M,P), melt=presentSeg(T,92+(j%5)*4,118+(j%5)*3), h=Math.round(TL_IG_CH*(1-melt));
+        if(u>18){ const pw=Math.round(3+melt*3), a=Math.min(1,(u-18)/10)*(1-presentSeg(T,120,132)); // el charco que deja
+          ctx.fillStyle='rgba(120,190,240,'+(.55*a).toFixed(2)+')'; ctx.fillRect(Math.round(x+3-pw),Math.round(fy+5),pw*2,2); ctx.fillStyle='rgba(232,248,255,'+(.7*a).toFixed(2)+')'; ctx.fillRect(Math.round(x+3-pw+1),Math.round(fy+5),2,1); }
+        if(h>0){ drawShadow(Math.round(x+3),Math.round(fy+6),2); ctx.drawImage(img,ix,iy+TL_IG_CH-h,TL_IG_CH,h,Math.round(x),Math.round(y)+TL_IG_CH-h,TL_IG_CH,h); } } } // se derrite de arriba abajo
+    if(T>=108){ const k=presentSeg(T,108,124), cx=M.x+8, cy=M.y+10; tlStar(cx,cy,Math.round(1+k*3),'#ffffff'); glowAt(cx,cy,8+k*6,'rgba(232,248,255,.3)'); } // donde caerá el vilano
+    presentBars(bars,12); },
+  end(P){ bossHidden=false; } };
