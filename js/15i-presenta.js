@@ -54,13 +54,13 @@ const ARM_DIST=28;
 function presentArmed(){ const Q=presentQ; if(Q.ex===undefined){ Q.ex=player.x; Q.ey=player.y; }
   return Math.hypot(player.x-Q.ex,player.y-Q.ey)>=ARM_DIST&&player.x>=16&&player.x<=128&&player.y>=4&&player.y<=92; }
 /* justo antes de aparecer: si su sitio de pelea te pilla cerca, se aparta hacia el otro lado de la sala (nunca encima de ti) */
-const BOSS_ROOM=60;
+const BOSS_ROOM=48;
 function presentPlaceBoss(){ const B=boss||midboss; if(!B) return; const w=B.w||32, h=B.h||32, pcx=player.x+8, pcy=player.y+10;
   let cx=B.x+w/2, cy=B.y+h/2; if(Math.hypot(cx-pcx,cy-pcy)>=BOSS_ROOM) return;
   let dx=cx-pcx, dy=cy-pcy, d=Math.hypot(dx,dy); if(d<1){ dx=80-pcx; dy=64-pcy; d=Math.hypot(dx,dy)||1; if(d<1){ dx=0; dy=-1; d=1; } }
-  const minX=8+w/2, maxX=VW-8-w/2, minY=8+h/2, maxY=PLAY_H-12-h/2, at=(k)=>[clamp(pcx+dx/d*k,minX,maxX),clamp(pcy+dy/d*k,minY,maxY)];
+  const minX=24+w/2, maxX=VW-24-w/2, minY=Math.min(20,B.y)+h/2, maxY=PLAY_H-28-h/2, /* con aire: nunca pegado a la pared (los voladores pueden seguir arriba) */ at=(k)=>[clamp(pcx+dx/d*k,minX,maxX),clamp(pcy+dy/d*k,minY,maxY)];
   let best=null, bd=-1; for(let k=BOSS_ROOM;k<=140;k+=4){ const [x,y]=at(k), dd=Math.hypot(x-pcx,y-pcy); if(dd>bd){ bd=dd; best=[x,y]; } if(dd>=BOSS_ROOM) break; }
-  if(bd<BOSS_ROOM){ const x=pcx<80?maxX:minX, y=pcy<64?maxY:minY; best=[x,y]; } // arrinconado: a la esquina contraria
+  if(bd<BOSS_ROOM) for(const c of [[minX,minY],[maxX,minY],[minX,maxY],[maxX,maxY]]){ const dd=Math.hypot(c[0]-pcx,c[1]-pcy); if(dd>bd){ bd=dd; best=c; } } // sin hueco en esa dirección: la esquina más lejana
   const nx=Math.round(best[0]-w/2), ny=Math.round(best[1]-h/2), ox=nx-B.x, oy=ny-B.y; B.x=nx; B.y=ny;
   if(B.mx!==undefined){ B.mx+=ox; B.my+=oy; } }
 /* la llamada del bucle de juego: arranca lo que haya en cola (true si ha empezado algo) */
@@ -94,7 +94,7 @@ function endPresent(){ const P=pres; if(!P) return;
   if(P.Q.kind==='bye'&&P.Q.after) P.Q.after(false); // el jefe se ha ido: cae la reliquia, se abren las puertas…
   if(P.Q.kind==='outro'){ presentQ=null; save(); saveFlash=45; } }
 function drawPresent(){ const P=pres; if(!P) return; P.R.draw(Math.min(P.t,P.dur),P);
-  if(P.t>=SKIP_T+6&&P.dur-P.t>30&&P.Q.kind!=='outro'){ const a=Math.min(1,(P.t-SKIP_T-6)/12); ctx.globalAlpha=a*(.55+.25*Math.sin(tick*.12)); ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,VH-11,43,11); txtS('Z: SALTAR',157,VH-8,'#e8e0d0','right'); ctx.globalAlpha=1; } } // con su pastilla oscura: sobre el HUD también se lee
+  if(P.t>=SKIP_T+6&&P.dur-P.t>30&&P.Q.kind!=='outro'){ const a=Math.min(1,(P.t-SKIP_T-6)/12); ctx.globalAlpha=a*(.55+.25*Math.sin(tick*.12)); ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,PLAY_H-11,43,11); txtS('Z: SALTAR',157,PLAY_H-8,'#e8e0d0','right'); ctx.globalAlpha=1; } } // con su pastilla oscura: sobre el HUD también se lee
 /* al coger una reliquia (getItem): la salida del jefe, cuando acaben el objeto y su texto */
 /* al ceder o caer un jefe (o minijefe, o un eco): su despedida; after(fallback) hace lo de siempre (reliquia, puertas…)
    al acabar. fallback=true si no hay despedida registrada: entonces after pone también el humo y la fanfarria de antes */
