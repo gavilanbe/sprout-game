@@ -43,6 +43,7 @@ function drawPlayer(){
   const py=player.y-jumpZ;
   drawSpinCharge(py);
   if(player.dir===1&&player.atk>0) drawSword();
+  if(player.dir===1&&typeof drawPinHeld==='function') drawPinHeld(); // el molinillo, detrás si mira arriba (12b)
   let s=P_SPRITES[player.dir][player.frame];
   const idle=player.frame===0&&player.atk===0&&state==='play';
   if(idle&&((tick+37)%210)<7) s=P_BLINK[player.dir];                 // parpadeo
@@ -61,6 +62,7 @@ function drawPlayer(){
   if(wade){ ctx.restore(); const wx=player.x|0, wy=(py+13)|0, f=(tick>>3)&1; ctx.fillStyle='#e8f8ff'; ctx.fillRect(wx+3+f,wy,4,1); ctx.fillRect(wx+9-f,wy,4,1); ctx.fillStyle='#a0d8f8'; ctx.fillRect(wx+2,wy+1,12,1); }
   drawShieldOn(player.x,py);
   if(player.dir!==1&&player.atk>0) drawSword();
+  if(player.dir!==1&&typeof drawPinHeld==='function') drawPinHeld(); // el molinillo alzado mientras sopla (12b)
   if(player.spin>0) drawSpinBlade(py);
 }
 function drawEnemy(e){

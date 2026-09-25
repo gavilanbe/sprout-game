@@ -1553,13 +1553,20 @@ const CIERVO_SPR=ciervoArt(true), CIERVO_BARE=ciervoArt(false), CIERVO_BARE_W=wh
 BOSS_SPR.scare=SCARE_SPR; BOSS_WHITE.scare=whiten(SCARE_SPR); BOSS_SPR.ciervo=CIERVO_SPR; BOSS_WHITE.ciervo=whiten(CIERVO_SPR);
 PORTRAITS['EL CIERVO']=CIERVO_BARE;
 /* el MOLINILLO (objeto X) y la HOJA DE ÁMBAR (reliquia del Otoño) */
-const PINWHEEL_SPR=mkArt(16,16,g=>{
-  g.fillStyle=PAL.k; g.fillRect(6,7,3,9); g.fillStyle='#8a5a2c'; g.fillRect(7,8,1,8); g.fillStyle='#b07840'; g.fillRect(7,8,1,3);
-  const cx=7.5, cy=6, cols=['#f04848','#f8c848','#e88030','#fff0c8'];
-  for(let i=0;i<4;i++){ const t=i*Math.PI/2+.3;
-    g.fillStyle=PAL.k; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(t)*6.8,cy+Math.sin(t)*6.8); g.lineTo(cx+Math.cos(t+.9)*4.6,cy+Math.sin(t+.9)*4.6); g.closePath(); g.fill();
-    g.fillStyle=cols[i]; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(t)*5.6,cy+Math.sin(t)*5.6); g.lineTo(cx+Math.cos(t+.85)*3.6,cy+Math.sin(t+.85)*3.6); g.closePath(); g.fill(); }
-  g.fillStyle=PAL.k; g.fillRect(6,5,3,3); g.fillStyle='#fcd878'; g.fillRect(7,6,1,1); });
+/* la cabeza del molinillo, píxel a píxel: cuatro aspas de papel plegado (cara clara, pliegue oscuro y el canto que brilla),
+   las mismas que en su cinemática (15e). rot en radianes: gira (tiene simetría de 90°) */
+const PIN_C4=[['#a01c2c','#e84050','#ffb4b4'],['#c08a08','#f4cc38','#fff4b8'],['#1e62ac','#58a0e8','#c4e4ff'],['#2a8030','#68c050','#c8f0a0']];
+function pinwheelHead(g,cx,cy,R,rot){
+  for(let y=Math.floor(cy-R-1);y<=cy+R+1;y++) for(let x=Math.floor(cx-R-1);x<=cx+R+1;x++){ const dx=x+.5-cx, dy=y+.5-cy, r=Math.hypot(dx,dy); if(r>R||r<.9) continue;
+    const a=((Math.atan2(dy,dx)-rot)%6.2832+12.5664)%6.2832, q=Math.floor(a/1.5708)&3, f=(a%1.5708)/1.5708;
+    if(r>R*(1-f*.58)) continue; const C=PIN_C4[q];
+    g.fillStyle=(f<.1&&r>R*.3)?C[2]:f<.46?C[1]:C[0]; g.fillRect(x,y,1,1); } }
+function pinwheelPin(g,x,y){ g.fillStyle='#fff4dc'; g.fillRect(x,y,2,2); g.fillStyle='#8a6a48'; g.fillRect(x+1,y+1,1,1); }
+const PINWHEEL_SPR=mkArt(16,16,g=>{ // el objeto: la cabeza arriba y el palo de madera
+  g.fillStyle='#6a4020'; g.fillRect(7,9,2,6); g.fillStyle='#b88048'; g.fillRect(7,9,1,6); g.fillStyle='#e0b070'; g.fillRect(7,10,1,2);
+  pinwheelHead(g,8,6.5,6.3,.35); pinwheelPin(g,7,6); artOutline(g,16,16); });
+/* girando en la mano de Sprout: 6 fotogramas (90° de vuelta) de la cabeza sola, con contorno */
+const PIN_SPIN=Array.from({length:6},(_,i)=>mkArt(15,15,g=>{ pinwheelHead(g,7.5,7.5,6,i/6*1.5708+.35); pinwheelPin(g,7,7); artOutline(g,15,15); }));
 const AMBER_SPR=mkArt(16,16,g=>{
   g.fillStyle=PAL.k; g.fillRect(7,11,3,5); g.fillStyle=AMBER5[0]; g.fillRect(8,12,1,4);
   blobArt(g,0,0,16,16,[{x:8,y:5.6,r:3.8,ry:4},{x:4,y:7.8,r:3,ry:2.6},{x:12,y:7.8,r:3,ry:2.6},{x:8,y:9.6,r:3.2,ry:2.4}],AMBER5,{grad:.5,dither:.6});

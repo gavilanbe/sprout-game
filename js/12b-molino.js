@@ -48,13 +48,15 @@ const LEAF_HIDE={
 for(let y=1;y<=6;y++) for(let x=3;x<=5;x++){ const safe=[[5,4],[4,4],[4,5],[3,5],[3,6],[5,1]].some(([a,b])=>a===x&&b===y); LEAF_HIDE['18,0:'+x+','+y]={kind:safe?'floor':'hole'}; }
 /* ---------- molinetes: reglas por sala ---------- */
 const MILL_RULES={'19,1':{mode:'all',dur:200,perm:true},'20,0':{mode:'any',dur:130},'20,-1':{mode:'all',dur:170,perm:true}};
+let pinT=0; const PIN_T=26; // el molinillo en la mano: cuánto dura alzado y girando
 let gusts=[], millSpin={}, millGates=null, millGatesOpen=false, millSail=0;
 /* ---------- el molinillo ---------- */
 function usePinwheel(){
   if(gusts.length) return;
   const D=DIRV[player.dir]; if(SFX.swoosh) SFX.swoosh(); else SFX.boomer(); noise(.14,.05,true);
   gusts.push({x:player.x+8+D[0]*8,y:player.y+10+D[1]*8,vx:D[0]*3.2,vy:D[1]*3.2,t:0,life:32,hits:new Set()});
-  player.squash=.18;
+  player.squash=.18; pinT=PIN_T; // Sprout lo alza y las aspas zumban
+  for(let i=0;i<6;i++){ const a=i/6*6.283; parts.push({k:'mote',x:player.x+8+D[0]*10+Math.cos(a)*4,y:player.y+9+D[1]*10+Math.sin(a)*4,vx:Math.cos(a)*.9+D[0]*.8,vy:Math.sin(a)*.9+D[1]*.8,life:12,max:12,sway:0,col:i&1?'#fffbe8':'#fcd878',nog:true}); }
   for(let i=0;i<5;i++) parts.push({k:'leafF',x:player.x+8+D[0]*6,y:player.y+8+D[1]*6,vx:D[0]*(1.5+Math.random()),vy:D[1]*(1.5+Math.random())-.3,life:40,max:40,sway:Math.random()*6,col:['#e8a040','#c86424','#fcd878'][i%3],nog:true});
 }
 function spinSwitch(x,y){ const R=MILL_RULES[sx+','+sy]; const k=x+','+y; const was=millSpin[k]>0; millSpin[k]=R?R.dur:150;
@@ -80,7 +82,7 @@ function gustHitEnemy(e,g){
   else if(e.type==='wisp'||e.type==='gust'){ e.hp=0; }
   else e.stun=Math.max(e.stun||0,40);
 }
-function updGusts(){
+function updGusts(){ if(pinT>0) pinT--;
   for(const g of gusts){ g.t++; g.x+=g.vx; g.y+=g.vy;
     if((tick&1)===0) parts.push({k:'mote',x:g.x+(Math.random()-.5)*10,y:g.y+(Math.random()-.5)*10,vx:g.vx*.3,vy:g.vy*.3,life:14,max:14,sway:Math.random()*6,col:'#fff6d8',nog:true});
     const tx=g.x>>4, ty=g.y>>4;
@@ -95,7 +97,8 @@ function updGusts(){
     for(const e of enemies){ if(g.hits.has(e)) continue; if(Math.hypot(e.x+8-g.x,e.y+8-g.y)<13){ g.hits.add(e); gustHitEnemy(e,g); } }
     if(boss&&!g.hits.has(boss)&&rectsHit([g.x-7,g.y-7,14,14],bossBox(boss))){ g.hits.add(boss); if(boss.type==='ciervo'){ ciervoGust(boss); g.dead=true; } }
     if(midboss&&!g.hits.has(midboss)&&rectsHit([g.x-7,g.y-7,14,14],[midboss.x+3,midboss.y+4,18,18])){ g.hits.add(midboss); midboss.kx=(g.vx||0)*1.4; midboss.ky=(g.vy||0)*1.4; }
-    if(g.t>=g.life) g.dead=true; }
+    if(g.t>=g.life) g.dead=true;
+    if(g.dead) for(let i=0;i<4;i++){ const a=i/4*6.283+g.t; parts.push({k:'mote',x:g.x+Math.cos(a)*3,y:g.y+Math.sin(a)*3,vx:Math.cos(a)*.5+g.vx*.15,vy:Math.sin(a)*.5+g.vy*.15,life:16,max:16,sway:i,col:i&1?'#fffbe8':PIN_C4[i][1],nog:true}); } } // se deshace en rizos
   gusts=gusts.filter(g=>!g.dead);
 }
 /* ---------- molinetes y verjas ---------- */
@@ -111,7 +114,7 @@ function updMillSwitches(){
     if(!blocked){ millGatesOpen=want; for(const [x,y] of millGates){ grid[y][x]=want?regionFloor():'='; puff(x*16+8,y*16+8,'#8a7048',4,.8); } markDirty(); SFX.bump(); } }
 }
 function initMill(){
-  gusts=[]; millSpin={}; millGates=null; millGatesOpen=false;
+  gusts=[]; pinT=0; millSpin={}; millGates=null; millGatesOpen=false;
   const key=sx+','+sy;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const ch=grid[y][x];
     if(ch==='ξ'){ const H=LEAF_HIDE[key+':'+x+','+y]||{kind:'floor'}; if(opened.has('LF'+key+':'+x+','+y)||(H.rotten&&summered)) applyLeaf(x,y,H,true); }
@@ -336,10 +339,39 @@ function millAmbience(){
 }
 function drawMillFront(){
   if(dungeonOf(sx,sy)==='molino') millAmbience();
-  for(const g of gusts){ const a=g.t*.6; ctx.save(); ctx.translate(g.x|0,g.y|0);
-    for(let r=0;r<3;r++){ ctx.strokeStyle=r===1?'rgba(252,216,120,.8)':'rgba(255,250,232,.85)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,0,3+r*3,a+r,a+r+3.6); ctx.stroke(); }
-    ctx.restore(); }
+  for(const g of gusts) drawGust(g);
 }
+/* la ráfaga, en píxeles nítidos: un remolino en espiral (banda de 2 px, blanco en el ojo y azul pálido fuera) y dos estelas
+   onduladas que se afinan hacia la cola, con contorno añil de 1 px para leerse en cualquier suelo. Se dibuja hacia la derecha
+   y se gira a las otras direcciones transponiendo píxeles (sin rotar ni escalar). Caché por dirección, fotograma y fase */
+const GUST_W=40, GUST_H=26, GUST_HX=30, GUST_HY=13, GUST_ART=new Map();
+function gustArt(dir,f,ph,tl){ const key=dir+'|'+f+'|'+ph+'|'+tl; let c=GUST_ART.get(key); if(c) return c;
+  const B=new Array(GUST_W*GUST_H).fill(null), R=ph===0?4.6:6.8, put=(x,y,col)=>{ x=Math.round(x); y=Math.round(y); if(x>=1&&y>=1&&x<GUST_W-1&&y<GUST_H-1) B[y*GUST_W+x]=col; };
+  // las estelas: dos corrientes que ondulan, gruesas cerca del remolino y deshilachadas en la cola
+  for(const side of [-1,1]) for(let x=GUST_HX-3;x>=Math.max(2,GUST_HX-tl);x--){ const d=GUST_HX-x, k=d/(GUST_HX-2); // tl: la estela solo llega hasta donde ya ha pasado (no tapa a Sprout al salir)
+    if(ph>=2&&BAYER4[x&3][(side+1)]/16<(ph-1)*.4) continue; if(k>.55&&BAYER4[(x+f)&3][side+1&3]/16<(k-.55)*2.2) continue;
+    const y=GUST_HY+side*(3.2+k*2.4+Math.sin(d*.42-f*.785+(side>0?1.6:0))*1.4);
+    put(x,y,k<.5?'#ffffff':'#e8f6ff'); if(k<.7) put(x,y+1,'#a8d8f0'); }
+  // el remolino: una espiral que gira
+  for(let y=0;y<GUST_H;y++) for(let x=0;x<GUST_W;x++){ const dx=x+.5-GUST_HX, dy=(y+.5-GUST_HY)*1.12, r=Math.hypot(dx,dy); if(r>R) continue;
+    if(ph>=2&&BAYER4[y&3][x&3]/16<(ph-1)*.4) continue;
+    const a=((Math.atan2(dy,dx)+f*.785)%6.2832+6.2832)%6.2832, v=(r-a*.95+20)%6; if(r>1.6&&v>2.4) continue;
+    B[y*GUST_W+x]=r<2.4?'#ffffff':r<R*.66?'#e8f6ff':'#a8d8f0'; }
+  const vert=dir<2, W=vert?GUST_H:GUST_W, H=vert?GUST_W:GUST_H; c=mkCanvas(W,H); const g=c.getContext('2d');
+  for(let y=0;y<GUST_H;y++) for(let x=0;x<GUST_W;x++){ const col=B[y*GUST_W+x]; if(!col) continue; g.fillStyle=col;
+    if(dir===3) g.fillRect(x,y,1,1); else if(dir===2) g.fillRect(GUST_W-1-x,y,1,1); else if(dir===0) g.fillRect(y,x,1,1); else g.fillRect(y,GUST_W-1-x,1,1); }
+  artOutline(g,W,H,'#3c3456'); GUST_ART.set(key,c); return c; }
+function drawGust(g){ const dir=Math.abs(g.vx)>Math.abs(g.vy)?(g.vx>0?3:2):(g.vy>0?0:1), f=(g.t>>1)&7, ph=g.t<3?0:g.t>=g.life-3?3:g.t>=g.life-6?2:1, img=gustArt(dir,f,ph,Math.min(28,Math.round((g.t*3.2+4)/4)*4));
+  const ox=dir===3?GUST_HX:dir===2?GUST_W-1-GUST_HX:GUST_HY, oy=dir===0?GUST_HX:dir===1?GUST_W-1-GUST_HX:GUST_HY;
+  ctx.drawImage(img,Math.round(g.x-ox),Math.round(g.y-oy));
+  if(ph<3) for(let i=0;i<4;i++){ const a=g.t*.32+i*1.5708, r=(8+Math.sin(g.t*.4+i)*1.5)*(ph===0?.7:1), x=Math.round(g.x+Math.cos(a)*r), y=Math.round(g.y+Math.sin(a)*r*.85), flip=((g.t>>1)+i)&1; // los papelitos de colores que la rodean
+    ctx.fillStyle=PAL.k; ctx.fillRect(x-1,y-1,flip?4:3,flip?3:4); ctx.fillStyle=PIN_C4[i][0]; ctx.fillRect(x,y+(flip?1:0),flip?2:1,1); ctx.fillStyle=PIN_C4[i][1]; ctx.fillRect(x,y,flip?2:1,flip?1:2); } }
+/* el molinillo en la mano mientras sopla: delante de Sprout, girando rápido y frenando (detrás si mira arriba) */
+function drawPinHeld(){ if(pinT<=0||xItem!=='molinillo') return; const k=pinT/PIN_T, D=DIRV[player.dir];
+  const spin=Math.floor((PIN_T-pinT)*(.5+k*1.6)), img=PIN_SPIN[((spin%6)+6)%6];
+  const P=[[13,9],[14,1],[-1,3],[17,3]][player.dir], hx=player.x+P[0], hy=player.y+P[1]-Math.round(Math.sin(k*3.1416)*1.5); // abajo: delante; arriba: sobre el hombro, detrás; a los lados: por delante
+  ctx.fillStyle='#6a4020'; ctx.fillRect(hx-1,hy+5,2,5); ctx.fillStyle='#b88048'; ctx.fillRect(hx-1,hy+5,1,5); ctx.fillStyle=PAL.k; ctx.fillRect(hx-2,hy+10,4,1);
+  ctx.drawImage(img,Math.round(hx-7.5),Math.round(hy-7.5)); }
 /* ---------- los bichos del molino, dibujados ---------- */
 const MILL_ENEMY={crow:1,knight:1,root:1};
 function drawMillEnemy(e){
