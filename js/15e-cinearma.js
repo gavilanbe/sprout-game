@@ -24,7 +24,7 @@ const BIG_FOOT=['#1c0e06','#3c1e0c','#66381a','#865028','#a66a38'];
 const BIG_LEAF=['#103816','#226e2a','#46a63c','#7ed64e','#c6f68e'];
 const BIG_INK='#1a1410', BIG_MOUTH='#3a1208';
 const BIG_W=80, BIG_H=72, BIG_OX=8, BIG_OY=8; // el lienzo lleva margen: el muñeco (0..64) cae en (8..72)
-const BIG_CACHE=new Map(); let BIG_SCR=null, BIG_ID=null;
+const BIG_CACHE=new Map(); let BIG_ID=null;
 function bigRecycle(){ if(BIG_CACHE.size<320) return mkCanvas(BIG_W,BIG_H); const k0=BIG_CACHE.keys().next().value, c=BIG_CACHE.get(k0); BIG_CACHE.delete(k0); c.getContext('2d').clearRect(0,0,BIG_W,BIG_H); return c; } // el más viejo, limpio, para el nuevo
 function bigLeaf(g,x0,y0,len,wid,ang,pal){ // hoja con punta, nervio y haz más claro, girada `ang` grados
   const a=ang*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), R=Math.ceil(len)+2;
@@ -81,7 +81,7 @@ function bigSprout(pose){
   const s=q.s, wx=Math.pow(s,-.8), O=BIG_OX, OY=BIG_OY, X=x=>32+(x-32)*wx+O, Y=y=>61-(61-y)*s+OY, P=(x,y)=>[Math.round(X(x)),Math.round(Y(y))];
   const L=(x,y,r,ry)=>({x:X(x),y:Y(y),r:r*wx,ry:(ry||r)*s});
   // 1) el cuerpo, derecho y ya aplastado o estirado (en la geometría: los píxeles salen limpios)
-  const B=BIG_SCR||(BIG_SCR=mkCanvas(BIG_W,BIG_H)), g=B.getContext('2d'), ID=BIG_ID||(BIG_ID=g.createImageData(BIG_W,BIG_H)), D=ID.data; D.fill(0); // el lienzo de trabajo, reutilizado (putImageData lo pisa entero)
+  const B=mkCanvas(BIG_W,BIG_H), g=B.getContext('2d'), ID=BIG_ID||(BIG_ID=g.createImageData(BIG_W,BIG_H)), D=ID.data; D.fill(0); // un lienzo nuevo cada vez (reutilizarlo tras putImageData falla en el iPhone; ver pxStamp)
   blobID(D,BIG_W,BIG_H,[L(25+q.ft[0],58+q.ft[1],5.5,3.2),L(39+q.ft[2],58+q.ft[3],5.5,3.2)],BIG_FOOT,{grad:.3,dither:.5}); // los pies
   blobID(D,BIG_W,BIG_H,[L(32,48,15.5,9)],BIG_PETO,{grad:.45,dither:.35}); // el faldón
   blobID(D,BIG_W,BIG_H,[L(32,33,17.5,15.5),L(32,19.5,6,4.5)],BIG_SKIN,{grad:.25,dither:.35}); // el bulbo

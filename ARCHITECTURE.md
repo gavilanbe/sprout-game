@@ -153,6 +153,11 @@ Reglas que sigue el código (y que conviene mantener):
   los píxeles opacos van a un búfer de 32 bits y se vuelcan de una vez. `blobArt`,
   `artOutline`, `bandSky`, las capas del paralaje, la colina del título, la corteza
   de la intro, las hojas y las raíces del sueño ya lo usan.
+- **Nunca un lienzo auxiliar compartido para `putImageData`.** Cada volcado va por
+  un lienzo de su tamaño exacto (uno nuevo, o el propio del búfer). Reutilizar uno
+  solo y copiarlo tras cada `putImageData` sale perfecto en el ordenador, pero en el
+  iPhone (WebKit con la GPU) daba basura: recuadros negros y trozos de otros dibujos.
+  Las pruebas de `tools/perf` no lo detectan (ni en Chromium ni en WebKit de escritorio).
 - **Solo a opacidad plena.** Con `globalAlpha<1` o colores semitransparentes, un
   bloque y muchos píxeles sueltos redondean distinto (±1): ahí se pinta como
   siempre. `pxPlain(g)` dice si un contexto admite el atajo.

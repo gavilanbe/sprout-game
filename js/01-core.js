@@ -80,11 +80,11 @@ function pxBuf(w,h,bg){ const img=new ImageData(w,h), d=new Uint32Array(img.data
     set(x,y,c){ if(x>=0&&y>=0&&x<w&&y<h) d[y*w+x]=pxCol(c); },
     rect(x,y,rw,rh,c){ const v=pxCol(c), x0=Math.max(0,x), y0=Math.max(0,y), x1=Math.min(w,x+rw), y1=Math.min(h,y+rh); for(let yy=y0;yy<y1;yy++) d.fill(v,yy*w+x0,yy*w+x1); },
     canvas(){ const c=mkCanvas(w,h); c.getContext('2d').putImageData(img,0,0); return c; },
-    into(g,ox,oy){ pxStamp(g,img,ox||0,oy||0); } }; }
-/* vuelca un ImageData sobre g con source-over (lo transparente no toca lo que hay debajo): a través de un lienzo auxiliar */
-let PX_SCR=null;
-function pxStamp(g,img,ox,oy){ if(!PX_SCR||PX_SCR.width<img.width||PX_SCR.height<img.height) PX_SCR=mkCanvas(Math.max(img.width,PX_SCR?PX_SCR.width:0),Math.max(img.height,PX_SCR?PX_SCR.height:0));
-  PX_SCR.getContext('2d').putImageData(img,0,0); g.drawImage(PX_SCR,0,0,img.width,img.height,ox,oy,img.width,img.height); }
+    into(g,ox,oy){ if(!this.cv){ this.cv=mkCanvas(w,h); this.cx=this.cv.getContext('2d'); } this.cx.putImageData(img,0,0); g.drawImage(this.cv,ox||0,oy||0); } }; } // su propio lienzo, de su tamaño exacto (ver pxStamp)
+/* vuelca un ImageData sobre g con source-over (lo transparente no toca lo que hay debajo): a través de un lienzo nuevo, de su tamaño exacto.
+   Nada de un lienzo auxiliar compartido y reutilizado: en el iPhone (WebKit con la GPU) copiarlo tras cada putImageData
+   daba basura (recuadros negros, trozos de otros dibujos) aunque en el ordenador saliera perfecto */
+function pxStamp(g,img,ox,oy){ const c=mkCanvas(img.width,img.height); c.getContext('2d').putImageData(img,0,0); g.drawImage(c,ox,oy); }
 /* un contexto de bolsillo para generar arte: fillStyle/fillRect/drawImage como los de verdad, pero los rectángulos
    opacos van al búfer y se vuelcan juntos (en orden: cualquier otra cosa vuelca primero lo pendiente) */
 function pxCtx(c){ const real=c.getContext('2d'), w=c.width, h=c.height, plain=pxPlain(real); let B=null, dirty=false, style='#000000', v=pxCol(style);
