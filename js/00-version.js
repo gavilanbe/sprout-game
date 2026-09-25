@@ -1,3 +1,3 @@
 'use strict';
 /* la versión del juego: la escribe scripts/version.cjs (fecha del último cambio y hash del contenido) */
-const GAME_VERSION='2026.09.25-ab280f9f';
+const GAME_VERSION='2026.09.25-8ca7da23';

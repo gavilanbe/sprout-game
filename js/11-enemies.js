@@ -82,18 +82,7 @@ function updEnemies(){
       e.ang+=.04; e.x+=Math.cos(e.ang)*.9+e.kx; e.y+=Math.sin(e.ang*1.3)*.7+e.ky;
       e.x=Math.max(4,Math.min(SW*16-20,e.x)); e.y=Math.max(4,Math.min(SH*16-20,e.y));
       if(d<40){ player.kx+=(player.x-e.x)/d*0.5; player.ky+=(player.y-e.y)/d*0.5; }
-    } else if(e.type==='squirrel'){
-      noContact=true; e.t++;
-      if(e.st==='flee'){ const [bx,by]=moveBlocked(e,e.x+e.fx*1.9+e.kx,e.y+e.fy*1.4+e.ky); if(bx)e.fx*=-1; if(by)e.fy*=-1; if(--e.ft<=0) e.despawn=true; }
-      else if(e.st==='dash'){ moveBlocked(e,e.x+dx/d*1.6+e.kx,e.y+dy/d*1.6+e.ky);
-        if(rectsHit([e.x+3,e.y+4,10,9],hitPlayerBox())){
-          if(berries>0){ berries--; SFX.bump(); shake=2; puff(player.x+8,player.y+8,'#d84878',6,1.2); showToast('¡BAYA ROBADA!','caza a la ardilla'); }
-          e.st='flee'; e.ft=110; e.fx=Math.sign(e.x-player.x)||1; e.fy=Math.sign(e.y-player.y)||0; }
-        if(d>110) e.st='wander';
-      } else { e.t2=(e.t2||0)-1;
-        if(e.t2<=0){ e.t2=50+hash(e.x|0,e.y|0)%60; const a=Math.random()*6.283; e.vx=Math.cos(a)*.45; e.vy=Math.sin(a)*.45; }
-        const [bx,by]=moveBlocked(e,e.x+e.vx+e.kx,e.y+e.vy+e.ky); if(bx)e.vx*=-1; if(by)e.vy*=-1;
-        if(berries>0&&d<56){ e.st='dash'; SFX.blip(); } }
+    } else if(e.type==='squirrel'){ noContact=updSquirrel(e,dx,dy,d); // la ardilla ladrona (11a)
     } else if(e.type==='icicle'){
       if(e.st==='hang'){ noContact=true; if(Math.abs(dx)<9&&dy>4&&dy<80){ e.st='shake'; e.st2=20; SFX.bump(); } }
       else if(e.st==='shake'){ noContact=true; e.x=e.x0+((tick&2)?1:-1); if(--e.st2<=0){ e.st='fall'; e.vy=.6; e.x=e.x0; } }
@@ -145,7 +134,8 @@ function updEnemies(){
     if(e.despawn) return false;
     if(e.hp<=0){
       SFX.edie(); deathPoof(e.x+8,e.y+8); shake=Math.max(shake,4);
-      if(e.type==='squirrel'){ for(let i=0;i<3;i++) pickups.push({kind:'berry',x:e.x+i*7-3,y:e.y+4,t:0,drop:14}); return false; }
+      if(e.type==='squirrel'){ const n=3+(e.stolen||0); for(let i=0;i<n;i++){ const a=-Math.PI*(.15+.7*(i+.5)/n); pickups.push({kind:'berry',x:e.x+4+Math.cos(a)*8,y:e.y+4+Math.sin(a)*4,t:0,drop:14+i*2}); } // sus bayas y las que robó, en abanico
+        for(let i=0;i<6;i++) parts.push({k:'leafF',x:e.x+8,y:e.y+6,vx:(Math.random()-.5)*2,vy:-1-Math.random(),life:40,max:40,sway:Math.random()*6,col:['#e07c34','#ffac5c','#c8642a'][i%3],nog:false}); return false; }
       dropLoot(e.x+4,e.y+4,e.type==='thorn'?.4:.22,.35+(e.fast?.2:0));
       return false;
     } return true;

@@ -66,6 +66,7 @@ function drawPlayer(){
   if(player.spin>0) drawSpinBlade(py);
 }
 function drawEnemy(e){
+  if(e.type==='squirrel'){ drawSquirrel(e); return; } // la ardilla, con sus poses (11a)
   if(MILL_ENEMY[e.type]){ drawMillEnemy(e); return; } // cuervo, caballero de hoja y raíz (12b)
   const S=E_SPR[e.type]; if(!S) return;
   const flash=e.flash>4, fl=e.type==='bat'||e.type==='bee'||e.type==='ghost'||e.type==='wisp';
