@@ -43,11 +43,6 @@ const CV_SFX={
   sink(){ if(!AC) return; const t=AC.currentTime; beep('triangle',220,60,.5,.06,t); swish(.5,.04,900,300,200,t,2); },
 };
 
-/* Sprout acaba de cruzar la puerta del borde: da unos pasos hacia dentro para no quedar bajo las franjas */
-function cvWalkInit(P){ const y=player.y, x=player.x; P.st.walk=y<14?{dy:1,to:16}:y>96?{dy:-1,to:94}:x<8?{dx:1,to:14}:x>136?{dx:-1,to:130}:null; }
-function cvWalkIn(P,t){ const W=P.st.walk; if(!W) return; const s=.8;
-  if(W.dy){ if((W.dy>0&&player.y<W.to)||(W.dy<0&&player.y>W.to)){ player.y+=W.dy*s; player.dir=W.dy>0?0:1; player.frame=((t>>3)&1)?1:3; } else { player.frame=0; P.st.walk=null; } }
-  else { if((W.dx>0&&player.x<W.to)||(W.dx<0&&player.x>W.to)){ player.x+=W.dx*s; player.dir=W.dx>0?3:2; player.frame=((t>>3)&1)?1:3; } else { player.frame=0; P.st.walk=null; } } }
 /* ---------- ayudas de dibujo ---------- */
 const CV_EARTH=['#1c0f07','#2e1a0c','#452812','#5c3818','#76502a','#9a7040'];
 const CV_STRATA=['#6a4626','#4e3018','#3e2412','#4a2c16','#34200e','#2a180a'];
@@ -182,51 +177,79 @@ function cvIronStrip(y,h,k,kv,T){ const half=Math.round(80*clamp(k,0,1)); if(hal
   cvPx(80-half,top-1,half*2,hh+2,PAL.k); cvPx(80-half,top,half*2,hh,'#2a3040'); cvPx(80-half,top,half*2,1,'#6a7890'); cvPx(80-half,top+hh-1,half*2,1,'#161a24');
   for(let x=80-half+4;x<80+half-3;x+=12){ cvPx(x,top+2,2,2,'#8a98b0'); cvPx(x,top+2,1,1,'#e0e8f4'); if(hh>10){ cvPx(x,top+hh-4,2,2,'#8a98b0'); cvPx(x,top+hh-4,1,1,'#e0e8f4'); } }
   const sw=Math.round((T*5)%260)-50; for(let r=0;r<hh;r++){ const x=80-half+sw-r; if(x>80-half&&x<80+half-2) cvPx(x,top+r,2,1,'rgba(220,232,255,.18)'); } }
-function cvKingPose(P,T){ const S=P.st, x0=S.m.x, y0=S.m.y; // dónde está y cómo mira el Rey en el instante T de la pista
-  let x=x0, y=y0, dir=-1, hop=0, sh=0;
-  if(T<44){ const u=presentSeg(T,8,40); x=x0-Math.round(18*u); dir=-1; hop=((T>>3)&1)&&T>8&&T<40?-1:0; }
-  else if(T<60){ x=x0-18; dir=T<50?-1:1; hop=T>=44&&T<50?-2:0; }
-  else if(T<86){ x=x0-18; dir=1; hop=-Math.round(Math.max(0,Math.sin(presentSeg(T,60,70)*Math.PI))*5+Math.max(0,Math.sin(presentSeg(T,72,82)*Math.PI))*5); }
-  else if(T<98){ x=x0-18; dir=1; sh=(T&2)?1:-1; }
-  else { const u=presentEase.out(presentSeg(T,98,112)); x=x0-18+Math.round(8*u); y=y0+Math.round(14*u); dir=1; if(T>=112&&T<122) sh=(T&1)?1:0; } // se queda donde frenó: de ahí arranca la pelea
-  return {x,y,dir,hop,sh}; }
-BOSS_INTRO.king={ dur:200, shortDur:84,
-  start(P){ const m=midboss; cvWalkInit(P); P.st.off=56; P.st.sc=(200-56)/84; P.st.m={x:m.x,y:m.y,st:m.st,t:m.t,dir:m.dir}; bossHidden=true; setTrack('silencio'); },
-  tick(t,P){ const T=cvT(P,t); cvWalkIn(P,t);
-    if(T<40) for(let a=12;a<40;a+=8) if(cvHit(P,t,a)){ CV_SFX.clank(); shake=Math.max(shake,1); const K=cvKingPose(P,T); parts.push({k:'dust',x:K.x+12,y:K.y+23,vx:.3,vy:-.1,life:12,max:12,r:1,col:'#8a8078',nog:true}); }
-    if(cvHit(P,t,46)&&AC){ const tt=AC.currentTime; beep('square',880,1320,.08,.035,tt); }
-    for(const a of [70,82]) if(cvHit(P,t,a)){ CV_SFX.thud(1.3); shake=Math.max(shake,4); const K=cvKingPose(P,T); for(let i=0;i<8;i++){ const an=i/8*6.283; parts.push({k:'dust',x:K.x+12+Math.cos(an)*8,y:K.y+22+Math.sin(an)*3,vx:Math.cos(an)*.9,vy:Math.sin(an)*.3-.1,life:16,max:16,r:2,col:'#9a9088',nog:true}); } }
-    if(cvHit(P,t,86)) CV_SFX.scrape();
-    if(T>=86&&T<112&&(t&1)===0){ const K=cvKingPose(P,T); for(let i=0;i<2;i++) parts.push({k:'shard',x:K.x+22,y:K.y+18,vx:-.5-Math.random()*1.6,vy:-1.2-Math.random()*1.2,life:10,max:12,col:Math.random()<.5?'#fff0a0':'#ffb040',nog:false}); }
-    if(cvHit(P,t,98)) CV_SFX.whoosh();
-    if(cvHit(P,t,112)){ shake=Math.max(shake,7); CV_SFX.steel(); screenFlash(4,'#e8f0ff'); presentMusic(P); }
-    if(T>=112&&T<126&&(t&1)===0){ const K=cvKingPose(P,T); parts.push({k:'dust',x:K.x+6+Math.random()*12,y:K.y+22,vx:(Math.random()-.5)*.5,vy:-.2,life:14,max:14,r:1+(t&2?1:0),col:'#a09890',nog:true}); }
-    const S='ESCARABAJO'; if(cvHit(P,t,118)) CV_SFX.letter(0); for(let i=0;i<S.length;i++) if(cvHit(P,t,120+i*2+8)) CV_SFX.letter(i);
-    if(cvHit(P,t,120+9*2+9)){ shake=Math.max(shake,4); CV_SFX.steel(); }
-    if(cvHit(P,t,146)){ CV_SFX.slam(); if(AC){ const tt=AC.currentTime; [84,88,91].forEach((m,i)=>beep('p25',f(m),0,.12,.03,tt+.05+i*.05)); } }
-    for(let i=0;i<14;i+=2) if(cvHit(P,t,156+i*2)) CV_SFX.type(); },
-  draw(t,P){ const T=cvT(P,t), K=cvKingPose(P,T), m=midboss;
-    // el Rey, dibujado aquí (mira a un lado y a otro, pisotea, arrastra el morro y embiste)
-    if(m){ const img=K.dir<0?BOSS_SPR.kingL:BOSS_SPR.king, flashW=T===98||T===99;
-      if(T>=98&&T<112){ for(let i=1;i<4;i++){ ctx.globalAlpha=.25/i; ctx.drawImage(img,K.x-(i*2),K.y-i*6); } ctx.globalAlpha=1; } // estela de la embestida
-      drawShadow(K.x+12,K.y+23,10); ctx.drawImage(flashW?(K.dir<0?BOSS_WHITE.kingL:BOSS_WHITE.king):img,K.x+K.sh,K.y+K.hop);
-      if(T>=86&&T<98&&(T&4)){ cvPx(K.x+22,K.y+15+K.hop,2,1,'#ffffff'); cvPx(K.x+23,K.y+14+K.hop,1,3,'#ffffff'); } // el morro brilla
-      if(T>=44&&T<62){ const u=T-44, by=K.y-10-Math.round(caK(u,[[0,4],[5,-2,'out'],[8,0,'in']])); // ¡!
+/* el Rey no estaba: cae del techo con un estruendo de hierro, mira a un lado y a otro, te ve, pisotea, arrastra el
+   morro y embiste hacia ti, pero frena antes (a BOSS_ROOM px como poco): de ahí arranca la pelea */
+function cvKingFree(x,y){ return x>=0&&y>=-4&&x<=VW-24&&y<=PLAY_H-24&&boxFree(x+3,y+6,18,16); } // la caja con la que anda en la pelea
+function cvKingSpot(m,pc){ if(cvKingFree(m.x,m.y)&&Math.hypot(m.x+12-pc[0],m.y+12-pc[1])>=BOSS_ROOM) return; // cae donde pueda andar (nunca dentro de un pilar)
+  let best=null, bd=1e9; for(let y=0;y<=PLAY_H-24;y+=4) for(let x=4;x<=VW-28;x+=4){ if(!cvKingFree(x,y)||Math.hypot(x+12-pc[0],y+12-pc[1])<BOSS_ROOM) continue; const dd=Math.hypot(x-m.x,y-m.y); if(dd<bd){ bd=dd; best=[x,y]; } }
+  if(best){ m.x=best[0]; m.y=best[1]; } }
+function cvKingPlan(P){ const m=midboss, pc0=[player.x+8,player.y+10]; cvKingSpot(m,pc0);
+  const S=P.st, pc=pc0, kc=[m.x+12,m.y+12], vx=pc[0]-kc[0], vy=pc[1]-kc[1], d=Math.hypot(vx,vy)||1;
+  S.m={x:m.x,y:m.y,st:m.st,t:m.t,dir:m.dir}; S.face=vx<0?-1:1;
+  // la embestida: hacia ti si cabe; si no, de lado (siempre acaba a BOSS_ROOM px de ti como poco y dentro de la sala)
+  const cand=[[vx/d,vy/d,clamp(d-BOSS_ROOM-4,0,20)],[S.face,0,22],[-S.face,0,22],[0,vy<0?-1:1,14],[0,vy<0?1:-1,14]]; let best=null;
+  for(const [ux,uy,L] of cand){ for(let l=L;l>=6;l-=2){ const tx=clamp(Math.round(m.x+ux*l),4,VW-28), ty=clamp(Math.round(m.y+uy*l),6,PLAY_H-30), moved=Math.hypot(tx-m.x,ty-m.y);
+      if(moved<6||Math.hypot(tx+12-pc[0],ty+12-pc[1])<BOSS_ROOM||!cvKingFree(tx,ty)||!cvKingFree(Math.round((tx+m.x)/2),Math.round((ty+m.y)/2))) continue; if(!best||moved>best.moved+4) best={tx,ty,moved,ux,uy}; break; } if(best&&best.moved>=12) break; }
+  if(!best) best={tx:m.x,ty:m.y,ux:S.face,uy:0};
+  S.to=[best.tx,best.ty]; S.cv=[best.ux,best.uy]; if(best.ux) S.face=best.ux<0?-1:1; }
+function cvKingPose(P,T){ const S=P.st, x0=S.m.x, y0=S.m.y, F=S.face; // dónde está y cómo mira el Rey en el instante T de la pista
+  let x=x0, y=y0, dir=F, hop=0, sh=0, fall=0;
+  if(T<6) return {hide:true,x,y,dir,hop,sh,fall:1};
+  if(T<30){ fall=1-presentEase.in(presentSeg(T,6,30)); y=y0-Math.round(118*fall); }
+  else if(T<40) hop=-Math.round(Math.sin(presentSeg(T,31,40)*Math.PI)*3);
+  else if(T<56){ dir=T<48?-F:F; hop=T>=48&&T<52?-1:0; }
+  else if(T<74) dir=F;
+  else if(T<98) hop=-Math.round(Math.max(0,Math.sin(presentSeg(T,74,82)*Math.PI))*5+Math.max(0,Math.sin(presentSeg(T,86,94)*Math.PI))*5);
+  else if(T<110) sh=(T&2)?1:-1;
+  else { const u=presentEase.out(presentSeg(T,110,122)); x=Math.round(x0+(S.to[0]-x0)*u); y=Math.round(y0+(S.to[1]-y0)*u); if(T>=122&&T<132) sh=(T&1)?1:0; }
+  return {x,y,dir,hop,sh,fall}; }
+BOSS_INTRO.king={ dur:220, shortDur:90,
+  start(P){ cvKingPlan(P); P.st.off=24; P.st.sc=(220-24)/90; bossHidden=true; },
+  tick(t,P){ const T=cvT(P,t), K=cvKingPose(P,T);
+    player.dir=Math.abs(K.x+12-player.x-8)>Math.abs(K.y+12-player.y-10)?(K.x+12>player.x+8?3:2):(K.y+12>player.y+10?0:1); // Sprout lo sigue con la mirada
+    if(cvHit(P,t,8)) CV_SFX.whoosh();
+    if(cvHit(P,t,30)){ CV_SFX.boom(); CV_SFX.steel(); shake=Math.max(shake,9); screenFlash(3,'#e8f0ff');
+      for(let i=0;i<12;i++){ const a=i/12*6.283; parts.push({k:'dust',x:K.x+12+Math.cos(a)*10,y:K.y+22+Math.sin(a)*3,vx:Math.cos(a)*1.3,vy:Math.sin(a)*.4-.15,life:20,max:20,r:2,col:'#9a9088',nog:true}); }
+      for(let i=0;i<10;i++){ const a=-Math.PI*(i/9), sp=1+Math.random()*2; parts.push({k:'shard',x:K.x+12,y:K.y+20,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.8,life:14,max:14,col:i&1?'#c8d0e0':'#fff0a0'}); } }
+    for(const a of [42,50]) if(cvHit(P,t,a)) CV_SFX.clank();
+    if(cvHit(P,t,58)&&AC){ const tt=AC.currentTime; beep('square',880,1320,.08,.035,tt); }
+    for(const a of [82,94]) if(cvHit(P,t,a)){ CV_SFX.thud(1.3); shake=Math.max(shake,4); for(let i=0;i<8;i++){ const an=i/8*6.283; parts.push({k:'dust',x:K.x+12+Math.cos(an)*8,y:K.y+22+Math.sin(an)*3,vx:Math.cos(an)*.9,vy:Math.sin(an)*.3-.1,life:16,max:16,r:2,col:'#9a9088',nog:true}); } }
+    if(cvHit(P,t,98)) CV_SFX.scrape();
+    if(T>=98&&T<122&&(t&1)===0){ const S=P.st, bx=K.x+12+S.cv[0]*11, by=K.y+18+S.cv[1]*4; for(let i=0;i<2;i++) parts.push({k:'shard',x:bx,y:by,vx:-S.cv[0]*(.5+Math.random()*1.6)+(Math.random()-.5),vy:-1.2-Math.random()*1.2,life:10,max:12,col:Math.random()<.5?'#fff0a0':'#ffb040',nog:false}); }
+    if(cvHit(P,t,110)) CV_SFX.whoosh();
+    if(cvHit(P,t,122)){ shake=Math.max(shake,7); CV_SFX.steel(); screenFlash(4,'#e8f0ff'); presentMusic(P); }
+    if(T>=122&&T<136&&(t&1)===0) parts.push({k:'dust',x:K.x+6+Math.random()*12,y:K.y+22,vx:(Math.random()-.5)*.5,vy:-.2,life:14,max:14,r:1+(t&2?1:0),col:'#a09890',nog:true});
+    const S='ESCARABAJO'; if(cvHit(P,t,136)) CV_SFX.letter(0); for(let i=0;i<S.length;i++) if(cvHit(P,t,138+i*2+8)) CV_SFX.letter(i);
+    if(cvHit(P,t,138+9*2+9)){ shake=Math.max(shake,4); CV_SFX.steel(); }
+    if(cvHit(P,t,164)){ CV_SFX.slam(); if(AC){ const tt=AC.currentTime; [84,88,91].forEach((m,i)=>beep('p25',f(m),0,.12,.03,tt+.05+i*.05)); } }
+    for(let i=0;i<14;i+=2) if(cvHit(P,t,174+i*2)) CV_SFX.type(); },
+  draw(t,P){ const T=cvT(P,t), K=cvKingPose(P,T), m=midboss, S=P.st;
+    const out=presentSeg(T,204,220); presentBars(presentEase.out(P.short?presentSeg(t,0,8):presentSeg(T,0,12))*(1-out),14); // primero las franjas: cae atravesándolas
+    if(m&&!K.hide){ const img=K.dir<0?BOSS_SPR.kingL:BOSS_SPR.king, white=K.dir<0?BOSS_WHITE.kingL:BOSS_WHITE.king, flashW=T===110||T===111||(T>=30&&T<32);
+      // la sombra crece en el suelo mientras cae; estela de la caída y, al embestir, hacia atrás
+      const gy=K.y+Math.round(118*K.fall); drawShadow(K.x+12,gy+23,Math.max(3,Math.round(10*(1-K.fall*.7))));
+      if(K.fall>0){ for(let i=1;i<4;i++){ ctx.globalAlpha=.22/i; ctx.drawImage(img,K.x,K.y-i*8); } ctx.globalAlpha=1; }
+      if(T>=110&&T<122){ for(let i=1;i<4;i++){ ctx.globalAlpha=.25/i; ctx.drawImage(img,Math.round(K.x-S.cv[0]*i*5),Math.round(K.y-S.cv[1]*i*5)); } ctx.globalAlpha=1; }
+      const sq=T>=30&&T<38?.22*Math.exp(-(T-30)/2.5):0;
+      if(sq>0){ ctx.save(); ctx.translate(K.x+12,K.y+24); ctx.scale(1+sq,1-sq); ctx.drawImage(flashW?white:img,-12,-24); ctx.restore(); }
+      else ctx.drawImage(flashW?white:img,K.x+K.sh,K.y+K.hop);
+      if(T>=98&&T<110&&(T&4)){ const nx=K.dir>0?K.x+22:K.x+1; cvPx(nx,K.y+15+K.hop,2,1,'#ffffff'); cvPx(nx+(K.dir>0?1:0),K.y+14+K.hop,1,3,'#ffffff'); } // el morro brilla
+      if(T>=56&&T<74){ const u=T-56, by=K.y-10-Math.round(caK(u,[[0,4],[5,-2,'out'],[8,0,'in']])); // ¡!
         cvPx(K.x+9,by-1,7,10,PAL.k); cvPx(K.x+10,by,5,8,'#fff4b0'); cvPx(K.x+12,by+1,1,4,'#c02828'); cvPx(K.x+12,by+6,1,1,'#c02828'); } }
-    // barras, veta de acero y el nombre
-    const out=presentSeg(T,184,200); presentBars(presentEase.out(P.short?presentSeg(t,0,8):presentSeg(T,0,12))*(1-out),14);
-    const k=presentEase.out(presentSeg(T,110,122));
-    if(k>0){ cvIronStrip(15,42,k,1-presentEase.in(out),T);
-      if(out<1){ ctx.save(); ctx.beginPath(); ctx.rect(0,14,160,44); ctx.clip();
+    // la veta de acero y el nombre
+    const k=presentEase.out(presentSeg(T,128,140));
+    const oy=S.to[1]+12<64?73:0; // el Rey arriba: el nombre abajo
+    if(k>0){ cvIronStrip(15+oy,42,k,1-presentEase.in(out),T);
+      if(out<1){ ctx.save(); ctx.beginPath(); ctx.rect(0,14+oy,160,44); ctx.clip();
         const L=cvBigLayout('ESCARABAJO'), x0=Math.round(80-(L.w+4+textW('REY'))/2), cx=x0+L.w/2;
-        cvTitle('EL',x0+5,19,T,118,3,CV_STEEL);
-        cvBigTitle('ESCARABAJO',cx,28,T,120,2,CV_BIG_STEEL,T>=150?150:undefined);
-        const rx=x0+L.w+4, ry=Math.round(caK(T-146,[[0,-40],[8,0,'in3'],[11,-3,'out'],[14,0,'in']]));
-        if(T>=146){ cvTitle('REY',rx+textW('REY')/2,36,T,146,0,{ext:'#6a4210',ext2:'#b07818',top:'#fff8c0',bot:'#f8d048'});
-          const cy=27+ry, c=rx+Math.round(textW('REY')/2); cvPx(c-5,cy+1,11,4,PAL.k); cvPx(c-4,cy+2,9,2,'#f8d048'); for(const dx of [-4,0,4]){ cvPx(c+dx-1,cy-2,3,4,PAL.k); cvPx(c+dx,cy-1,1,3,dx?'#e0a830':'#fff8c0'); } cvPx(c,cy+2,1,1,'#c02828'); } // la corona
-        cvType('morro de hierro',80,48,T,156,2,'#d8e2f4','#10141c'); ctx.restore(); } }
-    if(T>=98&&T<108){ ctx.globalAlpha=.5*(1-presentSeg(T,98,108)); ctx.fillStyle='#ffffff'; for(let i=0;i<10;i++){ const x=(hash(i,T>>1)%150)+5; ctx.fillRect(x,14+hash(i,3)%100,1,10+(i%3)*4); } ctx.globalAlpha=1; } },
-  end(P){ const m=midboss, M=P.st.m; if(m&&M){ const K=cvKingPose(P,999); m.x=K.x; m.y=K.y; m.st=M.st; m.t=M.t; m.dir=1; m.vx=m.vy=0; } bossHidden=false; } };
+        cvTitle('EL',x0+5,19+oy,T,136,3,CV_STEEL);
+        cvBigTitle('ESCARABAJO',cx,28+oy,T,138,2,CV_BIG_STEEL,T>=168?168:undefined);
+        const rx=x0+L.w+4, ry=Math.round(caK(T-164,[[0,-40],[8,0,'in3'],[11,-3,'out'],[14,0,'in']]));
+        if(T>=164){ cvTitle('REY',rx+textW('REY')/2,36+oy,T,164,0,{ext:'#6a4210',ext2:'#b07818',top:'#fff8c0',bot:'#f8d048'});
+          const cy=27+ry+oy, c=rx+Math.round(textW('REY')/2); cvPx(c-5,cy+1,11,4,PAL.k); cvPx(c-4,cy+2,9,2,'#f8d048'); for(const dx of [-4,0,4]){ cvPx(c+dx-1,cy-2,3,4,PAL.k); cvPx(c+dx,cy-1,1,3,dx?'#e0a830':'#fff8c0'); } cvPx(c,cy+2,1,1,'#c02828'); } // la corona
+        cvType('morro de hierro',80,48+oy,T,174,2,'#d8e2f4','#10141c'); ctx.restore(); } }
+    if(T>=110&&T<120){ ctx.globalAlpha=.5*(1-presentSeg(T,110,120)); ctx.fillStyle='#ffffff'; for(let i=0;i<10;i++){ const x=(hash(i,T>>1)%150)+5; ctx.fillRect(x,14+hash(i,3)%100,1,10+(i%3)*4); } ctx.globalAlpha=1; } },
+  end(P){ const m=midboss, S=P.st; if(m&&S.m){ m.x=S.to[0]; m.y=S.to[1]; m.st=S.m.st; m.t=S.m.t; m.dir=S.face; m.vx=m.vy=0; } bossHidden=false; } };
 
 /* ============================================================
    3) EL TOPO REAL (sala 6,2; su eco en 1,12)
@@ -234,16 +257,20 @@ BOSS_INTRO.king={ dur:200, shortDur:84,
 const CV_EARTHT={ext:'#2a160a',ext2:'#6a4020',top:'#fff6dc',bot:'#f0a040'};
 function cvMoundAt(x,y,wob){ drawShadow(x+16+wob,y+26,12); ctx.drawImage(MOUND_ART,Math.round(x+4+wob),Math.round(y+16)); }
 function cvBez(u,p0,p1,p2,p3){ const a=(1-u)*(1-u)*(1-u), b=3*u*(1-u)*(1-u), c=3*u*u*(1-u), d=u*u*u; return [a*p0[0]+b*p1[0]+c*p2[0]+d*p3[0],a*p0[1]+b*p1[1]+c*p2[1]+d*p3[1]]; }
-function cvMoundPos(P,T){ const S=P.st, e=[S.b.mx,S.b.my]; const u=presentEase.io(presentSeg(T,8,92)); return cvBez(u,[-30,96],[30,40],[150,120],e); }
+/* el montículo asoma lejos de Sprout y rodea el sitio del Topo por el lado contrario (nunca pasa cerca de él) */
+function cvMoundPlan(P){ const S=P.st, e=[S.b.mx,S.b.my], ec=[e[0]+16,e[1]+22], pc=[player.x+8,player.y+10]; S.a0=Math.atan2(ec[1]-pc[1],ec[0]-pc[0]); }
+function cvMoundPos(P,T){ const S=P.st, e=[S.b.mx,S.b.my], u=presentEase.io(presentSeg(T,8,92)), th=S.a0-1.5+3*u, r=48*Math.pow(1-u,.9);
+  return [clamp(e[0]+Math.cos(th)*r,-2,126),clamp(e[1]+Math.sin(th)*r*.75,-6,90)]; }
 /* altura del Topo sobre su agujero (positivo = bajo tierra) y cuánto se estira */
 function cvTopoY(T){ if(T<112) return 40; if(T<150) return caK(T,[[112,30],[126,-26,'out'],[146,0,'in3']]); if(T<250) return 0; return caK(T,[[250,0],[258,-16,'out'],[274,34,'in3']]); }
 function cvTopoSq(T){ if(T>=112&&T<126) return -.22; if(T>=126&&T<146) return -.1*(1-presentSeg(T,126,146)); if(T>=146&&T<160) return .32*Math.exp(-(T-146)/4); if(T>=258&&T<274) return -.25; if(T>=156&&T<200) return .04*Math.sin((T-156)*.9); return 0; }
 BOSS_INTRO.topo={ dur:300, shortDur:112,
-  start(P){ const b=boss; cvWalkInit(P); P.st.off=88; P.st.sc=(300-88)/112; P.st.b={x:b.x,y:b.y,mx:b.mx,my:b.my,st:b.st,t:b.t}; bossHidden=true; setTrack('silencio'); },
-  tick(t,P){ const T=cvT(P,t), B=P.st.b; cvWalkIn(P,t);
+  start(P){ const b=boss; P.st.off=88; P.st.sc=(300-88)/112; P.st.b={x:b.x,y:b.y,mx:b.mx,my:b.my,st:b.st,t:b.t}; cvMoundPlan(P); bossHidden=true; },
+  tick(t,P){ const T=cvT(P,t), B=P.st.b;
+    if(cvHit(P,t,8)){ CV_SFX.crumble(); shake=Math.max(shake,3); const [mx,my]=cvMoundPos(P,8); for(let i=0;i<10;i++){ const a=-Math.PI*(i/9), sp=.8+Math.random()*1.6; parts.push({x:mx+16,y:my+24,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.6,life:18,col:i&1?'#5a4430':'#9a7c58'}); } } // asoma: la tierra salta
     if(T>=8&&T<92){ if(cvHitEvery(P,t,8,92,6)) shake=Math.max(shake,2); if(cvHitEvery(P,t,8,92,26)) CV_SFX.rumble();
       if((t&1)===0){ const [mx,my]=cvMoundPos(P,T); if(mx>-10&&mx<150) parts.push({x:mx+12+Math.random()*8,y:my+26,vx:(Math.random()-.5)*.9,vy:-.7,life:12,col:(t&2)?'#5a4a40':'#8a6a48'}); }
-      const [mx,my]=cvMoundPos(P,T); const cx=mx+16, cy=my+16; if(!P.st.walk) player.dir=Math.abs(cx-player.x-8)>Math.abs(cy-player.y-8)?(cx>player.x+8?3:2):(cy>player.y+8?0:1); }
+      const [mx,my]=cvMoundPos(P,T); const cx=mx+16, cy=my+16; player.dir=Math.abs(cx-player.x-8)>Math.abs(cy-player.y-8)?(cx>player.x+8?3:2):(cy>player.y+8?0:1); }
     if(T>=92&&T<112){ if((t&1)===0) parts.push({x:B.mx+16+(Math.random()-.5)*12,y:B.my+26,vx:(Math.random()-.5)*.4,vy:-1,life:9,col:'#6e5a4c',nog:true}); shake=Math.max(shake,1); if(cvHit(P,t,94)) CV_SFX.creak(); }
     if(cvHit(P,t,112)){ shake=Math.max(shake,12); CV_SFX.boom(); screenFlash(3,'#f8e0b0');
       const cx=B.mx+16, cy=B.my+24; for(let i=0;i<16;i++){ const a=-Math.PI*(i/15), s=1.2+Math.random()*2.2; parts.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:26+(i&7),col:i&1?'#5a4430':'#9a7c58'}); }
@@ -254,12 +281,13 @@ BOSS_INTRO.topo={ dur:300, shortDur:112,
     if(cvHit(P,t,168)) presentMusic(P);
     const S='TOPO REAL', t0=176;
     if(cvHit(P,t,172)) CV_SFX.letter(0);
-    for(let i=0;i<S.length;i++) if(S[i]!==' '&&cvHit(P,t,t0+i*3+8)){ CV_SFX.letter(i); const x=cvBigX(S,80,i)+5; for(const s of [-1,1]) parts.push({k:'dust',x:x+s*4,y:118,vx:s*.5,vy:-.12,life:12,max:12,r:1,col:P.Q.echo?'#b8a0ff':'#c8a070',nog:true}); }
+    const oyT=B.my+26>70?-74:0; for(let i=0;i<S.length;i++) if(S[i]!==' '&&cvHit(P,t,t0+i*3+8)){ CV_SFX.letter(i); const x=cvBigX(S,80,i)+5; for(const s of [-1,1]) parts.push({k:'dust',x:x+s*4,y:118+oyT,vx:s*.5,vy:-.12,life:12,max:12,r:1,col:P.Q.echo?'#b8a0ff':'#c8a070',nog:true}); }
     if(cvHit(P,t,t0+(S.length-1)*3+9)){ CV_SFX.slam(); shake=Math.max(shake,6); }
     const sub=P.Q.echo?'un recuerdo que muerde':'guardián de la Brasa'; for(let i=0;i<sub.length;i+=2) if(cvHit(P,t,t0+S.length*3+12+i*2)) CV_SFX.type();
     if(cvHit(P,t,258)) CV_SFX.whoosh();
     if(cvHit(P,t,272)){ CV_SFX.thud(1.1); shake=Math.max(shake,4); const cx=B.mx+16, cy=B.my+24; for(let i=0;i<10;i++){ const a=-Math.PI*(i/9), s=.8+Math.random()*1.5; parts.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,life:20,col:i&1?'#5a4430':'#9a7c58'}); } } },
   draw(t,P){ const T=cvT(P,t), B=P.st.b, echo=P.Q.echo, cx=B.mx+16, gy=B.my+26; // gy: la línea del suelo donde se abre el agujero
+    const out=presentSeg(T,282,300); presentBars(presentEase.out(P.short?presentSeg(t,0,8):presentSeg(T,0,12))*(1-out),14); // primero las franjas: el Topo las rompe si sale arriba del todo
     // gravilla del techo (determinista)
     if(T>=10&&T<120) for(let i=0;i<18;i++){ const t0=10+i*5+(hash(i,3)%4), u=T-t0; if(u<0||u>40) continue; const x=16+hash(i,77)%128, yl=26+hash(i,5)%76, y=Math.min(yl,-4+u*u*.16), land=y>=yl;
       if(!land){ ctx.globalAlpha=.35; cvPx(x+1,4,1,Math.max(0,y-4),'#8a7058'); ctx.globalAlpha=1; } // el hilo de polvo que cae con ella
@@ -268,7 +296,9 @@ BOSS_INTRO.topo={ dur:300, shortDur:112,
     // grietas que se abren hacia el agujero
     const ck=presentSeg(T,92,112); if(ck>0&&T<276) cvDrawCracks(cx,gy,cvCracks(606,7,11),ck,echo?false:T>=112);
     // el montículo que da la vuelta a la sala
-    if(T>=8&&T<112){ const [mx,my]=T<92?cvMoundPos(P,T):[B.mx,B.my]; cvMoundAt(mx,my,T>=92?((T&2)?1:-1):0); }
+    if(T>=8&&T<112){ const [mx,my]=T<92?cvMoundPos(P,T):[B.mx,B.my], rise=presentSeg(T,8,16);
+      if(rise<1){ ctx.save(); ctx.beginPath(); ctx.rect(-4,Math.round(my+16+12*(1-rise)),VW+8,40); ctx.clip(); cvMoundAt(mx,my+Math.round(4*(1-rise)),0); ctx.restore(); } // asoma del suelo
+      else cvMoundAt(mx,my,T>=92?((T&2)?1:-1):0); }
     // el agujero y el Topo
     const yo=cvTopoY(T);
     if(T>=112&&T<280){ const r=T<118?presentEase.out(presentSeg(T,112,118)):T>=272?1-presentSeg(T,272,280):1; cvHole(cx,gy,12*r,4*r); }
@@ -281,16 +311,16 @@ BOSS_INTRO.topo={ dur:300, shortDur:112,
       if(T>=158&&T<200) for(const r0 of [158,166,174,182]){ const u=T-r0; if(u<0||u>16) continue; const rr=8+u*3, a=1-u/16; ctx.globalAlpha=a; for(let i=0;i<24;i++){ const an=i/24*6.283; cvPx(cx+Math.cos(an)*rr,B.my+14+Math.sin(an)*rr*.6,1,1,echo?'#e0d0ff':'#fff0c8'); } ctx.globalAlpha=1; }
       if(T>=170&&T<250&&((T>>3)&1)) cvPx(cx+5,B.my+4+yo,1,1,'#ffffff'); } // la corona destella
     if(T>=272){ const w=presentSeg(T,272,300); cvMoundAt(B.mx,B.my,w<.5?((T&2)?1:-1):0); } // ya bajo tierra: su montículo, listo para la pelea
-    // barras, la veta de tierra y el nombre
-    const out=presentSeg(T,282,300); presentBars(presentEase.out(P.short?presentSeg(t,0,8):presentSeg(T,0,12))*(1-out),14);
+    // la veta de tierra y el nombre
     const S='TOPO REAL', t0=176, k=presentEase.out(presentSeg(T,164,176));
     if(k>0){ const pal=echo?['#6a5898','#3e3068','#2e2450','#382a5c','#221a3c','#1a1430']:CV_STRATA;
-      cvStrip(89,40,k,1-presentEase.in(presentSeg(T,272,292)),pal,T,63);
-      if(T<292){ ctx.save(); ctx.beginPath(); ctx.rect(0,86,160,44); ctx.clip(); ctx.globalAlpha=1-presentSeg(T,270,284);
+      const oy=gy>70?-74:0; // el Topo abajo: el nombre arriba
+      cvStrip(89+oy,40,k,1-presentEase.in(presentSeg(T,272,292)),pal,T,63);
+      if(T<292){ ctx.save(); ctx.beginPath(); ctx.rect(0,86+oy,160,44); ctx.clip(); ctx.globalAlpha=1-presentSeg(T,270,284);
         const bx=Math.round(80-cvBigLayout(S).w/2), small=echo?{ext:'#1c1430',ext2:'#5a4890',top:'#f4f0ff',bot:'#b8a0ff'}:CV_EARTHT;
-        cvTitle(echo?'ECO DEL':'EL',bx+(echo?19:7),92,T,172,3,small);
-        cvBigTitle(S,80,101,T,t0,3,echo?CV_BIG_ECHO:CV_BIG_EARTH,T>=t0+S.length*3+14?t0+S.length*3+14:undefined);
-        cvType(echo?'un recuerdo que muerde':'guardián de la Brasa',80,122,T,t0+S.length*3+12,2,echo?'#e0d4ff':'#f0c898',echo?'#140c24':'#1c0f07'); ctx.restore(); } } },
+        cvTitle(echo?'ECO DEL':'EL',bx+(echo?19:7),92+oy,T,172,3,small);
+        cvBigTitle(S,80,101+oy,T,t0,3,echo?CV_BIG_ECHO:CV_BIG_EARTH,T>=t0+S.length*3+14?t0+S.length*3+14:undefined);
+        cvType(echo?'un recuerdo que muerde':'guardián de la Brasa',80,122+oy,T,t0+S.length*3+12,2,echo?'#e0d4ff':'#f0c898',echo?'#140c24':'#1c0f07'); ctx.restore(); } } },
   end(P){ const b=boss, B=P.st.b; if(b&&B){ b.x=B.x; b.y=B.y; b.mx=B.mx; b.my=B.my; b.st=B.st; b.t=B.t; } bossHidden=false; } };
 
 /* ============================================================
@@ -308,10 +338,10 @@ BOSS_OUTRO.topo={ dur:228, swap:112, dest:CV_DEST,
   start(P){ P.st.px=player.x; P.st.py=player.y; P.st.off=0; P.st.sc=1; },
   tick(t,P){ const S=P.st, D=CV_DEST;
     if(t===2) CV_SFX.creak();
-    if(t===40){ player.x=-200; CV_SFX.sink(); } // desde aquí Sprout lo dibuja la salida (se hunde)
+    if(t===40){ playerHidden=true; CV_SFX.sink(); } // desde aquí Sprout lo dibuja la salida (se hunde)
     if(t>=40&&t<66&&(t&1)===0) parts.push({x:S.px+8+(Math.random()-.5)*12,y:S.py+15,vx:(Math.random()-.5)*.8,vy:-.8,life:12,col:(t&2)?'#f8a030':'#6e4a2a'});
     if(t===70) CV_SFX.whoosh(); if(t===96) CV_SFX.whoosh();
-    if(t>=112) player.x=-200; // ya en la boca de la cueva: la salida lo dibuja hasta el final (encima del corro de flores)
+    if(t>=112) playerHidden=true; // ya en la boca de la cueva: la salida lo dibuja hasta el final (encima del corro de flores)
     if(t>=150&&t<174){ if((t&3)===0){ shake=Math.max(shake,1); parts.push({x:D.x+8+(Math.random()-.5)*10,y:D.y+15,vx:(Math.random()-.5)*.6,vy:-.9,life:10,col:(t&4)?'#e8f0f8':'#8a6a48'}); } if(t===150) CV_SFX.rumble(); }
     if(t===174){ CV_SFX.boom(); shake=Math.max(shake,6); for(let i=0;i<14;i++){ const a=-Math.PI*(i/13), s=1+Math.random()*2; parts.push({x:D.x+8,y:D.y+14,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.8,life:24,col:i%3===0?'#ffffff':i&1?'#8a6a48':'#f8c048'}); } }
     if(t===180) CV_SFX.spring();
@@ -346,3 +376,101 @@ BOSS_OUTRO.topo={ dur:228, swap:112, dest:CV_DEST,
         for(let i=0;i<5;i++){ const u=((t*.08+i/5)%1); cvPx(cx-4+hash(i,t>>2)%9,cy+8+u*50,1,1,u<.5?'#fff0a0':'#f8a030'); } }
       if(ir>=0) cvIris(Math.round(ic[0]),Math.round(ic[1]),ir); } },
   end(P){ player.x=CV_DEST.x; player.y=CV_DEST.y; player.dir=0; player.frame=0; } };
+
+/* ============================================================
+   5) LAS DESPEDIDAS (BOSS_BYE)
+   · El Topo Real, en paz: un corazón, una reverencia con su corona,
+     escarba y se hunde en su agujero; su montículo se aleja de ti y se
+     aplana; las grietas se encienden y la Brasa late donde estaba.
+     Su eco no cava: se deshace en tiras violetas que suben.
+   · El Escarabajo Rey, vencido: se tambalea echando chispas, salta,
+     da la vuelta en el aire y cae patas arriba; pataleo, y se deshace
+     en polvo de hierro y chispas.
+   ============================================================ */
+function cvFlipV(c){ const n=mkCanvas(c.width,c.height), g=n.getContext('2d'); g.translate(0,c.height); g.scale(1,-1); g.drawImage(c,0,0); return n; }
+const CV_KING_UP={R:cvFlipV(BOSS_SPR.king),L:cvFlipV(BOSS_SPR.kingL)}; // patas arriba (espejo exacto, sin girar píxeles)
+function cvHeart(x,y){ x=Math.round(x); y=Math.round(y); // corazón de 7×6 con contorno
+  const rows=['.kk.kk.','krrkrrk','krwrrrk','.krrrk.','..krk..','...k...'];
+  rows.forEach((r,j)=>{ for(let i=0;i<r.length;i++){ const ch=r[i]; if(ch==='.') continue; cvPx(x+i,y+j,1,1,ch==='k'?PAL.k:ch==='w'?'#ffffff':'#f05868'); } }); }
+function cvStar(x,y,r,col){ x=Math.round(x); y=Math.round(y); for(let i=-r;i<=r;i++){ cvPx(x+i,y,1,1,col); cvPx(x,y+i,1,1,col); } if(r>1){ cvPx(x-1,y-1,1,1,col); cvPx(x+1,y-1,1,1,col); cvPx(x-1,y+1,1,1,col); cvPx(x+1,y+1,1,1,col); } }
+/* el Topo tras la paz: dónde está su montículo mientras se aleja (se aleja siempre de Sprout) */
+function cvByeMound(S,T){ const u=presentEase.io(presentSeg(T,106,132)); return [S.cx+(S.tx-S.cx)*u, S.gy+(S.ty-S.gy)*u]; }
+BOSS_BYE.topo={ dur:190,
+  start(P){ const b=boss, S=P.st; bossHidden=true; S.x=b.x; S.y=b.y; S.cx=b.x+16; S.gy=b.y+30;
+    const pc=[player.x+8,player.y+10], a=Math.atan2(S.gy-pc[1],S.cx-pc[0]);
+    S.tx=clamp(S.cx+Math.cos(a)*84,14,146); S.ty=clamp(S.gy+Math.sin(a)*70,22,112); setTrack('silencio'); },
+  tick(t,P){ const S=P.st, echo=P.Q.echo;
+    if(t===14&&AC){ const tt=AC.currentTime; beep('p25',f(76),0,.1,.03,tt); beep('p25',f(81),0,.16,.03,tt+.09); }
+    if(t===38){ CV_SFX.type(); if(AC){ const tt=AC.currentTime; beep('triangle',f(88),0,.12,.025,tt); } }
+    if(!echo){
+      if(t>=48&&t<78){ if(t%8===0) CV_SFX.crumble(); if((t&1)===0){ const s=(t&2)?1:-1; parts.push({x:S.cx+s*9,y:S.gy-2,vx:s*(.6+Math.random()*1.1),vy:-1.3-Math.random()*1.2,life:18,col:(t&4)?'#5a4430':'#9a7c58'}); } shake=Math.max(shake,1); }
+      if(t===72) CV_SFX.sink();
+      if(t===100){ CV_SFX.crumble(); for(let i=0;i<10;i++){ const a=-Math.PI*(i/9), sp=.7+Math.random()*1.3; parts.push({x:S.cx,y:S.gy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.5,life:16,col:i&1?'#5a4430':'#9a7c58'}); } }
+      if(t===106) CV_SFX.rumble();
+      if(t>=106&&t<132&&(t&1)===0){ const [mx,my]=cvByeMound(S,t); parts.push({x:mx+(Math.random()-.5)*14,y:my+2,vx:(Math.random()-.5)*.8,vy:-.7,life:12,col:(t&2)?'#5a4a40':'#8a6a48'}); if((t&7)===0) shake=Math.max(shake,1); }
+      if(t===134){ CV_SFX.thud(.8); for(let i=0;i<8;i++){ const a=i/8*6.283; parts.push({k:'dust',x:S.tx+Math.cos(a)*8,y:S.ty+Math.sin(a)*3,vx:Math.cos(a)*.7,vy:-.1,life:14,max:14,r:1+(i&1),col:'#8a7058',nog:true}); } } }
+    else { if(t===48||t===80){ if(AC){ const tt=AC.currentTime; swish(.5,.04,2600,5200,3000,tt,1.6,true); beep('p25',f(t===48?83:88),0,.3,.02,tt); } }
+      if(t>=48&&t<112&&(t&1)===0) parts.push({k:'mote',x:S.x+4+Math.random()*24,y:S.y+6+Math.random()*22,vx:(Math.random()-.5)*.2,vy:-.5-Math.random()*.4,life:30,max:30,sway:Math.random()*6,col:(t&2)?'#d8c8ff':'#9a78e8',nog:true}); }
+    for(const a of [142,156,168]) if(t===a) CV_SFX.heart();
+    if(t>=138&&t<176&&(t%3)===0){ const an=Math.random()*6.283, r=4+Math.random()*12; parts.push({x:S.cx+Math.cos(an)*r,y:S.y+18+Math.sin(an)*r*.5,vx:0,vy:-.5-Math.random()*.5,life:18,col:echo?((t&1)?'#e0d0ff':'#9a78e8'):((t&1)?'#fff0a0':'#f8a030'),nog:true}); }
+    if(t===176){ screenFlash(4,echo?'#e8e0ff':'#fff0c0'); shake=Math.max(shake,4); CV_SFX.slam();
+      if(AC){ const tt=AC.currentTime; (echo?[79,83,86,91]:[72,76,79,84]).forEach((m,i)=>beep('p25',f(m),0,.14,.035,tt+.06+i*.06)); }
+      parts.push({x:S.cx,y:S.y+16,vx:0,vy:0,life:14,col:'#ffffff',ring:true,r:18,nog:true});
+      for(let i=0;i<12;i++){ const a=i/12*6.283, sp=1.2+Math.random()*1.5; parts.push({k:'shard',x:S.cx,y:S.y+16,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.4,life:14,max:14,col:echo?(i&1?'#ffffff':'#c8b0ff'):(i&1?'#fff8c0':'#f8a030')}); } } },
+  draw(t,P){ const S=P.st, echo=P.Q.echo, img=echo?tintCached(TOPO_SPR,'#b8a0ff'):TOPO_SPR, cx=S.cx, gy=S.gy;
+    presentBars(presentEase.out(presentSeg(t,0,12))*(1-presentSeg(t,176,190)),12);
+    // las grietas se encienden bajo donde estuvo (la Brasa despierta)
+    if(!echo&&t>=104){ const k=presentSeg(t,108,140)*(1-presentSeg(t,180,190)); if(k>0) cvDrawCracks(cx,gy,cvCracks(707,7,13),k,true); }
+    // luz de la reliquia que va a aparecer
+    if(t>=136&&t<190){ const beat=[142,156,168].reduce((v,a)=>v+(t>=a&&t<a+10?Math.exp(-(t-a)/3):0),0), k=presentSeg(t,136,176), r=5+k*16+beat*5;
+      glowAt(cx,S.y+16,r,echo?'rgba(190,160,255,'+(.25+k*.35).toFixed(2)+')':'rgba(255,190,80,'+(.25+k*.4).toFixed(2)+')');
+      if(t>=150){ const n=Math.round(1+k*2+beat*2); cvStar(cx,S.y+16,n,echo?'#f4ecff':'#fff8d0'); } }
+    if(t<104||echo&&t<112){ // el Topo
+      let dy=0, sq=Math.sin(t*.2)*.04, jit=0;
+      if(t<30&&!echo) glowAt(cx,S.y+16,22,'rgba(120,232,120,'+(.3*(1-t/30)).toFixed(2)+')');
+      if(t>=30&&t<46){ const u=presentSeg(t,30,46), b=Math.sin(u*Math.PI); dy=Math.round(b*2); sq=b*.12; } // la reverencia
+      if(!echo&&t>=48&&t<78){ jit=(t&2)?1:-1; sq=.05*Math.sin(t*.9); }
+      if(!echo&&t>=72) dy=Math.round(34*presentEase.in(presentSeg(t,72,100)));
+      if(!echo&&t>=48){ const k=presentEase.out(presentSeg(t,48,62))*(1-presentSeg(t,98,106)); if(k>0) cvHole(cx,gy,13*k,4*k); }
+      if(echo&&t>=48){ const k=presentSeg(t,48,110); // se deshace en tiras
+        glowAt(cx,S.y+16,28,'rgba(170,140,255,'+(.35*(1-k)).toFixed(2)+')');
+        for(let r=0;r<32;r+=2){ const ox=Math.round(Math.sin(r*.9+t*.4)*k*8), a=Math.max(0,1-k*1.2+((r*7)%5)*.05); if(a<=0) continue; ctx.globalAlpha=a*.85; ctx.drawImage(TOPO_SPR,0,r,32,2,S.x+ox,S.y+r-Math.round(k*k*r*.4),32,2); ctx.globalAlpha=a*.45; ctx.drawImage(img,0,r,32,2,S.x+ox,S.y+r-Math.round(k*k*r*.4),32,2); } ctx.globalAlpha=1; }
+      else { if(dy<30) drawShadow(cx,gy,Math.max(4,12-dy/3));
+        ctx.save(); ctx.beginPath(); ctx.rect(-4,-4,VW+8,gy+2+4); ctx.clip(); ctx.translate(cx+jit,S.y+30+dy); ctx.scale(1+sq,1-sq);
+        if(echo){ ctx.globalAlpha=.8; ctx.drawImage(TOPO_SPR,-16,-30); ctx.globalAlpha=.45; ctx.drawImage(img,-16,-30); ctx.globalAlpha=1; } else ctx.drawImage(img,-16,-30); ctx.restore();
+        if(!echo&&t>=48){ const k=presentEase.out(presentSeg(t,48,62))*(1-presentSeg(t,98,106)); if(k>0) for(let x=-12;x<=12;x++){ const y=Math.round(Math.sqrt(Math.max(0,1-(x*x)/169))*4*k); cvPx(cx+x,gy+y,1,1,'#9a7c58'); cvPx(cx+x,gy+y+1,1,1,PAL.k); } } } // el labio del agujero lo tapa
+      if(t>=36&&t<44) cvStar(cx+5,S.y+3+dy,t<40?2:1,'#fff8c0'); // la corona destella al saludar
+      if(!echo&&t>=96&&t<104) cvStar(cx+5,gy-2,1,'#fff8c0'); } // lo último que se ve: un brillo de la corona
+    if(t>=14&&t<48){ const u=t-14, hy=S.y-10-Math.round(caK(u,[[0,6],[6,-2,'out'],[10,0,'in']]))-Math.round(u*.15); if(u<30||(u&2)) cvHeart(cx-3,hy); } // un corazón: sin rencor
+    if(!echo&&t>=100&&t<140){ // su montículo se aleja de ti y se aplana
+      const [mx,my]=cvByeMound(S,t), rise=presentSeg(t,100,106), sink=presentSeg(t,128,140), vis=Math.min(rise,1-sink);
+      if(vis>0){ ctx.save(); ctx.beginPath(); ctx.rect(-4,Math.round(my-9+12*(1-vis)),VW+8,24); ctx.clip(); drawShadow(mx,my+2,Math.round(10*vis)); ctx.drawImage(MOUND_ART,Math.round(mx-12+((t&2)&&t<132?1:0)),Math.round(my-9+3*(1-vis))); ctx.restore(); } } } };
+
+/* el Escarabajo Rey, vencido */
+function cvKingDust(x,y,n){ for(let i=0;i<n;i++){ const a=Math.random()*6.283; parts.push({k:'dust',x:x+Math.cos(a)*6,y:y+Math.sin(a)*3,vx:Math.cos(a)*(.4+Math.random()*.6),vy:-.3-Math.random()*.4,life:18,max:18,r:1+(i&1),col:(i%3)?'#8a8894':'#5a5a68',nog:true}); } }
+BOSS_BYE.king={ dur:140,
+  start(P){ const m=midboss, S=P.st; bossHidden=true; S.x=m.x; S.y=m.y; S.dir=m.dir<0?-1:1; setTrack('silencio'); },
+  tick(t,P){ const S=P.st, cx=S.x+12, cy=S.y+12;
+    for(const a of [2,10,18,26]) if(t===a){ CV_SFX.clank(); shake=Math.max(shake,2); }
+    if(t<30&&t%3===0) for(let i=0;i<2;i++) parts.push({k:'shard',x:cx+(Math.random()-.5)*16,y:cy-4+(Math.random()-.5)*8,vx:(Math.random()-.5)*2,vy:-1-Math.random()*1.4,life:12,max:12,col:Math.random()<.5?'#fff0a0':'#ffb040'});
+    if(t===30) CV_SFX.whoosh();
+    if(t===44){ CV_SFX.thud(1.4); shake=Math.max(shake,6); for(let i=0;i<10;i++){ const a=i/10*6.283; parts.push({k:'dust',x:cx+Math.cos(a)*10,y:S.y+22+Math.sin(a)*3,vx:Math.cos(a)*1.1,vy:Math.sin(a)*.35-.1,life:18,max:18,r:2,col:'#9a9088',nog:true}); } }
+    if(t>=48&&t<84&&t%10===0&&AC){ const tt=AC.currentTime; beep('square',300+(t%20?0:60),200,.04,.02,tt); } // patalea
+    if(t===84){ CV_SFX.steel(); CV_SFX.crumble(); }
+    if(t>=84&&t<116){ const k=presentSeg(t,84,116), ly=S.y+Math.round(24*k); if(t%6===0) CV_SFX.crumble(); if((t&1)===0){ cvKingDust(cx+(Math.random()-.5)*18,ly,2); parts.push({k:'shard',x:cx+(Math.random()-.5)*18,y:ly,vx:(Math.random()-.5)*1.4,vy:-1.2-Math.random(),life:12,max:12,col:(t&2)?'#ffb040':'#fff0a0'}); } }
+    if(t===116){ CV_SFX.boom(); shake=Math.max(shake,5); screenFlash(3,'#e8f0ff'); cvKingDust(cx,S.y+18,12); parts.push({x:cx,y:S.y+16,vx:0,vy:0,life:12,col:'#ffffff',ring:true,r:16,nog:true});
+      for(let i=0;i<8;i++){ const a=i/8*6.283; parts.push({k:'smoke',x:cx+Math.cos(a)*5,y:S.y+18+Math.sin(a)*2,vx:Math.cos(a)*.8,vy:-.35,life:22,max:26,r:3,col:i&1?'#c8c8d0':'#8a8894',nog:true}); } } },
+  draw(t,P){ const S=P.st, cx=S.x+12, up=t>=37, img=up?(S.dir<0?CV_KING_UP.L:CV_KING_UP.R):(S.dir<0?BOSS_SPR.kingL:BOSS_SPR.king), white=S.dir<0?BOSS_WHITE.kingL:BOSS_WHITE.king;
+    presentBars(presentEase.out(presentSeg(t,0,10))*(1-presentSeg(t,122,140)),12);
+    if(t>=116) return;
+    let x=S.x, y=S.y;
+    if(t<30) x+=Math.round(Math.sin(t*.9)*2*(1-t/30)); // se tambalea
+    if(t>=30&&t<44) y-=Math.round(Math.sin(presentSeg(t,30,44)*Math.PI)*10); // salta y da la vuelta
+    if(t>=44&&t<84){ x+=(t&4)?1:0; y+=(t&8)?1:0; } // patalea
+    const air=t>=30&&t<44?Math.sin(presentSeg(t,30,44)*Math.PI):0; drawShadow(cx,S.y+23,Math.round(10-air*4));
+    const sq=t>=44&&t<52?.2*Math.exp(-(t-44)/2.5):0, flash=t<3||(t>=8&&t<10)||(t>=16&&t<17);
+    if(t>=84){ const k=presentSeg(t,84,116), cut=Math.round(24*k); // se deshace en polvo de hierro desde arriba
+      if(cut<24){ ctx.save(); ctx.beginPath(); ctx.rect(x-2,y+cut,28,26); ctx.clip(); ctx.drawImage(img,x,y); ctx.restore(); for(let i=0;i<24;i+=2){ if(hash(i,t>>1)&1) cvPx(x+i,y+cut,1,1,(hash(i,t)&1)?'#fff0a0':'#c8c8d0'); } } }
+    else if(sq>0){ ctx.save(); ctx.translate(cx,y+24); ctx.scale(1+sq,1-sq); ctx.drawImage(img,-12,-24); ctx.restore(); }
+    else ctx.drawImage(flash&&!up?white:img,x,y);
+    if(t>=52&&t<84) for(let i=0;i<3;i++){ const a=t*.2+i*2.09, sx=Math.round(cx+Math.cos(a)*10), sy=Math.round(S.y+2+Math.sin(a)*3); cvPx(sx-1,sy-2,3,5,PAL.k); cvPx(sx-2,sy-1,5,3,PAL.k); cvPx(sx,sy-1,1,3,(i&1)?'#fff0a0':'#ffffff'); cvPx(sx-1,sy,3,1,(i&1)?'#fff0a0':'#ffffff'); } } }; // mareado
