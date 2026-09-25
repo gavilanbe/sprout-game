@@ -141,7 +141,7 @@ function loadScreen(nx,ny){
   sx=nx; sy=ny;
   grid=MAPS[sx+','+sy].map(r=>[...r]);
   enemies=[]; pickups=[]; elderPos=null; npcs=[]; boss=null; midboss=null; bombs=[]; projs=[]; windProjs=[]; boomer=null; hook=null; jumpT=0;
-  plateCells.clear(); pushHold=0; crystalOn=opened.has('CR'+sx+','+sy);
+  plateCells.clear(); pushHold=0; blockSlide=null; crystalOn=opened.has('CR'+sx+','+sy);
   const dng=dungeonOf(sx,sy), r=regionOf(sx,sy);
   const fast=(dng||r==='norte'||r==='gruta')?1:0;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){
@@ -206,7 +206,7 @@ function loadScreen(nx,ny){
     else if(NPCS[ch]){ npcs.push({ch,x,y}); }
     else if(ch==='E'){ elderPos=[x,y]; }
   }
-  if(opened.has('PZ'+sx+','+sy)&&plateCells.size&&!hasGate()) { /* recompensa ya dada */ }
+  restoreBlocks(); // una sala de pulsadores resuelta: las rocas, donde las dejaste (09)
   // el pueblo florece con cada estación que vuelve
   if(inTown(sx,sy)&&won){ const dens=cycled?2:(summered?3:(thawed?4:6));
     for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='.'&&hash(x*5+1,y*9+3)%dens===0) grid[y][x]='f'; }
@@ -229,13 +229,14 @@ function loadScreen(nx,ny){
   setTrack(boss?'jefe':midboss?'minijefe':(r2==='casa'?((sx===8||sx===7)?'tienda':'casa'):sy===-3?'cima':r2==='norte'?'nieve':r2==='cueva'?'cueva':(r2==='gruta'||r2==='secreto')?'gruta':r2==='templo'?'templo':r2==='tronco'?'cueva':r2==='molino'?(TRACKS.molino?'molino':'cueva'):r2==='marisma'?'pantano':'valle'));
   const firstVisit=!visited.has(key); visited.add(key);
   if(firstVisit&&PLACE_NAMES[key]&&introDone&&!boss&&!midboss) placeBanner={txt:PLACE_NAMES[key],t:110};
-  if((boss||midboss)&&AC) SFX.boss();
+  if((boss||midboss)&&AC&&!BOSS_INTRO[(boss||midboss).type]) SFX.boss(); // con entrada propia (15i), la entrada pone su sonido
   bossCard=boss?{txt:boss.type==='topo'?'EL TOPO REAL':boss.type==='avispa'?'LA REINA AVISPA':boss.type==='ciervo'?'EL CIERVO DE ÁMBAR':'EL VIENTO DEL NORTE',t:130}:midboss?{txt:MID_CARD[midboss.type],t:130}:null;
   if(midboss&&!hinted.has('mid'+midboss.type)){ hinted.add('mid'+midboss.type); pendingSay=MID_INTRO[midboss.type].slice(); }
   const reg=regionOf(sx,sy);
   if(reg!=='casa'&&respawnPoint.reg!==reg&&REGION_ANCHOR[reg]) respawnPoint={...REGION_ANCHOR[reg],reg};
   if(sx===1&&sy===-3&&boss3Done) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') grid[y][x]=';'; // los braseros de la cima arden en paz
   initRoomRules(); initSecrets(); initMill(); markDirty();
+  queueSpawns(); queuePresent(); // los bichos aparecen un momento después de llegar (11) y lo que haya que presentar (15i)
   if(state!=='title'&&state!=='boot'&&state!=='file') save();
 }
 function hasGate(){ for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='=') return true; return false; }
@@ -244,6 +245,7 @@ function hasGate(){ for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===
 function isSolid(ch){ if(ch==='z') return !won; if(ch==='zd') return false; return SOLID.has(ch); }
 function solidAt(px,py){
   if(px<0||py<0||px>=SW*16||py>=SH*16) return true;
+  if(blockSlide&&blockSolidAt(px>>4,py>>4)) return true; // la roca que se arrastra ya ocupa su sitio nuevo
   return isSolid(grid[py>>4][px>>4]);
 }
 function boxFree(x,y,w,h){ return !solidAt(x,y)&&!solidAt(x+w-1,y)&&!solidAt(x,y+h-1)&&!solidAt(x+w-1,y+h-1); }

@@ -51,7 +51,7 @@ function openRoom(){
 function updRoomRules(){
   updEcho();
   if(shutArm&&!roomShut){ const [tx,ty]=playerTile(); if(tx>=1&&tx<=SW-2&&ty>=1&&ty<=SH-2){ shutArm=false; closeRoom(); } }
-  else if(roomShut&&enemies.length===0&&!midboss) openRoom();
+  else if(roomShut&&enemies.length===0&&!spawnQ.length&&!midboss) openRoom();
   // los belloteros vuelven a brotar
   for(const r of regrow){ r.t--;
     if(r.t<=0){ const ch=grid[r.y][r.x];

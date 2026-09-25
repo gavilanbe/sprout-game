@@ -464,6 +464,7 @@ function draw(){
   if(state==='pause'){ drawPause(); ctx.restore(); return; }
   if(state==='dialog'&&zLore&&dlg){ drawPause(); drawDialog(); ctx.restore(); return; } // un recuerdo leído desde el zurrón
   drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
+  if(state==='present'||state==='outro') drawPresent(); // títulos, entradas y salidas (15i)
   if(state==='rite') drawRite(); // la entrega en la plaza (15f)
   if(state==='door') drawDoor(); // la travesía por una puerta, cueva o escalera (15g)
   if(state==='itemget'&&moment) drawMoment(); // el momento del arma (15d)

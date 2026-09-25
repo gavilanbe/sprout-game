@@ -131,6 +131,10 @@ const SFX = {
   blip(){ beep('square',1100,0,.025,.025); },
   secret(){ const a=audio(),t=a.currentTime; [76,80,83,88,83,80,76,88].forEach((m,i)=>beep('p25',f(m),0,.1,.05,t+i*.07)); beep('triangle',f(64),0,.5,.05,t); },
   bump(){ beep('square',120,80,.06,.03); },
+  spawn(){ const t=audio().currentTime; swish(.12,.035,900,2600,1400,t,1.2); beep('triangle',260,520,.07,.022,t+.02); }, // un bicho aparece de un soplo
+  push(){ const t=audio().currentTime; noise(.16,.035,false,t,420); beep('triangle',70,52,.14,.05,t); }, // la roca-raíz arrastra
+  pushLand(){ const t=audio().currentTime; beep('triangle',110,40,.12,.09,t); noise(.08,.05,false,t,900); }, // y se asienta: ¡tum!
+  plate(n){ const t=audio().currentTime; beep('square',f(64+(n||0)*3),0,.06,.035,t); beep('p25',f(76+(n||0)*3),0,.12,.03,t+.05); }, // el pulsador cede (sube con cada uno)
   fanfare(){ const a=audio(),t=a.currentTime; // ¡objeto!: el motivo con acordes
     [[69,0,.13],[71,.13,.13],[72,.26,.13],[74,.39,.13],[76,.52,.3],[81,.86,.55]].forEach(([m,d,du])=>{ beep('square',f(m),0,du,.06,t+d); beep('p25',f(m-12),0,du,.035,t+d); });
     [[57,0],[57,.26],[60,.52],[57,.86]].forEach(([m,d])=>beep('triangle',f(m),0,.3,.06,t+d)); },

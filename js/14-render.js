@@ -53,7 +53,7 @@ function drawPlayer(){
   if(player.inv>54&&state==='play'&&!rebornInv) s=P_WHITE[player.dir]; // destello al recibir daño (al rebrotar no: 15c)
   // estirar y encoger: el golpe estira, el aterrizaje y el daño aplastan; en reposo respira
   let sq=player.squash||0; if(idle&&((tick>>5)&1)&&(tick&31)<10) sq-=.06;
-  const lunge=player.atk>8?[[0,1],[0,-1],[-1,0],[1,0]][player.dir]:[0,0];
+  const lunge=player.atk>8?[[0,1],[0,-1],[-1,0],[1,0]][player.dir]:state==='play'?pushLean():[0,0];
   const wade=jumpT===0&&state==='play'&&playerOnTile()==='w'; // en el vado: los pies bajo el agua
   if(wade){ ctx.save(); ctx.beginPath(); ctx.rect(player.x-8,py-12,32,28-3); ctx.clip(); }
   if(Math.abs(sq)>.01){ ctx.save(); ctx.translate((player.x+8+lunge[0])|0,(py+16+lunge[1])|0); ctx.scale(1-sq*.55,1+sq); ctx.drawImage(s,-8,-16); ctx.restore(); }
@@ -202,9 +202,11 @@ function drawScene(){
     if(n.guest==='viento'){ drawShadow(n.x*16+8,n.y*16+16,10); drawWind(n.x*16+8,n.y*16-2+sway,{s:.86,mood:'calm',f:(tick>>3)&7,flip:player.x>n.x*16}); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-26); } // el Viento, en paz, en su pico
     else if(n.guest){ const img=BOSS_SPR[n.guest]; drawShadow(n.x*16+8,n.y*16+16,10); ctx.drawImage(img,n.x*16-8,n.y*16-14+sway); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-24); }
     else { drawShadow(n.x*16+8,n.y*16+15,5); ctx.drawImage(NPCS[n.ch].img,n.x*16,n.y*16+sway); } }});
-  for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
-  if(boss) L.push({y:boss.y+32,f:()=>{ if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});
-  if(midboss) L.push({y:midboss.y+24,f:drawMidboss});
+  for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.pop>0){ const k=easeOutBack(1-e.pop/10), s=Math.max(.05,k); ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(s*(1+(1-k)*.3),s); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } // aparece de un soplo (11)
+    else if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
+  if(blockSlide) L.push({y:blockPos()[1]+16,f:drawBlockSlide});
+  if(boss&&!bossHidden) L.push({y:boss.y+32,f:()=>{ if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});
+  if(midboss&&!bossHidden) L.push({y:midboss.y+24,f:drawMidboss});
   L.push({y:player.y+16+(jumpT>0?40:0),f:drawPlayer});
   L.sort((a,b)=>a.y-b.y); for(const o of L) o.f();
   ctx.drawImage(fgCanvas[bgFrame()],0,0); // copas que tapan a quien pasa por detrás

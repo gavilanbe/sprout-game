@@ -112,10 +112,12 @@ function update(){
     keys.alt=false; updParts(); return;
   }
   if(state==='trans'){ trans.t++; if(trans.t>=trans.dur){ state='play'; trans=null; } return; }
+  if(state==='present'||state==='outro'){ updPresent(); return; } // el título de una mazmorra, la entrada o la salida de un jefe (15i)
 
   /* === PLAY === */
   if(sproutT>0){ updRebrote(); return; } // rebrotar: germina y sale de la tierra (15c)
   if(keys.menu){ keys.menu=false; openZurron(0); return; }
+  if(presentQ&&startPresent()) return;
   if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;
   if(bossCard&&--bossCard.t<=0) bossCard=null;
@@ -136,6 +138,7 @@ function update(){
     else { jumpT--; jumpZ=Math.sin((26-jumpT)/26*Math.PI)*14; tryMove(jumpDir[0]*2.1,jumpDir[1]*2.1); if(jumpT===13&&keys.altHeld&&!glideUsed&&xItem==='feather') glideStart(); }
     player.anim=0;
     if(jumpT===0){ SFX.land(); player.squash=-.45; stepDust(); stepDust(); } }
+  else if(blockSlide&&updBlockSlide()){ if(!(keys.left||keys.right||keys.up||keys.down)){ pushLatch=false; pushHold=0; } } // empujando la roca: Sprout va detrás (soltar la cruceta ya vale para el siguiente empujón)
   else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); leafSwingTick(); } // briznas, rocío y el tintineo del temple (12b)
   else {
     let dx=0,dy=0;
@@ -178,7 +181,7 @@ function update(){
   updBombs(); updProjs(); updWind(); updBoomer(); updGear();
   updBoss(); updMidboss(); musicIntensity(boss&&boss.maxHp?bossPhase(boss)-1:midboss&&midboss.maxHp?(midboss.hp<=midboss.maxHp/2?1:0):0);
   updPickups();
-  updEnemies(); updRoomRules(); updMill(); updSecrets(); updParts();
+  updSpawns(); updEnemies(); updRoomRules(); updMill(); updSecrets(); updParts();
   updExits();
 }
 function weather(){

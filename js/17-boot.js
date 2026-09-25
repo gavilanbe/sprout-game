@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- DEBUG ---------- */
 window.__sprout={
-  warp(nx,ny,px,py){ loadScreen(nx,ny); player.x=px??72; player.y=py??60; state='play'; dlg=null; inBed=false; pendingSay=null; player.atk=player.spin=player.charge=0; jumpT=0; boomer=null; hook=null; },
+  warp(nx,ny,px,py){ loadScreen(nx,ny); player.x=px??72; player.y=py??60; state='play'; presentQ=null; flushSpawns(); /* de depuración: sin presentaciones y con los bichos ya en su sitio */ dlg=null; inBed=false; pendingSay=null; player.atk=player.spin=player.charge=0; jumpT=0; boomer=null; hook=null; },
   blade(){ hasBlade=true; }, bomb(){ hasBomb=true; xItem=xItem||'bomb'; }, hookOn(){ hasHook=true; xItem=xItem||'hook'; },
   gear(){ hasBlade=hasBomb=hasHook=hasBoomer=hasLantern=hasFeather=hasShield=true; xItem=xItem||'bomb'; },
   allAmulets(){ for(const k in AMULETS) amulets.add(k); },

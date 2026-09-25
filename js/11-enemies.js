@@ -9,6 +9,28 @@ function shieldBlocks(fromX,fromY){ // el escudo de corteza rebota lo que llega 
   const dx=fromX-(player.x+8), dy=fromY-(player.y+10), D=DIRV[player.dir];
   return (dx*D[0]+dy*D[1])>0&&Math.abs(dx*D[1]-dy*D[0])<(shieldLvl>=2?18:14);
 }
+/* ---------- al llegar a una pantalla, los bichos no te esperan encima ----------
+   Aparecen un momento después, uno tras otro, en un soplo de polvo (nunca a menos de SPAWN_SAFE de ti: si su sitio
+   te pilla cerca, salen en el hueco libre más próximo a él) y se quedan un instante alerta antes de actuar.
+   Los fijos (espinos, carámbanos, lirios, raíces trampa) ya están ahí: solo esperan ese instante. */
+const SPAWN_T0=14, SPAWN_GAP=7, SPAWN_ALERT=20, SPAWN_SAFE=52, SPAWN_FIXED={thorn:1,icicle:1,lirio:1,root:1};
+let spawnQ=[], spawnT=0;
+function queueSpawns(){ spawnT=0; spawnQ=[];
+  const keep=[]; for(const e of enemies){ if(SPAWN_FIXED[e.type]){ e.wake=SPAWN_ALERT; keep.push(e); } else spawnQ.push(e); } enemies=keep;
+  spawnQ.forEach((e,i)=>{ e.spawnAt=SPAWN_T0+i*SPAWN_GAP; }); }
+function updSpawns(){ if(!spawnQ.length) return; spawnT++;
+  while(spawnQ.length&&spawnT>=spawnQ[0].spawnAt){ const e=spawnQ.shift(); spawnSettle(e); e.wake=SPAWN_ALERT; e.pop=10; enemies.push(e); spawnFx(e); } }
+function flushSpawns(){ for(const e of spawnQ){ e.wake=0; enemies.push(e); } spawnQ=[]; for(const e of enemies) e.wake=0; }
+function spawnSettle(e){ const px=player.x, py=player.y+4; if(Math.hypot(e.x-px,e.y-py)>=SPAWN_SAFE) return;
+  const fly=e.type==='bat'||e.type==='bee'||e.type==='ghost'||e.type==='wisp'||e.type==='gust'; let best=null, bd=1e9;
+  for(let ty=0;ty<SH;ty++) for(let tx=0;tx<SW;tx++){ const x=tx*16, y=ty*16; if(Math.hypot(x-px,y-py)<SPAWN_SAFE+6) continue;
+    const ch=grid[ty][tx]; if(isSolid(ch)||ch==='°') continue; if(!fly&&!boxFree(x+3,y+5,10,7)) continue;
+    const d=Math.hypot(x-e.x,y-e.y); if(d<bd){ bd=d; best=[x,y]; } }
+  if(best){ e.x=best[0]; e.y=best[1]; if(e.x0!==undefined) e.x0=e.x; } }
+function spawnFx(e){ const x=e.x+8, y=e.y+12;
+  for(let i=0;i<8;i++){ const a=i/8*6.283; parts.push({k:'smoke',x:x+Math.cos(a)*4,y:y+Math.sin(a)*2,vx:Math.cos(a)*.7,vy:Math.sin(a)*.35-.2,life:16+(i&3),max:20,r:2+(i%3),col:i&1?'#f0ece4':'#c8c0c8',nog:true}); }
+  parts.push({x,y:y-2,vx:0,vy:0,life:10,col:'#ffffff',ring:true,r:10,nog:true});
+  if(AC) SFX.spawn(); }
 function updEnemies(){
   for(const e of enemies){
     if(e.flash>0)e.flash--;
@@ -16,8 +38,8 @@ function updEnemies(){
     if(e.stun>0){ e.stun--; moveBlocked(e,e.x+e.kx,e.y+e.ky); if((tick&7)===0) sparkle(e.x+4+Math.random()*8,e.y-2,'#fff0a0'); }
     const dx=player.x-e.x, dy=player.y-e.y, d=Math.hypot(dx,dy)||1;
     let blindHit=false, noContact=false;
-    const stunned=e.stun>0;
-    if(stunned){ /* aturdido: no actúa */ }
+    const stunned=e.stun>0, waking=e.wake>0; if(waking){ e.wake--; if(e.wake===0&&!SPAWN_FIXED[e.type]) e.squash=.3; } // recién llegado: alerta, sin moverse ni hacer daño
+    if(stunned||waking){ /* aturdido o recién aparecido: no actúa */ }
     else if(e.type==='blob'){
       e.t--;
       if(e.t<=0){ e.t=40+hash(e.x|0,e.y|0)%50; const sp=e.fast?.65:.4;
@@ -104,7 +126,7 @@ function updEnemies(){
     } else if(MILL_ENEMY[e.type]){ [noContact,blindHit]=updMillEnemy(e,dx,dy,d); } // cuervo, caballero de hoja, raíz trampa
     // ----- daño por contacto -----
     const eb=[e.x+3,e.y+4,10,9];
-    if(!noContact&&!stunned&&player.inv===0&&state==='play'&&jumpT===0&&rectsHit(eb,hitPlayerBox())){
+    if(!noContact&&!stunned&&!waking&&player.inv===0&&state==='play'&&jumpT===0&&rectsHit(eb,hitPlayerBox())){
       hurt(e.dmg||1,e.x,e.y);
     }
     // ----- espadazo / remolino -----

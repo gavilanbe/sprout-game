@@ -58,17 +58,58 @@ function tryPushBlock(){
   if(dest!=='_'&&dest!==regionFloor()&&dest!=='q'){ pushHold=0; return; }
   if(enemies.some(e=>Math.abs(e.x-dx*16)<10&&Math.abs(e.y-dy*16)<10)){ pushHold=0; return; }
   pushHold=0; pushLatch=true;
-  grid[ty][tx]=plateCells.has(tx+','+ty)?'_':regionFloor();
-  grid[dy][dx]='#'; markDirty();
-  if(player.dir===0){ player.x=tx*16; player.y=ty*16-4; } else if(player.dir===1){ player.x=tx*16; player.y=ty*16+4; }
-  else if(player.dir===2){ player.y=ty*16-4; player.x=tx*16+4; } else { player.y=ty*16-4; player.x=tx*16-4; }
-  SFX.bump(); puff(tx*16+8,ty*16+12,'#8a7460',5,.8);
-  checkPlates();
+  grid[ty][tx]=plateCells.has(tx+','+ty)?'_':regionFloor(); markDirty(); // la roca sale del fondo: se pinta aparte mientras se arrastra
+  let ex=player.x, ey=player.y;
+  if(player.dir===0){ ex=tx*16; ey=ty*16-4; } else if(player.dir===1){ ex=tx*16; ey=ty*16+4; }
+  else if(player.dir===2){ ey=ty*16-4; ex=tx*16+4; } else { ey=ty*16-4; ex=tx*16-4; }
+  blockSlide={fx:tx,fy:ty,tx:dx,ty:dy,t:0,land:0,p0:[player.x,player.y],p1:[ex,ey],dir:player.dir};
+  SFX.push(); player.squash=-.18; stepDustAt(player.x+8,player.y+15,1); // arranca: un pisotón
 }
+/* la roca-raíz se arrastra (BLOCK_SLIDE fotogramas, Sprout empuja detrás), se asienta con un «tum» y un poco de polvo,
+   y solo entonces vuelve al fondo y cuenta para los pulsadores */
+const BLOCK_SLIDE=14, BLOCK_LAND=9;
+let blockSlide=null;
+function blockSolidAt(cx,cy){ return blockSlide&&cx===blockSlide.tx&&cy===blockSlide.ty; }
+function blockPos(){ const B=blockSlide, k=B.land?1:Math.min(1,B.t/BLOCK_SLIDE), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  return [(B.fx+(B.tx-B.fx)*e)*16,(B.fy+(B.ty-B.fy)*e)*16,e]; }
+function updBlockSlide(){ const B=blockSlide; if(!B) return false;
+  if(!B.land){ B.t++; const [bx,by,e]=blockPos();
+    player.x=B.p0[0]+(B.p1[0]-B.p0[0])*e; player.y=B.p0[1]+(B.p1[1]-B.p0[1])*e; player.anim=(player.anim||0)+1; player.frame=((B.t>>2)&1)?1:3;
+    if((B.t&1)===0){ const D=DIRV[B.dir], s=(B.t&2)?1:-1; // el polvo del arrastre sale por los lados de la roca (nunca encima de Sprout)
+      if(D[0]===0) parts.push({k:'dust',x:bx+8+s*8,y:by+(D[1]<0?13:15),vx:s*.3,vy:-.06,life:14,max:14,r:1+(B.t&4?1:0),col:groundDustCol(),nog:true});
+      else parts.push({k:'dust',x:bx+8-D[0]*4+s*3,y:by+15,vx:-D[0]*.15+s*.1,vy:-.1,life:14,max:14,r:1+(B.t&4?1:0),col:groundDustCol(),nog:true}); }
+    if(B.t>=BLOCK_SLIDE){ B.land=1; const onPlate=plateCells.has(B.tx+','+B.ty), cx=B.tx*16+8, cy=B.ty*16+14;
+      SFX.pushLand(); shake=Math.max(shake,2); player.squash=.22; player.frame=0;
+      for(const s of [-1,1]) for(let i=0;i<3;i++) parts.push({k:'dust',x:cx+s*(6+i*2),y:cy,vx:s*(.5+i*.25),vy:-.12-i*.05,life:16,max:16,r:1+(i&1),col:groundDustCol(),nog:true});
+      if(onPlate){ let n=0; for(const c of plateCells){ const [x,y]=c.split(',').map(Number); if(grid[y][x]==='#') n++; } SFX.plate(n);
+        parts.push({x:cx,y:cy-6,vx:0,vy:0,life:12,col:'#fff6c0',ring:true,r:12,nog:true}); for(let i=0;i<5;i++) sparkle(cx-6+Math.random()*12,cy-12+Math.random()*6,'#fff6c0'); } }
+    return true; }
+  if(++B.land>BLOCK_LAND){ blockSlide=null; grid[B.ty][B.tx]='#'; markDirty(); if(opened.has('PZ'+sx+','+sy)) saveBlocks(); checkPlates(); return false; }
+  return true; }
+/* la roca en movimiento, en la capa de actores: se arrastra con un leve vaivén y al asentarse se aplasta y recupera */
+function drawBlockSlide(){ const B=blockSlide; if(!B) return; const [bx,by]=blockPos(), img=blockTile();
+  drawShadow(bx+8,by+15,7);
+  if(B.land){ const k=B.land/BLOCK_LAND, sq=Math.sin(k*Math.PI)*(1-k*.5)*.16; ctx.save(); ctx.translate(bx+8,by+16); ctx.scale(1+sq,1-sq); ctx.drawImage(img,-8,-16); ctx.restore(); }
+  else ctx.drawImage(img,Math.round(bx),Math.round(by)-((B.t>>1)&1)); }
+function pushLean(){ const D=DIRV[player.dir]; // Sprout apretando contra la roca: se inclina y tiembla un poco
+  if(blockSlide&&!blockSlide.land) return [D[0],D[1]];
+  if(pushHold>2){ const j=(tick&2)?1:0; return [D[0]*(1+j),D[1]*(1+j)]; } return [0,0]; }
+/* la foto de dónde quedaron las rocas de una sala resuelta: al volver, siguen ahí (y no aparecen otras nuevas) */
+function saveBlocks(){ const key='PB'+sx+','+sy+':'; for(const id of [...opened]) if(id.startsWith(key)) opened.delete(id);
+  const L=[]; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='#') L.push(x+','+y); opened.add(key+L.join(';')); }
+function restoreBlocks(){ if(!plateCells.size||!opened.has('PZ'+sx+','+sy)) return;
+  const key='PB'+sx+','+sy+':'; let rec=null; for(const id of opened) if(id.startsWith(key)){ rec=id.slice(key.length); break; }
+  const start=[]; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='#'&&!plateCells.has(x+','+y)) start.push([x,y]);
+  if(rec!==null){ for(const [x,y] of start) grid[y][x]=regionFloor();
+    for(const c of rec.split(';')) if(c){ const [x,y]=c.split(',').map(Number); if(grid[y]) grid[y][x]='#'; } return; }
+  // partidas de antes de guardar la foto: por cada pulsador ocupado se quita la roca de salida más cercana
+  for(const c of plateCells){ const [px,py]=c.split(',').map(Number); let bi=-1, bd=1e9;
+    start.forEach(([x,y],i)=>{ const d=Math.abs(x-px)+Math.abs(y-py); if(d<bd){ bd=d; bi=i; } });
+    if(bi>=0){ const [x,y]=start.splice(bi,1)[0]; grid[y][x]=regionFloor(); } } }
 function checkPlates(){
   if(plateCells.size===0||opened.has('PZ'+sx+','+sy)) return;
   for(const c of plateCells){ const [x,y]=c.split(',').map(Number); if(grid[y][x]!=='#') return; }
-  opened.add('PZ'+sx+','+sy); SFX.puzzle(); shake=4;
+  opened.add('PZ'+sx+','+sy); saveBlocks(); SFX.puzzle(); shake=4;
   let gate=false;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='='){ grid[y][x]='q'; gate=true; puff(x*16+8,y*16+8,'#8a7048',6,1.2); }
   if(!gate){ // sin verja: cae una llave en el centro de la sala
@@ -404,6 +445,7 @@ function getItem(kind){
   [itemSpr,itemPages]=M[kind]; if(!arm) SFX.fanfare(); shake=6; screenFlash(8,'#fff6c0'); player.squash=.4; state='itemget'; itemT=120; itemCardName=ITEM_NAMES[kind]||''; player.dir=0; player.atk=0; player.spin=0; save();
   puff(player.x+8,player.y+8,C.flowerC,14,1.6); puff(player.x+8,player.y+8,PAL.l,10,1.2);
   if(arm) startMoment(kind);
+  queueOutro(kind); // la reliquia de un jefe: su salida temática, al acabar el texto (15i)
 }
 function findFree(px,py,axis){
   for(const ax of [axis, axis==='x'?'y':'x']){

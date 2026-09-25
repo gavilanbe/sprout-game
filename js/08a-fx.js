@@ -104,4 +104,4 @@ function drawScreenFx(){
   if(flashT>0){ ctx.globalAlpha=Math.min(1,flashT/6)*.7; ctx.fillStyle=flashCol; ctx.fillRect(0,0,160,PLAY_H); ctx.globalAlpha=1; }
 }
 function tickFx(){ if(flashT>0) flashT--; if(hurtVig>0) hurtVig--; if(player.squash) player.squash*=.72; if(Math.abs(player.squash||0)<.02) player.squash=0;
-  for(const e of enemies) if(e.squash){ e.squash*=.72; if(e.squash<.02) e.squash=0; } ambient(); }
+  for(const e of enemies){ if(e.squash){ e.squash*=.72; if(e.squash<.02) e.squash=0; } if(e.pop>0) e.pop--; } ambient(); }

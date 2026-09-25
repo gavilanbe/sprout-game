@@ -28,6 +28,7 @@ const server=http.createServer((req,res)=>{
     window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
+    window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
   });
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
@@ -155,7 +156,7 @@ const server=http.createServer((req,res)=>{
       // la Galería Oscura: la otra llave, en el saliente
       __go(7,-1,40,60); enemies=[]; const kg=pickups.find(p=>p.kind==='key'); player.x=kg.x; player.y=kg.y-4; __step(3); __skipDialog(); log.push(['galería',dungeonKeys.cueva]);
       // sala de las raíces: bloques (2,3)→(2,1) y (5,3)→(5,1)
-      __go(7,0,72,90); __skipDialog(); enemies=[]; for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; for(let k=0;k<2;k++){ keys.up=true; for(let i=0;i<14;i++){ __step(1); } keys.up=false; __step(1); } }
+      __go(7,0,72,90); __skipDialog(); enemies=[]; for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; for(let k=0;k<2;k++){ keys.up=true; for(let i=0;i<20;i++){ __step(1); } keys.up=false; __step(1); __settle(); } }
       log.push(['placas',grid[1][2],grid[1][5],grid[6][4]]);
       // pulsador y llave
       __go(7,1,72,30); enemies=[]; player.x=5*16; player.y=4*16-6; __step(3); log.push(['pulsador',grid[3][1]]);
@@ -205,8 +206,8 @@ const server=http.createServer((req,res)=>{
       xItem='hook'; player.x=4*16; player.y=4*16-4; player.dir=1; keys.alt=true; __step(1); __step(70); log.push(['canal',(player.y+12)>>4]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); log.push(['templo',sx,sy]);
       __go(14,1,72,90); enemies=[]; __skipDialog();
-      player.x=1*16; player.y=2*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); player.x=3*16; player.y=1*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1);
-      player.x=5*16; player.y=4*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); player.x=7*16; player.y=3*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false;
+      player.x=1*16; player.y=2*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); __settle(); player.x=3*16; player.y=1*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1); __settle();
+      player.x=5*16; player.y=4*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); __settle(); player.x=7*16; player.y=3*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1); __settle();
       log.push(['bloques',grid[3][3],grid[5][7],pickups.some(p=>p.kind==='key')]);
       const k=pickups.find(p=>p.kind==='key'); if(k){ player.x=k.x; player.y=k.y-4; __step(20); __skipDialog(); }
       __go(15,1,20,60); enemies=[]; player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.templo,grid[3][9]]);
@@ -327,6 +328,34 @@ const server=http.createServer((req,res)=>{
       const saved=[hasPinwheel,midScare,hasAmber,boss4Done,autumned,chapterIdx(),q.find(x=>x.id==='molino').done,q.find(x=>x.id==='ambar2').done];
       hasAmber=false; hasFlake=true; __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); const talk=state; __skipDialog();
       return [saved,talk,cycled,state]; }),[[true,true,true,true,false,3,true,false],'dialog',false,'play']);
+  });
+  await check('Rocas empujadas: se arrastran y se asientan; resuelta la sala, al volver siguen donde quedaron (sin rocas nuevas)',async()=>{
+    eq(await ev(()=>{ __go(7,0,72,90); __skipDialog(); enemies=[]; const count=()=>grid.flat().filter(c=>c==='#').length, n0=count();
+      for(const bx of [2,5]){ player.x=bx*16; player.y=4*16-4; player.dir=1; for(let k=0;k<2;k++){ keys.up=true; for(let i=0;i<20;i++) __step(1); keys.up=false; __step(1); __settle(); } }
+      const solved=opened.has('PZ7,0'), n1=count(); loadScreen(7,0); const n2=count(), onPlates=[grid[1][2],grid[1][5]];
+      // una partida guardada antes de la foto de las rocas: las de salida que sobran se quitan igual
+      for(const id of [...opened]) if(id.startsWith('PB7,0:')) opened.delete(id); loadScreen(7,0); const n3=count();
+      return [solved,n0===n1,n2===n1,onPlates,n3===n1]; }),[true,true,true,['#','#'],true]);
+  });
+  await check('Al llegar a una pantalla los bichos aparecen un momento después, nunca encima, y no hacen daño hasta despertar',async()=>{
+    eq(await ev(()=>{ __go(1,2,72,56); flushSpawns(); enemies=[]; loadScreen(1,2); const B=spawnEnemy('blob',4,3,0); spawnQ=[]; enemies=[]; // uno justo al lado de donde entras
+      player.x=4*16+4; player.y=3*16; player.inv=0; hitStop=0; queueSpawns(); spawnQ=[B]; B.spawnAt=SPAWN_T0; const hp0=player.hp;
+      const at0=enemies.length; __step(SPAWN_T0); const far=Math.hypot(B.x-player.x,B.y-player.y+4)>=SPAWN_SAFE, wake=B.wake>0;
+      B.x=player.x; B.y=player.y; __step(3); const safe=player.hp===hp0; __step(SPAWN_ALERT); return [at0,enemies.length,far,wake,safe,B.wake]; }),[0,1,true,true,true,0]);
+  });
+  await check('Presentaciones: cada título de mazmorra, entrada y salida de jefe se rueda (entera, corta y saltada) sin errores y devuelve el juego',async()=>{
+    const r=await ev(()=>{ const out=[], bad=[];
+      const roll=(Q,setup)=>{ for(const mode of ['full','short','skip']){ setup(); if(mode!=='full') hinted.add('pi'+(Q.kind==='boss'?Q.type+(Q.echo?'~e':''):Q.kind==='outro'?'o'+Q.type:Q.dng)); else for(const h of [...hinted]) if(h.startsWith('pi')) hinted.delete(h);
+        presentQ=Q; state='play'; if(!startPresent()){ bad.push('no arranca '+JSON.stringify(Q)); return; } let i=0;
+        while((state==='present'||state==='outro')&&i++<900){ if(mode==='skip'&&i===SKIP_T+2) keys.fire=true; update(); if(i%2===0) draw(); }
+        if(state!=='play') bad.push(JSON.stringify(Q)+' '+mode+' acaba en '+state); if(bossHidden) bad.push(JSON.stringify(Q)+' deja al jefe oculto'); } out.push(Q.type||Q.dng); };
+      const ROOM={topo:'6,2',avispa:'10,2',viento:'1,-3',ciervo:null,king:null,drone:null,iceguard:null,scare:null};
+      for(const type of Object.keys(BOSS_INTRO)){ let key=null; for(const k in MAPS){ const [x,y]=k.split(',').map(Number); if(y===12) continue; newGame(); introDone=true; loadScreen(x,y); const B=boss||midboss; if(B&&B.type===type){ key=[x,y]; break; } }
+        if(!key){ bad.push('sin sala: '+type); continue; } roll({kind:'boss',type,echo:false,mid:!BOSS_INTRO[type]||!boss},()=>{ newGame(); introDone=true; loadScreen(key[0],key[1]); player.x=72; player.y=100; presentQ=null; }); }
+      for(const dng of Object.keys(DNG_CARD)) roll({kind:'dng',dng},()=>{ newGame(); introDone=true; const k=Object.keys(MAPS).find(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dng&&!MAPS[k].join('').match(/[J!^Λ]/); }); const [x,y]=k.split(',').map(Number); loadScreen(x,y); presentQ=null; });
+      for(const type of Object.keys(BOSS_OUTRO)) roll({kind:'outro',type},()=>{ newGame(); introDone=true; const R=BOSS_OUTRO[type]; loadScreen(...({topo:[6,2],avispa:[10,2],viento:[1,-3],ciervo:[20,-1]}[type]||[R.dest.sx,R.dest.sy])); presentQ=null; player.x=72; player.y=80; });
+      return {bad,out}; });
+    eq(r.bad,[]);
   });
   await check('Emboscada: al entrar se cierran las puertas; al vencer se abren y cae la llave',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true;
