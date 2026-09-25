@@ -124,9 +124,10 @@ function initEcho(){
 }
 function updEcho(){
   if(!boss||!boss.echo||boss.hp>2) return;
-  const key=sx+','+sy, b=boss; pendingSay=null;
-  for(let i=0;i<3;i++) puff(b.x+16,b.y+16,['#c8b0ff','#fffbe8','#8a78d8'][i],12,1.6);
-  deathPoof(b.x+16,b.y+16,'#c8b0ff'); boss=null; enemies=[]; projs=[]; shake=10; screenFlash(10,'#e8e0ff');
-  opened.add('ECO'+key); opened.add('G'+key); openGates(); player.hp=Math.min(player.maxHp,player.hp+4);
-  if(AC){ SFX.fanfare(); setTrack('gruta'); } showToast('EL ECO SE DESVANECE','la verja se abre'); save();
+  if(boss.dying) return; const key=sx+','+sy, b=boss; pendingSay=null; b.dying=true; enemies=[]; projs=[];
+  queueBye(b.type,fb=>{ // su despedida en violeta (15j-15m); luego se abre la verja
+    if(fb){ for(let i=0;i<3;i++) puff(b.x+16,b.y+16,['#c8b0ff','#fffbe8','#8a78d8'][i],12,1.6); deathPoof(b.x+16,b.y+16,'#c8b0ff'); shake=10; screenFlash(10,'#e8e0ff'); }
+    boss=null; enemies=[]; projs=[];
+    opened.add('ECO'+key); opened.add('G'+key); openGates(); player.hp=Math.min(player.maxHp,player.hp+4);
+    if(AC){ if(fb) SFX.fanfare(); setTrack('gruta'); } showToast('EL ECO SE DESVANECE','la verja se abre'); save(); },{echo:true});
 }

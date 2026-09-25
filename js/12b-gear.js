@@ -66,8 +66,8 @@ function leafHitFx(x,y){ // cuando la Hoja da en un bicho: un «chas» y savia v
 /* ---------- quién es vulnerable ahora (mismas reglas que el tornadito) ---------- */
 function bossVulnerable(b){ return (b.type==='topo'&&b.st==='dazed')||(b.type==='avispa'&&b.st==='pinned')||(b.type==='viento'&&b.st==='rest')||(b.type==='ciervo'&&b.mantle===0&&b.st!=='yield'); }
 function midVulnerable(m){ return (m.type==='king'&&m.st==='stuck')||(m.type==='drone'&&m.st==='stunned')||(m.type==='iceguard'&&m.soft>0)||(m.type==='scare'&&m.st==='dizzy'); }
-function rangedHitMid(dmg,x,y){ const m=midboss; if(midVulnerable(m)){ m.hp-=dmg; m.flash=8; SFX.ehit(); flyText.push({x:m.x+12,y:m.y-4,txt:''+dmg,t:24,col:'#fffbe8'}); hitSpark(x,y); } else { SFX.block(); sparkle(x,y,'#c8d8ff'); } }
-function rangedHitBoss(dmg,x,y){ if(bossVulnerable(boss)) bossHit(boss,dmg); else { SFX.block(); for(let i=0;i<3;i++) sparkle(x+(Math.random()-.5)*8,y+(Math.random()-.5)*8,'#c8d8ff'); } }
+function rangedHitMid(dmg,x,y){ const m=midboss; if(!m||m.dead||presentAwaiting()) return; if(midVulnerable(m)){ m.hp-=dmg; m.flash=8; SFX.ehit(); flyText.push({x:m.x+12,y:m.y-4,txt:''+dmg,t:24,col:'#fffbe8'}); hitSpark(x,y); } else { SFX.block(); sparkle(x,y,'#c8d8ff'); } }
+function rangedHitBoss(dmg,x,y){ if(!boss||boss.dying||presentAwaiting()) return; if(bossVulnerable(boss)) bossHit(boss,dmg); else { SFX.block(); for(let i=0;i<3;i++) sparkle(x+(Math.random()-.5)*8,y+(Math.random()-.5)*8,'#c8d8ff'); } }
 /* ---------- RAYO DE HOJA: Hoja templada y vigor lleno ---------- */
 function leafBeamTry(){
   if(bladeLvl<3||player.hp<player.maxHp||leafBeams.length) return;

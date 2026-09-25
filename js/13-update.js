@@ -117,8 +117,8 @@ function update(){
   /* === PLAY === */
   if(sproutT>0){ updRebrote(); return; } // rebrotar: germina y sale de la tierra (15c)
   if(keys.menu){ keys.menu=false; openZurron(0); return; }
-  if(presentQ&&startPresent()) return;
-  if(pendingSay){ const ps=pendingSay; pendingSay=null; say(ps); return; }
+  if(presentQ&&(!presentQ.await||presentArmed())&&startPresent()) return; // la entrada de un jefe espera a que te metas en la sala (15i)
+  if(pendingSay&&!presentAwaiting()){ const ps=pendingSay; pendingSay=null; say(ps); return; }
   if(fadeIn>0) fadeIn--;
   if(bossCard&&--bossCard.t<=0) bossCard=null;
   if((tick&15)===0) checkQuests();
@@ -179,7 +179,7 @@ function update(){
   if(player.spin>0){ player.spin--; if((tick&1)===0){ const a=(18-player.spin)*.7; parts.push({x:player.x+8+Math.cos(a)*14,y:player.y+9+Math.sin(a)*14,vx:Math.cos(a)*.8,vy:Math.sin(a)*.8,life:10,col:'#a8ec78',nog:true}); }
     if(player.spin===9||(hasBigSpin&&player.spin===24)) cutAt(meleeBox()); }
   updBombs(); updProjs(); updWind(); updBoomer(); updGear();
-  updBoss(); updMidboss(); musicIntensity(boss&&boss.maxHp?bossPhase(boss)-1:midboss&&midboss.maxHp?(midboss.hp<=midboss.maxHp/2?1:0):0);
+  if(!presentAwaiting()){ updBoss(); updMidboss(); } musicIntensity(boss&&boss.maxHp?bossPhase(boss)-1:midboss&&midboss.maxHp?(midboss.hp<=midboss.maxHp/2?1:0):0);
   updPickups();
   updSpawns(); updEnemies(); updRoomRules(); updMill(); updSecrets(); updParts();
   updExits();

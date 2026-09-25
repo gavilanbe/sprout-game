@@ -153,10 +153,12 @@ function updTopo(){
     if(b.flash===0&&meleeActive()&&rectsHit(meleeBox(),bb)) bossClang(b,cx,cy);
     if(b.t<=0&&b.st==='up'){ b.st='burrow'; b.t=(ph===1?100:ph===2?80:70)+hash(tick,7)%50; b.mx=b.x; b.my=b.y; } }
 }
-function updBoss(){ if(!boss) return; if(boss.type==='viento') updViento(); else if(boss.type==='avispa') updAvispa(); else if(boss.type==='ciervo') updCiervo(); else updTopo(); }
+function updBoss(){ if(!boss||boss.dying) return; if(boss.type==='viento') updViento(); else if(boss.type==='avispa') updAvispa(); else if(boss.type==='ciervo') updCiervo(); else updTopo(); }
 /* ===== MINIJEFES ===== */
-function midDefeated(){
-  const m=midboss; SFX.edie(); SFX.fanfare(); shake=10; puff(m.x+12,m.y+12,'#fffbe8',20,2); puff(m.x+12,m.y+12,'#9088a0',12,1.5);
+function midDefeated(){ const m=midboss; if(!m||m.dead) return; // cae: se queda quieto y llega su despedida (15j-15m); luego, la recompensa
+  m.dead=true; m.flash=0; projs=[]; enemies=[]; queueBye(m.type,fb=>midReward(m,fb),{mid:true}); }
+function midReward(m,fb){ if(midboss!==m) return;
+  if(fb){ SFX.edie(); SFX.fanfare(); shake=10; puff(m.x+12,m.y+12,'#fffbe8',20,2); puff(m.x+12,m.y+12,'#9088a0',12,1.5); }
   const reward=m.type==='king'?'bomb':m.type==='drone'?'hook':m.type==='scare'?'molinillo':'feather';
   if(m.type==='king') midKing=true; else if(m.type==='drone') midDrone=true; else if(m.type==='scare') midScare=true; else midIce=true;
   pickups.push({kind:reward,x:m.x+4,y:m.y+4,t:0}); midboss=null; enemies=[]; projs=[]; bossCard=null; save();
@@ -164,7 +166,7 @@ function midDefeated(){
   for(let i=0;i<6;i++) pickups.push({kind:'heart',x:m.x+Math.random()*24,y:m.y+Math.random()*24,t:0,drop:20});
 }
 function updMidboss(){
-  const m=midboss; if(!m) return;
+  const m=midboss; if(!m||m.dead) return; // vencido: espera su despedida
   if(m.type==='scare'){ updScare(m); if(m.hp<=0) midDefeated(); return; } // el Espantapájaros (12b)
   if(m.flash>0)m.flash--; m.t--; m.kx*=.8; m.ky*=.8;
   const cx=m.x+12, cy=m.y+12, dx=player.x+8-cx, dy=player.y+10-cy, d=Math.hypot(dx,dy)||1;

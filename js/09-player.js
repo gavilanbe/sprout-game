@@ -167,20 +167,20 @@ function attack(){
   if(inBed){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); noise(.1,.04,false); return; }
   // el Viento exhausto se recuerda (Z a su lado)
   if(boss&&boss.type==='viento'&&boss.hp<=2&&boss.st==='rest'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<34){
-    say(WIND_PEACE,()=>{ SFX.fanfare(); shake=14;
-      puff(boss.x+16,boss.y+16,'#dff0ff',18,2); puff(boss.x+16,boss.y+16,'#9ec7e8',12,1.6);
-      pickups.push({kind:'flake',x:boss.x+8,y:boss.y+8,t:0});
-      boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima'); },'EL VIENTO');
+    say(WIND_PEACE,()=>queueBye('viento',fb=>{ const b=boss; if(!b) return; if(fb){ SFX.fanfare(); shake=14; // su despedida (15l); luego, el Copo donde estaba
+        puff(b.x+16,b.y+16,'#dff0ff',18,2); puff(b.x+16,b.y+16,'#9ec7e8',12,1.6); }
+      pickups.push({kind:'flake',x:b.x+8,y:b.y+8,t:0});
+      boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima'); }),'EL VIENTO');
     return;
   }
   if(boss&&boss.type==='ciervo'&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<40){ ciervoPeace(); return; } // el Ciervo de Ámbar (12b)
   if(boss&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<36){
-    const isTopo=boss.type==='topo', bx=boss.x, by=boss.y;
-    say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>{ SFX.fanfare(); shake=10;
-      puff(bx+16,by+16,isTopo?'#7a5a38':'#f8d030',16,2); puff(bx+16,by+16,isTopo?'#e8d8c0':'#1a1410',10,1.5);
+    const isTopo=boss.type==='topo', bx0=boss.x, by0=boss.y;
+    say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>queueBye(isTopo?'topo':'avispa',fb=>{ const b=boss, bx=b?b.x:bx0, by=b?b.y:by0; // su despedida (15j/15k); luego, la reliquia donde estaba
+      if(fb){ SFX.fanfare(); shake=10; puff(bx+16,by+16,isTopo?'#7a5a38':'#f8d030',16,2); puff(bx+16,by+16,isTopo?'#e8d8c0':'#1a1410',10,1.5); }
       pickups.push({kind:isTopo?'ember':'tear',x:bx+8,y:by+8,t:0});
       if(isTopo) bossDone=true; else boss2Done=true;
-      boss=null; enemies=[]; projs=[]; save(); setTrack('cueva'); },isTopo?'EL TOPO REAL':'LA REINA');
+      boss=null; enemies=[]; projs=[]; save(); setTrack('cueva'); }),isTopo?'EL TOPO REAL':'LA REINA');
     return;
   }
   const ft=facingTile();

@@ -26,7 +26,7 @@ const server=http.createServer((req,res)=>{
     window.__hold=(k,n)=>{ keys[k]=true; __step(n); keys[k]=false; };
     window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } if(presentQ) __skipPres(); };
     window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
-    window.__skipPres=()=>{ let i=0; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas)
+    window.__skipPres=()=>{ let i=0; if(presentQ&&presentQ.await) presentQ.await=false; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas)
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
@@ -344,6 +344,14 @@ const server=http.createServer((req,res)=>{
       const at0=enemies.length; __step(SPAWN_T0); const far=Math.hypot(B.x-player.x,B.y-player.y+4)>=SPAWN_SAFE, wake=B.wake>0;
       B.x=player.x; B.y=player.y; __step(3); const safe=player.hp===hp0; __step(SPAWN_ALERT); return [at0,enemies.length,far,wake,safe,B.wake]; }),[0,1,true,true,true,0]);
   });
+  await check('Sala de jefe: al llegar está vacía y en silencio; el jefe aparece al meterte, lejos de ti, y no actúa antes',async()=>{
+    eq(await ev(()=>{ newGame(); introDone=true; inBed=false; elderMet=true; hasBlade=true; hasBomb=true; for(const h of [...hinted]) if(h.startsWith('pi')) hinted.delete(h);
+      loadScreen(6,2); state='play'; player.x=72; player.y=104; player.inv=0; hitStop=0; pendingSay=null; const b=boss, x0=b.x, y0=b.y, t0=b.t;
+      __step(20); const waiting=[state,bossHidden,b.x===x0&&b.y===y0&&b.t===t0,curTrack];
+      player.x=72; player.y=58; b.x=64; b.y=44; __step(1); // se mete justo donde espera el jefe
+      const started=state, far=Math.hypot(b.x+16-(player.x+8),b.y+16-(player.y+10))>=BOSS_ROOM;
+      return [waiting,started,far]; }),[['play',true,true,'silencio'],'present',true]);
+  });
   await check('Presentaciones: cada título de mazmorra, entrada y salida de jefe se rueda (entera, corta y saltada) sin errores y devuelve el juego',async()=>{
     const r=await ev(()=>{ const out=[], bad=[];
       const roll=(Q,setup)=>{ for(const mode of ['full','short','skip']){ setup(); if(mode!=='full') hinted.add('pi'+(Q.kind==='boss'?Q.type+(Q.echo?'~e':''):Q.kind==='outro'?'o'+Q.type:Q.dng)); else for(const h of [...hinted]) if(h.startsWith('pi')) hinted.delete(h);
@@ -353,6 +361,9 @@ const server=http.createServer((req,res)=>{
       const ROOM={topo:'6,2',avispa:'10,2',viento:'1,-3',ciervo:null,king:null,drone:null,iceguard:null,scare:null};
       for(const type of Object.keys(BOSS_INTRO)){ let key=null; for(const k in MAPS){ const [x,y]=k.split(',').map(Number); if(y===12) continue; newGame(); introDone=true; loadScreen(x,y); const B=boss||midboss; if(B&&B.type===type){ key=[x,y]; break; } }
         if(!key){ bad.push('sin sala: '+type); continue; } roll({kind:'boss',type,echo:false,mid:!BOSS_INTRO[type]||!boss},()=>{ newGame(); introDone=true; loadScreen(key[0],key[1]); player.x=72; player.y=100; presentQ=null; }); }
+      for(const type of Object.keys(BOSS_BYE)){ let key=null; for(const k in MAPS){ const [x,y]=k.split(',').map(Number); if(y===12) continue; newGame(); introDone=true; loadScreen(x,y); const B=boss||midboss; if(B&&B.type===type){ key=[x,y]; break; } }
+        if(!key){ bad.push('sin sala (despedida): '+type); continue; }
+        roll({kind:'bye',type,mid:!['topo','avispa','viento','ciervo'].includes(type),after:()=>{ boss=null; midboss=null; }},()=>{ newGame(); introDone=true; loadScreen(key[0],key[1]); presentQ=null; bossHidden=false; player.x=72; player.y=100; }); }
       for(const dng of Object.keys(DNG_CARD)) roll({kind:'dng',dng},()=>{ newGame(); introDone=true; const k=Object.keys(MAPS).find(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dng&&!MAPS[k].join('').match(/[J!^Λ]/); }); const [x,y]=k.split(',').map(Number); loadScreen(x,y); presentQ=null; });
       for(const type of Object.keys(BOSS_OUTRO)) roll({kind:'outro',type},()=>{ newGame(); introDone=true; const R=BOSS_OUTRO[type]; loadScreen(...({topo:[6,2],avispa:[10,2],viento:[1,-3],ciervo:[19,-1]}[type]||[R.dest.sx,R.dest.sy])); presentQ=null; player.x=72; player.y=80; });
       return {bad,out}; });
