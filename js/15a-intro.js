@@ -466,7 +466,7 @@ let titleCam=0, fileT=0, fileSpotX=80, fileWake=[0,0,0], fileDelT=[0,0,0], fileH
 /* FS: la fase del selector — 'pick' (eligiendo), 'go' (el brote salta de la maceta y entra en el juego), 'plant' (una semilla
    brota para una partida nueva), 'back' (vuelta al título: las macetas se hunden) */
 let FS={ph:'pick',t:0};
-const FILE_POT_X=[30,80,130], FILE_POT_Y=72, FILE_DEL=64, FILE_GO=74, FILE_PLANT=86;
+const FILE_POT_X=[30,80,130], FILE_POT_Y=72, FILE_DEL=64, FILE_GO=74, FILE_PLANT=176;
 const POT_PALS=[['#4a1c0c','#7a3414','#b05426','#d8803e','#f4ac6c'],['#12204a','#22407a','#3662aa','#5a8ed4','#a4ccf4'],['#12321a','#225a2a','#358a38','#58b048','#a4dc80']];
 const FILE_POTS=POT_PALS.map(pal=>{ const c=mkCanvas(32,26), g=c.getContext('2d');
   blobArt(g,2,6,28,20,[{x:14,y:7,r:12.5,ry:9},{x:14,y:12,r:9.5,ry:6.5}],pal,{grad:.45,dither:.6});
@@ -478,33 +478,50 @@ const FILE_POTS=POT_PALS.map(pal=>{ const c=mkCanvas(32,26), g=c.getContext('2d'
 function fileSoilY(){ return FILE_POT_Y+5; }
 /* cuánto ha salido cada maceta de la tierra (0 enterrada · 1 fuera): brotan una tras otra al entrar y se hunden al volver */
 function potOut(i){ if(state!=='file') return 1; if(FS.ph==='back') return 1-clamp((FS.t-(2-i)*3)/12,0,1); return clamp((fileT-8-i*8)/14,0,1); }
-/* el brote de cada maceta, dibujado a su tamaño con las piezas del primer plano de las cinemáticas (15e): bulbo sombreado,
-   tallo y hojas que se mecen, ojos que duermen, parpadean o se asustan, mofletes y boca. Nada escalado.
-   o = {lid, eyes:'open'|'wide'|'happy', mouth, look, hands:0 nada|1 en el borde|2 arriba, feet, leaf:[a,b], sweat} */
-const POT_F=.8;
-let POT_HAND=null;
-function potHand(){ return POT_HAND||(POT_HAND=mkArt(6,6,g=>{ blobArt(g,1,1,4,4,[{x:2,y:2,r:2}],BIG_SKIN,{grad:.3,dither:.4}); })); }
-function potHead(fx,fy,o){ const F=POT_F; o=o||{}; fx=Math.round(fx); fy=Math.round(fy);
-  if(o.feet){ for(const s of [-1,1]) cuDisc(fx+s*5,fy+14*F,3.6,2.2,BIG_FOOT[1]), cuDisc(fx+s*5,fy+14*F-1,2.6,1.2,BIG_FOOT[3]); }
-  const base=cuBase(F), bx=fx-85, by=fy-104; ctx.drawImage(base,bx,by);
-  const lf=o.leaf||[0,0], sx=Math.round(fx-F), sy=Math.round(fy-22*F), sh=Math.round(6*F);
-  ctx.fillStyle=BIG_INK; ctx.fillRect(sx-1,sy-1,4,sh+1); ctx.fillStyle=BIG_LEAF[1]; ctx.fillRect(sx,sy,2,sh); ctx.fillStyle=BIG_LEAF[3]; ctx.fillRect(sx,sy,1,sh-2);
-  [[-1,-21,-150,0],[1,-22,-32,1]].forEach(([ox,oy,a0,i])=>{ const img=cuLeaf(F,a0+lf[i]), R=(img.width-1)/2; ctx.drawImage(img,Math.round(fx+ox*F-R),Math.round(fy+oy*F-R)); });
-  const eyes=o.eyes||'open', lk=(o.look||0)*F, E=[[fx-7*F+lk,fy+1.5*F],[fx+7*F+lk,fy+1.5*F]];
-  E.forEach(([x,y],i)=>cuEye(x,y,F,o.lid||0,eyes,i,base,bx,by));
-  for(const s of [-1,1]) cuDisc(fx+s*12*F+lk*.4,fy+6.5*F,2.6*F,1.05*F,'rgba(240,112,112,.7)');
-  cuMouth(fx+lk*.8,fy+9*F,F,o.mouth||'smile');
-  if(o.sweat!==undefined){ const x=fx+13, y=fy-6+o.sweat; ctx.fillStyle=PAL.k; ctx.fillRect(x-1,y-1,3,5); ctx.fillStyle='#8ad0ff'; ctx.fillRect(x,y,1,3); ctx.fillStyle='#ffffff'; ctx.fillRect(x,y,1,1); }
-  if(o.hands===2){ const h=potHand(); ctx.drawImage(h,fx-17,fy-8-(o.wave?1:0)); ctx.drawImage(h,fx+11,fy-8-(o.wave?0:1)); }
-  else if(o.hands===1){ const h=potHand(); ctx.drawImage(h,fx-15,fileSoilY()-4); ctx.drawImage(h,fx+9,fileSoilY()-4); } }
-/* el brote en su maceta: rise = cuánto asoma por encima de la tierra (recortado por la tierra) */
-function drawPotBrote(cx,rise,o,dx){ const soil=fileSoilY(), fy=soil+Math.round(15.5*POT_F)-rise;
-  ctx.save(); ctx.beginPath(); ctx.rect(cx-30,-60,60,soil+61); ctx.clip(); potHead(cx+(dx||0),fy,o); ctx.restore();
-  if(o&&o.hands===1) potHead.lastHands=1; }
-/* el brote que aún no ha nacido: dos hojitas (del mismo dibujo) que salen de la semilla; g de 0 a 1 */
-function drawPotSeedling(cx,g,sway){ if(g<=0) return; const soil=fileSoilY(), F=.28+g*.34, L=Math.round(2+g*7);
-  ctx.fillStyle=BIG_INK; ctx.fillRect(cx-1,soil-3-L,3,L+1); ctx.fillStyle=BIG_LEAF[1]; ctx.fillRect(cx,soil-3-L,1,L);
-  [[-1,-150],[1,-32]].forEach(([s,a0])=>{ const img=cuLeaf(Math.round(F*10)/10,a0+(sway||0)*s), R=(img.width-1)/2; ctx.drawImage(img,Math.round(cx+s*2-R),Math.round(soil-4-L-R+2)); }); }
+/* el brote de cada maceta, de cuerpo entero y a su tamaño (≈35 px): la misma geometría que el muñeco grande de las
+   cinemáticas (15e) —pies, faldón, bulbo, tallo y hojas— a escala MID_K, dibujada píxel a píxel (nada escalado).
+   o = {sq (aplastar/estirar), eyes:'open'|'closed'|'happy'|'wide', blink, mouth:'smile'|'o'|'open'|'flat'|'grin',
+        look:-1|0|1, arms:'down'|'up'|'wave', leaf:[a,b], sad} · el lienzo es de MID_W×MID_H con los pies abajo, en (20,40) */
+const MID_K=.55, MID_W=40, MID_H=44, MID_CACHE=new Map();
+function midSprout(o){ o=o||{}; const sq=Math.round((o.sq||1)*20)/20, eyes=o.blink?'blink':(o.eyes||'open'), mouth=o.mouth||'smile', look=o.look||0, arms=o.arms||'down', lf=(o.leaf||[0,0]).map(v=>Math.round(v/6)*6);
+  const key=[sq,eyes,mouth,look,arms,lf[0],lf[1],o.sad?1:0].join('|'); let c=MID_CACHE.get(key); if(c) return c;
+  c=mkCanvas(MID_W,MID_H); const g=c.getContext('2d'), k=MID_K, wx=Math.pow(sq,-.8), X=x=>20+(x-32)*k*wx, Y=y=>40-(61-y)*k*sq, L=(x,y,r,ry)=>({x:X(x),y:Y(y),r:r*k*wx,ry:(ry||r)*k*sq});
+  const hand=(x,y)=>blobArt(g,0,0,MID_W,MID_H,[L(x,y,3.8,3.4)],BIG_SKIN,{outline:false,grad:.2,dither:.4});
+  const A=arms==='up'?[[11,22],[53,22]]:arms==='wave'?[[12,40],[53,20]]:[[17,45],[47,45]];
+  blobArt(g,0,0,MID_W,MID_H,[L(25,58,5.5,3.2),L(39,58,5.5,3.2)],BIG_FOOT,{outline:false,grad:.3,dither:.5}); // los pies
+  blobArt(g,0,0,MID_W,MID_H,[L(32,48,15.5,9)],BIG_PETO,{outline:false,grad:.45,dither:.35}); // el faldón
+  if(arms!=='down') for(const [x,y] of A) hand(x,y); // los brazos alzados van detrás del bulbo
+  blobArt(g,0,0,MID_W,MID_H,[L(32,33,17.5,15.5),L(32,19.5,6,4.5)],BIG_SKIN,{outline:false,grad:.25,dither:.35}); // el bulbo
+  if(arms==='down') for(const [x,y] of A) hand(x,y);
+  g.fillStyle='#8a4a24'; for(let x=19;x<=45;x+=1){ if(x%3===0) continue; g.fillRect(Math.round(X(x)),Math.round(Y(46-Math.pow((x-32)/14,2)*3)),1,1); } // la costura del faldón
+  // la cara
+  const ex=[Math.round(X(25))+look,Math.round(X(39))+look], ey=Math.round(Y(31)); g.fillStyle=BIG_INK;
+  for(let i=0;i<2;i++){ const x=ex[i];
+    if(eyes==='closed'||eyes==='blink'){ g.fillRect(x-1,ey+2,3,1); if(eyes==='closed') g.fillRect(i?x+1:x-1,ey+1,1,1); }
+    else if(eyes==='happy'){ g.fillRect(x-1,ey+1,1,1); g.fillRect(x,ey,1,1); g.fillRect(x+1,ey+1,1,1); }
+    else { const t=eyes==='wide'?5:4; g.fillStyle=BIG_INK; g.fillRect(x-1,ey,2,t); g.fillRect(x+1,ey+1,1,t-2); g.fillStyle='#ffffff'; g.fillRect(x-1,ey,1,eyes==='wide'?2:1); g.fillStyle=BIG_INK; } }
+  if(o.sad){ g.fillStyle='#4a2410'; g.fillRect(ex[0]-2,ey-2,2,1); g.fillRect(ex[0]-1,ey-3,1,1); g.fillRect(ex[1]+1,ey-2,2,1); g.fillRect(ex[1]+1,ey-3,1,1); }
+  g.fillStyle='rgba(240,112,112,.8)'; g.fillRect(Math.round(X(18)),Math.round(Y(39)),3,1); g.fillRect(Math.round(X(43))-1,Math.round(Y(39)),3,1); // mofletes
+  const mx=Math.round(X(32))+look, my=Math.round(Y(42)); g.fillStyle=BIG_MOUTH;
+  if(mouth==='o') g.fillRect(mx,my-1,2,2); else if(mouth==='open'){ g.fillRect(mx-1,my-1,3,3); g.fillStyle='#d84848'; g.fillRect(mx,my,1,1); }
+  else if(mouth==='flat') g.fillRect(mx-1,my,3,1); else if(mouth==='grin'){ g.fillRect(mx-2,my-1,5,1); g.fillRect(mx-1,my,3,1); }
+  else { g.fillRect(mx-1,my,1,1); g.fillRect(mx,my+1,1,1); g.fillRect(mx+1,my,1,1); }
+  // el tallo y las dos hojas
+  const tx=Math.round(X(31)), ty=Math.round(Y(12)); g.fillStyle=BIG_LEAF[1]; g.fillRect(tx,ty,2,Math.max(2,Math.round(5*k*sq))); g.fillStyle=BIG_LEAF[3]; g.fillRect(tx,ty,1,Math.max(1,Math.round(4*k*sq)));
+  bigLeaf(g,X(31),Y(12),15*k,6*k,-150+lf[0],BIG_LEAF); bigLeaf(g,X(33),Y(11),15*k,6*k,-32+lf[1],BIG_LEAF);
+  artOutline(g,MID_W,MID_H);
+  MID_CACHE.set(key,c); if(MID_CACHE.size>160) MID_CACHE.delete(MID_CACHE.keys().next().value); return c; }
+/* el brote en su maceta: sink = cuánto quedan los pies bajo la tierra (0: de pie sobre ella; ~12: solo asoma la cabeza) */
+function drawPotBrote(cx,sink,o,dx){ const soil=fileSoilY(), img=midSprout(o), x=Math.round(cx-20+(dx||0)), y=Math.round(soil+sink-40);
+  ctx.save(); ctx.beginPath(); ctx.rect(cx-30,-60,60,soil+61); ctx.clip(); ctx.drawImage(img,x,y); ctx.restore();
+  if(o&&o.rim){ ctx.drawImage(midHand(),cx-14+(dx||0),soil-3); ctx.drawImage(midHand(),cx+9+(dx||0),soil-3); } } // las manitas en el borde
+let MID_HAND=null;
+function midHand(){ return MID_HAND||(MID_HAND=mkArt(6,6,g=>{ blobArt(g,1,1,4,4,[{x:2,y:2,r:2.1}],BIG_SKIN,{grad:.3,dither:.4}); })); }
+/* el brote que aún no ha nacido: tallo y dos hojitas (el mismo dibujo) que salen de la semilla; g de 0 a 1 */
+function drawPotSeedling(cx,g,sway){ if(g<=0) return; const soil=fileSoilY(), L=Math.round(1+g*6), len=4+g*6, wid=1.8+g*2.2;
+  const c=mkCanvas(24,24), q=c.getContext('2d'); q.fillStyle=BIG_LEAF[1]; q.fillRect(11,22-L,2,L); q.fillStyle=BIG_LEAF[3]; q.fillRect(11,22-L,1,L-1);
+  bigLeaf(q,11.5,22-L,len,wid,-150+(sway||0),BIG_LEAF); bigLeaf(q,12.5,22-L,len,wid,-30-(sway||0),BIG_LEAF); artOutline(q,24,24);
+  ctx.drawImage(c,cx-12,soil-21); }
 /* las reliquias de cada partida, como flores en su maceta: la Brasa, la Lágrima, el Ámbar y el Copo */
 const RELIC_FLOWER=[['#f06030','#ffd070'],['#58a8f0','#e8f6ff'],['#e89820','#fff0a0'],['#f4f8ff','#8ac8f0']];
 function potFlowers(cx,d,i){ if(!d) return; const on=[d.thawed,d.summered,d.autumned||d.cycled,d.cycled], soil=fileSoilY(), X=[-13,-8,8,13]; // plantadas en el borde de la maceta, delante del brote
@@ -526,22 +543,24 @@ function drawPots(alpha,sink){
     if(fileDelT[i]>0) drawDelSprout(cx,fileDelT[i],shakeX);
     else if(sel&&FS.ph==='go') drawGoSprout(cx,shakeX);
     else if(sel&&FS.ph==='plant') drawPlantSprout(cx);
-    else if(d){ // un brote: dormido, o despierto si es el elegido
-      const lf=[Math.sin(tick*.05+i)*6,Math.sin(tick*.05+i+1.3)*6], O={leaf:lf}; let rise=sel?Math.round(20+wk*6):20;
-      if(!sel){ O.lid=1; rise+=((tick>>5)+i)&1; }
-      else if(!fileConfirm){ O.lid=Math.max(0,1-wk*1.4); O.look=Math.sin(since*.02)*.6;
-        if(since>6&&since<26){ O.eyes='happy'; O.hands=2; O.wave=(since>>2)&1; O.mouth='open'; }
-        const hp=(since-34)%110; if(since>34&&hp<16){ rise+=Math.round(Math.sin(hp/16*Math.PI)*6); O.eyes='happy'; O.leaf=[lf[0]-14,lf[1]+14]; }
-        else if(since>30) O.hands=1;
-        if(((tick+i*50)%190)<6&&since>30&&O.eyes!=='happy') O.lid=1; }
-      else { rise=26; O.eyes='wide'; O.mouth='o'; O.sweat=(tick>>3)&1; O.hands=1; O.leaf=[lf[0]+((tick>>1)&1?6:-6),lf[1]]; }
-      if(FS.ph==='go'&&!sel){ O.lid=0; O.eyes='happy'; O.hands=2; O.wave=((tick>>3)+i)&1; O.mouth='open'; rise=26; }
-      if(out<1) rise=Math.round(rise*out);
-      drawPotBrote(cx,rise,O,shakeX);
-      if(!sel&&FS.ph==='pick'&&out>=1&&((tick+i*40)%120)<70){ const zt=((tick+i*40)%120)/70; txtS('z',cx+12+Math.round(zt*4),fileSoilY()-22-Math.round(zt*10),'#e8f0ff'); } }
+    else if(d){ // un brote: dormido hasta la barbilla, o despierto si es el elegido (se levanta hasta el faldón)
+      const lf=[Math.sin(tick*.05+i)*8,Math.sin(tick*.05+i+1.3)*8], O={leaf:lf}; let sink=12;
+      if(!sel){ O.eyes='closed'; sink+=((tick>>5)+i)&1; }
+      else if(!fileConfirm){ sink=Math.round(12-wk*6); O.eyes=wk<.5?'closed':'open'; O.look=Math.round(Math.sin(since*.02)*1);
+        if(since>6&&since<28){ O.eyes='happy'; O.arms='wave'; O.mouth='open'; O.leaf=[lf[0]-10,lf[1]+10]; }
+        const hp=(since-36)%110; if(since>36&&hp<18){ const h=Math.sin(hp/18*Math.PI); sink=Math.round(6-h*14); O.eyes='happy'; O.arms=h>.3?'up':'down'; O.sq=hp<3?.85:h>.2?1.1:1; O.leaf=[lf[0]-18*h,lf[1]+18*h]; }
+        else if(since>30) O.rim=true;
+        if(((tick+i*50)%190)<6&&since>30&&O.eyes==='open') O.blink=true; }
+      else { sink=6; O.eyes='wide'; O.mouth='o'; O.rim=true; O.leaf=[lf[0]+((tick>>1)&1?8:-8),lf[1]]; }
+      if(FS.ph==='plant'&&!sel&&FS.t>PL.crack){ O.eyes=FS.t>PL.joy?'happy':'open'; O.look=fileSel>i?1:-1; O.mouth=FS.t>PL.joy?'open':'o'; sink=7; O.arms=FS.t>PL.land&&((tick>>3)+i)&1?'up':'down'; }
+      if(FS.ph==='go'&&!sel){ O.eyes='happy'; O.arms=((tick>>3)+i)&1?'up':'wave'; O.mouth='open'; sink=5; }
+      if(out<1) sink=Math.round(sink+(1-out)*24);
+      drawPotBrote(cx,sink,O,shakeX);
+      if(sel&&fileConfirm&&(tick&15)<11){ const x=cx+10, y=fileSoilY()-24+((tick>>3)&1); ctx.fillStyle=PAL.k; ctx.fillRect(x-1,y-1,3,5); ctx.fillStyle='#8ad0ff'; ctx.fillRect(x,y,1,3); ctx.fillStyle='#ffffff'; ctx.fillRect(x,y,1,1); }
+      if(!sel&&FS.ph==='pick'&&out>=1&&((tick+i*40)%120)<70){ const zt=((tick+i*40)%120)/70; txtS('z',cx+9+Math.round(zt*4),fileSoilY()-20-Math.round(zt*10),'#e8f0ff'); } }
     else { // una semilla que espera; la elegida echa sus dos hojitas
       const soil=fileSoilY(); ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage(ACORN_GOLD,cx-4,soil-5); ctx.restore();
-      if(sel&&out>=1) drawPotSeedling(cx,easeOutBack(wk),Math.sin(tick*.08)*8);
+      if(sel&&out>=1&&FS.ph!=='plant') drawPotSeedling(cx,easeOutBack(wk)*.8,Math.sin(tick*.08)*10);
       if(((tick+i*37)&31)===0) sparkle(cx-3+Math.random()*6,soil-4,'#fff6c0'); }
     if(fileDelT[i]===0) potFlowers(cx+shakeX,d,i); // por delante del brote
     txtOL(''+(i+1),cx,py+14,'#fff6d8','center',POT_PALS[i][0]);
@@ -551,18 +570,43 @@ function drawPots(alpha,sink){
 }
 /* borrar: se despide con la mano, se marchita, se hunde entre terrones y en su sitio vuelve a asomar la semilla */
 function drawDelSprout(cx,T,dx){ const t=FILE_DEL-T, soil=fileSoilY();
-  if(t<16){ drawPotBrote(cx,26,{eyes:'happy',hands:2,wave:(t>>2)&1,mouth:'smile'},dx); return; }
-  if(t<42){ const k=(t-16)/26, rise=Math.round(26*(1-k*k)); drawPotBrote(cx,rise,{lid:.55,mouth:'flat',leaf:[-40*k,40*k]},dx); return; }
+  if(t<16){ drawPotBrote(cx,6,{eyes:'happy',arms:(t>>2)&1?'wave':'up',mouth:'smile'},dx); return; }
+  if(t<42){ const k=(t-16)/26; drawPotBrote(cx,Math.round(6+k*k*36),{eyes:'closed',sad:true,mouth:'flat',leaf:[-50*k,50*k],sq:1-k*.15},dx); return; }
   const k=clamp((t-48)/12,0,1); if(k>0){ ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage(ACORN_GOLD,cx-4,Math.round(soil-5+(1-easeOutBack(k))*6)); ctx.restore(); } }
-/* continuar: se agacha (asoma menos), salta fuera de la maceta entero —pies y brazos arriba— y se pierde por arriba */
+/* continuar: se agacha, salta fuera de la maceta de cuerpo entero —brazos arriba, las hojas al viento— y se pierde por arriba */
 function drawGoSprout(cx,dx){ const t=FS.t, soil=fileSoilY();
-  if(t<12){ drawPotBrote(cx,Math.round(26-t*.8),{eyes:'happy',mouth:'grin',hands:1},dx); return; }
-  const u=t-12, fy=soil+12-u*4.4+u*u*.035, fl=Math.sin(u*.9)*25;
-  if(fy>-30) potHead(cx,fy,{eyes:'happy',mouth:'open',hands:2,wave:(u>>1)&1,feet:true,leaf:[-20+fl,20-fl]}); }
-/* partida nueva: la semilla brilla, el Roble le manda su luz y brotan sus hojas */
-function drawPlantSprout(cx){ const t=FS.t, soil=fileSoilY(), k=clamp((t-24)/20,0,1);
-  ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage(ACORN_GOLD,cx-4,soil-5-(t<24?((t>>1)&1):0)); ctx.restore();
-  if(k>0) drawPotSeedling(cx,easeOutBack(k)*1.15,Math.sin(t*.2)*10); }
+  if(t<12){ drawPotBrote(cx,Math.round(6+t*.5),{eyes:'happy',mouth:'grin',rim:true,sq:1-t/12*.2},dx); return; }
+  const u=t-12, fy=soil+2-u*4.4+u*u*.035, fl=Math.sin(u*.9)*20, img=midSprout({eyes:'happy',mouth:'open',arms:'up',sq:u<5?1.2:1.05,leaf:[-24+fl,24-fl]});
+  if(fy>-10) ctx.drawImage(img,Math.round(cx-20),Math.round(fy-40)); }
+/* ---------- partida nueva: la siembra (FILE_PLANT fotogramas; Z salta) ----------
+   la bellota late · el Roble le manda su luz dorada con pétalos · la cáscara se parte y brota · el brote empuja la tierra,
+   despierta, mira a los lados, se alegra, salta fuera de la maceta de cuerpo entero y saluda · un iris de hojas se cierra */
+const PL={beat1:6,beat2:20,beam:30,crack:58,grow:60,push:82,wake:106,joy:120,hop:130,land:146,iris:156};
+function plantOut(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY(); // dónde está el brote y cómo, en cada momento
+  if(t<PL.push) return null;
+  if(t<PL.wake){ const k=presentEase.out(clamp((t-PL.push)/22,0,1)); return {x:cx,feet:soil+Math.round(34-k*22),clip:true,o:{eyes:'closed',leaf:[Math.sin(t*.3)*10,-Math.sin(t*.3)*10],sq:1+(1-k)*.12}}; }
+  if(t<PL.joy){ const u=t-PL.wake; return {x:cx,feet:soil+12-Math.min(4,u>>1),clip:true,o:{eyes:u<4?'closed':u<7?'open':'open',blink:u>=4&&u<6,look:u<8?0:u<11?-1:1}}; }
+  if(t<PL.hop){ return {x:cx,feet:soil+8,clip:true,o:{eyes:'happy',mouth:'open',arms:'up',sq:t-PL.joy<3?.85:1.08}}; }
+  if(t<PL.land){ const k=(t-PL.hop)/(PL.land-PL.hop), gx=cx+Math.round(k*24*(cx<130?1:-1)), y=Math.round(soil+8+(24-8)*k-Math.sin(k*Math.PI)*30); return {x:gx,feet:y,clip:k<.25,o:{eyes:'happy',mouth:'open',arms:'up',sq:1.12,leaf:[-20,20]}}; }
+  const u=t-PL.land, gx=cx+24*(cx<130?1:-1); return {x:gx,feet:soil+24,clip:false,o:{eyes:'happy',mouth:u<6?'grin':'smile',arms:(u>>3)&1?'wave':'up',sq:u<4?.82:1}}; }
+function drawPlantSprout(cx){ const t=FS.t, soil=fileSoilY();
+  if(t<PL.crack){ const beat=[PL.beat1,PL.beat2,PL.beam+6,PL.beam+16].some(b=>t>=b&&t<b+4); ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip();
+    if(t>=PL.beam) glowAt(cx,soil-2,8+Math.sin(t*.3)*2,'rgba(255,236,150,.55)'); ctx.drawImage(beat?ACORN_GOLD:ACORN_GOLD,cx-4,soil-5-(beat?1:0)); ctx.restore(); if(beat) glowAt(cx,soil-2,10,'rgba(255,246,200,.6)'); }
+  const g=clamp((t-PL.grow)/22,0,1); if(t>=PL.grow&&t<PL.push+8) drawPotSeedling(cx,easeOutBack(g),Math.sin(t*.25)*12);
+  const P=plantOut(); if(P&&P.clip){ const img=midSprout(P.o); ctx.save(); ctx.beginPath(); ctx.rect(cx-30,-60,60,soil+61); ctx.clip(); ctx.drawImage(img,Math.round(P.x-20),Math.round(P.feet-40)); ctx.restore(); } }
+/* lo que va por delante de las macetas: el brote ya fuera, y el iris que se cierra sobre él */
+function drawPlantFront(){ const t=FS.t, P=plantOut();
+  if(P&&!P.clip){ if(t>=PL.land) drawShadow(P.x,P.feet,6); ctx.drawImage(midSprout(P.o),Math.round(P.x-20),Math.round(P.feet-40)); }
+  if(t>=PL.iris&&P) fileIris(P.x,P.feet-16,1-presentEase.in(clamp((t-PL.iris)/(FILE_PLANT-PL.iris-4),0,1))); }
+/* la luz del Roble: se atenúa el prado salvo la maceta y baja un haz dorado desde la copa */
+function drawPlantBeam(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY(), dk=clamp(t/20,0,1)*(1-clamp((t-PL.land)/12,0,1));
+  if(dk>0){ const R=30, cy=soil-6; ctx.fillStyle='rgba(10,14,40,'+(dk*.38).toFixed(3)+')'; // el prado se apaga; el borde de la luz, tramado (sin corte duro)
+    for(let y=0;y<VH;y++) for(let x=0;x<VW;x+=1){ const d=Math.hypot(x+.5-cx,(y+.5-cy)*1.15)-R; if(d<0) { x=Math.max(x,Math.floor(cx+Math.sqrt(Math.max(0,R*R-((y+.5-cy)*1.15)**2)))-1); continue; } if(d<6&&BAYER4[y&3][x&3]/16>d/6) continue; let x2=x+1; while(x2<VW){ const d2=Math.hypot(x2+.5-cx,(y+.5-cy)*1.15)-R; if(d2<6) break; x2++; } ctx.fillRect(x,y,x2-x,1); x=x2-1; } }
+  const bk=clamp((t-PL.beam)/14,0,1)*(1-clamp((t-PL.push)/20,0,1)); if(bk<=0) return;
+  const ox=80, oy=34, w0=3+bk*3, w1=6+bk*8;
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  for(const [w,a] of [[1.3,.12],[1,.16],[.5,.22]]){ ctx.fillStyle='rgba(255,226,140,'+(a*bk).toFixed(3)+')'; ctx.beginPath(); ctx.moveTo(ox-w0*w,oy); ctx.lineTo(ox+w0*w,oy); ctx.lineTo(cx+w1*w,soil); ctx.lineTo(cx-w1*w,soil); ctx.fill(); }
+  ctx.restore(); glowAt(ox,oy,10*bk,'rgba(255,240,180,.5)'); }
 function fileSpot(){ // rayo de luz que se desliza hasta la maceta elegida
   fileSpotX+=(FILE_POT_X[fileSel]-fileSpotX)*.22; const x=fileSpotX, k=Math.min(1,fileT/20)*(FS.ph==='back'?1-clamp(FS.t/10,0,1):1)*(FS.ph==='plant'?1+clamp(FS.t/30,0,1.6):1);
   ctx.save(); ctx.globalCompositeOperation='lighter';
@@ -594,7 +638,7 @@ function drawFileCard(y){
 }
 function drawFileSelect(){
   const cam=titleCam;
-  drawSeasonWorld(cam); fileSpot(); drawPots(1,0); drawParts();
+  drawSeasonWorld(cam); if(FS.ph==='plant') drawPlantBeam(); else fileSpot(); drawPots(1,0); if(FS.ph==='plant') drawPlantFront(); drawParts();
   if(cam<1) drawLogo(-Math.round(cam*56),1-cam);
   const bk=FS.ph==='back'?clamp(FS.t/10,0,1):0, gok=FS.ph==='go'||FS.ph==='plant'?clamp(FS.t/10,0,1):0, hide=Math.max(bk,gok);
   // el cartel se desenrolla desde el centro
@@ -605,7 +649,6 @@ function drawFileSelect(){
   if(state==='file'&&FS.ph==='pick'){ const d=slotCache[fileSel], since=tick-fileWake[fileSel], rise=d?(fileConfirm?26:27):26, b=Math.round(Math.abs(Math.sin(tick*.12))*3);
     if(fileT>24&&fileDelT[fileSel]===0) ctx.drawImage(NEXT_SPR,FILE_POT_X[fileSel]-3,fileSoilY()-rise-12-b+(since<10?10-since:0)); }
   if(FS.ph==='go'&&FS.t>=40) fileIris(FILE_POT_X[fileSel],30,1-clamp((FS.t-40)/(FILE_GO-44),0,1)); // el iris de hojas se cierra sobre el cielo por donde se fue
-  if(FS.ph==='plant'){ const w=clamp((FS.t-44)/24,0,1), bl=clamp((FS.t-70)/14,0,1); if(w>0){ ctx.fillStyle='rgba(255,250,228,'+w.toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } if(bl>0){ ctx.fillStyle='rgba(0,0,0,'+bl.toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } }
 }
 /* el iris de hojas: negro alrededor de un círculo que se cierra (o se abre), con hojas que giran en su borde. k = 1 abierto · 0 cerrado */
 function fileIris(cx,cy,k){ const R=Math.round(k*200); if(R>=200) return;

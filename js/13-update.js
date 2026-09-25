@@ -358,9 +358,20 @@ function fileGoTick(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY();
   if(t>=FILE_GO){ const d=slotCache[fileSel]; FS={ph:'pick',t:0}; loadGame(d); parts=[]; startArrive(); } }
 /* partida nueva: la semilla brilla, la luz del Roble baja, brota y todo se funde hacia el prólogo */
 function filePlantTick(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY();
-  if(t<24&&(t%6)===0) sparkle(cx-4+Math.random()*8,soil-6,'#fff6c0');
-  if(t===24){ SFX.regrow&&SFX.regrow(); for(let k=0;k<8;k++) sparkle(cx-8+Math.random()*16,soil-20+Math.random()*16,'#fffbe0'); puff(cx,soil,'#5a3a1c',5,.8); }
-  if(t===46&&AC) SFX.chime();
+  if(keys.fire&&t>20){ keys.fire=false; FS.t=FILE_PLANT; } // Z: al prólogo
+  if(t===PL.beat1||t===PL.beat2){ if(typeof tiHeart==='function') tiHeart(t===PL.beat1?.8:1); }
+  if(t===PL.beam){ SFX.chime(); } if(t>PL.beam&&t<PL.push&&(t%3)===0){ const k=Math.random(); parts.push({k:'leafF',x:80+(cx-80)*k+(Math.random()-.5)*8,y:34+(soil-34)*k,vx:(cx-80)/60,vy:.5,life:40,max:40,sway:Math.random()*6,col:['#fff0a0','#ffd8e8','#fffbe0'][t%3],nog:true}); }
+  if(t===PL.beam+6||t===PL.beam+16){ if(typeof tiHeart==='function') tiHeart(1.2); }
+  if(t===PL.crack){ shake=2; if(AC){ noise(.06,.05,true,undefined,3000); beep('triangle',f(72),f(84),.12,.05); } screenFlash&&screenFlash(4,'#fffbe0');
+    for(const s of [-1,1]) parts.push({k:'shard',x:cx+s*2,y:soil-4,vx:s*1.1,vy:-1.6,life:22,max:22,col:'#c88a10'}); for(let k=0;k<8;k++) sparkle(cx-6+Math.random()*12,soil-10+Math.random()*8,'#fffbe0'); }
+  if(t===PL.grow+4&&AC) SFX.regrow();
+  if(t>=PL.push&&t<PL.wake&&(t&3)===0) parts.push({k:'shard',x:cx+(Math.random()-.5)*14,y:soil,vx:(Math.random()-.5)*1.4,vy:-1-Math.random(),life:14,max:14,col:Math.random()<.5?'#5a3a1c':'#8a6a40'});
+  if(t===PL.push+18){ shake=1; if(AC) beep('triangle',f(60),0,.1,.05); }
+  if(t===PL.wake+5&&AC) SFX.ping();
+  if(t===PL.joy&&AC){ beep('square',f(76),f(88),.1,.04); SFX.chime(); }
+  if(t===PL.hop&&AC) SFX.jump();
+  if(t===PL.land){ if(AC) SFX.land(); shake=2; const P=plantOut(); for(const s of [-1,1]) for(let k=0;k<3;k++) parts.push({k:'dust',x:P.x+s*(4+k*2),y:P.feet,vx:s*(.5+k*.25),vy:-.1,life:16,max:16,r:1+(k&1),col:'#e8dcc0',nog:true}); }
+  if(t===PL.iris&&AC) swish(.6,.05,900,3000,1600);
   if(t>=FILE_PLANT){ FS={ph:'pick',t:0}; newGame(); } }
 /* ---------- EL ZURRÓN (pausa) ---------- */
 const X_ITEMS=['bomb','hook','boomer','lantern','feather','molinillo'];
