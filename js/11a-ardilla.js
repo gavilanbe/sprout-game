@@ -10,47 +10,28 @@
    · Si la alcanzas mientras huye, suelta todas las bayas robadas en abanico y se queda mareada.
    · Sin bayas es tímida: si te acercas, se aparta a saltitos.
    ============================================================ */
-const SQ_FUR=['#3a1406','#7a3010','#b8541e','#e07a34','#f8b060'], SQ_TAIL=['#6a2a0c','#b85a1c','#ec8c34','#ffbc62','#fff0c8'], SQ_LINE='#3a1406';
-const SQ_CACHE=new Map();
-/* una pose, mirando a la IZQUIERDA (se voltea al dibujar). pose: sit | nibble | look | run | alert | carry | dizzy
-   sq: aplastar (<1) o estirar (>1) · tail: vaivén de la cola (-1..1) · f: fotograma (mordisqueo, pasos; 9 = parpadeo) */
-function squirrelArt(pose,sq,tail,f){ sq=Math.round((sq||1)*10)/10; tail=Math.round((tail||0)*2)/2; f=f||0;
-  const key=pose+'|'+sq+'|'+tail+'|'+f; let c=SQ_CACHE.get(key); if(c) return c;
-  const W=24, H=21; c=mkCanvas(W,H); const g=c.getContext('2d'), by=18; // by: la línea del suelo en el lienzo
-  const Y=y=>by-(by-y)*sq, L=(x,y,r,ry)=>({x,y:Y(y),r,ry:(ry||r)*sq});
-  const run=pose==='run', up=pose==='alert';
-  // la cola: un penacho continuo que sube en S por detrás (o se estira hacia atrás al correr), con su propio contorno
-  const T=run?[[13.5,12.5],[17,10],[19.5,7.5+tail],[20.5,4.5+tail*1.5],[19,2.5+tail*1.5]]
-             :up?[[12.5,14],[15,11],[16,7.5],[15.5,4],[13.5,2.5]]
-                :[[12,15],[15,12.5],[17,9+tail*.5],[16.5,5+tail*.5],[14.5,3+tail],[12.8,3.6+tail]];
-  const tl=[]; for(let i=0;i<T.length-1;i++) for(let k=0;k<2;k++){ const u=(i+k/2)/(T.length-1), x=T[i][0]+(T[i+1][0]-T[i][0])*k/2, y=T[i][1]+(T[i+1][1]-T[i][1])*k/2; tl.push(L(x,y,1.9+2*Math.sin(Math.PI*Math.min(1,u*1.15)))); }
-  blobArt(g,0,0,W,H,tl,SQ_TAIL,{outline:SQ_LINE,grad:.3,dither:.55});
-  // el cuerpo: pera sentada (o alargado al correr)
-  const body=run?[L(11,13,5.2,3.2),L(8,13.5,3,2.6)]:[L(10,13,3.7,4.3),L(11.5,15.2,3.2,2.4)];
-  blobArt(g,0,0,W,H,body,SQ_FUR,{outline:false,grad:.4,dither:.5});
-  // la cabeza con su hocico, y la oreja puntiaguda con mechón
-  const hx=run?5.6:(pose==='look'&&f?6.8:6.4), hy=run?10.4:up?5.4:7;
-  const head=[L(hx,hy,3.7,3.4),L(hx-2.6,hy+1.1,1.9,1.6)]; if(pose==='carry') head.push(L(hx-1,hy+2,2.5,2));
-  blobArt(g,0,0,W,H,head,SQ_FUR,{outline:SQ_LINE,grad:.2,dither:.45});
-  const P=(x,y,col)=>{ g.fillStyle=col; g.fillRect(Math.round(x),Math.round(Y(y)),1,1); };
-  const ex0=Math.round(hx+1), ey0=hy-3.4-(up?1:0); // la oreja: triángulo de 3 px de alto y el mechón oscuro
-  for(let j=0;j<3;j++){ P(ex0,ey0+j,j===0?SQ_FUR[0]:SQ_FUR[3]); if(j>0) P(ex0+1,ey0+j,SQ_FUR[2]); } P(ex0,ey0-1,SQ_LINE); P(ex0-1,ey0,SQ_LINE); P(ex0+1,ey0,SQ_LINE); P(ex0+2,ey0+1,SQ_LINE);
-  // la barriga crema, las manitas y los pies
-  if(!run){ for(let y=11;y<=16;y++) for(let x=8;x<=(y<13?9:10);x++) P(x,y,y<13?'#fff0d0':'#f4d8a8'); }
-  else { for(let x=8;x<=13;x++) P(x,15,'#f4d8a8'); }
-  if(pose==='nibble'||pose==='carry'){ P(hx-2.4,hy+3.2,'#fff0d0'); P(hx-1.4,hy+3.2,'#f4d8a8'); if(pose==='nibble'&&!(f&1)){ P(hx-2.4,hy+2.4,'#8a5a20'); } } // las manitas a la boca (con su bellotita)
-  else if(!run){ P(7.4,13,'#fff0d0'); P(7.4,14,'#e0b888'); }
-  if(run){ const a=f&1; for(const [x,c] of [[6+a,0],[7+a,1],[14-a,0],[15-a,1]]) P(x,17,SQ_FUR[c]); }
-  else { for(const [x,c] of [[7,0],[8,1],[12,0],[13,1]]) P(x,17,SQ_FUR[c]); }
-  // la cara: ojo grande con brillo (o mareo, o parpadeo), naricilla y moflete
-  const ex=Math.round(hx-.8), ey=Math.round(hy-1);
-  if(pose==='dizzy'){ for(const [a,b2] of [[-1,-1],[1,-1],[0,0],[-1,1],[1,1]]) P(ex+a,ey+b2,SQ_LINE); }
-  else if(f===9){ P(ex-1,ey+1,SQ_LINE); P(ex,ey+1,SQ_LINE); P(ex+1,ey+1,SQ_LINE); }
-  else { g.fillStyle=SQ_LINE; g.fillRect(ex-1,Math.round(Y(ey)),2,up?3:2); g.fillRect(ex-1,Math.round(Y(ey+ (up?3:2))),1,1); P(ex-1,ey,'#ffffff'); }
-  P(hx-4.4,hy+.6,'#e05070'); P(hx+.6,hy+1.8,'rgba(240,112,112,.8)');
-  if(pose==='carry'){ const bx=Math.round(hx-5), bY=Math.round(Y(hy+2.4)); g.fillStyle=SQ_LINE; g.fillRect(bx-1,bY-1,4,4); g.fillStyle='#d83060'; g.fillRect(bx,bY,2,2); g.fillStyle='#ff90b0'; g.fillRect(bx,bY,1,1); g.fillStyle='#3a8a3a'; g.fillRect(bx+1,bY-2,1,1); }
-  artOutline(g,W,H);
-  SQ_CACHE.set(key,c); if(SQ_CACHE.size>140) SQ_CACHE.delete(SQ_CACHE.keys().next().value); return c; }
+/* las poses, a mano y a 16×16 como los demás bichos (misma silueta que la ardilla de siempre, con más volumen):
+   mira a la IZQUIERDA; se voltea al dibujar. b pelo · B pelo claro · n pelo oscuro · v barriga · t/T/L cola (media, oscura, clara)
+   p naricilla · q brillo del ojo · a bellotita · r/R baya */
+const SQ_MAP={b:'#c07838',B:'#eaa868',n:'#8a4a20',v:'#f8e0b8',t:'#d89048',T:'#9a5a28',L:'#ffd898',p:'#f07080',q:'#ffffff',a:'#8a5a20',r:'#d83060',R:'#ff90b0'};
+const SQ_TAILR=["..........kkkk..",".........kTttLk.","........kTttLLtk","........ktTkkLtk","........ktk..kTk",".........k..ktTk","...........kttk.","..........kLtk..",".........kLtk...","........kLtTk...","........bttTk...","........ntTk....","........nnk....."];
+const SQ_ROWS={
+  sit:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbBqkbbk.k..ktTk","kbBkkbnk...kttk.","kpbbbnk...kLtk..",".kvvbbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  blink:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbBbbbbk.k..ktTk","kbkkbbnk...kttk.","kpbbbnk...kLtk..",".kvvbbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  nibble0:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbBqkbbk.k..ktTk","kbBkkbnk...kttk.","kpakvnk...kLtk..",".kavvbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  nibble1:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbBqkbbk.k..ktTk","kbBkkbnk...kttk.","kqakvbk...kLtk..",".kavvbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  look:["................","..........kkkk..",".........kTttLk.","...k.k..kTttLLtk","..kBkBk.ktTkkLtk","..kBbbbkktk..kTk",".kbbqkbbkk..ktTk",".kbbkkbnk...kttk","..kbbbnk..kLtk..","..kvvbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  run0:["................","................","................","............kk..","...........kLTk.","..k.k.....kLtTk.",".kBkBk...kLttk..","kbBqkbk.kLttk...","kbBkkbbkkttk....","kpbbbbbbbtk.....",".kvvvbbbbbk.....","..kvvbbbnnk.....","..knk..knk......","..kk....kk......","................","................"],
+  run1:["................","................","................","...........kk...","..........kLTk..","..k.k....kLtTk..",".kBkBk..kLttk...","kbBqkbk.kLtk....","kbBkkbbkkttk....","kpbbbbbbbtk.....",".kvvvbbbbbk.....","..kvvbbbnnk.....","...knkknk.......","...kk.kk........","................","................"],
+  alert:["................","................","..k.k.....kkk...",".kBkBk...kLtTk..",".kBbbbk..kLtTk..","kbBqkbbk.kLtTk..","kbBkkbnk.kLtTk..","kpbbbnk..kLtTk..",".kvvbbk..kLtTk..",".kvvbbbk.kLtk...",".kvvbbbbkLttk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  carry:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbBqkbbk.k..ktTk","kbBkkbnk...kttk.","krRbbnk...kLtk..","krrvbbbk.kLtk...",".kkvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"],
+  dizzy:["................","..........kkkk..",".........kTttLk.","..k.k...kTttLLtk",".kBkBk..ktTkkLtk",".kBbbbk.ktk..kTk","kbkbkbbk.k..ktTk","kbBkBbnk...kttk.","kpkbkbk...kLtk..",".kvvbbbk.kLtk...",".kvvbbbbkLtTk...",".kvvbbbbbtTk....","..kvbbbbnnk.....","..knbkknbk......","..kk..kk........","................"]};
+const SQ_SPR={}; for(const k in SQ_ROWS) SQ_SPR[k]=sprN(SQ_ROWS[k].map(r=>r.padEnd(16,'.').slice(0,16)),SQ_MAP);
+/* la pose que toca (compatibilidad con los parámetros de antes: sq y tail ya no se usan; el aplastado lo hace e.squash) */
+function squirrelArt(pose,sq,tail,f){ f=f||0;
+  if(f===9&&(pose==='sit'||pose==='nibble'||pose==='look')) return SQ_SPR.blink;
+  if(pose==='nibble') return SQ_SPR[(f&1)?'nibble1':'nibble0']; if(pose==='run') return SQ_SPR[(f&1)?'run1':'run0'];
+  return SQ_SPR[pose]||SQ_SPR.sit; }
 
 /* ---------- el comportamiento (lo llama updEnemies; devuelve noContact: la ardilla nunca hace daño) ---------- */
 const SQ_HOP=14;
@@ -59,7 +40,7 @@ function sqHopStart(e,dx,dy,sp,len){ e.hop={t:0,len:len||SQ_HOP,vx:dx*sp,vy:dy*s
 function sqHopStep(e){ const H=e.hop; if(!H) return false; H.t++;
   const [bx,by]=moveBlocked(e,e.x+H.vx+e.kx,e.y+H.vy+e.ky); if(e.st!=='flee'){ if(bx) H.vx*=-1; if(by) H.vy*=-1; } e.blocked=(bx||by)?(e.blocked||0)+1:0; // huyendo no rebota: se desliza
   e.z=Math.sin(H.t/H.len*Math.PI)*H.h;
-  if(H.t>=H.len){ e.hop=null; e.z=0; e.land=6; if(e.st!=='dash'||(tick&1)) stepDustAt(e.x+8,e.y+15,.4); return false; } return true; }
+  if(H.t>=H.len){ e.hop=null; e.z=0; e.land=6; e.squash=.3; if(e.st!=='dash'||(tick&1)) stepDustAt(e.x+8,e.y+15,.4); return false; } return true; }
 function updSquirrel(e,dx,dy,d){
   e.t++; if(e.land>0) e.land--; if(e.face===undefined) e.face=-1; if(e.stolen===undefined) e.stolen=0;
   // un golpe: chillido; si llevaba bayas robadas, las suelta en abanico y se marea
@@ -118,7 +99,7 @@ function drawSquirrel(e){ const z=Math.round(e.z||0), fl=e.flash>4;
   if(e.land>0&&!e.hop) sq=1-e.land*.04;
   const img=squirrelArt(pose,sq,tail,f), W=img.width, H=img.height;
   drawShadow(e.x+8,e.y+15,Math.max(3,5-z/3));
-  let x=Math.round(e.x-4), y=Math.round(e.y-5-z);
+  let x=Math.round(e.x), y=Math.round(e.y-z);
   if(e.st==='dig'){ const k=Math.min(1,e.dg/30); ctx.save(); ctx.beginPath(); ctx.rect(x-4,y-4,W+8,Math.round(H-k*H)+4); ctx.clip(); y+=Math.round(k*12); } // se mete en la tierra
   const src=fl?whiteArt(img):img;
   if(e.face>0){ ctx.save(); ctx.translate(x+W,y); ctx.scale(-1,1); ctx.drawImage(src,0,0); ctx.restore(); } else ctx.drawImage(src,x,y);
