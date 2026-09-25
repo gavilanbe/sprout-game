@@ -66,6 +66,7 @@ function drawPlayer(){
   if(player.spin>0) drawSpinBlade(py);
 }
 function drawEnemy(e){
+  { const D=ENEMY_DRAW[e.type]; if(D){ D(e); return; } } // cada bicho, a su manera (11a-11e)
   if(e.type==='squirrel'){ drawSquirrel(e); return; } // la ardilla, con sus poses (11a)
   if(MILL_ENEMY[e.type]){ drawMillEnemy(e); return; } // cuervo, caballero de hoja y raíz (12b)
   const S=E_SPR[e.type]; if(!S) return;

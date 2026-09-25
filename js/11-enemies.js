@@ -1,5 +1,10 @@
 'use strict';
 /* ---------- ENEMIGOS ---------- */
+/* ganchos para el aspecto y el juice de cada bicho (11a-11e): nada de esto cambia cómo juegan
+   ENEMY_DRAW[tipo](e)            lo dibuja entero (en lugar de drawEnemy; la sombra también es suya)
+   ENEMY_FX[tipo](e,dx,dy,d)      cada fotograma, tras su IA: partículas, sonidos, contadores de animación (no toca posición ni daño)
+   ENEMY_DEATH[tipo](e)           su muerte propia (en lugar del humo genérico); el botín cae igual */
+const ENEMY_DRAW={}, ENEMY_FX={}, ENEMY_DEATH={};
 function moveBlocked(e,nx,ny){ let bx=false,by=false;
   if(boxFree(nx+3,e.y+5,10,7)) e.x=nx; else bx=true;
   if(boxFree(e.x+3,ny+5,10,7)) e.y=ny; else by=true; return [bx,by]; }
@@ -113,6 +118,7 @@ function updEnemies(){
       e.t++; if(e.st==='out'){ if(e.t%3===0) moveBlocked(e,e.x+Math.sign(dx)*.5+e.kx,e.y+Math.sign(dy)*.5+e.ky); else moveBlocked(e,e.x+e.kx,e.y+e.ky); }
       else { blindHit=true; if(--e.shellT<=0) e.st='out'; }
     } else if(MILL_ENEMY[e.type]){ [noContact,blindHit]=updMillEnemy(e,dx,dy,d); } // cuervo, caballero de hoja, raíz trampa
+    { const FX=ENEMY_FX[e.type]; if(FX) FX(e,dx,dy,d); } // el juice de cada bicho (11b-11e)
     // ----- daño por contacto -----
     const eb=[e.x+3,e.y+4,10,9];
     if(!noContact&&!stunned&&!waking&&player.inv===0&&state==='play'&&jumpT===0&&rectsHit(eb,hitPlayerBox())){
@@ -133,7 +139,7 @@ function updEnemies(){
   enemies=enemies.filter(e=>{
     if(e.despawn) return false;
     if(e.hp<=0){
-      SFX.edie(); deathPoof(e.x+8,e.y+8); shake=Math.max(shake,4);
+      SFX.edie(); if(ENEMY_DEATH[e.type]) ENEMY_DEATH[e.type](e); else deathPoof(e.x+8,e.y+8); shake=Math.max(shake,4);
       if(e.type==='squirrel'){ const n=3+(e.stolen||0); for(let i=0;i<n;i++){ const a=-Math.PI*(.15+.7*(i+.5)/n); pickups.push({kind:'berry',x:e.x+4+Math.cos(a)*8,y:e.y+4+Math.sin(a)*4,t:0,drop:14+i*2}); } // sus bayas y las que robó, en abanico
         for(let i=0;i<6;i++) parts.push({k:'leafF',x:e.x+8,y:e.y+6,vx:(Math.random()-.5)*2,vy:-1-Math.random(),life:40,max:40,sway:Math.random()*6,col:['#e07c34','#ffac5c','#c8642a'][i%3],nog:false}); return false; }
       dropLoot(e.x+4,e.y+4,e.type==='thorn'?.4:.22,.35+(e.fast?.2:0));
