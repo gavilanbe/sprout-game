@@ -24,9 +24,10 @@ const server=http.createServer((req,res)=>{
   await ev(()=>{
     window.__press=(k,n)=>{ keys[k]=true; if(k==='fire') keys.fireHeld=true; __step(n||1); if(k==='fire') keys.fireHeld=false; if(k!=='fire'&&k!=='alt'&&k!=='menu') keys[k]=false; };
     window.__hold=(k,n)=>{ keys[k]=true; __step(n); keys[k]=false; };
-    window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } };
+    window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } if(presentQ) __skipPres(); };
     window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
-    window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); }; // la travesía de una puerta, cueva o escalera (15g)
+    window.__skipPres=()=>{ let i=0; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas)
+    window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
   });

@@ -70,7 +70,7 @@ function endPresent(){ const P=pres; if(!P) return;
   if(P.Q.kind==='boss'&&curTrack!==P.music) setTrack(P.music);
   if(P.Q.kind==='outro'){ presentQ=null; save(); saveFlash=45; } }
 function drawPresent(){ const P=pres; if(!P) return; P.R.draw(Math.min(P.t,P.dur),P);
-  if(P.t>=SKIP_T+6&&P.dur-P.t>30&&P.Q.kind!=='outro'){ const a=Math.min(1,(P.t-SKIP_T-6)/12); ctx.globalAlpha=a*(.55+.25*Math.sin(tick*.12)); txtS('Z: SALTAR',157,137,'#e8e0d0','right'); ctx.globalAlpha=1; } }
+  if(P.t>=SKIP_T+6&&P.dur-P.t>30&&P.Q.kind!=='outro'){ const a=Math.min(1,(P.t-SKIP_T-6)/12); ctx.globalAlpha=a*(.55+.25*Math.sin(tick*.12)); ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,VH-11,43,11); txtS('Z: SALTAR',157,VH-8,'#e8e0d0','right'); ctx.globalAlpha=1; } } // con su pastilla oscura: sobre el HUD también se lee
 /* al coger una reliquia (getItem): la salida del jefe, cuando acaben el objeto y su texto */
 function queueOutro(kind){ const type=RELIC_BOSS[kind]; if(type&&BOSS_OUTRO[type]&&!(boss&&boss.echo)) presentQ={kind:'outro',type}; }
 
