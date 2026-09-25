@@ -417,8 +417,8 @@ const server=http.createServer((req,res)=>{
   await check('El Eco de los Guardianes: tras el final la Gruta baja al Eco; cada eco se disuelve y abre la verja',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=cycled=true; hasBomb=true; bombAmmo=20; hasHook=true; hasLantern=true; hitStop=0;
       __go(5,9,72,60); const st=grid[1][8]; player.x=8*16; player.y=1*16-4; __step(3); __skipDoor(); const at=[sx,sy];
-      __go(1,12,20,60); const e=!!(boss&&boss.echo), g0=grid[3][9]; boss.hp=2; __step(2); const g1=grid[3][9];
-      __go(1,12,20,60); const t1=boss===null; hasPinwheel=true; __go(3,12,20,60); const c=boss&&boss.echo&&boss.type; boss.hp=2; __step(2); return [st,at,e,g0,g1,t1,c,grid[3][9]]; }),['>',[0,12],true,'=','q',true,'ciervo','q']);
+      __go(1,12,20,60); const e=!!(boss&&boss.echo), g0=grid[3][9]; boss.hp=2; __step(2); __skipPres(); const g1=grid[3][9];
+      __go(1,12,20,60); const t1=boss===null; hasPinwheel=true; __go(3,12,20,60); const c=boss&&boss.echo&&boss.type; boss.hp=2; __step(2); __skipPres(); return [st,at,e,g0,g1,t1,c,grid[3][9]]; }),['>',[0,12],true,'=','q',true,'ciervo','q']);
   });
   await check('Ajustes: volúmenes, dificultad y vibración se guardan; la dificultad cambia el daño',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; __go(0,1,60,70);
