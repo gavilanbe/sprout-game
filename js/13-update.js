@@ -3,8 +3,7 @@
 function startTransition(dx,dy){
   const nx=sx+dx, ny=sy+dy;
   if(!MAPS[nx+','+ny]){ return; }
-  if(!elderMet&&introDone&&inTown(sx,sy)&&!inTown(nx,ny)){
-    pendingSay=["(Tus raíces se\nclavan en el\nsuelo...","La voz del GRAN\nROBLE aún te\nreclama. Ve a la\nplaza.)"]; return; }
+  if(!elderMet&&introDone&&inTown(sx,sy)&&!inTown(nx,ny)){ rootTug(dx,dy); return; }
   if(bgDirty) rebuildBg(); bgEnsure(bgFrame());
   const a=mkCanvas(160,128); { const g=a.getContext('2d'); g.drawImage(bgCanvas[bgFrame()],0,0); g.drawImage(fgCanvas[bgFrame()],0,0); }
   const oldEnemies=enemies.map(e=>({...e})), oldNpcs=npcs.slice(), oldElder=elderPos;
@@ -18,7 +17,19 @@ function startTransition(dx,dy){
   if(!boxFree(player.x+4,player.y+8,8,8)){ [player.x,player.y]=findFree(player.x,player.y,dx?'y':'x'); }
   lastEntry={sx,sy,x:player.x,y:player.y};
 }
-let overUD=0;
+/* aún no puedes salir del pueblo: las raíces tiran de Sprout hacia dentro (nunca se queda en el borde repitiendo el aviso).
+   El texto sale la primera vez y, como recordatorio, si ha pasado un buen rato; entre medias, solo el tirón */
+let tugSayT=-99999;
+function rootTug(dx,dy){ if(player.tug>0) return;
+  if(dx===1) player.x=Math.min(player.x,160-18); if(dx===-1) player.x=Math.max(player.x,2); if(dy===1) player.y=Math.min(player.y,128-24); if(dy===-1) player.y=Math.max(player.y,-3);
+  player.kx=-dx*3.2; player.ky=-dy*3.2; player.tug=24; player.squash=-.3; shake=Math.max(shake,2);
+  const fx=player.x+8, fy=player.y+15;
+  for(let i=0;i<7;i++){ const a=-Math.PI*(i/6); parts.push({k:'shard',x:fx+Math.cos(a)*4,y:fy,vx:Math.cos(a)*.9-dx*.4,vy:-.8-Math.random()*.7-dy*.3,life:16,max:16,col:i&1?'#6a4a2a':'#8a6a40'}); }
+  for(let i=0;i<4;i++) parts.push({k:'dust',x:fx+(i-1.5)*4,y:fy,vx:(i-1.5)*.3,vy:-.1,life:14,max:14,r:1+(i&1),col:groundDustCol(),nog:true});
+  if(AC){ noise(.12,.04,false,undefined,300); beep('triangle',110,70,.16,.06); }
+  if(tick-tugSayT>900){ tugSayT=tick; pendingSay=["(Tus raíces se\nclavan en el\nsuelo...","La voz del GRAN\nROBLE aún te\nreclama. Ve a la\nplaza.)"]; }
+  else if(tick-tugTxtT>120){ tugTxtT=tick; flyText.push({x:player.x+8,y:player.y-6,txt:'¡La plaza!',t:40,col:'#fff6c0'}); } }
+let tugTxtT=-99999, overUD=0;
 function playerOnTile(){ const [tx,ty]=playerTile(); return grid[ty]&&grid[ty][tx]; }
 function update(){
   tick++;
@@ -131,7 +142,7 @@ function update(){
     updParts(); return; }
   if(player.inv>0)player.inv--;
   if(hasAmulet('musgo')&&player.hp<player.maxHp&&++regen>=900){ regen=0; player.hp++; SFX.heart(); amuletFx('musgo'); }
-  player.kx*=.75; player.ky*=.75;
+  player.kx*=.75; player.ky*=.75; if(player.tug>0) player.tug--;
   if(Math.abs(player.kx)>.1||Math.abs(player.ky)>.1) tryMove(player.kx,player.ky);
   const onTile=playerOnTile();
   // salto con el Vilano
@@ -145,6 +156,7 @@ function update(){
     let dx=0,dy=0;
     if(keys.left)dx=-1; else if(keys.right)dx=1;
     if(keys.up)dy=-1; else if(keys.down)dy=1;
+    if(player.tug>10){ dx=0; dy=0; } // las raíces aún tiran de él
     if(inBed&&(dx||dy)){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); puff(player.x+8,player.y+10,'#c06030',4,.8); noise(.1,.04,false); }
     if(dx||dy){ player.dir=dy<0?1:dy>0?0:(dx<0?2:3); tryPushBlock(); if(dx&&dy){dx*=.72;dy*=.72;} } else { pushLatch=false; pushHold=0; }
     let sp=playerSpeed();
