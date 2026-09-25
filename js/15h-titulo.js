@@ -364,7 +364,7 @@ function updTitle(){
   if(d!==TI.lastDir){ TI.lastDir=d; if(d>=0&&t>=TITLE_MENU){ TI.look={dir:d,t:tick}; if(AC) beep('square',520+d*60,700+d*60,.06,.02); } }
   if(keys.fire||keys.alt){ keys.fire=false; keys.alt=false; audio(true);
     if(t<TITLE_MENU) tiSkip();
-    else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; fileT=0; fileWake[fileSel]=tick+12; fileSpotX=FILE_POT_X[fileSel];
+    else { slotCache=[readSlot(0),readSlot(1),readSlot(2)]; fileSel=Math.max(0,slotCache.findIndex(d=>d)); fileConfirm=false; fileUD=0; state='file'; fileT=0; FS={ph:'pick',t:0}; fileHop=[-99,-99,-99]; fileDelT=[0,0,0]; fileWake[fileSel]=tick+30; fileSpotX=FILE_POT_X[fileSel];
       TI.go=tick; for(let i=0;i<7;i++) tiHop(TI.hops,i,6,12); for(let i=0;i<14;i++){ const a=i/14*6.283; parts.push({k:'leafF',x:80+Math.cos(a)*20,y:120,vx:Math.cos(a)*1.6,vy:-1-Math.random()*1.4,life:60,max:60,nog:false,sway:Math.random()*6,col:i&1?'#78d838':'#d0f890'}); }
       if(AC){ SFX.blip(); SFX.menuIn(); } } }
 }

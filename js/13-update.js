@@ -56,6 +56,7 @@ function update(){
   }
   if(state==='title'){ updTitle(); return; }
   if(state==='file'){ updFile(); return; }
+  if(state==='arrive'){ updArrive(); return; } // al continuar: Sprout cae del cielo a su sitio (15a)
   if(state==='fish'){ updFishing(); return; } // la pesca con Moss (12c)
   if(state==='credits'){ creditsT++; // los créditos avanzan; al final, Z vuelve al valle (post-juego)
     const si=((creditsT/420)|0)%4; if((tick%7)===0) parts.push({k:SEASONS[si].part,x:Math.random()*170-5,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:240,max:240,sway:Math.random()*6,r:(tick&8)?1:0,col:SEASONS[si].partCol[(tick>>3)&1],nog:true});
@@ -308,17 +309,47 @@ function updExits(){
 }
 /* ---------- TÍTULO Y ARCHIVOS ---------- */
 function updFile(){
-  updParts(); fileT++; titleCam=Math.min(1,titleCam+1/22); fileParts();
-  for(let i=0;i<3;i++) if(fileDelT[i]>0) fileDelT[i]--;
-  if(keys.menu){ keys.menu=false; if(fileConfirm) fileConfirm=false; else { state='title'; titleT=Math.max(titleT,TITLE_MENU); } SFX.blip(); return; }
+  updParts(); fileT++; FS.t++; if(FS.ph!=='back') titleCam=Math.min(1,titleCam+1/22); fileParts();
+  for(let i=0;i<3;i++){ if(fileDelT[i]>0){ fileDelT[i]--; fileDelTick(i); } fileEmergeFx(i); }
+  if(FS.ph==='go'){ fileGoTick(); return; }
+  if(FS.ph==='plant'){ filePlantTick(); return; }
+  if(FS.ph==='back'){ titleCam=Math.max(0,titleCam-1/16); if(FS.t>=18){ state='title'; titleT=Math.max(titleT,TITLE_MENU); FS={ph:'pick',t:0}; } return; }
+  if(fileT<30){ keys.fire=keys.alt=keys.menu=false; return; } // mientras brotan las macetas
+  if(keys.menu){ keys.menu=false; if(fileConfirm) fileConfirm=false; else { FS={ph:'back',t:0}; if(AC) beep('square',f(72),f(60),.18,.03); } SFX.blip(); return; }
   const lr=((keys.right||keys.down)?1:0)-((keys.left||keys.up)?1:0);
-  if(lr!==fileUD){ fileUD=lr; if(lr!==0&&!fileConfirm){ fileSel=(fileSel+(lr>0?1:2))%3; fileWake[fileSel]=tick; SFX.blip(); } }
+  if(lr!==fileUD){ fileUD=lr; if(lr!==0&&!fileConfirm&&fileDelT.every(v=>v===0)){ fileSel=(fileSel+(lr>0?1:2))%3; fileWake[fileSel]=tick; fileHop[fileSel]=tick; fileSelFx(fileSel); } }
   if(keys.fire){ keys.fire=false;
-    if(fileConfirm){ try{ localStorage.removeItem(slotKey(fileSel)); }catch(e){} slotCache[fileSel]=null; fileConfirm=false; SFX.cut(); shake=3;
-      fileDelT[fileSel]=36; const cx=FILE_POT_X[fileSel]; bladeBits(cx,fileSoilY()-10,['#78d838','#a4e070','#2e8a34'],12); puff(cx,fileSoilY(),'#5a3a1c',6,.8); }
-    else { curSlot=fileSel; const d=slotCache[fileSel]; if(d){ loadGame(d); state='play'; fadeIn=40; parts=[]; } else newGame(); } }
-  if(keys.alt){ keys.alt=false; if(fileConfirm){ fileConfirm=false; SFX.blip(); } else if(slotCache[fileSel]){ fileConfirm=true; SFX.bump(); } }
+    if(fileConfirm){ try{ localStorage.removeItem(slotKey(fileSel)); }catch(e){} slotCache[fileSel]=null; fileConfirm=false; fileDelT[fileSel]=FILE_DEL; if(AC) SFX.blip(); }
+    else if(fileDelT[fileSel]===0){ curSlot=fileSel; if(slotCache[fileSel]){ FS={ph:'go',t:0}; if(AC) SFX.charge&&SFX.charge(); } else { FS={ph:'plant',t:0}; if(AC) SFX.chime(); } } }
+  if(keys.alt){ keys.alt=false; if(fileConfirm){ fileConfirm=false; SFX.blip(); } else if(slotCache[fileSel]&&fileDelT[fileSel]===0){ fileConfirm=true; SFX.bump(); } }
 }
+/* las macetas brotan de la tierra: terrones al abrirse y un golpe al asentarse (con una nota que sube de una a otra) */
+function fileEmergeFx(i){ if(FS.ph!=='pick') return; const t0=8+i*8, cx=FILE_POT_X[i], gy=FILE_POT_Y+26;
+  if(fileT===t0){ for(let k=0;k<8;k++) parts.push({k:'shard',x:cx-12+k*3,y:gy,vx:(k-3.5)*.35,vy:-1.4-Math.random(),life:18,max:18,col:k&1?'#5a3a1c':'#8a6a40'}); if(AC) noise(.08,.04,false,undefined,500); }
+  if(fileT===t0+10){ for(let s of [-1,1]) for(let k=0;k<3;k++) parts.push({k:'dust',x:cx+s*(12+k*2),y:gy,vx:s*(.5+k*.25),vy:-.1,life:16,max:16,r:1+(k&1),col:'#e8dcc0',nog:true});
+    shake=Math.max(shake,1); if(AC){ beep('triangle',f(55+i*4),0,.12,.07); beep('square',f(67+i*4),0,.07,.02); } } }
+/* cambiar de maceta: salta, suelta un par de hojas y suena su nota */
+function fileSelFx(i){ const cx=FILE_POT_X[i]; for(let k=0;k<4;k++) parts.push({k:'leafF',x:cx-6+k*4,y:fileSoilY()-18,vx:(k-1.5)*.5,vy:-1-Math.random()*.6,life:40,max:40,sway:Math.random()*6,col:k&1?'#78d838':'#d0f890',nog:false});
+  if(AC){ beep('square',f(72+i*3),f(79+i*3),.06,.03); beep('triangle',f(60+i*3),0,.08,.04); } }
+/* borrar: la despedida (mano), el marchitarse y hundirse, los terrones y la hoja que sube; la semilla vuelve con un destello */
+function fileDelTick(i){ const t=FILE_DEL-fileDelT[i], cx=FILE_POT_X[i], soil=fileSoilY();
+  if(t===2&&AC) beep('triangle',f(67),f(64),.2,.03);
+  if(t===16&&AC) SFX.wilt&&SFX.wilt();
+  if(t===40){ SFX.cut(); shake=3; puff(cx,soil,'#5a3a1c',8,.9); for(let k=0;k<6;k++) parts.push({k:'shard',x:cx-6+k*2,y:soil,vx:(k-2.5)*.4,vy:-1.2-Math.random()*.8,life:16,max:16,col:'#6a4a2a'});
+    parts.push({k:'leafF',x:cx,y:soil-8,vx:.2,vy:-.9,life:70,max:70,sway:2,col:'#a4e070',nog:true}); }
+  if(t===52){ for(let k=0;k<6;k++) sparkle(cx-5+Math.random()*10,soil-6+Math.random()*4,'#fff6c0'); if(AC) SFX.ping(); } }
+/* continuar: el brote salta fuera y el iris de hojas se cierra; al acabar, el juego se abre donde lo dejaste */
+function fileGoTick(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY();
+  if(t===12){ SFX.jump(); shake=2; for(let k=0;k<10;k++){ const a=-Math.PI*(k/9); parts.push({k:'leafF',x:cx,y:soil-4,vx:Math.cos(a)*1.8,vy:Math.sin(a)*1.6-.6,life:50,max:50,sway:Math.random()*6,col:['#78d838','#d0f890','#2e8a34'][k%3],nog:false}); } puff(cx,soil,'#5a3a1c',6,1); }
+  if(t>12&&t<34&&(t&1)) parts.push({k:'mote',x:cx+(Math.random()-.5)*8,y:soil-30-(t-12)*4,vx:0,vy:.4,life:20,max:20,sway:Math.random()*6,col:'#fff6c0',nog:true});
+  if(t===40&&AC) swish(.5,.05,900,3000,1600);
+  if(t>=FILE_GO){ const d=slotCache[fileSel]; FS={ph:'pick',t:0}; loadGame(d); parts=[]; startArrive(); } }
+/* partida nueva: la semilla brilla, la luz del Roble baja, brota y todo se funde hacia el prólogo */
+function filePlantTick(){ const t=FS.t, cx=FILE_POT_X[fileSel], soil=fileSoilY();
+  if(t<24&&(t%6)===0) sparkle(cx-4+Math.random()*8,soil-6,'#fff6c0');
+  if(t===24){ SFX.regrow&&SFX.regrow(); for(let k=0;k<8;k++) sparkle(cx-8+Math.random()*16,soil-20+Math.random()*16,'#fffbe0'); puff(cx,soil,'#5a3a1c',5,.8); }
+  if(t===46&&AC) SFX.chime();
+  if(t>=FILE_PLANT){ FS={ph:'pick',t:0}; newGame(); } }
 /* ---------- EL ZURRÓN (pausa) ---------- */
 const X_ITEMS=['bomb','hook','boomer','lantern','feather','molinillo'];
 function ownedX(){ return X_ITEMS.filter(k=>({bomb:hasBomb,hook:hasHook,boomer:hasBoomer,lantern:hasLantern,feather:hasFeather,molinillo:hasPinwheel})[k]); }

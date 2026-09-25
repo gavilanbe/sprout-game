@@ -51,7 +51,7 @@ const server=http.createServer((req,res)=>{
     eq(r,['silencio','titulo','title',true,true,'titulo','title',2,'file']);
   });
   await check('Arranque: boot → título → archivos → partida nueva → cinemática → casa',async()=>{
-    eq(await ev(()=>{ state='boot'; bootT=50; keys.fire=true; __step(1); const s1=state; __step(70); const s2=state; titleT=TITLE_MENU+5; keys.fire=true; __step(1); const s3=state; keys.fire=true; __step(1); const s4=state;
+    eq(await ev(()=>{ state='boot'; bootT=50; keys.fire=true; __step(1); const s1=state; __step(70); const s2=state; titleT=TITLE_MENU+5; keys.fire=true; __step(1); const s3=state; __step(30); keys.fire=true; __step(1); for(let i=0;i<150&&state==='file';i++) __step(1); const s4=state; // las macetas brotan y la semilla se planta (15a)
       for(let i=0;i<8&&state==='cine';i++){ cineChars=9999; keys.fire=true; __step(1); if(cineFold) __step(30); } return [s1,s2,s3,s4,state,sx,sy,inBed]; }),['boot','title','file','cine','play',9,9,true]);
   });
   await check('Al moverse sale de la maceta; la salida de casa lleva al barrio',async()=>{

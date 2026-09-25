@@ -462,8 +462,11 @@ function cineParts(){
    o una semilla (una ranura libre). La elegida se despierta bajo
    un rayo de luz; al borrar, el brote se hunde y vuelve a semilla.
    ============================================================ */
-let titleCam=0, fileT=0, fileSpotX=80, fileWake=[0,0,0], fileDelT=[0,0,0];
-const FILE_POT_X=[30,80,130], FILE_POT_Y=72;
+let titleCam=0, fileT=0, fileSpotX=80, fileWake=[0,0,0], fileDelT=[0,0,0], fileHop=[-99,-99,-99];
+/* FS: la fase del selector — 'pick' (eligiendo), 'go' (el brote salta de la maceta y entra en el juego), 'plant' (una semilla
+   brota para una partida nueva), 'back' (vuelta al título: las macetas se hunden) */
+let FS={ph:'pick',t:0};
+const FILE_POT_X=[30,80,130], FILE_POT_Y=72, FILE_DEL=64, FILE_GO=74, FILE_PLANT=86;
 const POT_PALS=[['#4a1c0c','#7a3414','#b05426','#d8803e','#f4ac6c'],['#12204a','#22407a','#3662aa','#5a8ed4','#a4ccf4'],['#12321a','#225a2a','#358a38','#58b048','#a4dc80']];
 const FILE_POTS=POT_PALS.map(pal=>{ const c=mkCanvas(32,26), g=c.getContext('2d');
   blobArt(g,2,6,28,20,[{x:14,y:7,r:12.5,ry:9},{x:14,y:12,r:9.5,ry:6.5}],pal,{grad:.45,dither:.6});
@@ -473,48 +476,84 @@ const FILE_POTS=POT_PALS.map(pal=>{ const c=mkCanvas(32,26), g=c.getContext('2d'
   g.fillStyle=pal[4]; g.fillRect(6,15,20,1); g.fillStyle=pal[1]; for(let x=7;x<26;x+=4) g.fillRect(x,16,2,1);
   return c; });
 function fileSoilY(){ return FILE_POT_Y+5; }
+/* cuánto ha salido cada maceta de la tierra (0 enterrada · 1 fuera): brotan una tras otra al entrar y se hunden al volver */
+function potOut(i){ if(state!=='file') return 1; if(FS.ph==='back') return 1-clamp((FS.t-(2-i)*3)/12,0,1); return clamp((fileT-8-i*8)/14,0,1); }
 /* un brote dentro de su maceta: rise = píxeles que asoman por encima de la tierra */
 function drawPotSprout(cx,rise,img,dx,squash){
-  const soil=fileSoilY(); ctx.save(); ctx.beginPath(); ctx.rect(cx-24,0,48,soil+1); ctx.clip();
+  const soil=fileSoilY(); ctx.save(); ctx.beginPath(); ctx.rect(cx-24,-60,48,soil+61); ctx.clip();
   if(squash){ ctx.translate(cx+dx,soil); ctx.scale(1+squash*.15,1-squash*.15); ctx.drawImage(img,-16,-rise,32,32); }
   else ctx.drawImage(img,cx-16+dx,soil-rise,32,32);
   ctx.restore(); }
+/* las reliquias de cada partida, como flores en su maceta: la Brasa, la Lágrima, el Ámbar y el Copo */
+const RELIC_FLOWER=[['#f06030','#ffd070'],['#58a8f0','#e8f6ff'],['#e89820','#fff0a0'],['#f4f8ff','#8ac8f0']];
+function potFlowers(cx,d,i){ if(!d) return; const on=[d.thawed,d.summered,d.autumned||d.cycled,d.cycled], soil=fileSoilY(), X=[-14,-10,10,14]; // en el borde de la maceta, a los lados del brote
+  on.forEach((o,k)=>{ if(!o) return; const x=cx+X[k], sw=Math.round(Math.sin(tick*.05+k*1.7+i)*.6), y=soil-5-(k===1||k===2?1:0), C=RELIC_FLOWER[k];
+    ctx.fillStyle='#2e7a30'; ctx.fillRect(x,y+2,1,3); ctx.fillStyle=PAL.k; ctx.fillRect(x-2+sw,y-1,5,5);
+    ctx.fillStyle=C[0]; ctx.fillRect(x-1+sw,y,3,3); ctx.fillStyle=C[1]; ctx.fillRect(x+sw,y+1,1,1); }); }
 function drawPots(alpha,sink){
   ctx.save(); ctx.globalAlpha=alpha;
   for(let i=0;i<3;i++){
-    const cx=FILE_POT_X[i], sel=i===fileSel&&state==='file', d=slotCache[i];
-    const enter=state==='file'?clamp((fileT-6-i*5)/14,0,1):1, drop=Math.round((1-easeOutBack(enter))*46+(sink||0));
-    ctx.save(); ctx.translate(0,drop);
-    drawShadow(cx,FILE_POT_Y+24,13);
+    const cx=FILE_POT_X[i], sel=i===fileSel&&state==='file', d=slotCache[i], out=potOut(i);
+    if(out<=0) continue;
+    const hk=(tick-fileHop[i])/12, hop=hk>=0&&hk<1?Math.round(Math.sin(hk*Math.PI)*5):0, land=hk>=1&&hk<1.6?(1.6-hk)/.6:0;
+    const drop=Math.round((1-easeOutBack(out))*34+(sink||0))-hop;
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,VW,FILE_POT_Y+27); ctx.clip(); ctx.translate(0,drop); // lo que aún está bajo tierra no se ve
     const pot=FILE_POTS[i], px=cx-16, py=FILE_POT_Y;
-    const shakeX=sel&&fileConfirm?((tick>>1)&1?1:-1):0;
-    ctx.drawImage(pot,px+shakeX,py);
+    const shakeX=sel&&fileConfirm?((tick>>1)&1?1:-1):(FS.ph==='go'&&sel&&FS.t<12?((FS.t>>1)&1?1:-1):0);
+    if(land>0){ ctx.save(); ctx.translate(cx,py+26); ctx.scale(1+land*.12,1-land*.1); ctx.drawImage(pot,-16+shakeX,-26); ctx.restore(); } else ctx.drawImage(pot,px+shakeX,py);
     const since=tick-fileWake[i], wk=sel?clamp(since/10,0,1):0;
-    if(fileDelT[i]>0){ const k=fileDelT[i]/36; drawPotSprout(cx,Math.round(24*k),P_BLINK[0],shakeX,1-k); }
+    if(fileDelT[i]>0) drawDelSprout(cx,fileDelT[i],shakeX);
+    else if(sel&&FS.ph==='go') drawGoSprout(cx,shakeX);
+    else if(sel&&FS.ph==='plant') drawPlantSprout(cx);
     else if(d){ // un brote: dormido, o despierto si es el elegido
       let rise=Math.round(22+wk*6), img=wk>.3?P_SPRITES[0][0]:P_BLINK[0], sq=0;
       if(sel&&!fileConfirm){ if(since<22&&since>6) img=H_LIFT; const hp=(since-30)%110; if(since>30&&hp<16){ rise+=Math.round(Math.sin(hp/16*Math.PI)*7); img=hp<8?P_SPRITES[0][1]:img; } else if(since>30&&hp<22) sq=(22-hp)/6;
         if(((tick+i*50)%190)<6&&since>30) img=P_BLINK[0]; }
       if(sel&&fileConfirm){ img=P_SPRITES[0][0]; rise=26; }
-      if(!sel) rise+=((tick>>5)+i)&1;
+      if(FS.ph==='go'&&!sel){ img=H_LIFT; rise=26+(((tick>>3)+i)&1?1:0); } // los otros lo despiden con los brazos en alto
+      if(!sel&&FS.ph!=='go') rise+=((tick>>5)+i)&1;
+      if(out<1) rise=Math.round(rise*out);
       drawPotSprout(cx,rise,img,shakeX,sq);
       if(sel&&fileConfirm&&(tick&15)<11){ ctx.fillStyle=PAL.k; ctx.fillRect(cx+9,fileSoilY()-rise+6,3,4); ctx.fillStyle='#8ad0ff'; ctx.fillRect(cx+10,fileSoilY()-rise+6+((tick>>3)&1),1,2); }
-      if(!sel&&((tick+i*40)%120)<70){ const zt=((tick+i*40)%120)/70; txtS('z',cx+10+Math.round(zt*4),fileSoilY()-24-Math.round(zt*10),'#e8f0ff'); } }
+      if(!sel&&FS.ph==='pick'&&out>=1&&((tick+i*40)%120)<70){ const zt=((tick+i*40)%120)/70; txtS('z',cx+10+Math.round(zt*4),fileSoilY()-24-Math.round(zt*10),'#e8f0ff'); } }
     else { // una semilla que espera; la elegida echa un brote
       const soil=fileSoilY(); ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage(ACORN_GOLD,cx-4,soil-5); ctx.restore();
-      if(sel){ const g2=easeOutBack(wk), sw=Math.round(Math.sin(tick*.08)*1); ctx.save(); ctx.translate(cx+sw,soil-2); ctx.scale(1,Math.max(.05,g2)); ctx.drawImage(H_SEEDLING,0,0,16,13,-16,-26,32,26); ctx.restore(); }
+      if(sel&&out>=1){ const g2=easeOutBack(wk), sw=Math.round(Math.sin(tick*.08)*1); ctx.save(); ctx.translate(cx+sw,soil-2); ctx.scale(1,Math.max(.05,g2)); ctx.drawImage(H_SEEDLING,0,0,16,13,-16,-26,32,26); ctx.restore(); }
       if(((tick+i*37)&31)===0) sparkle(cx-3+Math.random()*6,soil-4,'#fff6c0'); }
+    if(fileDelT[i]===0) potFlowers(cx+shakeX,d,i); // por delante del brote
     txtOL(''+(i+1),cx,py+14,'#fff6d8','center',POT_PALS[i][0]);
-    ctx.restore(); }
+    ctx.restore();
+    if(out>0&&out<1){ const my=FILE_POT_Y+26; ctx.fillStyle='#5a3a1c'; ctx.fillRect(cx-15,my-1,30,2); ctx.fillStyle='#3a2410'; ctx.fillRect(cx-13,my,26,1); } } // el montón de tierra que se abre
   ctx.restore();
 }
+/* borrar: se despide con la mano, se marchita, se hunde entre terrones y en su sitio vuelve a asomar la semilla */
+function drawDelSprout(cx,T,dx){ const t=FILE_DEL-T, soil=fileSoilY();
+  if(t<16){ drawPotSprout(cx,26,(t>>2)&1?H_LIFT:P_SPRITES[0][0],dx,0); return; }
+  if(t<42){ const k=(t-16)/26, rise=Math.round(26*(1-k*k)); ctx.save(); ctx.beginPath(); ctx.rect(cx-24,-60,48,soil+61); ctx.clip(); ctx.translate(cx+dx,soil); ctx.rotate(Math.sin(k*9)*.12*(1-k)); ctx.drawImage(P_BLINK[0],-16,-rise,32,32); ctx.restore(); return; }
+  const k=clamp((t-48)/12,0,1); if(k>0){ ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage(ACORN_GOLD,cx-4,Math.round(soil-5+(1-easeOutBack(k))*6)); ctx.restore(); } }
+/* continuar: se agacha, salta fuera de la maceta girando y se pierde por arriba */
+function drawGoSprout(cx,dx){ const t=FS.t, soil=fileSoilY();
+  if(t<12){ drawPotSprout(cx,26,P_SPRITES[0][0],dx,t/12*.9); return; }
+  const u=t-12, y=soil-26-u*4.2+u*u*.03, frames=[P_SPRITES[0][1],P_SPRITES[2][1],P_SPRITES[1][1],P_SPRITES[3][1]], img=frames[(u>>1)&3];
+  if(y>-40){ ctx.save(); ctx.translate(cx,y+16); ctx.scale(u<4?1-(4-u)*.08:1,u<4?1+(4-u)*.1:1); ctx.drawImage(img,-16,-16,32,32); ctx.restore(); } }
+/* partida nueva: la semilla brilla, el Roble le manda su luz y brota */
+function drawPlantSprout(cx){ const t=FS.t, soil=fileSoilY(), k=clamp((t-24)/20,0,1);
+  ctx.save(); ctx.beginPath(); ctx.rect(cx-16,0,32,soil+2); ctx.clip(); ctx.drawImage((t>>2)&1&&t<24?ACORN_GOLD:ACORN_GOLD,cx-4,soil-5-(t<24?((t>>1)&1):0)); ctx.restore();
+  if(k>0){ const g2=easeOutBack(k); ctx.save(); ctx.translate(cx,soil-2); ctx.scale(1,Math.max(.05,g2*1.25)); ctx.drawImage(H_SEEDLING,0,0,16,13,-16,-26,32,26); ctx.restore(); } }
 function fileSpot(){ // rayo de luz que se desliza hasta la maceta elegida
-  fileSpotX+=(FILE_POT_X[fileSel]-fileSpotX)*.22; const x=fileSpotX, k=Math.min(1,fileT/20);
+  fileSpotX+=(FILE_POT_X[fileSel]-fileSpotX)*.22; const x=fileSpotX, k=Math.min(1,fileT/20)*(FS.ph==='back'?1-clamp(FS.t/10,0,1):1)*(FS.ph==='plant'?1+clamp(FS.t/30,0,1.6):1);
   ctx.save(); ctx.globalCompositeOperation='lighter';
   ctx.fillStyle='rgba(255,246,200,'+(0.09*k).toFixed(3)+')'; ctx.beginPath(); ctx.moveTo(x-8,0); ctx.lineTo(x+10,0); ctx.lineTo(x+24,FILE_POT_Y+22); ctx.lineTo(x-22,FILE_POT_Y+22); ctx.fill();
   ctx.fillStyle='rgba(255,250,220,'+(0.08*k).toFixed(3)+')'; ctx.beginPath(); ctx.moveTo(x-3,0); ctx.lineTo(x+5,0); ctx.lineTo(x+13,FILE_POT_Y+22); ctx.lineTo(x-11,FILE_POT_Y+22); ctx.fill();
-  ctx.restore(); glowAt(x,FILE_POT_Y+22,20,'rgba(255,246,200,'+(0.22*k).toFixed(3)+')'); }
+  ctx.restore(); glowAt(x,FILE_POT_Y+22,20,'rgba(255,246,200,'+(Math.min(.6,0.22*k)).toFixed(3)+')'); }
 function clockIcon(x,y,col){ ctx.fillStyle=PAL.k; ctx.fillRect(x+1,y,5,7); ctx.fillRect(x,y+1,7,5); ctx.fillStyle='#fff6d8'; ctx.fillRect(x+1,y+1,5,5); ctx.fillStyle=col; ctx.fillRect(x+3,y+2,1,2); ctx.fillRect(x+4,y+3,1,1); }
+/* iconos del cartel, a su tamaño (nada encogido): las cuatro reliquias en 8×8 y un alfiler para el sitio */
+const RELIC_MINI=[
+  spr8(['...k....','..kOk...','.kOYk...','.kOYOk..','kOYWYOk.','kOYWYOk.','.kOYOk..','..kkk...'],{O:'#e84818',Y:'#f8b030',W:'#fff4c0'}),
+  spr8(['...k....','..kBk...','..kBk...','.kBLBk..','kBLWLBk.','kBLLLBk.','.kBBBk..','..kkk...'],{B:'#2a70c8',L:'#68b0f0',W:'#ffffff'}),
+  spr8(['...kk...','..kAAk..','.kAYYAk.','kAYWYYAk','kAYYYYAk','.kAYYAk.','..kkkk..','...k....'],{A:'#b86010',Y:'#f0b030',W:'#fff4c0'}),
+  spr8(['...k....','.k.W.k..','..kWk...','kWWWWWk.','..kWk...','.k.W.k..','...k....','........'],{W:'#e8f6ff'})];
+const PIN_MINI=spr8(['.kkk....','kRRRk...','kRWRk...','kRRRk...','.kRk....','..k.....','........','........'],{R:'#e04040',W:'#ffd0d0'});
 function drawFileCard(y){
   const i=fileSel, d=slotCache[i], F=drawFrame(6,y,148,31,'wood');
   if(fileConfirm&&d){ roundBox(6,y,148,31,'rgba(200,40,30,.22)');
@@ -524,29 +563,44 @@ function drawFileCard(y){
   if(!d){ txt('NUEVO BROTE',22,y+3,F.key); txt('Una semilla espera.',10,y+13,F.text); txt('¡Pulsa Z y plántala!',10,y+22,F.text); return; }
   const ch=d.cycled?5:d.autumned?4:d.summered?3:d.thawed?2:d.won?1:0;
   txt(CHAPTER_NAMES[ch],22,y+3,F.key); clockIcon(116,y+3,'#8a1808'); txt(timeStr(d.playTime||0).slice(0,-3),150,y+3,F.text,'right');
-  const mh=Math.min(10,((d.maxHp||6)/2)|0); for(let h=0;h<mh;h++) ctx.drawImage(HEART_FULL,10+h*7,y+13,7,7);
-  ctx.drawImage(ACORN_GOLD,116,y+12); txt(Math.min(8,d.seeds||0)+'/8',150,y+13,F.text,'right');
-  [[EMBER_SPR,d.thawed],[TEAR_SPR,d.summered],[AMBER_SPR,d.autumned||d.cycled],[FLAKE_SPR,d.cycled]].forEach(([sp,on],k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.25; ctx.drawImage(sp,0,0,16,16,10+k*11,y+21,10,10); ctx.restore(); });
-  const am=(d.amulets||[]).length, lt=(d.collected||[]).filter(c=>c[0]==='✉').length;
-  const amT=am+'/'+Object.keys(AMULETS).length, lx=Math.max(92,70+textW(amT)+5);
-  ctx.drawImage(AMULET_SPR.raiz,0,0,12,12,58,y+21,10,10); txt(amT,70,y+22,F.text);
-  ctx.drawImage(LETTER_SPR,0,0,LETTER_SPR.width,LETTER_SPR.height,lx,y+22,10,8); txt(lt+'/5',lx+12,y+22,F.text);
+  const mh=Math.min(10,((d.maxHp||6)/2)|0); for(let h=0;h<mh;h++) ctx.drawImage(HEART_FULL,10+h*8,y+12);
+  ctx.drawImage(ACORN_GOLD,118,y+12); txt(Math.min(8,d.seeds||0)+'/8',150,y+13,F.text,'right');
+  [d.thawed,d.summered,d.autumned||d.cycled,d.cycled].forEach((on,k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.22; ctx.drawImage(RELIC_MINI[k],10+k*9,y+21); ctx.restore(); });
+  const R=d.respawn, place=R&&PLACE_NAMES[R.sx+','+R.sy];
+  if(place){ ctx.drawImage(PIN_MINI,50,y+21); let p=place; while(p.length>4&&textW(p,FONT_S)>92) p=p.slice(0,-1); if(p!==place) p=p.trimEnd()+'…'; txtS(p,57,y+23,F.text); }
 }
 function drawFileSelect(){
   const cam=titleCam;
   drawSeasonWorld(cam); fileSpot(); drawPots(1,0); drawParts();
   if(cam<1) drawLogo(-Math.round(cam*56),1-cam);
-  const rk=clamp(fileT/16,0,1); ribbon(80,Math.round(-16+21*easeOutBack(rk)),textW('ELIGE TU BROTE')+14,'ELIGE TU BROTE');
-  const ck=clamp((fileT-12)/14,0,1); if(ck>0){ const y=Math.round(104+(1-easeOutBack(ck))*44); drawFileCard(y);
-    const fk=clamp((fileT-20)/10,0,1); if(fk>0){ ctx.globalAlpha=fk; txtSO(fileConfirm?'Z ARRANCAR · X CANCELAR':slotCache[fileSel]?'Z JUGAR · X BORRAR · ENTER ATRÁS':'Z PLANTAR · ENTER ATRÁS',80,139,fileConfirm?'#ffd0c0':'#fff6d8','center','#1a1408'); ctx.globalAlpha=1; } }
-  if(state==='file'){ const d=slotCache[fileSel], since=tick-fileWake[fileSel], rise=d?(fileConfirm?26:27):26, b=Math.round(Math.abs(Math.sin(tick*.12))*3);
-    if(fileT>18&&fileDelT[fileSel]===0) ctx.drawImage(NEXT_SPR,FILE_POT_X[fileSel]-3,fileSoilY()-rise-12-b+(since<10?10-since:0)); }
+  const bk=FS.ph==='back'?clamp(FS.t/10,0,1):0, gok=FS.ph==='go'||FS.ph==='plant'?clamp(FS.t/10,0,1):0, hide=Math.max(bk,gok);
+  // el cartel se desenrolla desde el centro
+  const rk=clamp((fileT-4)/14,0,1), rw=Math.round((textW('ELIGE TU BROTE')+14)*easeOutBack(rk)), ry=Math.round(5-hide*24);
+  if(rk>0&&rw>6){ ctx.save(); ctx.beginPath(); ctx.rect(80-rw/2-10,ry-2,rw+20,20); ctx.clip(); ribbon(80,ry,textW('ELIGE TU BROTE')+14,'ELIGE TU BROTE'); ctx.restore(); }
+  const ck=clamp((fileT-14)/14,0,1); if(ck>0){ const y=Math.round(104+(1-easeOutBack(ck))*44+hide*48); drawFileCard(y);
+    const fk=clamp((fileT-22)/10,0,1)*(1-hide); if(fk>0){ ctx.globalAlpha=fk; txtSO(fileConfirm?'Z ARRANCAR · X CANCELAR':slotCache[fileSel]?'Z JUGAR · X BORRAR · ENTER ATRÁS':'Z PLANTAR · ENTER ATRÁS',80,139,fileConfirm?'#ffd0c0':'#fff6d8','center','#1a1408'); ctx.globalAlpha=1; } }
+  if(state==='file'&&FS.ph==='pick'){ const d=slotCache[fileSel], since=tick-fileWake[fileSel], rise=d?(fileConfirm?26:27):26, b=Math.round(Math.abs(Math.sin(tick*.12))*3);
+    if(fileT>24&&fileDelT[fileSel]===0) ctx.drawImage(NEXT_SPR,FILE_POT_X[fileSel]-3,fileSoilY()-rise-12-b+(since<10?10-since:0)); }
+  if(FS.ph==='go'&&FS.t>=40) fileIris(FILE_POT_X[fileSel],30,1-clamp((FS.t-40)/(FILE_GO-44),0,1)); // el iris de hojas se cierra sobre el cielo por donde se fue
+  if(FS.ph==='plant'){ const w=clamp((FS.t-44)/24,0,1), bl=clamp((FS.t-70)/14,0,1); if(w>0){ ctx.fillStyle='rgba(255,250,228,'+w.toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } if(bl>0){ ctx.fillStyle='rgba(0,0,0,'+bl.toFixed(2)+')'; ctx.fillRect(0,0,VW,VH); } }
 }
+/* el iris de hojas: negro alrededor de un círculo que se cierra (o se abre), con hojas que giran en su borde. k = 1 abierto · 0 cerrado */
+function fileIris(cx,cy,k){ const R=Math.round(k*200); if(R>=200) return;
+  ctx.fillStyle='#050805'; for(let y=0;y<VH;y++){ const dy=y+.5-cy, h=R*R-dy*dy; if(h<=0){ ctx.fillRect(0,y,VW,1); continue; } const w=Math.sqrt(h), x0=Math.round(cx-w), x1=Math.round(cx+w); if(x0>0) ctx.fillRect(0,y,x0,1); if(x1<VW) ctx.fillRect(x1,y,VW-x1,1); }
+  if(R>2){ const n=Math.max(6,Math.round(R/3)); for(let i=0;i<n;i++){ const a=i/n*6.283+tick*.03, x=Math.round(cx+Math.cos(a)*R), y=Math.round(cy+Math.sin(a)*R), f=(i+(tick>>3))&1;
+    ctx.drawImage(tintCached(LEAF_FALL[f],i%3===0?'#a8e070':i%3===1?'#58b048':'#2e8a34'),x-1,y-1); } } }
 function fileParts(){
   const si=menuSeason(), S=SEASONS[si];
   if((tick%(si===3?5:11))===0) parts.push({k:S.part,x:Math.random()*170-5,y:-4,vx:(si===2?.4:.1)+(Math.random()-.5)*.3,vy:.3+Math.random()*.35,life:260,max:260,sway:Math.random()*6,r:(tick&8)?1:0,col:S.partCol[(tick>>3)&1],nog:true});
   if((tick%14)===0) parts.push({k:'mote',x:fileSpotX-10+Math.random()*20,y:20+Math.random()*60,vx:0,vy:.12,life:90,max:90,sway:Math.random()*6,col:'#fff6c0',nog:true});
 }
+/* al continuar: el iris se abre sobre el sitio guardado y Sprout cae del cielo a su sitio (state 'arrive') */
+let arriveT=0; const ARRIVE_T=46;
+function startArrive(){ state='arrive'; arriveT=ARRIVE_T; jumpT=1; jumpZ=90; placeBanner=null; }
+function updArrive(){ arriveT--; const t=ARRIVE_T-arriveT; updParts();
+  if(t<=26){ const k=t/26; jumpZ=Math.round(90*(1-k*k)); if(t===26){ jumpZ=0; SFX.land(); shake=3; player.squash=-.5; for(let i=0;i<6;i++){ const s=i<3?-1:1; parts.push({k:'dust',x:player.x+8+s*(3+(i%3)*2),y:player.y+15,vx:s*(.5+(i%3)*.3),vy:-.1,life:16,max:16,r:1+(i&1),col:groundDustCol(),nog:true}); } } }
+  if(arriveT<=0){ jumpT=0; jumpZ=0; state='play'; const key=sx+','+sy; if(PLACE_NAMES[key]&&regionOf(sx,sy)!=='casa') placeBanner={txt:PLACE_NAMES[key],t:110}; } }
+function drawArrive(){ const t=ARRIVE_T-arriveT; fileIris(player.x+8,player.y+8,clamp(t/22,0,1)); }
 /* la cinemática de estación (cuando vuelve cada reliquia) vive ahora en 15f-roble.js: el valle cambia de verdad */
 /* ============================================================
    EL FINAL: cuatro planos antes de los créditos.
