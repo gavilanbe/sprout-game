@@ -12,3 +12,4 @@ test-results/
 
 # el tráiler renderizado (fotogramas, audio y vídeos: npm run trailer)
 tools/trailer/out/
+.claude/worktrees/
