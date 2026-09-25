@@ -354,7 +354,7 @@ const server=http.createServer((req,res)=>{
       for(const type of Object.keys(BOSS_INTRO)){ let key=null; for(const k in MAPS){ const [x,y]=k.split(',').map(Number); if(y===12) continue; newGame(); introDone=true; loadScreen(x,y); const B=boss||midboss; if(B&&B.type===type){ key=[x,y]; break; } }
         if(!key){ bad.push('sin sala: '+type); continue; } roll({kind:'boss',type,echo:false,mid:!BOSS_INTRO[type]||!boss},()=>{ newGame(); introDone=true; loadScreen(key[0],key[1]); player.x=72; player.y=100; presentQ=null; }); }
       for(const dng of Object.keys(DNG_CARD)) roll({kind:'dng',dng},()=>{ newGame(); introDone=true; const k=Object.keys(MAPS).find(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dng&&!MAPS[k].join('').match(/[J!^Λ]/); }); const [x,y]=k.split(',').map(Number); loadScreen(x,y); presentQ=null; });
-      for(const type of Object.keys(BOSS_OUTRO)) roll({kind:'outro',type},()=>{ newGame(); introDone=true; const R=BOSS_OUTRO[type]; loadScreen(...({topo:[6,2],avispa:[10,2],viento:[1,-3],ciervo:[20,-1]}[type]||[R.dest.sx,R.dest.sy])); presentQ=null; player.x=72; player.y=80; });
+      for(const type of Object.keys(BOSS_OUTRO)) roll({kind:'outro',type},()=>{ newGame(); introDone=true; const R=BOSS_OUTRO[type]; loadScreen(...({topo:[6,2],avispa:[10,2],viento:[1,-3],ciervo:[19,-1]}[type]||[R.dest.sx,R.dest.sy])); presentQ=null; player.x=72; player.y=80; });
       return {bad,out}; });
     eq(r.bad,[]);
   });

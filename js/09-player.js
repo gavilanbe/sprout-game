@@ -375,7 +375,7 @@ function exitDungeon(){
   if(sx===5) placeAt(0,0,20,30,0);
   else if(sx>=18&&sx<=20) placeAt(4,3,112,28,0); // del Molino a la Ciénaga, bajo la puerta
   else if(sx>=14) placeAt(1,-2,64,26,0);
-  else if(sx>=10) placeAt(1,3,68,34,0);
+  else if(sx>=10) placeAt(1,3,68,30,0);
   else placeAt(2,-1,76,34,0);
 }
 /* ---------- LAS TIENDAS ---------- */
