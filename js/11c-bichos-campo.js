@@ -72,21 +72,46 @@ ENEMY_DEATH.gust=e=>{ const x=e.x+8, y=e.y+7; for(let i=0;i<10;i++){ const a=i/1
   cpBurst(x,y,['#ffffff','#a8d8f0'],6,1,{k:'mote',life:20,nog:true}); parts.push({x,y,vx:0,vy:0,life:12,col:'#e8f6ff',ring:true,r:14,nog:true});
   if(AC) swish(.3,.05,2400,900,1200); };
 
-/* ---------- EL CARÁMBANO: un brillo le recorre; al notarte tiembla, se agrieta y gotea; cae con estela y se hace añicos ---------- */
-function icicleShatter(x,y){ cpBurst(x,y,['#ffffff','#e8f4ff','#a8d0f0','#6a90c0'],12,1.9,{life:14});
-  for(let i=0;i<4;i++) parts.push({k:'flake',x:x-4+i*3,y,vx:(i-1.5)*.5,vy:-.8,life:30,max:30,col:'#ffffff',nog:true,r:i&1});
-  parts.push({x,y,vx:0,vy:0,life:12,col:'#ffffff',ring:true,r:12,nog:true}); shake=Math.max(shake,2); if(AC) beep('square',1800,2600,.05,.025); }
-ENEMY_DRAW.icicle=e=>{ const src=e.flash>4?cpW(ICICLE_SPR):ICICLE_SPR, x=Math.round(e.x), y=Math.round(e.y);
-  if(e.st==='fall'){ ctx.fillStyle='rgba(232,246,255,.7)'; for(const [ox,L] of [[6,6],[9,9],[8,4]]) ctx.fillRect(x+ox,y-L-2,1,L); } // estela de caída
+/* ---------- EL CARÁMBANO: un racimo de tres carámbanos que cuelga de un pegote de nieve (16×16, contorno negro).
+   Colgado: un brillo le baja y en la punta se forman gotas que caen y salpican. Al notarte tiembla, la grieta crece en dos
+   tiempos y gotea deprisa. Al caer, el pegote se queda arriba y solo cae el hielo, con estela; contra el suelo se hace añicos,
+   con una onda de escarcha y trocitos que se derriten; el pegote se deshace en nieve. ---------- */
+const ICE_T=['#ffffff','#e4f2ff','#a8d0f0','#6a90c0','#3c5a8a']; // canto, cara clara, media, sombra, fondo
+const ICE_SPIKES=[[8.5,3,6.4,12.5],[4.6,3,3.4,6.5],[12.2,3,3.6,8.5]]; // [centro x, arriba, ancho, largo]
+function iceBodyArt(crack){ const c=mkCanvas(16,16), g=c.getContext('2d');
+  for(const [cx,top,w,L] of ICE_SPIKES) for(let y=0;y<L;y++){ const hw=w/2*(1-y/L); if(hw<.35) continue; const x0=Math.round(cx-hw), x1=Math.round(cx+hw)-1;
+    for(let x=x0;x<=Math.max(x0,x1);x++){ const u=x1>x0?(x-x0)/(x1-x0):.5; g.fillStyle=u<.18?ICE_T[0]:u<.45?ICE_T[1]:u<.78?ICE_T[2]:ICE_T[3]; g.fillRect(x,Math.round(top+y),1,1); } }
+  g.fillStyle=ICE_T[0]; g.fillRect(7,5,1,3); g.fillRect(8,9,1,2); g.fillStyle=ICE_T[3]; g.fillRect(10,5,1,2); // facetas: brillo y hendidura
+  if(crack>=1){ g.fillStyle=ICE_T[4]; g.fillRect(8,4,1,2); g.fillRect(9,6,1,1); g.fillRect(8,7,1,1); }
+  if(crack>=2){ g.fillStyle=ICE_T[4]; g.fillRect(9,8,1,2); g.fillRect(7,9,1,1); g.fillRect(4,5,1,1); g.fillRect(12,6,1,2); }
+  artOutline(g,16,16); return c; }
+const ICE_BODY=[iceBodyArt(0),iceBodyArt(1),iceBodyArt(2)];
+const ICE_CAP=(()=>{ const c=mkCanvas(16,16), g=c.getContext('2d'); // el pegote de nieve del que cuelga
+  blobArt(g,0,0,16,16,[{x:4.4,y:2.8,r:3,ry:2},{x:12.4,y:2.9,r:2.8,ry:1.9},{x:8.4,y:2.3,r:3.8,ry:2.3}],['#7a92b8','#b0c6e2','#dceaf8','#f4faff','#ffffff'],{grad:.3,dither:.5});
+  return c; })();
+const ICE_W={}; function iceWhite(img){ return ICE_W[ICE_BODY.indexOf(img)]||(ICE_W[ICE_BODY.indexOf(img)]=tintTo(img,'#ffffff')); }
+function icicleShatter(x,y,ground){ cpBurst(x,y,['#ffffff','#e4f2ff','#a8d0f0','#6a90c0'],14,2,{life:16});
+  for(let i=0;i<5;i++) parts.push({k:'flake',x:x-6+i*3,y,vx:(i-2)*.5,vy:-.9,life:30,max:30,col:'#ffffff',nog:true,r:i&1});
+  if(ground) for(let i=0;i<6;i++) parts.push({k:'dust',x:x-7+i*2.8+Math.random(),y:y+2+(i&1),vx:0,vy:0,life:90+i*6,max:96,r:1,col:i&1?'#e4f2ff':'#a8d0f0',nog:true}); // trocitos que se derriten
+  parts.push({x,y,vx:0,vy:0,life:14,col:'#e4f2ff',ring:true,r:14,nog:true}); shake=Math.max(shake,2);
+  if(AC){ const t=audio().currentTime; beep('square',1900,2700,.05,.025,t); beep('triangle',2400,1600,.09,.02,t+.03); noise(.08,.04,true,t,5200); } }
+ENEMY_DRAW.icicle=e=>{ const x=Math.round(e.x), y=Math.round(e.y), x0=Math.round(e.x0!==undefined?e.x0:e.x), y0=Math.round(e.y0!==undefined?e.y0:e.y);
+  const crack=e.st==='shake'?(e.st2>10?1:2):e.st==='fall'?2:0, body=ICE_BODY[crack], src=e.flash>4?iceWhite(body):body;
+  if(e.st==='fall'){ const k=Math.min(1,(e.y-y0)/40); ctx.globalAlpha=1-k; ctx.drawImage(ICE_CAP,x0,y0); ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(232,246,255,.75)'; for(const [ox,L] of [[5,5],[8,9],[12,6]]) ctx.fillRect(x+ox,y-L+2,1,L); } // el pegote se queda; el hielo cae con estela
+  else ctx.drawImage(ICE_CAP,x,y);
+  if(e.st==='fall'||e.st==='shake') drawShadow(x+8,Math.min(y+16+Math.round(e.st==='fall'?0:0),y0+64),3);
   ctx.drawImage(src,x,y);
-  if(e.st==='shake'){ ctx.fillStyle='#4a6a98'; ctx.fillRect(x+6,y+2,1,2); ctx.fillRect(x+7,y+4,1,1); ctx.fillRect(x+6,y+5,1,1); } // la grieta
-  if(e.st==='hang'){ const g=(tick+(e.x|0)*7)%90; if(g<10){ ctx.fillStyle='#ffffff'; ctx.fillRect(x+5+(g>>2),y+1+g,1,1); } } // el brillo que baja
+  if(e.st==='hang'){ const g=(tick+(e.x|0)*7)%100; if(g<12){ ctx.fillStyle='#ffffff'; ctx.fillRect(x+6+(g>>3),y+4+g,1,1); ctx.fillRect(x+7+(g>>3),y+5+g,1,1); } // el brillo que baja
+    const dp=(tick+(e.x|0)*13)%70; if(dp>40){ const r=dp>60?2:1; ctx.fillStyle=PAL.k; ctx.fillRect(x+8,y+15,1,r+1); ctx.fillStyle='#a8d8f8'; ctx.fillRect(x+8,y+15,1,r); } } // la gota que se forma
   cpStun(e); };
-ENEMY_FX.icicle=(e,dx,dy,d)=>{ const p=cpPrev(e);
-  if(e.st==='shake'&&(tick&3)===0) parts.push({k:'shard',x:e.x+8,y:e.y+11,vx:0,vy:.6,life:14,max:14,col:'#a8d0f0'});
-  if(p==='shake'&&e.st==='fall'){ cpBurst(e.x+8,e.y+1,['#ffffff','#e8f4ff'],4,.8,{life:10}); if(AC) beep('square',900,1400,.05,.02); }
-  if(e.st==='fall'&&e.despawn) icicleShatter(e.x+8,e.y+11); }; // se estrella contra el suelo
-ENEMY_DEATH.icicle=e=>icicleShatter(e.x+8,e.y+6);
+ENEMY_FX.icicle=(e,dx,dy,d)=>{ const p=cpPrev(e); if(e.y0===undefined&&e.st==='hang') e.y0=e.y;
+  if(e.st==='hang'&&((tick+(e.x|0)*13)%70)===69) parts.push({k:'shard',x:e.x+8.5,y:e.y+16,vx:0,vy:.9,life:12,max:12,col:'#a8d8f8'}); // cae la gota…
+  if(e.st==='shake'){ if((tick&1)===0) parts.push({k:'shard',x:e.x+6+Math.random()*5,y:e.y+13,vx:0,vy:.8,life:12,max:12,col:'#a8d0f0'}); if((tick&7)===0) parts.push({k:'mote',x:e.x+4+Math.random()*9,y:e.y+3,vx:0,vy:.2,life:14,max:14,sway:0,col:'#ffffff',nog:true}); }
+  if(p==='hang'&&e.st==='shake'&&AC) beep('square',700,1100,.05,.02);
+  if(p==='shake'&&e.st==='fall'){ cpBurst(e.x+8,e.y+3,['#ffffff','#dceaf8'],6,.9,{life:12}); if(AC) beep('square',900,1500,.06,.025); }
+  if(e.st==='fall'&&e.despawn){ icicleShatter(e.x+8,e.y+12,true); const y0=e.y0!==undefined?e.y0:e.y; cpBurst(e.x+8,y0+3,['#ffffff','#dceaf8','#b0c6e2'],6,.6,{life:18}); } }; // se estrella; el pegote se deshace en nieve
+ENEMY_DEATH.icicle=e=>{ icicleShatter(e.x+8,e.y+8,false); cpBurst(e.x+8,e.y+3,['#ffffff','#dceaf8'],5,.6,{life:16}); };
 
 /* ---------- EL SETÓN: respira y parpadea; se hincha poco a poco temblando, escupe con retroceso y una nube de esporas ---------- */
 const SETON_BLINK=spr(["................","......kkkk......","....kkHHRRkk....","...kHHwwRRRRk...","..kHwwwRRRwwRk..","..kRwwRRRRwwRk..",".kRRRRRRwwRRRrk.",".krRRwwRRRRRrrk.",".kkrrrrrrrrrrkk.","...kssssssssk...","...kssssssssk...","...kskksskkSk...","...kscsmmscSk...","...kSsssssSSk...","....kkkkkkkk....","................"],SETON_FX);
