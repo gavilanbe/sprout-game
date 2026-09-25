@@ -95,7 +95,7 @@ const server=http.createServer((req,res)=>{
     eq(await ev(()=>{ __go(8,0,72,90); __skipDialog(); const m0=midboss&&midboss.hp; midboss.dir=1; midboss.st='walk'; midboss.x=72; midboss.y=48;
       player.x=100; player.y=52; player.dir=2; player.atk=11; midboss.flash=0; __step(1); const front=midboss.hp;
       player.x=52; player.y=52; player.dir=3; player.atk=11; midboss.flash=0; __step(1); const back=midboss.hp;
-      __sprout.killBoss(); hitStop=0; __step(2); const drop=pickups.some(p=>p.kind==='bomb'); return [m0,front,back,midboss===null,midKing,drop]; }),[10,10,9,true,true,true]);
+      __sprout.killBoss(); hitStop=0; __step(2); __skipPres(); const drop=pickups.some(p=>p.kind==='bomb'); return [m0,front,back,midboss===null,midKing,drop]; }),[10,10,9,true,true,true]);
   });
   await check('La bomba rompe rocas agrietadas y daña bichos; el amuleto del Topo evita el daño propio',async()=>{
     eq(await ev(()=>{ hasBomb=true; xItem='bomb'; __go(2,1,40,90); player.x=2*16; player.y=5*16-6; keys.alt=true; __step(1); const placed=bombs.length; __step(85); const broke=grid[4][2]; const hpA=player.hp;

@@ -59,9 +59,10 @@ function presentPlaceBoss(){ const B=boss||midboss; if(!B) return; const w=B.w||
   let cx=B.x+w/2, cy=B.y+h/2; if(Math.hypot(cx-pcx,cy-pcy)>=BOSS_ROOM) return;
   let dx=cx-pcx, dy=cy-pcy, d=Math.hypot(dx,dy); if(d<1){ dx=80-pcx; dy=64-pcy; d=Math.hypot(dx,dy)||1; if(d<1){ dx=0; dy=-1; d=1; } }
   const minX=24+w/2, maxX=VW-24-w/2, minY=Math.min(20,B.y)+h/2, maxY=PLAY_H-28-h/2, /* con aire: nunca pegado a la pared (los voladores pueden seguir arriba) */ at=(k)=>[clamp(pcx+dx/d*k,minX,maxX),clamp(pcy+dy/d*k,minY,maxY)];
-  let best=null, bd=-1; for(let k=BOSS_ROOM;k<=140;k+=4){ const [x,y]=at(k), dd=Math.hypot(x-pcx,y-pcy); if(dd>bd){ bd=dd; best=[x,y]; } if(dd>=BOSS_ROOM) break; }
-  if(bd<BOSS_ROOM) for(const c of [[minX,minY],[maxX,minY],[minX,maxY],[maxX,maxY]]){ const dd=Math.hypot(c[0]-pcx,c[1]-pcy); if(dd>bd){ bd=dd; best=c; } } // sin hueco en esa dirección: la esquina más lejana
-  const nx=Math.round(best[0]-w/2), ny=Math.round(best[1]-h/2), ox=nx-B.x, oy=ny-B.y; B.x=nx; B.y=ny;
+  const fly=B.type==='avispa'||B.type==='viento'||B.type==='drone'||B.type==='topo', free=([x,y])=>fly||boxFree(Math.round(x-w/2)+4,Math.round(y-h/2)+h/2,w-8,h/2-2); // los que andan, nunca dentro de un pilar (el Topo va bajo tierra y los que vuelan, por encima)
+  let best=null, bd=-1; for(let k=BOSS_ROOM;k<=140;k+=4){ const c=at(k); if(!free(c)) continue; const dd=Math.hypot(c[0]-pcx,c[1]-pcy); if(dd>bd){ bd=dd; best=c; } if(dd>=BOSS_ROOM) break; }
+  if(bd<BOSS_ROOM) for(const c of [[minX,minY],[maxX,minY],[minX,maxY],[maxX,maxY]]){ if(!free(c)) continue; const dd=Math.hypot(c[0]-pcx,c[1]-pcy); if(dd>bd){ bd=dd; best=c; } } // sin hueco en esa dirección: la esquina más lejana
+  if(!best) return; const nx=Math.round(best[0]-w/2), ny=Math.round(best[1]-h/2), ox=nx-B.x, oy=ny-B.y; B.x=nx; B.y=ny;
   if(B.mx!==undefined){ B.mx+=ox; B.my+=oy; } }
 /* la llamada del bucle de juego: arranca lo que haya en cola (true si ha empezado algo) */
 function startPresent(){
@@ -72,7 +73,7 @@ function startPresent(){
   if(Q.kind==='boss'){ presentPlaceBoss(); bossHidden=false; }
   pres={Q,R,t:0,short,dur:short?(R.shortDur||R.dur):R.dur,skip:false,music:Q.music||curTrack,st:{},swapped:false};
   state=Q.kind==='outro'?'outro':'present';
-  player.atk=player.spin=player.charge=0; player.kx=player.ky=0; keys.fire=keys.alt=false; bossCard=null; toast=null;
+  player.atk=player.spin=player.charge=0; player.kx=player.ky=0; keys.fire=keys.alt=false; bossCard=null; toast=null; placeBanner=null;
   if(R.start) R.start(pres);
   return true;
 }

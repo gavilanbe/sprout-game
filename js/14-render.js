@@ -234,6 +234,7 @@ function drawScene(){
 /* barra de vida del guardián: marco, corona, y el daño se queda un instante en blanco */
 let bossBarLag=null;
 function drawBossBar(b){
+  if(presentAwaiting()||(pres&&pres.Q.kind==='boss')) return; // la sala aún está vacía / el jefe se está presentando: la barra llega con la pelea
   const max=b.maxHp||8, k=Math.max(0,b.hp)/max; if(bossBarLag===null||bossBarLag<k) bossBarLag=k; bossBarLag+=(k-bossBarLag)*.06;
   const x=36, y=3, w=88;
   ctx.fillStyle=PAL.k; ctx.fillRect(x-1,y,w+2,9); ctx.fillRect(x,y-1,w,11);
