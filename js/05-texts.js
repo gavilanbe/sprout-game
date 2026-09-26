@@ -259,6 +259,16 @@ const MID_INTRO={
   drone:["(Un zumbido rígido llena el nido. Es un soldado del panal, con coraza de cera dura.)","(La Hoja no le hará ni un rasguño... a no ser que algo lo ablande.)"],
   iceguard:["(Los bloques del templo se juntan y cobran forma: hielo vacío, con algo gris dentro.)","(La Hoja no le hace nada. Tendría que ablandarse... con un buen estallido.)"],
 };
+/* los Anillos del Roble (12i) */
+const RING_T={
+  get:["¡El ANILLO DEL AÑO!","Un corte del tronco del Roble, con los cuatro colores del año.","Dentro del Roble, con X, hace girar la estación de la sala en la que estás."],
+  enter:["(Dentro del tronco huele a savia y a nieve vieja.)","(Esto es un recuerdo del valle: el último invierno que alguien cantó.)"],
+  hints:{
+    '22,4':["(Un recuerdo: el valle de hace mucho, en invierno. El Roble era un arbolito.)","(Aquí siempre es invierno... a no ser que el año gire.)"],
+    '23,4':["(Un estanque helado, con un islote. En la orilla, un bloque.)","(Y dos capullos de nenúfar, dormidos en el hielo.)"],
+    '23,3':["(Algo gris se revuelve entre los árboles del recuerdo...)"],
+  },
+};
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
 const CV_T={
   mother:["(Un temblor sube desde lo más hondo de la cueva, por todas las raíces a la vez...)","—¡Brote! ¿Lo notas? Es mi raíz madre: ha despertado con el calor de los dos fogones.","—Te espera abajo, en la cripta. Ella guarda lo que buscas."],
@@ -426,9 +436,9 @@ const C5T={
   tilo:["¡Un cliente! Creo.","¿Esto cuánto costaba? ¿Y esto qué es, una baya?","¿Las bayas se venden o se comen?","Mira el género... si sabes qué es, cliente."],
   pot:["¿Dormir en la maceta?"], potNo:["(Todavía no.)"],
   dream:["Sprout.","Despierto ya no puedo hablarte: la polilla me tiene la voz en la boca.","Mis anillos son los años del valle. Ella se los come de fuera hacia dentro.",
-    "Si llega al primero, al día en que nos plantaron...","...mi hermano y yo nunca habremos sido hermanos.","Ahora bajará a por el último nombre que le falta.","El tuyo, brote.",
-    "No tengas miedo. Deja que se lo coma.","Un nombre no es de quien lo lleva. Es de quien lo llama.","Y a ti te llama todo el valle, aunque ahora no lo sepa.",
-    "Cuando vuelvas a ser tú, gira. Con las cuatro estaciones dentro.","Despierta. Te espero en la plaza."],
+    "Si llega al primero, al día en que nos plantaron...","...mi hermano y yo nunca habremos sido hermanos.","Toma. Es el ANILLO DEL AÑO: hazlos girar.",
+    "Entra por mi tronco y ve hacia dentro, anillo a anillo, hasta el primer día.","Y cuando venga a por tu nombre, no tengas miedo.","Un nombre no es de quien lo lleva. Es de quien lo llama.",
+    "Y a ti te llama todo el valle, aunque ahora no lo sepa.","Despierta. Te espero dentro."],
   wake:["(Te despiertas en tu maceta. Hueles a polvo gris... y a hojas nuevas.)"],
   lost:'(¿Cómo se andaba...?)',
   voices:[ // el final: el valle llama a Sprout y cada voz devuelve algo (15o)

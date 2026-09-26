@@ -46,7 +46,7 @@ const server=http.createServer((req,res)=>{
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:89});
+      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:92});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -172,6 +172,23 @@ const server=http.createServer((req,res)=>{
     eq(await ev(()=>{ bossDone=false; topoGift=false; __go(8,2,72,90); __skipDialog(); const hp=boss.hp; boss.hp=2; __step(2); __skipDialog(); const st=boss.st; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2);
       const ember=pickups.some(p=>p.kind==='ember'); __go(8,2,72,90); const guest=npcs.some(n=>n.guest==='topo'); player.x=5*16; player.y=3*16+6; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2); if(state==='itemget'){ itemT=0; __step(2); __skipDialog(); }
       return [hp,st,bossDone,ember,guest,amulets.has('topo')]; }),[18,'yield',true,true,true,true]);
+  });
+  await check('Los Anillos del Roble, el de invierno: el hueco del tronco se abre tras el sueño; el Anillo gira la estación de la sala; el estanque de las dos estaciones (el bloque resbala, se hunde y deja piedra); la Oruga del Olvido solo sufre por la cola y huye por el desgarro',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem; state='play'; hitStop=0; const was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno];
+      boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); xItem='anillo';
+      __go(1,1,80,56); player.x=80; player.y=56; player.dir=1; keys.fire=true; __step(1); let i=0; while(state==='door'&&i++<200) __step(1); for(let k=0;k<60;k++){ __step(1); if(state==='dialog') __skipDialog(); }
+      out.push(sx+','+sy,roomSeason('22,4'),grid[3][7]);
+      player.x=96; player.y=44; keys.alt=true; __step(1); for(let k=0;k<30;k++) __step(1); out.push(roomSeason('22,4'),grid[3][7]); keys.alt=true; __step(1); for(let k=0;k<30;k++) __step(1); keys.alt=true; __step(1); for(let k=0;k<30;k++) __step(1); keys.alt=true; __step(1); for(let k=0;k<30;k++) __step(1); out.push(roomSeason('22,4'),grid[3][7]);
+      __go(23,4,4,44); __step(40); __skipDialog(); player.x=64; player.y=44; player.dir=3; keys.right=true; i=0; while(!iceBlockAnim&&i++<40) __step(1); keys.right=false; for(let k=0;k<40;k++) __step(1); out.push(grid[3][6]);
+      player.x=80; player.y=44; for(let n=0;n<2;n++){ keys.alt=true; __step(1); for(let k=0;k<40;k++) __step(1); } out.push(roomSeason('23,4'),grid[3][6],grid[3][7],grid[3][3]);
+      const mv=(k,n)=>{ keys[k]=true; for(let q=0;q<n;q++) __step(1); keys[k]=false; for(let q=0;q<10;q++) __step(1); }; mv('right',14); mv('right',14); mv('up',14); keys.up=true; i=0; while(sx===23&&sy===4&&i++<80) __step(1); keys.up=false; for(let k=0;k<60;k++){ __step(1); if(state==='dialog') __skipDialog(); }
+      out.push(sx+','+sy,!!oruga); player.inv=9999; for(let k=0;k<120;k++) __step(1);
+      const O=oruga; O.eatT=1e9; for(const [x,y] of O.eaten) grid[y][x]='.'; O.eaten=[]; lastEntry={sx,sy,x:112,y:96}; // que no se caiga en lo roído mientras la golpea
+      const [bx,by]=oruSeg(2); player.x=bx-8; player.y=by+2; player.dir=1; player.atk=11; O.flash=0; hitStop=0; const hp0=O.hp; __step(2); out.push(O.hp===hp0);
+      let n=0; while(oruga&&oruga.st==='crawl'&&n++<20){ if(state!=='play'){ __skipDialog(); __skipPres(); if(state!=='play') __step(1); continue; } const [tx,ty]=oruSeg(O.segs-1); player.x=tx-8; player.y=ty+2; player.dir=1; player.atk=11; O.flash=0; hitStop=0; __step(1); for(let k=0;k<14;k++) __step(1); }
+      for(let k=0;k<120;k++){ __step(1); if(state==='dialog') __skipDialog(); } out.push(O.hp,grid[0][4],opened.has('ORU23,3'));
+      player.inv=0; player.x=64; player.y=20; keys.up=true; i=0; while(sx===23&&i++<80) __step(1); keys.up=false; i=0; while(state==='door'&&i++<200) __step(1); out.push(opened.has('RINGSDONE'),sx+','+sy);
+      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; opened.delete('RINGSDONE'); c5Fin=null; state='play'; xItem=x0; return out; }),['22,4',3,'∩',0,'.',3,'∩','#',1,'Ꞣ','@','@','23,3',true,true,0,'ꞻ',true,true,'1,1']);
   });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
@@ -312,7 +329,8 @@ const server=http.createServer((req,res)=>{
       player.x=2*16; player.y=6*16-4; player.dir=3; keys.fire=true; __step(1); skipAll(()=>c5.copo&&state==='play',900); log.push(['altar',c5.copo]);
       __go(0,1,32,100); player.x=2*16; player.y=6*16-4; player.dir=1; keys.fire=true; __step(1); skipAll(()=>state==='play',200); log.push(['petra',c5.hint]);
       __go(9,9,48,60); player.x=3*16; player.y=3*16-4; player.dir=1; keys.fire=true; __step(1); skipAll(()=>state==='c5dream',200);
-      let d=0; while(state==='c5dream'&&d++<4000){ if(c5D) c5D.chars=999; keys.fire=true; __step(1); } skipAll(()=>state==='play',200); log.push(['sueño',c5.sueno]);
+      let d=0; while(state==='c5dream'&&d++<4000){ if(c5D) c5D.chars=999; keys.fire=true; __step(1); } skipAll(()=>state==='play',200); itemT=0; __step(2); skipAll(()=>state==='play',200); log.push(['sueño',c5.sueno,opened.has('ANILLO'),xItem]);
+      opened.add('RINGSDONE'); // los Anillos del Roble tienen su propia prueba
       __go(1,1,72,98); const fin=state; d=0;
       while(d++<12000&&state!=='ending'&&state!=='credits'){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; __step(1); continue; } if(c5Fin&&c5Fin.ph==='charge'){ keys.fireHeld=c5Fin.charge<1; __step(1); continue; } __step(1); }
       keys.fireHeld=false; log.push(['nombre',fin,cycled,state]);
@@ -320,7 +338,7 @@ const server=http.createServer((req,res)=>{
       creditsT=CREDITS.length*22+100; keys.fire=true; __step(1); const post=state; for(let i=0;i<80;i++) __step(1); keys.fire=true; __step(1); log.push(['después',post,state]);
       return log; });
     eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques',true,'q','##'],['pista','1,6 1,5 3,5 3,2 1,2 1,3 9,3',1],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['campanas',true,'q'],['puerta','q'],['cima',1,-3],
-      ['copo',true,true,1,1],['olvido',true,'silk',true],['altar',true],['petra',true],['sueño',true],['nombre','c5fin',true,'ending'],['final',true,'credits'],['después','c5post','play']]);
+      ['copo',true,true,1,1],['olvido',true,'silk',true],['altar',true],['petra',true],['sueño',true,true,'anillo'],['nombre','c5fin',true,'ending'],['final',true,'credits'],['después','c5post','play']]);
   });
   await check('Camino crítico: el Molino de la Hojarasca (emboscada, grieta y mapa, Espantapájaros, la Rueda Mayor, brújula, el Foso de los Sacos, el eje, llave grande, Ciervo, otoño)',async()=>{
     const r=await ev(()=>{ const log=[];

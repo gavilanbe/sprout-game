@@ -204,13 +204,14 @@ function c5RaizMute(){ const P=C5T.raizPoint, next=!autumned?P.otono:!c5.copo?P.
   q[i].done=c5.copo||cycled; const add=[];
   if(c5.copo) add.push({id:'recuerda',txt:'Busca quien recuerde',done:c5.hint||c5.sueno||cycled});
   if(c5.hint||c5.sueno) add.push({id:'maceta',txt:'Duerme en tu MACETA',done:c5.sueno||cycled});
-  if(c5.sueno) add.push({id:'nombre',txt:'La PLAZA: el OLVIDO',done:cycled});
+  if(c5.sueno) add.push({id:'anillos',txt:'Entra en el ROBLE',done:opened.has('RINGSDONE')||cycled});
+  if(opened.has('RINGSDONE')) add.push({id:'nombre',txt:'La PLAZA: el OLVIDO',done:cycled});
   q.splice(i+1,0,...add); return q; }; }
 /* lo que dispara cada cosa (cada fotograma de juego, tras las polillas) */
 { const U0=updOlvido; updOlvido=function(){ U0(); c5Tick(); }; }
 function c5Tick(){ if(state!=='play'||!olvidoLoose()||!(sx===1&&sy===1)||presentQ||pendingSay||dlg) return;
   if(!c5.arrive){ c5StartArrive(); return; }
-  if(c5.sueno&&!c5Fin) c5StartFin(); }
+  if(c5.sueno&&opened.has('RINGSDONE')&&!c5Fin) c5StartFin(); } // el Nombre, cuando vuelve de los Anillos del Roble (12i)
 /* la maceta: con el Copo en su altar, dormir es lo que toca */
 function c5Pot(){ if(!olvidoLoose()||!c5.copo||c5.sueno) return false; ask(C5T.pot,null,yes=>{ if(yes) c5StartDream(); else say(C5T.potNo); }); return true; }
 
@@ -264,11 +265,12 @@ function updC5Dream(){ const D=c5D; if(!D){ state='play'; return; } D.t++; D.rin
   if(D.phase==='talk'){ dreamType(D); const s=pageText(D), last=D.pg>=D.pages.length-1;
     if(keys.fire){ keys.fire=false;
       if(D.chars<s.length){ D.chars=s.length; D.wait=0; }
-      else if(!last){ D.pg++; D.chars=0; D.wait=6; SFX.blip(); if(D.pg===8) setTrack('casa'); } // «un nombre no es de quien lo lleva»: la nana vuelve entera
+      else if(!last){ D.pg++; D.chars=0; D.wait=6; SFX.blip(); if(D.pg===9) setTrack('casa'); } // «un nombre no es de quien lo lleva»: la nana vuelve entera
       else { D.phase='out'; D.pt=0; WSFX.yes(); for(const r of D.roots){ r.pulses.push(0,-8,-16); r.next=999; } } }
     return; }
   if(D.phase==='out'){ D.pt++; if(D.pt===30) WSFX.beam(); if(D.pt>=84) c5EndDream(); } }
-function c5EndDream(){ c5D=null; c5.sueno=true; save(); state='play'; fadeIn=56; player.dir=0; parts=[]; setTrack('olvido'); say(C5T.wake); }
+function c5EndDream(){ c5D=null; c5.sueno=true; save(); state='play'; fadeIn=56; player.dir=0; parts=[]; setTrack('olvido');
+  say(C5T.wake,()=>{ if(!opened.has('ANILLO')){ opened.add('ANILLO'); xItem='anillo'; giveThing(RING_SPR,'ANILLO DEL AÑO',RING_T.get); } }); } // el Roble le dio el Anillo en el sueño: al despertar, lo tiene en la mano (12i)
 let C5_EAT=null;
 function c5DreamEaten(D){ dreamInit(); if(!C5_EAT){ const c=mkCanvas(VW,VH); C5_EAT={c,g:c.getContext('2d')}; C5_EAT.img=C5_EAT.g.createImageData(VW,VH); }
   const d=C5_EAT.img.data, t=D.t; d.fill(0);

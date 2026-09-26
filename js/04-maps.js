@@ -412,6 +412,37 @@ const MAPS={
 "vqqqqqqqqv",
 "vvvvvҜvvvv",
 ],
+/* ================= LOS ANILLOS DEL ROBLE (la mazmorra final, 12i) ================= */
+'22,4':[ // LOS ANILLOS DEL ROBLE · Anillo del invierno · La plaza del último invierno — se entra por el hueco del tronco; el ventisquero solo se va si el año gira (12i)
+"TTTTTTTTTT",
+"Tf.....Ꞙ.T",
+"T......Ꞙ.T",
+"T...Ꝡ..Ꞙ..",
+"T......Ꞙ.T",
+"Tf.....Ꞙ.T",
+"T...xx.Ꞙ.T",
+"TTTTTTTTTT",
+],
+'23,4':[ // LOS ANILLOS DEL ROBLE · Anillo del invierno · El estanque de las dos estaciones — en invierno el bloque resbala hasta el capullo helado; en verano se hunde y deja una piedra (resolvedor: 14 pasos; sin piedra, sin verano o sin invierno no hay camino, ni con el gancho)
+"TTTTTTT.TT",
+"T..WWWr.TT",
+"T..W..r.TT",
+"...Ꞥ.#WꞤTT",
+"T..W..WWTT",
+"T..WWWWWTT",
+"T..WWWWWTT",
+"TTTTTTTTTT",
+],
+'23,3':[ // LOS ANILLOS DEL ROBLE · Anillo del invierno · El desgarro — la Oruga del Olvido: solo le duele la cola; al final huye por el desgarro, más adentro
+"TTTTꞺTTTTT",
+"T........T",
+"T.WWWWWW.T",
+"T.WWWWWW.T",
+"T.WWWWWW.T",
+"T.WWWWWW.T",
+"T........T",
+"TTTTTTT.TT",
+],
 /* ================= EL TRONCO HUECO (mazmorra 2) ================= */
 '10,0':[ // Umbral del Tronco — el PRIMER RAYO (12g): la Hoja corta el tapón del nudo y el sol derrite la cera de la salida
 "vvvvvvvvvv",
@@ -931,7 +962,7 @@ const CHESTS={
 };
 /* nombres de lugar */
 const PLACE_NAMES={'0,0':'Riscos del Silencio','1,0':'Bosque de los Ecos','2,0':'Claro del Primer Brote','3,0':'Juncal del Norte','4,0':'Cascada del Ámbar','0,1':'Barrio del Roble','1,1':'Plaza de las Estaciones','2,1':'Pradera del Recuerdo','3,1':'Orilla de Moss','4,1':'Orilla del Este','0,2':'Playa de la Hoja','1,2':'Camino de los Dientes de León','2,2':'Dunas del Este','3,2':'Lago de las Runas','4,2':'Cabo del Vilano','0,-1':'Ladera de la Vigilia','1,-1':'Campo del Deshielo','2,-1':'Boca de la Cueva','3,-1':'Mirador del Ámbar','1,-2':'Sendero del Último Invierno','1,-3':'Cima del Viento','2,3':'Marisma de las Cartas','1,3':'Tronco de la Reina','3,3':'Jardín Sumergido',
-'6,0':'Vestíbulo del Topo','7,0':'Cámara de las Raíces','8,0':'Trono del Escarabajo','6,1':'Taller de las Bellotas','7,1':'El Fogón','8,1':'Galería de los Rodapúas','6,2':'La Bajada','7,2':'Las Charcas Heladas','8,2':'Refugio del Topo Real','6,3':'Las Cuestas','7,3':'La Cripta de la Raíz','6,-1':'Sala de las Guardias','7,-1':'Galería Oscura','8,-1':'Cámara del Eco','11,-1':'Colmena Alta','10,-1':'Paso de los Agujeros','12,-1':'Despensa de Miel','12,2':'Estanque del Panal','14,2':'Galería del Hielo','16,2':'Capilla de las Llamas','16,-1':'Puente Roto',
+'22,4':'La plaza del último invierno','23,4':'El estanque de las dos estaciones','23,3':'El desgarro del invierno','6,0':'Vestíbulo del Topo','7,0':'Cámara de las Raíces','8,0':'Trono del Escarabajo','6,1':'Taller de las Bellotas','7,1':'El Fogón','8,1':'Galería de los Rodapúas','6,2':'La Bajada','7,2':'Las Charcas Heladas','8,2':'Refugio del Topo Real','6,3':'Las Cuestas','7,3':'La Cripta de la Raíz','6,-1':'Sala de las Guardias','7,-1':'Galería Oscura','8,-1':'Cámara del Eco','11,-1':'Colmena Alta','10,-1':'Paso de los Agujeros','12,-1':'Despensa de Miel','12,2':'Estanque del Panal','14,2':'Galería del Hielo','16,2':'Capilla de las Llamas','16,-1':'Puente Roto',
 '10,0':'Umbral del Tronco','11,0':'Galería del Enjambre','12,0':'Nido del Soldado','10,1':'Canal de la Memoria','11,1':'Sala de la Miel','12,1':'Cámara de la Llave','10,2':'Corazón del Panal',
 '15,2':'Atrio Helado','15,1':'Sala del Vacío','14,1':'Galería de Bloques','16,1':'Cámara de la Llave','15,0':'Sala de las Campanas','14,0':'Pista de Hielo','16,0':'Trono del Guardián',
 '5,9':'Gruta de los Ecos','0,12':'Antesala del Eco','1,12':'Eco del Topo','2,12':'Eco de la Reina','3,12':'Eco del Ciervo','4,12':'Eco del Viento','5,12':'El Alba','4,9':'Bodega del Bosque','3,9':'Madriguera del Camino','4,-1':'Glaciar del Silencio','0,3':'Cala del Silencio','4,3':'Ciénaga de las Cartas','9,9':'Tu maceta','8,9':'La tienda de Tilo','7,9':'La cabaña de Corteza'};

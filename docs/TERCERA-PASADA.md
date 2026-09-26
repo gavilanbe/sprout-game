@@ -14,7 +14,12 @@
 > la ciega, herida manda abejas a tapar lo abierto y al final sella tres con cera dura) y la **Cueva** (`js/12h-cueva.js`:
 > dos pisos, las Galerías y las Hondonadas; fogones que prenden con una bellota y cuyo calor derrite el hielo y despierta
 > raíces que hacen de puente y de escalera entre pisos y salas; grietas del suelo; bellotas que ruedan por rampas con un
-> cruce que cambia una roca; la raíz madre, que pide dos fogones; y el Topo Real que busca el calor). Faltan E, F y G.
+> cruce que cambia una roca; la raíz madre, que pide dos fogones; y el Topo Real que busca el calor). De la fase **E**,
+> hecho el **Anillo del Año** (`js/12i-anillos.js`: el sueño lo da, X gira la estación de la sala con una onda de color,
+> casillas de estación, hielo de verdad en invierno, bloques que se hunden y dejan piedra) y el **anillo del invierno**
+> (la plaza del último invierno con su recuerdo, el estanque de las dos estaciones —comprobado con resolvedor, también
+> contra el gancho— y el desgarro con la Oruga del Olvido). De momento el desgarro lleva al Nombre; faltan los anillos de
+> otoño, verano y primavera, la médula y los niveles 1-3 (F), y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.
