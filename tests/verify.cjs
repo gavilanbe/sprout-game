@@ -276,6 +276,23 @@ const server=http.createServer((req,res)=>{
       [false,'W',3,'i','9,4 9,6 6,6 6,3 8,3 8,4','CARTA DE CIERZO (1 de 4):',1,'@','6,1 7,1 8,1','CARTA DE CIERZO (2 de 4):',3,'Ꞧ',
        'Ꝛ',2,'ꝛ','7,2','7,1','CARTA DE CIERZO (3 de 4):','Ꝟ',0,'ꝟ','trepa',4,'7,1',true,2,true,'ECO DE CIERZO']);
   });
+  await check('Después del final, la polillita: vive en la hoja de Sprout y va a la luz del farol; huele los capullos grises, se los come y lo de dentro sale; devuelto a su dueño (Lupa planta flores, Moss da la sopa gratis); con las cuatro cosas, dorada',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem, was=[won,thawed,summered,autumned,boss3Done,cycled,hasLantern], b0=berries; state='play'; hitStop=0; player.inv=9999;
+      const play=n=>{ for(let k=0;k<n;k++){ __step(1); if(state==='dialog') __skipDialog(); } };
+      won=thawed=summered=autumned=boss3Done=true; hasLantern=true; for(const id in LOST){ collected.delete('lz:'+id); opened.delete('LZ'+id); opened.delete('LZB'+id); } opened.delete('PLIgold');
+      cycled=false; __go(2,0,6*16,2*16-4); play(5); out.push(grid[1][8],!!pli);                                                  // antes del final, el capullo está y la polillita no
+      cycled=true; __go(2,0,4*16,3*16-4); play(5); out.push(pli&&pli.mode); player.x=8*16; player.y=3*16-4; i=0; let i2=0; while(i2++<200&&!lostDrop) __step(1); out.push(!!lostDrop,grid[1][8],opened.has('LZregadera'));
+      play(24); player.x=8*16; player.y=1*16-4; i2=0; while(i2++<60&&state==='play') __step(1); out.push(state,itemCardName); i2=0; while(i2++<300&&state!=='play'){ keys.fire=true; __step(1); if(state==='dialog') __skipDialog(); }
+      __go(0,1,2*16,4*16-4); play(5); player.x=2*16; player.y=4*16-4; player.dir=0; keys.fire=true; __step(1); out.push(dlg&&dlg.who); __skipDialog(); play(5); out.push(lostBack('regadera'),berries-b0);
+      collected.add('lz:semillas'); opened.add('LZsemillas'); __go(1,1,6*16,6*16-4); play(5); player.x=6*16; player.y=6*16-4; player.dir=3; keys.fire=true; __step(1); __skipDialog(); play(10); __skipDialog(); out.push(lostBack('semillas'),grid[6][1]);
+      collected.add('lz:cebo'); opened.add('LZcebo'); __go(3,1,2*16,5*16-4); play(5); player.x=2*16; player.y=5*16-4; player.dir=0; keys.fire=true; __step(1); __skipDialog(); play(5);
+      play(20); player.atk=0; player.hp=1; keys.fire=true; __step(1); out.push(dlg&&dlg.who); __skipDialog(); out.push(player.hp===player.maxHp);   // la sopa, gratis
+      xItem='lantern'; player.dir=1; keys.alt=true; __step(1); __step(3); out.push(pli.mode);
+      collected.add('lz:libreta'); opened.add('LZlibreta'); opened.add('LZBlibreta'); opened.add('RZpost'); opened.add('TOCin'); opened.add('PLIin'); for(let q=0;q<4;q++) collected.add('ç'+q); opened.add('CZread');
+      __go(1,1,72,76); play(5); const e=elderPos; player.x=e[0]*16; player.y=e[1]*16+12; player.dir=1; keys.fire=true; __step(1); __skipDialog(); play(10); out.push(lostCount(),pliGold());
+      [won,thawed,summered,autumned,boss3Done,cycled,hasLantern]=was; pli=null; player.inv=0; xItem=x0; state='play'; return out; }),
+      ['Ꝫ',false,'perch',true,'.',true,'itemget','LA REGADERA DE PETRA','PETRA',true,20,true,'f','MOSS',true,'lamp',4,true]);
+  });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
       const coc=!!(boss&&boss.cocoon&&boss.left===4); for(const th of boss.threads){ th.m=[]; cocCutThread(boss,th,80,80); }

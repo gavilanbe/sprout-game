@@ -1,6 +1,6 @@
 # SPROUT · Tercera pasada: lo que el valle olvidó
 
-> **Estado:** en marcha. Hechas las fases **A** (canon y voz: `0c652ae`, `b4e53b0`, `f32e992`) y **B**
+> **Estado:** hecha (fases A-G). Hechas las fases **A** (canon y voz: `0c652ae`, `b4e53b0`, `f32e992`) y **B**
 > (la cima y el capítulo 5 con su final provisional: `js/15n-cima.js`, `js/15o-capitulo5.js`). El final
 > provisional es el nivel 4 del jefe (§7.4, «el Nombre») jugado en la plaza; cuando lleguen las fases E y F,
 > los Anillos del Roble y los niveles 1-3 se meten delante. De C y D, hecho el **Templo** (`js/12e-templo.js`:
@@ -37,7 +37,11 @@
 > el lago de las Runas se hiela y se resbala hasta un islote —comprobado con resolvedor—, los nenúfares del juncal se
 > abren en verano, los setos del bosque se pelan en otoño y la enredadera del risco florece en primavera y se trepa hasta
 > una panorámica del valle), las **cuatro cartas de Cierzo** que guardan (Raíz las lee en voz alta: nieva y contesta
-> desde el cielo), y el **Eco** con su runa nueva y el eco de Cierzo con su nombre. Falta la polillita.
+> desde el cielo), y el **Eco** con su runa nueva y el eco de Cierzo con su nombre. Y la **polillita** (`js/12m-polillita.js`):
+> vive en la hoja de Sprout y va a la luz del farol; huele los capullos de seda gris que el Olvido dejó por el valle, se
+> los come y sale lo que los vecinos olvidaron en el capítulo 5 (la regadera de Petra, las semillas de Lupa, el cebo de
+> Moss, la libreta de Tilo); devuelto, Lupa planta flores en la plaza y Moss da su sopa gratis; con las cuatro cosas,
+> Raíz la ve dorada: «Hasta el olvido tiene su estación». **La tercera pasada está completa.**
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

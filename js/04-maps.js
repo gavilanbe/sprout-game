@@ -40,7 +40,7 @@ const MAPS={
 ],
 '2,0':[ // Claro del Primer Brote — semilla 2 y la cabaña de Corteza
 "TTTRRRTTTT",
-'T.."D".T.T',
+'T.."D".TꝪT',
 "T.t.....t.",
 "Tt..2.ttt.",
 "..t.t.tøt.",
@@ -115,12 +115,12 @@ const MAPS={
 "WWW.....tM",
 "WWWWs....M",
 "WWWWsss..M",
-"WWWWss...M",
+"WWWWꝪs...M",
 "WWWsst..MM",
 ],
 '0,2':[ // Playa de la Hoja — la HOJA ANCESTRAL (L) y semilla en arbusto
 "M.T.....T.",
-"M..t..S...",
+"MꝪ.t..S...",
 "M....s.c..",
 "M.B.sss.s.",
 "M..ssLsss.",
@@ -135,7 +135,7 @@ const MAPS={
 "..B.p..t..",
 ".t..p4....",
 "..$.pp.B..",
-".t.øp.....",
+".t.øp...Ꝫ.",
 "MMMMMMMMMM",
 ],
 '2,2':[ // Dunas del Este — semilla 5; grietas hacia las marismas

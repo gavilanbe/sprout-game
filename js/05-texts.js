@@ -323,6 +323,29 @@ const CIERZO_LETTERS=[
     "Por eso manda a la enredadera, que es como una mano muy lenta. Esta primavera le he pedido que te subiera a ti,",
     "para que vieras el valle entero, como lo veo yo. ¿A que es bonito?","Todo eso lo cuidáis vosotros. Yo solo lo despeino.»","CIERZO."] },
 ];
+/* DESPUÉS DEL FINAL (12m): la polillita y lo que el Olvido se llevó envuelto en seda */
+const PLI_T={
+  cocoon:["(Un capullo de seda gris, del Olvido. Algo late dentro.)","(Si lo quemaras, ardería también lo de dentro.)"],
+  cocoonPli:["(La polillita se remueve en tu hoja. Huele su propia seda.)"],
+  raiz:["¿Esa polilla en tu hoja...? Es ella. La que se comió los nombres. Ahora es chiquitita.","El Olvido dejó capullos de seda gris escondidos por el valle, con cosas dentro: cosas que la gente echa de menos sin saber qué.",
+    "Ella sabe deshacerlos sin romper nada. Síguela, brote. Y devuelve lo que encuentres."],
+  raizAll:["Brote... tu polillita ya no es gris.","Ha devuelto todo lo que el Olvido se llevó. Ahora es solo una polilla. Una polilla de luz.","Hasta el olvido tiene su estación."],
+  found:{
+    regadera:["¡La REGADERA de Petra!","(El Olvido la envolvió en seda. Petra la estará buscando.)"],
+    semillas:["¡Las SEMILLAS de Lupa!","(Un sobrecito de semillas de flor. Lupa las estará buscando.)"],
+    cebo:["¡El CEBO DE LA SUERTE de Moss!","(Rojo y blanco, con una pluma. Moss lo estará buscando.)"],
+    libreta:["¡La LIBRETA de Tilo!","(Llena de números. Tilo la estará buscando.)"],
+  },
+  back:{
+    regadera:["¡Mi REGADERA! ¿Dónde estaba?","¿En un capullo gris? Qué asco... digo, qué raro.","Con esta regadera te regaba a ti, ¿sabes? Cuando eras una semilla en la maceta.","Toma, lo que tenía ahorrado. ¡Y no te me olvides más!"],
+    semillas:["¡Mis SEMILLAS de flor! Las guardaba para la plaza, tallito.","Por eso regaba una piedra: se me olvidó qué quería plantar.","Mira, mira..."],
+    cebo:["¡Mi CEBO DE LA SUERTE! Treinta años pescando con él, grumete.","Por eso no me acordaba de la caña: sin cebo, una caña es un palo.","Desde hoy, mi sopa te sale gratis. Palabra de pescador."],
+    libreta:["¡Mi LIBRETA DE PRECIOS! Tres semanas cobrando a ojo, cliente...","Una baya, una baya... ¡ya decía yo que las bayas se venden!","Toma, por las molestias. Un tendero sin libreta es un cuentacuentos."],
+  },
+  lupaAfter:["¡Ahora sí! La plaza, con color.","Y cada primavera, más, tallito."],
+  lupaSnow:["Ya están plantadas. Bajo la nieve, las semillas sueñan, tallito.","En cuanto se vaya el invierno, la plaza se llena de color."],
+  soup:["¿Sopa, grumete? Para ti, gratis. Palabra de pescador.","¡Como nuevo!"],
+};
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
 const CV_T={
   mother:["(Un temblor sube desde lo más hondo de la cueva, por todas las raíces a la vez...)","—¡Brote! ¿Lo notas? Es mi raíz madre: ha despertado con el calor de los dos fogones.","—Te espera abajo, en la cripta. Ella guarda lo que buscas."],
