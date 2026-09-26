@@ -22,7 +22,7 @@
 const RING_X0=22, RING_X1=26;
 const SEASON_NAME=['PRIMAVERA','VERANO','OTOÑO','INVIERNO'], SEASON_TINT=['#f8a0d0','#f8d030','#e8803a','#dff0ff'];
 ['Ꞓ','ꞓ','Ꞔ','ꞔ','ꞕ','Ꞗ','ꞗ','Ꞙ','Ꞝ','Ꞟ','Ꞣ'].forEach(c=>GROUND.add(c));           // lo que se pisa (o por donde se cae)
-['Ꞥ','Ꞧ','Ꞡ','ꞡ','Ꞛ','Ꝡ','Ꞻ'].forEach(c=>SOLID.add(c)); GROUND.add('ꞻ');                // Ꞧ el capullo helado · Ꝡ el Roble joven · Ꞻ el desgarro (ꞻ, abierto)                                          // lo que no
+['Ꞥ','Ꞧ','Ꞡ','ꞡ','Ꞛ','Ꝡ','Ꞻ','Ꞵ'].forEach(c=>SOLID.add(c)); GROUND.add('ꞻ');                // Ꞧ el capullo helado · Ꝡ el Roble joven · Ꞻ el desgarro (ꞻ, abierto)                                          // lo que no
 /* las salas de los Anillos: su estación de recuerdo (la que tienen al llegar) */
 const RING_ROOMS={
   '22,4':{ring:3,season:3,name:'La plaza del último invierno'},
@@ -30,7 +30,12 @@ const RING_ROOMS={
   '23,3':{ring:3,season:3,name:'El desgarro del invierno',oruga:{tear:[4,0],hits:4,segs:7,spd:1.05,next:[23,2,7*16,6*16-4]}},
   '23,2':{ring:2,season:2,name:'La plaza de las escobas'},
   '22,2':{ring:2,season:2,name:'El barrizal'},
-  '22,1':{ring:2,season:2,name:'El desgarro del otoño',oruga:{tear:[4,0],hits:5,segs:9,spd:1.25,next:null}},
+  '22,1':{ring:2,season:2,name:'El desgarro del otoño',oruga:{tear:[4,0],hits:5,segs:9,spd:1.25,next:[25,2,5*16,5*16-4]}},
+  '25,2':{ring:1,season:1,name:'El prado de la Reina',sun:true},
+  '24,2':{ring:1,season:1,name:'El claro del sol',sun:true},
+  '24,3':{ring:1,season:1,name:'El desgarro del verano',oruga:{tear:[4,7],hits:6,segs:11,spd:1.4,next:[24,1,6*16,6*16-4]}},
+  '24,1':{ring:0,season:0,name:'El primer día'},
+  '24,0':{ring:0,season:0,name:'El último desgarro',oruga:{tear:[4,0],hits:7,segs:13,spd:1.55,next:null}},
 };
 function inRings(){ return regionOf(sx,sy)==='anillos'; }
 { const R0=regionOf; regionOf=function(nx,ny){ if(nx>=RING_X0&&nx<=RING_X1&&ny>=-6&&ny<=6) return 'anillos'; return R0(nx,ny); }; }
@@ -46,7 +51,7 @@ function seasonTile(c,s){
   switch(c){
     case 'W': return s===3?'i':'W';
     case 'Ꞥ': return s===1?'@':s===3?'Ꞧ':'Ꞥ';   // en invierno el capullo se hiela: un bulto en el hielo (el gancho y los bloques chocan)
-    case 'Ꞓ': return ['ꞓ','Ꞡ','ꞡ','Ꞓ'][s];
+    case 'Ꞓ': return ['ꞓ','Ꞡ','ꞡ','Ꞓ'][s];   // (quemado en otoño: ya no está; ver applySeason)
     case 'Ꞔ': return s===1?'ꞔ':s===3?'ꞕ':'Ꞔ';
     case 'Ꞗ': return s===2?'Ꞗ':'_';
     case 'ꞗ': return s===2?'ꞗ':'°';
@@ -59,6 +64,7 @@ function applySeason(s){ const key=sx+','+sy, M=MAPS[key]; if(!M) return;
     if(c==='Ꞙ'&&opened.has('SD'+key+':'+x+','+y)&&s===3){ grid[y][x]='n'; continue; }             // barrido este invierno
     if(grid[y][x]==='#'||grid[y][x]==='Ꞣ') continue;                                              // un bloque encima (o la piedra que dejó)
     if(grid[y][x]==='Ꞝ'&&oruga&&oruga.eaten.some(e=>e[0]===x&&e[1]===y)) continue;              // lo que ha roído la Oruga solo lo repara la estación del anillo
+    if(c==='Ꞓ'&&opened.has('SB'+key+':'+x+','+y)){ grid[y][x]='.'; continue; }                 // un semillero quemado ya no vuelve
     grid[y][x]=seasonTile(c,s); } }
   if(s===0) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='ꞓ') vineBridge(x,y);   // la enredadera tiende su puente
   for(const k of stonesOf(key)){ const [x,y]=k; grid[y][x]='Ꞣ'; }                                // las piedras que dejaron los bloques hundidos
@@ -104,7 +110,7 @@ function ringPlatesCheck(silent){ if(!inRings()) return; const key=sx+','+sy; if
 
 /* ---------- el farol quema la seda gris y las ramas secas del otoño ---------- */
 function updRingFire(){ for(const q of flares){ const tx=q.x>>4, ty=(q.y-2)>>4, c=grid[ty]&&grid[ty][tx]; if(c!=='Ꞛ'&&c!=='ꞡ') continue;
-    const key=sx+','+sy; grid[ty][tx]=c==='Ꞛ'?'.':'.'; if(c==='Ꞛ') opened.add('SK'+key+':'+tx+','+ty); markDirty(); save();
+    const key=sx+','+sy; grid[ty][tx]='.'; opened.add((c==='Ꞛ'?'SK':'SB')+key+':'+tx+','+ty); markDirty(); save(); // la seda y la rama seca, quemadas para siempre
     for(let i=0;i<12;i++) parts.push({k:'dust',x:tx*16+4+Math.random()*8,y:ty*16+4+Math.random()*8,vx:(Math.random()-.5)*.6,vy:-.4-Math.random()*.5,life:26,max:26,r:1+(i&1),col:c==='Ꞛ'?(i&1?OLV.dust:OLV.dustD):(i&1?'#f8a030':'#6a4a28'),nog:true});
     if(AC) noise(.3,.03,false,undefined,c==='Ꞛ'?3200:1800); } }
 /* el molinillo barre el ventisquero de invierno (sin el aviso de la grieta del norte) */
@@ -139,6 +145,7 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
   if(c==='Ꞛ'){ R(g,0,0,16,16,OLV.ink); for(let i=0;i<6;i++){ const y=1+i*3; for(let x=0;x<16;x++) if(((x+i*3)%7)<5) PX(g,x,y+((x>>2)&1),i&1?OLV.dust:OLV.dustD); } R(g,0,0,16,1,OLV.wingL); return; } // seda gris
   if(c==='Ꞝ'){ R(g,0,0,16,16,'#141018'); for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const n=(x*7+y*13)%11; if(n===0) PX(g,x,y,OLV.dustD); else if(n===5) PX(g,x,y,'#2a2230'); } // roído: un agujero gris, sin fondo
     for(let x=0;x<16;x++){ PX(g,x,0,OLV.dust); if(x%3) PX(g,x,1,OLV.dustD); } return; }
+  if(c==='Ꞟv'){ R(g,6,0,4,16,'#3c8a34'); R(g,6,0,1,16,'#78c850'); R(g,9,0,1,16,'#1e5a28'); for(let y=1;y<16;y+=4){ R(g,4,y,2,2,'#58a840'); PX(g,4,y,'#a4e070'); R(g,10,y+2,2,2,'#58a840'); } return; } // la enredadera, de arriba abajo
   if(c==='Ꞟ'){ R(g,0,6,16,4,'#3c8a34'); R(g,0,6,16,1,'#78c850'); R(g,0,9,16,1,'#1e5a28'); for(let x=1;x<16;x+=4){ R(g,x,4,2,2,'#58a840'); PX(g,x,4,'#a4e070'); R(g,x+2,10,2,2,'#58a840'); } return; } // enredadera sobre el hueco
   if(c==='Ꞣ'){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot((x-7.5)/6.6,(y-8.5)/5.6); if(d>1) continue; PX(g,x,y,d>.86?PAL.k:y<7?'#a8a098':(x+y)%4?'#7a726a':'#8a8278'); } PX(g,5,5,'#d0c8c0'); PX(g,6,5,'#d0c8c0'); return; } // la piedra que dejó el bloque
   if(c==='Ꞥ'){ for(const [x,y] of [[7,6],[8,6],[7,7],[8,7],[7,8]]) PX(g,x,y,'#58a840'); PX(g,7,5,'#f8a0d0'); PX(g,8,5,'#f8c0e0'); return; } // un capullo de nenúfar, cerrado
@@ -153,7 +160,7 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
   if(ch==='ꞗ'){ const e=edgesOf(rows,x,y,c=>c!=='ꞗ'&&c!=='°'&&c!=='Ꞟ'); g.drawImage(leafPitTile(e&15,(x*7+y*5)&3),px,py); return; }
   if(ch==='°'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); return; }
   if(ch==='Ꞝ'){ g.drawImage(ringTileArt('Ꞝ',opts.bio),px,py); return; }
-  if(ch==='Ꞟ'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); g.drawImage(ringTileArt('Ꞟ',opts.bio),px,py); return; }
+  if(ch==='Ꞟ'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); const v=c=>c==='Ꞟ'||c==='ꞓ'; const vert=(rows[y-1]&&v(rows[y-1][x]))||(rows[y+1]&&v(rows[y+1][x])); g.drawImage(ringTileArt(vert?'Ꞟv':'Ꞟ',opts.bio),px,py); return; }
   if(ch==='Ꞣ'){ const b=[...(MAPS[opts.sx+','+opts.sy]||[])[y]||''][x]; if(b==='Ꞔ'){ grass(); g.drawImage(ringTileArt('Ꞔ',opts.bio),px,py); } else water(); g.drawImage(ringTileArt('Ꞣ',opts.bio),px,py); return; } // la piedra, en el agua o en el barro
   if(ch==='Ꞥ'){ water(); g.drawImage(ringTileArt('Ꞥ',opts.bio),px,py); return; }
   if(ch==='i'||ch==='Ꞧ'){ const e=edgesOf(rows,x,y,c=>c!=='i'&&c!=='Ꞧ'&&c!=='#'&&c!=='Ꞣ'); g.drawImage(pondIceTile(e&15,(x*7+y*3)&3),px,py); if(ch==='Ꞧ') g.drawImage(ringTileArt('Ꞧ',opts.bio),px,py); return; }
@@ -172,6 +179,8 @@ function drawRingTurn(){ const T=ringTurn; if(!T) return; const k=CA_EASE.out(Ma
    ============================================================ */
 const RING_GHOSTS={
   '22,4':[{kind:'wind',x:92,y:50,mood:'happy',notes:true}],   // Cierzo le canta la nana al Roble dormido
+  '25,2':[{kind:'queen',x:88,y:18}], // la Reina le pide descanso al Roble, que dice que no
+  '24,1':[{kind:'seeds',x:80,y:22}],   // la Tierra planta dos semillas: una será el Roble; la otra, el viento
   '23,2':[{kind:'npc',ch:'g',x:112,y:24,sweep:1},{kind:'npc',ch:'ö',x:24,y:88,sweep:-1},{kind:'npc',ch:'h',x:128,y:88,sweep:1}], // el valle barre las hojas, con rabia
 };
 let GHOST_TINT=new Map();
@@ -181,6 +190,15 @@ function drawRingGhosts(){ const key=sx+','+sy, G=RING_GHOSTS[key], R=RING_ROOMS
   for(const q of G){ const bob=Math.round(Math.sin(tick*.05)*2), a=.56+.1*Math.sin(tick*.07);
     if(q.kind==='wind'){ const img=windArt({s:1,mood:q.mood,f:(tick>>3)&7,flip:true}); ctx.globalAlpha=a; ctx.drawImage(ghostImg(img),Math.round(q.x-(img.width-22))-1,Math.round(q.y-17+bob)-1); ctx.globalAlpha=1;
       if(q.notes&&(tick%40)===0) parts.push({k:'mote',x:q.x-10,y:q.y-10,vx:-.25,vy:-.35,life:60,max:60,sway:Math.random()*6,col:'#fff6c0',nog:true}); }
+    else if(q.kind==='queen'){ const img=BOSS_SPR.avispa, bow=Math.max(0,Math.sin(tick*.03))*3; ctx.globalAlpha=a; ctx.drawImage(ghostImg(img),Math.round(q.x)-1,Math.round(q.y+bob+bow)-1); ctx.globalAlpha=1; // se inclina, pide... y espera
+      if((tick%70)<35){ const tx=Math.round(q.x-6), ty=Math.round(q.y+8); ctx.fillStyle='rgba(255,244,216,'+(a*.9).toFixed(2)+')'; ctx.fillRect(tx-10,ty-6,11,7); ctx.fillStyle='#6a5238'; txtS('zz',tx-8,ty-1,'#6a5238'); } } // «descanso»
+    else if(q.kind==='seeds'){ const T=(tick%240), k=Math.min(1,T/80), grow=Math.max(0,Math.min(1,(T-100)/70)); ctx.globalAlpha=a; // dos manos de tierra bajan las semillas; brotan: un roble y un remolino
+      for(const s of [-1,1]){ const x=Math.round(q.x+s*16), y=Math.round(q.y+bob*.3);
+        const hy=Math.round(y-18+k*10); if(T<110){ ctx.fillStyle='#fff4d8'; ctx.fillRect(x-4,hy,8,5); ctx.fillRect(x-5,hy+2,1,3); ctx.fillRect(x+4,hy+2,1,3); ctx.fillStyle='#6a5238'; ctx.fillRect(x-4,hy+5,8,1); }
+        ctx.fillStyle='#fff0a0'; ctx.fillRect(x-1,y-2,3,3); if((tick&15)<8){ ctx.fillStyle='#ffffff'; ctx.fillRect(x,y-2,1,1); }
+        if(grow>0){ const h=Math.round(grow*10); if(s<0){ ctx.fillStyle='#fff4d8'; ctx.fillRect(x,y-2-h,1,h); ctx.fillRect(x-2,y-2-h,5,2); } // el roble
+          else for(let i=0;i<h;i++){ ctx.fillStyle='#e8f0ff'; ctx.fillRect(x+Math.round(Math.sin(i*.9+tick*.1)*2),y-2-i,1,1); } } } // el viento
+      ctx.globalAlpha=1; }
     else if(q.kind==='npc'){ const N=NPCS[q.ch]; if(!N) continue; const sw=q.sweep?Math.round(Math.sin(tick*.12+q.x)*6):0, x=Math.round(q.x+sw), y=Math.round(q.y+bob*.5);
       ctx.globalAlpha=a+.12; ctx.drawImage(ghostImg(N.img),x-1,y-1);
       if(q.sweep){ const bx=x+(q.sweep>0?14:-2), ph=Math.sin(tick*.24+q.x); ctx.fillStyle='#fff0c8'; for(let i=0;i<9;i++) ctx.fillRect(Math.round(bx+ph*i*.35*q.sweep),y+4+i,1,1); ctx.fillRect(Math.round(bx+ph*3*q.sweep)-2,y+13,5,2); // la escoba, a zarpazos
@@ -198,13 +216,13 @@ let oruga=null;
 function oruKey(){ const R=RING_ROOMS[sx+','+sy]; return R&&R.oruga?'ORU'+sx+','+sy:null; }
 function initOruga(){ oruga=null; const key=sx+','+sy, R=RING_ROOMS[key]; if(!R||!R.oruga) return; const O=R.oruga, [tx,ty]=O.tear;
   if(opened.has(oruKey())){ grid[ty][tx]='ꞻ'; return; }
-  oruga={x:tx*16+8,y:ty*16+20,a:Math.PI/2,hist:[],segs:O.segs,hp:O.hits,spd:O.spd,flash:0,hurtT:0,eatT:60,st:'in',t:0,eaten:[],flee:null,O};
-  for(let i=0;i<O.segs*6;i++) oruga.hist.push([oruga.x,oruga.y-i*.6]); }
+  const dir=ty===0?1:-1; oruga={x:tx*16+8,y:ty===0?ty*16+20:ty*16-4,a:dir*Math.PI/2,dir,hist:[],segs:O.segs,hp:O.hits,spd:O.spd,flash:0,hurtT:0,eatT:60,st:'in',t:0,eaten:[],flee:null,O};
+  for(let i=0;i<O.segs*6;i++) oruga.hist.push([oruga.x,oruga.y-i*.6*dir]); }
 { const I0=initRing; initRing=function(){ I0(); initOruga(); NO_GLIDE.add(sx+','+sy); }; } // en los recuerdos el aire no sostiene al vilano
 function oruSeg(i){ const O=oruga, k=Math.min(O.hist.length-1,i*6); return O.hist[k]; }
 function oruFree(x,y){ const c=tileAt(x|0,y|0); return c!==undefined&&(!isSolid(c)||c==='W')&&x>18&&x<142&&y>18&&y<110; } // repta sobre lo que ha roído (y sobre el agua: no se hunde)
 function updOruga(){ const O=oruga; if(!O) return; O.t++; if(O.flash>0) O.flash--; if(O.hurtT>0) O.hurtT--;
-  if(O.st==='in'){ O.y+=.8; if(O.t>40){ O.st='crawl'; if(!opened.has('ORUfirst')){ opened.add('ORUfirst'); showToast('LA ORUGA DEL OLVIDO','solo le duele la cola'); } } }
+  if(O.st==='in'){ O.y+=.8*O.dir; if(O.t>40){ O.st='crawl'; if(!opened.has('ORUfirst')){ opened.add('ORUfirst'); showToast('LA ORUGA DEL OLVIDO','solo le duele la cola'); } } }
   else if(O.st==='crawl'){ const sp=O.spd*(O.hurtT>0?1.8:1), wig=Math.sin(O.t*.09)*.05;
     O.a+=wig+(Math.random()-.5)*.08; let nx=O.x+Math.cos(O.a)*sp, ny=O.y+Math.sin(O.a)*sp;
     if(!oruFree(nx,ny)){ O.a+=Math.PI*(.5+Math.random()*.6); nx=O.x; ny=O.y; } // da la vuelta
@@ -290,3 +308,9 @@ function mudTile(k,e,v){ return cached('mud'+k+e+v,g=>{ // el barrizal, de una p
   if(e&1) R(g,0,0,16,2,shade(base,-.35)); if(e&4) R(g,0,14,16,2,shade(base,.18)); if(e&8) R(g,0,0,2,16,shade(base,-.25)); if(e&2) R(g,14,0,2,16,shade(base,-.25)); }); }
 function leafPitTile(e,v){ return cached('lpit'+e+v,g=>{ g.drawImage(simaTile(e),0,0); // un hoyo lleno de hojarasca: sostiene... en otoño
   for(let i=0;i<40;i++){ const x=((i*7+v*5)%16), y=((i*11+v*3)%15)+((e&1)&&((i*11+v*3)%15)<5?5:0); if(y>15) continue; R(g,x,y,2,1,['#c86424','#e8a040','#a04818','#f0c060','#8a4a18'][(i+v)%5]); } }); }
+
+/* el sol de los Anillos: los claros de la copa ('Ꞵ') solo alumbran en verano (12g traza el rayo) */
+function ringLit(){ const R=RING_ROOMS[sx+','+sy]; return inRings()&&!!R&&!!R.sun; }
+function ringSun(){ return ringLit()&&roomSeason(sx+','+sy)===1; }
+{ const O0=drawObject; drawObject=function(g,rows,x,y,ch,opts,f,fg){ if(ch!=='Ꞵ') return O0(g,rows,x,y,ch,opts,f,fg); O0(g,rows,x,y,'T',opts,f,fg); // un claro en la copa
+  const sum=opts.bio==='summer'; g.fillStyle=PAL.k; g.fillRect(x*16+5,y*16+3,6,6); g.fillStyle=sum?'#fff6c0':'#8aa0b0'; g.fillRect(x*16+6,y*16+4,4,4); if(sum){ g.fillStyle='#ffffff'; g.fillRect(x*16+7,y*16+5,2,2); } }; }

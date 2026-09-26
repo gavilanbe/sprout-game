@@ -46,7 +46,7 @@ const server=http.createServer((req,res)=>{
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:95});
+      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:100});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -201,6 +201,19 @@ const server=http.createServer((req,res)=>{
       keys.left=true; for(let k=0;k<50;k++) __step(1); keys.left=false; for(let k=0;k<10;k++) __step(1); keys.up=true; i=0; while(sx===22&&sy===2&&i++<80) __step(1); keys.up=false; for(let k=0;k<60;k++){ __step(1); if(state==='dialog') __skipDialog(); }
       out.push(sx+','+sy,!!oruga&&oruga.segs);
       [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; state='play'; xItem=x0; return out; }),[2,'Ꞔ',3,'ꞕ','22,2',4,'Ꞣ',2,'ꞗ','play','22,1',9]);
+  });
+  await check('Los anillos del verano y la primavera: el sol del verano derrite la cera; el arbusto del propio verano tapa el rayo hasta quemarlo en otoño; la enredadera de primavera tiende el puente; la Oruga, cada vez más grande',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem, was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]; state='play'; hitStop=0;
+      boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); hasLantern=true;
+      const play=n=>{ for(let k=0;k<n;k++){ __step(1); if(state==='dialog') __skipDialog(); } };
+      const turn=()=>{ xItem='anillo'; keys.alt=true; __step(1); play(40); };
+      __go(25,2,5*16,5*16-4); play(200); out.push(roomSeason('25,2'),grid[3][0]);
+      __go(24,2,128,44); play(40); out.push(beams.length,beams[0]&&beams[0].hit&&beams[0].hit[2]);
+      keys.left=true; for(let k=0;k<60;k++) __step(1); keys.left=false; play(10); out.push(playerTile().join()); turn(); out.push(grid[2][5]);
+      player.x=80; player.y=44; player.dir=1; xItem='lantern'; keys.alt=true; __step(1); play(40); out.push(grid[2][5]); turn(); turn(); turn(); play(160); out.push(roomSeason('24,2'),grid[7][5]);
+      __go(24,1,96,92); play(20); out.push(grid[3][4],grid[4][4],grid[5][4]);
+      player.x=64; player.y=92; keys.up=true; let i=0; while(sx===24&&sy===1&&i++<120) __step(1); keys.up=false; i=0; while(state!=='play'&&i++<200) __step(1); play(60); out.push(sx+','+sy,!!oruga&&oruga.segs);
+      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; oruga=null; state='play'; xItem=x0; return out; }),[1,'.',1,'Ꞡ','5,3','ꞡ','.',1,'.','Ꞟ','Ꞟ','Ꞟ','24,0',13]);
   });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;

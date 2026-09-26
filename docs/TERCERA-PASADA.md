@@ -20,8 +20,11 @@
 > (la plaza del último invierno con su recuerdo, el estanque de las dos estaciones —comprobado con resolvedor, también
 > contra el gancho— y el desgarro con la Oruga del Olvido) y el **anillo del otoño** (la plaza de las escobas, el barrizal
 > —el bloque hundido en el barro deja piedra; comprobado con resolvedor, también contra el gancho y el salto— y el segundo
-> desgarro). De momento el último desgarro lleva al Nombre; faltan los anillos de verano y primavera, la médula y los
-> niveles 1-3 (F), y G.
+> desgarro), el **anillo del verano** (el prado de la Reina —su recuerdo pidiendo descanso; el sol de un claro de la copa
+> derrite la cera—, el claro del sol —el arbusto del propio verano tapa el rayo hasta quemarlo en otoño— y el tercer
+> desgarro) y el **de la primavera**, recortado a dos salas (el primer día —la Tierra planta dos semillas; la enredadera tiende
+> el puente— y el último desgarro, con la Oruga más grande). De momento ese desgarro lleva al Nombre; faltan la médula y
+> los niveles 1-3 (F), y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

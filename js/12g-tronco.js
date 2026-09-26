@@ -22,7 +22,7 @@ const BEAM_PASS=new Set(['~','W','°','@']); // la luz cruza la miel, el agua y 
 const MELT_T=46, BEAM_SPD=7;               // lo que tarda en derretirse; lo que avanza la luz por fotograma
 let beams=[], beamDirty=true, beamReach={}, melting={}, plugFx=[], hookPlug=null, lensCut={k:null,t:-99};
 function knotDir(x,y){ return x===0?[1,0]:x===SW-1?[-1,0]:y===0?[0,1]:[0,-1]; }
-function inTronco(){ return regionOf(sx,sy)==='tronco'; }
+function inTronco(){ return regionOf(sx,sy)==='tronco'||(typeof ringLit==='function'&&ringLit()); } // también las salas de sol de los Anillos (12i)
 { const M0=markDirty; markDirty=function(){ M0(); beamDirty=true; }; }
 
 /* ---------- al entrar: lo abierto sigue abierto, y la luz ya está ahí ---------- */
@@ -30,12 +30,12 @@ function inTronco(){ return regionOf(sx,sy)==='tronco'; }
 function initTronco(){ beams=[]; beamReach={}; melting={}; plugFx=[]; hookPlug=null; plugBees=[]; const key=sx+','+sy, queen=key===QUEEN_ROOM;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const c=grid[y][x];
     if(c==='Ꝋ'&&(queen||opened.has('KN'+key+':'+x+','+y))) grid[y][x]='Ꝍ'; // la sala de la Reina siempre entra llena de sol: antes de que llegue ella, y cuando ya se ha rendido
-    if((c==='Ѡ'||c==='Ӂ')&&opened.has('WX'+key+':'+x+','+y)) grid[y][x]='q'; }
+    if((c==='Ѡ'||c==='Ӂ')&&opened.has('WX'+key+':'+x+','+y)) grid[y][x]=regionFloor(); }
   beamDirty=true; if(inTronco()){ traceBeams(); for(const b of beams) beamReach[b.key]=b.len; } }
 
 /* ---------- el rayo: desde cada nudo abierto (y desde arriba, si la Columna alumbra) hasta chocar ---------- */
 function traceBeams(){ const prev=beams, key=sx+','+sy, starts=[]; beams=[];
-  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꝍ'){ const [dx,dy]=knotDir(x,y); starts.push([x,y,dx,dy,false]); }
+  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꝍ'||(grid[y][x]==='Ꞵ'&&typeof ringSun==='function'&&ringSun())){ const [dx,dy]=knotDir(x,y); starts.push([x,y,dx,dy,false]); } // Ꞵ: un claro en la copa, en los Anillos: solo alumbra en verano
   const F=TRONCO_FEED[key]; if(F&&F.need.every(n=>opened.has(n))) starts.push([F.x,-1,0,1,true]);
   for(const [x0,y0,dx0,dy0,col] of starts){ let x=x0, y=y0, dx=dx0, dy=dy0, hit=null; const cells=[[x,y]];
     for(let i=0;i<48;i++){ x+=dx; y+=dy; cells.push([x,y]);
@@ -73,7 +73,7 @@ function updBeams(){ if(!inTronco()){ if(beams.length) beams=[]; return; } if(be
   // las polillas que cruzan el rayo, se queman
   if(typeof moths!=='undefined'&&beams.length) for(const q of moths){ if(q.st==='husk'||q.dead) continue; if(inBeam(q.x,q.y)){ q.dead=true; olvPoof(q.x,q.y); sparkle(q.x,q.y-2,'#fff6c0'); } }
   for(const p of plugFx){ p.t++; p.x+=p.vx; p.y+=p.vy; p.vy+=.18; if(p.t===14) puff(p.x,p.y+2,'#c89030',3,.6); } plugFx=plugFx.filter(p=>p.t<16); }
-function meltWax(x,y){ const key=sx+','+sy, honey=grid[y][x]==='Ӂ'; grid[y][x]='q'; opened.add('WX'+key+':'+x+','+y); markDirty(); save(); shake=Math.max(shake,3);
+function meltWax(x,y){ const key=sx+','+sy, honey=grid[y][x]==='Ӂ'; grid[y][x]=regionFloor(); opened.add('WX'+key+':'+x+','+y); markDirty(); save(); shake=Math.max(shake,3);
   if(AC){ beep('triangle',f(76),f(64),.3,.03); noise(.3,.03,false,undefined,900); }
   for(let i=0;i<14;i++){ const a=Math.random()*6.283; parts.push({k:'shard',x:x*16+8,y:y*16+8,vx:Math.cos(a)*1.3,vy:Math.sin(a)*1.1-.5,life:18,max:18,col:i&1?'#fff6c0':honey?'#f0a828':'#e8b040',nog:true}); }
   for(let i=0;i<5;i++) parts.push({k:'dust',x:x*16+3+i*2.5,y:y*16+14,vx:(i-2)*.25,vy:.1,life:30,max:30,r:2,col:honey?'#d89a28':'#c89030',nog:true}); } // un charquito que se seca

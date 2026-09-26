@@ -270,6 +270,11 @@ const RING_T={
     '23,2':["(Otro recuerdo: el valle barriendo las hojas del otoño, con rabia. Nadie las quería.)","(El barro se traga lo que pisa. A no ser que esté helado.)"],
     '22,2':["(Un barrizal y un campo de hoyos tapados de hojas. En la orilla, un bloque.)","(El barro se traga lo que pesa... y lo que se traga, ya no se mueve.)"],
     '22,1':["(Hojas por todas partes. Y algo gris que las mastica.)"],
+    '25,2':["(Otro recuerdo: el verano de hace mucho. La Reina le pide al Roble que la deje descansar.)","(El Roble joven dice que no. Y el sol entra por un claro de la copa...)"],
+    '24,2':["(Un claro en la copa. El sol del verano baja por él... hasta un arbusto en flor.)","(Abajo, la salida está sellada con cera.)"],
+    '24,3':["(El verano zumba. Algo gris se come la hierba.)"],
+    '24,1':["(El recuerdo más viejo del valle: el día que la Tierra plantó dos semillas.)","(Una iba a ser un roble. La otra, el viento.)"],
+    '24,0':["(Hasta aquí ha huido. Detrás de ese desgarro ya no hay recuerdos: solo la médula del Roble.)"],
   },
 };
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
