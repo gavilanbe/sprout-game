@@ -72,8 +72,8 @@ const TXT = {
             "Una lágrima del Roble con el sol dentro. Fresca y tibia a la vez.",
             "Su ALTAR la espera junto al Roble." ],
   flakeGet:[ "¡El COPO ETERNO!",
-             "No se derrite jamás. Late frío, despacio, como quien por fin descansa.",
-             "Su ALTAR espera junto al del otoño." ],
+             "No se derrite jamás. Late frío y deprisa, como un corazón que corre.",
+             "Llévalo al Roble. Deprisa." ],
   thaw:[ "¿Lo notas en los pies, brote? La tierra está tibia.",
          "La primavera ha vuelto a casa.",
          "Y el Topo te cantó algo, ¿verdad? «Cier...»",
@@ -113,18 +113,10 @@ const TXT = {
   amberGet:[ "¡La HOJA DE ÁMBAR!",
              "Dorada y tibia. Aunque la sueltes, cae despacio.",
              "El otoño entero cabe en ella. Llévala a su ALTAR, junto al Roble." ],
-  cycle:[ "El Copo de mi hermano descansa junto al otoño.",
-          "Cierzo. Cierzo...",
-          "¿Lo oyes, brote? Ya puedo decirlo.",
-          "Siempre llegaron juntos, el otoño y él.",
-          "Por fin ha dejado de aullar. No le vencimos, brote:",
-          "le recordamos. Es lo único que pedía.",
-          "Y las cuatro ESTACIONES vuelven a girar.",
-          "¿Sabes por qué te planté, brote?",
-          "Un árbol no puede subir a una montaña.",
-          "Mis raíces llegan a todo el valle... menos a él.",
-          "Gracias por subir.",
-          "F I N" ],
+  cycle:[ "Todo el valle ha dicho su nombre, brote.", // el final (15o): Raíz, con voz otra vez, bajo la nieve de su hermano
+          "Y el tuyo.",
+          "Mis raíces llegan a todo el valle... menos al pico.",
+          "¿Sabes por qué te planté?" ],               // la respuesta es el último plano del final (15a)
   amuletGet:(a)=>[ "¡"+a.name+"!", a.desc, "Equípalo en el zurrón (ENTER): dos ranuras." ],
   diaryFirst:[ "(Una hoja del Roble escrita con letra menuda. El viento se las lleva por todo el valle.)" ],
 };
@@ -294,9 +286,10 @@ const CREDITS=[
   'SPROUT','y las 8 semillas','',
   'una aventura de','GAVILANBE','',
   'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Ciervo de Ámbar','Cierzo, el Viento del Norte','',
+  'EL OLVIDO','que volvió a ser','una polilla','',
   'LOS VECINOS','Petra · Lupa · Moss','Tilo · Corteza','',
   'LA VOZ DEL ROBLE','Raíz','',
-  'Ocho semillas.','Cuatro estaciones.','Ningún guardián','ha muerto.','',
+  'Ocho semillas.','Cuatro estaciones.','Un nombre.','Nadie ha muerto','y nadie ha sido olvidado.','',
   'Gracias por','hacer brotar','el valle.','',
   'Z: seguir jugando',
 ];
@@ -309,7 +302,7 @@ const ROOM_HINTS={
   '16,2':["(Dos antorchas frías custodian un cofre tras una verja.)"],
   '16,-1':["(El puente se hundió hace muchos inviernos. Habría que saltar como un vilano.)"],
   '10,2':["(Un zumbido grave llena el panal. La Reina vuela alto, muy por encima de tu Hoja...)","(...algo tendría que TIRAR de ella hacia el suelo.)"],
-  '1,-3':["(Un aullido sin palabras. No suena a rabia: suena a pena.)","(Cuatro BRASEROS fríos rodean la cima. Aquí arriba, el frío lo sostiene todo.)"],
+  '1,-3':["(Una tormenta gris gira sobre la cima. Dentro, algo llora con voz de viento.)","(Cuatro hilos grises la atan a las rocas. Las polillas no se despegan de ellos.)"],
   '1,-2':["(Aquí arriba el invierno nunca se fue. Sopla fuerte.)"],
   '2,3':["(Las hojas caen sin parar. Huele a otoño viejo...)"],
   '0,2':["(La arena susurra. Algo brilla entre las dunas...)"],
@@ -381,20 +374,56 @@ const GUEST_TALK={
   topo(){ const L=[];
     if(!thawed) L.push(["—La Brasa ya es tuya, chiquillo.","—Llévala al altar y que el valle respire."]);
     else if(!summered) L.push(["—¿Calorcito arriba? Aquí abajo se nota.","—Las raíces ya no tiemblan.","—Ve a ver a la Reina. Está más cansada que yo. Con razón."]);
+    else if(boss3Done&&!cycled) L.push(["—¿Chiquillo? Aquí abajo aún te veo.","—Arriba ya no huele a nada. Ni a tierra.","—Si te llaman, contesta. Eso lo sé yo."]); // el Olvido suelto (15o): bajo tierra aún se acuerdan
     else if(!cycled) L.push(["—Ese de allá arriba, el Cier... el Viento... no es malo, chiquillo.","—Solo lleva mucho tiempo solo. Como yo antes de que bajaras."]);
     else L.push(["—¿Nieva? Me gusta. La nieve es la manta de la tierra.","—Zzz... Cierra al salir, chiquillo."]);
     return L[0]; },
   avispa(){
     if(!summered) return ["—Zzz... Lleva la Lágrima al altar, pequeño.","—Mis flores esperan."];
+    if(boss3Done&&!cycled) return ["—Zzz... Pequeño. Mis obreras se olvidan del camino a casa.","—Algo gris come en la puerta del Tronco.","—Si hace falta, zumbaré tu nombre. Zzz."];
     if(!cycled) return ["—Las flores ya cierran de noche. Gracias, pequeño.","—El Viento me escribió una vez. Nunca abrí la carta. Como Raíz.","—Si encuentras sus cartas... léelas por mí."];
     return ["—Zzz... Verano, otoño, invierno. Así debe ser.","—Mis obreras duermen. Yo también. Zzz..."]; },
   viento(){
-    if(!cycled) return ["(El Viento no dice nada. Canturrea bajito.)"];
+    if(!cycled) return ["—¿Qué haces aquí arriba, semillita?","—La polilla ha bajado al Roble. Yo no puedo bajar: nadie me llama.","—Corre."];
     return ["—...gracias por decir mi nombre, semillita.","—Bajaré cada invierno. Y me iré cada primavera. Es lo justo."]; },
   ciervo(){
     if(!autumned) return ["—Lleva la HOJA DE ÁMBAR al Roble, caminante.","—Que caiga despacio en su altar.","—Yo me quedo aquí, entre las hojas. Por fin puedo tumbarme."];
+    if(boss3Done&&!cycled) return ["—Caminante. Se han caído todas las hojas a la vez.","—Ninguna recuerda de qué árbol era.","—Yo sí me acuerdo de ti. No lo olvides."];
     if(!cycled) return ["—El otoño ya está en casa. Ahora le toca al Viento del Norte.","—Si subes al pico, dile que el Ciervo...","—...sigue dejando caer las hojas.","—Él entenderá."];
     return ["—Las hojas caen y nadie se enfada. Qué cosa más rara.","—Gracias, caminante. El molino vuelve a moler."]; },
+};
+/* EL CAPÍTULO 5: el Olvido suelto (15o). Raíz no tiene voz: sus cajas salen roídas (nunca seis ▒ seguidos, que se leerían CIERZO).
+   Los vecinos olvidan, pero se les escapa cómo llaman a Sprout: eso es lo último que se va */
+const C5T={
+  raizMute:["……▒…","▒▒… ▒…▒▒▒……"],
+  arrive:["(Raíz abre la boca, pero no le sale nada. Solo polvo gris.)","(En la copa, la polilla pliega las alas. Duerme... o hace como que duerme.)","CAPÍTULO 5: EL OLVIDO"],
+  raizPoint:{ otono:["(Raíz señala el ALTAR DEL OTOÑO, vacío. Luego te señala a ti.)"], copo:["(Raíz señala el ALTAR DEL INVIERNO. Luego, tu zurrón.)"],
+    sleep:["(Raíz junta las manos bajo la mejilla, como quien duerme.)"], fin:["(Raíz mira a la polilla. Luego a ti. Asiente, despacio.)"] },
+  raizSleep:["…d▒▒rm▒…"],
+  copoMissing:["ALTAR DEL INVIERNO.","(El Copo tiembla en tu zurrón. Pero junto al Roble aún hay cuencos vacíos.)"],
+  copoDone:["ALTAR DEL INVIERNO.","(El COPO late bajo la seda gris, con las otras tres.)"],
+  copo:["(Las cuatro reliquias laten juntas bajo la seda.)","(El hueco del tronco se abre, como una boca que quiere hablar...)","(...y no le sale nada.)","(Raíz te mira y mueve los labios, muy despacio.)"],
+  petra:["¡Hola! ¿Nos conocemos?","Tienes cara de... de algo verde.","Qué raro. Tengo un nombre en la punta de la lengua...","...y no me sale."],
+  petraHint:["¡Hola, cosa verde!","Tengo una frase metida en la cabeza y no sé de dónde sale:","«Un brote no despierta hasta que el valle lo llama.»","Es de un libro. Lo escribí yo... ¿para quién?","Oye... ¿tú no dormías en una maceta?"],
+  petraAfter:["¿Por qué tendré tantas ganas de gritar un nombre?","Si supiera cuál..."],
+  lupa:["¿Por qué estaré regando esta piedra?","...Ah, no. Es una flor. Gris. ¿Las flores eran grises?","Perdona, ¿cómo te llamabas, tallito?","...¿Tallito? ¿Por qué te he llamado tallito?"],
+  moss:["...¿Y esta caña de quién es?","Tira de mí hacia el agua. Buena caña.","Tú... ¿nos conocemos, grumete?"],
+  corteza:["Me llamo Corteza. Lo tengo tallado aquí, en el mostrador.","Lo que se talla no se olvida, criatura. Por eso tallo.","Hoy tengo mucho trabajo."],
+  tilo:["¡Un cliente! Creo.","¿Esto cuánto costaba? ¿Y esto qué es, una baya?","¿Las bayas se venden o se comen?","Mira el género... si sabes qué es, cliente."],
+  pot:["¿Dormir en la maceta?"], potNo:["(Todavía no.)"],
+  dream:["Sprout.","Despierto ya no puedo hablarte: la polilla me tiene la voz en la boca.","Mis anillos son los años del valle. Ella se los come de fuera hacia dentro.",
+    "Si llega al primero, al día en que nos plantaron...","...mi hermano y yo nunca habremos sido hermanos.","Ahora bajará a por el último nombre que le falta.","El tuyo, brote.",
+    "No tengas miedo. Deja que se lo coma.","Un nombre no es de quien lo lleva. Es de quien lo llama.","Y a ti te llama todo el valle, aunque ahora no lo sepa.",
+    "Cuando vuelvas a ser tú, gira. Con las cuatro estaciones dentro.","Despierta. Te espero en la plaza."],
+  wake:["(Te despiertas en tu maceta. Hueles a polvo gris... y a hojas nuevas.)"],
+  lost:'(¿Cómo se andaba...?)',
+  voices:[ // el final: el valle llama a Sprout y cada voz devuelve algo (15o)
+    {who:'PETRA',txt:'¡SPROUT!'},{who:'LUPA',txt:'¡Tallito, arriba!'},{who:'MOSS',txt:'¡A flote, grumete!'},{who:'TILO',txt:'¡Tu Hoja, cliente!'},
+    {who:'CORTEZA',txt:'Respira, criatura.'},{who:'EL TOPO REAL',txt:'¡Aquí, chiquillo!'},{who:'LA REINA',txt:'Zzz... ¡Ahora, pequeño!'},
+    {who:'EL CIERVO',txt:'Levántate, caminante.'},{who:'CIERZO',txt:'¡SEMILLITA!'},{who:'RAÍZ',txt:'Brote.'}],
+  hold:'MANTÉN',
+  call:["Ya tengo voz, brote. Y ahora, todos a la vez:"],
+  brother:["Cierzo."], brotherBack:["...Raíz."],
 };
 /* el pozo de los deseos */
 const WELL_TALK=["Un pozo viejo. El agua brilla al fondo, muy abajo."];
@@ -404,5 +433,5 @@ const WELL_DONE=["(Chof.)","(Silencio.)","(...y algo sube flotando desde el fond
 const ITEM_NAMES={blade:'HOJA ANCESTRAL',bomb:'BELLOTA-BOMBA',hook:'RAÍZ-GANCHO',boomer:'VAINA VOLADORA',lantern:'FAROL DE BRASA',feather:'VILANO DE PETRA',shield:'ESCUDO DE CORTEZA',ember:'BRASA DE PRIMAVERA',tear:'LÁGRIMA DE VERANO',flake:'COPO ETERNO'};
 AMULETS.susurro={name:'SUSURRO DEL VIENTO',desc:'El Remolino se\ncarga al instante\ny el tornadito\nvuela más lejos.'};
 AMULETS.trebol={name:'TRÉBOL DE CUATRO',desc:'Trae suerte: más corazones y bayas de bichos y hierba.'}; // final de los trueques (12c)
-const CHAPTER_NAMES=['Prólogo · El brote','Cap. 1 · La Brasa','Cap. 2 · La Lágrima','Cap. 3 · El Ámbar','Cap. 4 · El Copo','Epílogo · El ciclo'];
-const CHAPTER_SHORT=['Prólogo','La Brasa','La Lágrima','El Ámbar','El Copo','Epílogo'];
+const CHAPTER_NAMES=['Prólogo · El brote','Cap. 1 · La Brasa','Cap. 2 · La Lágrima','Cap. 3 · El Ámbar','Cap. 4 · El Copo','Cap. 5 · El Olvido','Epílogo · El ciclo'];
+const CHAPTER_SHORT=['Prólogo','La Brasa','La Lágrima','El Ámbar','El Copo','El Olvido','Epílogo'];

@@ -98,7 +98,7 @@ function saveOpts(){ try{ localStorage.setItem('sprout.opts',JSON.stringify(opts
 function diffDamage(n){ const d=opts.diff??1; return d===0?Math.max(1,Math.floor(n/2)):d===2?Math.ceil(n*1.5):n; }
 let playTime=0, petraWoke=false, saveFlash=0, wellDone=false, lettersGiven=false, loreSel=0, optSel=0, itemCardT=0, itemCardName='';
 function lettersCount(){ let n=0; for(const id of collected) if(id[0]==='✉') n++; return n; }
-function chapterIdx(){ return cycled?5:autumned?4:summered?3:thawed?2:won?1:0; }
+function chapterIdx(){ return cycled?6:boss3Done?5:autumned?4:summered?3:thawed?2:won?1:0; } // 5: el Olvido suelto (15o)
 function timeStr(f){ const s=(f/60)|0; return ((s/3600)|0)+':'+String(((s/60)|0)%60).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 /* ---------- HUD y menú elevados ---------- */
 const THUMBS={};                 // miniaturas del mapa por pantalla ('x,y' → canvas 18×14)

@@ -239,7 +239,7 @@ BOSS_INTRO.viento={ dur:300, shortDur:100,
         tlBigLine(s,80,y0,pal,i=>{ const u=T-(t0+i*1.1); if(u<0) return null; const k=presentEase.out(Math.min(1,u/8)); return {dx:(1-k)*120,dy:0,a:Math.min(1,u/2)*a}; });
         if(T>=t0&&T<t0+14){ ctx.fillStyle='rgba(255,255,255,.7)'; const w=tlLineW(s); for(let j=0;j<5;j++) ctx.fillRect(Math.round(80+w/2+(1-(T-t0)/14)*120-10+j*9),y0-6+j*5,14-j*2,1); }
         if(T>=236+li*5&&T<258+li*5) tlShine(s,80,y0,(T-236-li*5)/22); });
-      if(T>=226){ const n=Math.floor((T-226)*1.3), s=eco?'lo que el viento recuerda':'hermano del Roble'; ctx.globalAlpha=a; txtOL(s.slice(0,n),80,P.st.ty[2],eco?'#d0b8ff':'#a8e0ff','center','#0a1428'); ctx.globalAlpha=1; } }
+      if(T>=226){ const n=Math.floor((T-226)*1.3), s=typeof tlSubViento==='function'?tlSubViento(eco):(eco?'lo que el viento recuerda':'hermano del Roble'); ctx.globalAlpha=a; txtOL(s.slice(0,n),80,P.st.ty[2],eco?'#d0b8ff':'#a8e0ff','center','#0a1428'); ctx.globalAlpha=1; } }
   },
   end(P){ bossHidden=false; } };
 function tlVY(T,B){ const low=B.y+13+(B.low===undefined?22:B.low); return T<250?low:Math.round(low+(B.y+13-low)*presentEase.io(presentSeg(T,250,290))); } // más bajo durante la entrada; sube a flotar

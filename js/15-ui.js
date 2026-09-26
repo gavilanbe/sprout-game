@@ -231,7 +231,7 @@ function drawDialog(){
   const open=Math.min(1,(dlg.t||0)/9), sy=easeOutBack(open);
   if(open<1){ ctx.save(); ctx.translate(x+w/2,y+h/2); ctx.scale(Math.min(1,.4+open*.9),Math.max(.1,sy)); ctx.translate(-(x+w/2),-(y+h/2)); drawFrame(x,y,w,h,dlg.style); ctx.restore(); return; }
   const F=drawFrame(x,y,w,h,dlg.style), S=SPEAKER[dlg.who];
-  const por=dlg.who&&PORTRAITS[dlg.who], talking=dlg.chars<full.length;
+  let por=dlg.who&&PORTRAITS[dlg.who]; if(por&&typeof c5Portrait==='function') por=c5Portrait(dlg.who,por); const talking=dlg.chars<full.length; // en el capítulo 5, los que olvidan, apagados (15o)
   if(por){ const bob=talking?Math.round(Math.abs(Math.sin(tick*.35))*1.5):0, col=S?S.col:'#78c850';
     roundBox(x+3,y+3,40,40,PAL.k); ctx.fillStyle=shade(col,-.55); ctx.fillRect(x+4,y+4,38,38);
     const gr=ctx.createRadialGradient(x+23,y+18,2,x+23,y+22,24); gr.addColorStop(0,shade(col,-.1)); gr.addColorStop(1,shade(col,-.6)); ctx.fillStyle=gr; ctx.fillRect(x+4,y+4,38,38);
@@ -493,11 +493,15 @@ function draw(){
     drawUI(); drawToast(); drawZurronOut(); ctx.restore(); return; }
   if(state==='credits'){ drawCredits(); ctx.restore(); return; }
   if(state==='pause'){ drawPause(); ctx.restore(); return; }
+  if(state==='nombre'){ drawNombre(); ctx.restore(); return; } // la pantalla del nombre (15n)
+  if(state==='c5dream'){ drawC5Dream(); ctx.restore(); return; } // el sueño en la maceta (15o)
+  if(state==='c5post'){ drawC5Post(); ctx.restore(); return; }   // después de los créditos (15o)
   if(state==='dialog'&&zLore&&dlg){ drawPause(); drawDialog(); ctx.restore(); return; } // un recuerdo leído desde el zurrón
   drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
   if(state==='arrive') drawArrive(); // el iris que se abre al continuar (15a)
   if(state==='present'||state==='outro') drawPresent(); // títulos, entradas y salidas (15i)
   if(state==='olvmoment') drawOlvMoment(); // los momentos del Olvido (12d)
+  if(state==='c5arrive') drawC5Arrive(); if(state==='c5copo') drawC5Copo(); if(typeof c5Fin!=='undefined'&&c5Fin&&(state==='c5fin'||state==='dialog')) drawC5FinUI(); // el capítulo 5 (15o)
   if(state==='rite') drawRite(); // la entrega en la plaza (15f)
   if(state==='door') drawDoor(); // la travesía por una puerta, cueva o escalera (15g)
   if(state==='itemget'&&moment) drawMoment(); // el momento del arma (15d)

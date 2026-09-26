@@ -629,11 +629,11 @@ function drawFileCard(y){
     txtS('Z SÍ · X NO',80,y+24,(tick&31)<22?'#8a1808':F.inner,'center'); return; }
   badge(''+(i+1),10,y+2);
   if(!d){ txt('NUEVO BROTE',22,y+3,F.key); txt('Una semilla espera.',10,y+13,F.text); txt('¡Pulsa Z y plántala!',10,y+22,F.text); return; }
-  const ch=d.cycled?5:d.autumned?4:d.summered?3:d.thawed?2:d.won?1:0;
+  const ch=d.cycled?6:d.boss3Done?5:d.autumned?4:d.summered?3:d.thawed?2:d.won?1:0;
   txt(CHAPTER_NAMES[ch],22,y+3,F.key); clockIcon(116,y+3,'#8a1808'); txt(timeStr(d.playTime||0).slice(0,-3),150,y+3,F.text,'right');
   const mh=Math.min(10,((d.maxHp||6)/2)|0); for(let h=0;h<mh;h++) ctx.drawImage(HEART_FULL,10+h*8,y+12);
   ctx.drawImage(ACORN_GOLD,118,y+12); txt(Math.min(8,d.seeds||0)+'/8',150,y+13,F.text,'right');
-  [d.thawed,d.summered,d.autumned||d.cycled,d.cycled].forEach((on,k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.22; ctx.drawImage(RELIC_MINI[k],10+k*9,y+21); ctx.restore(); });
+  [d.thawed,d.summered,d.autumned||d.cycled,d.cycled||(d.c5&&d.c5.copo)].forEach((on,k)=>{ ctx.save(); if(!on) ctx.globalAlpha=.22; ctx.drawImage(RELIC_MINI[k],10+k*9,y+21); ctx.restore(); });
   const R=d.respawn, place=R&&PLACE_NAMES[R.sx+','+R.sy];
   if(place){ ctx.drawImage(PIN_MINI,50,y+21); let p=place; while(p.length>4&&textW(p,FONT_S)>92) p=p.slice(0,-1); if(p!==place) p=p.trimEnd()+'…'; txtS(p,57,y+23,F.text); }
 }
@@ -674,18 +674,17 @@ function drawArrive(){ const t=ARRIVE_T-arriveT; fileIris(player.x+8,player.y+8,
    playEnding(cb) — Z pasa de plano; cb al terminar (créditos)
    ============================================================ */
 let ending=null;
-const END_SHOTS=[
-  {len:300,txt:['Las cuatro estaciones','volvieron a su sitio.']},
-  {len:300,txt:['Y Cierzo, el Viento del Norte,','bajó a ver a su hermano.']},
-  {len:300,txt:['El valle volvió a girar,','y todos salieron a verlo.']},
-  {len:330,txt:['La novena semilla','ya no duerme.']},
+const END_SHOTS=[ // docs/TERCERA-PASADA.md §7.5: la pregunta de Raíz («¿sabes por qué te planté?») se contesta en el último
+  {len:300,txt:['El año volvió a girar.']},
+  {len:330,txt:['Y en la plaza, dos hermanos','se llamaron por su nombre.']},
+  {len:300,txt:['El valle salió a verlo,','y nadie tuvo frío.']},
+  {len:380,txt:['Un árbol no puede subir','a una montaña.','Por eso plantó un brote.']},
 ];
 function playEnding(cb){ ending={shot:0,t:0,cb:cb||null}; state='ending'; parts=[]; toast=null; if(AC){ setTrack(typeof TRACKS!=='undefined'&&TRACKS.final?'final':'creditos'); } }
 function updEnding(){
   const e=ending; if(!e){ state='credits'; return; } e.t++; const S=END_SHOTS[e.shot];
   const si=e.shot===2?((e.t/75)|0)%4:e.shot===1?3:1, SS=SEASONS[si];
   if((tick%6)===0) parts.push({k:SS.part,x:Math.random()*170-5,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:240,max:240,sway:Math.random()*6,r:(tick&8)?1:0,col:SS.partCol[(tick>>3)&1],nog:true});
-  if(e.shot===1&&(tick%9)===0) parts.push({k:'petal',x:Math.random()*160,y:-4,vx:.2,vy:.4,life:220,max:220,sway:Math.random()*6,col:'#f8c8e0',nog:true});
   updParts();
   if(keys.fire&&e.t>30){ keys.fire=false; e.t=S.len; }
   if(e.t>=S.len){ e.shot++; e.t=0; parts=[]; if(AC) SFX.chime();
@@ -700,15 +699,20 @@ function drawEnding(){
     const lit=ROBLE_ALTARS.filter((A,i)=>t>=54+i*34).length; if(lit) glowAt(80,62,16+lit*6+Math.sin(tick*.1)*2,'rgba(255,244,200,'+(.12*lit).toFixed(2)+')');
     drawRoble(ROBLE_X,ROBLE_Y); ROBLE_ALTARS.forEach(A=>drawAltarRelic(A));
     ctx.drawImage(ELDER,64,64); ctx.drawImage(P_SPRITES[1][0],64,80); ctx.restore(); SEASON_FORCE=keep;
-  } else if(e.shot===1){ // los hermanos: el Viento baja y rodea al Roble, manso
-    drawTitleScene(3,1,0,false); const k=clamp(t/160,0,1), a=t*.02;
-    const wx=80+Math.cos(a)*44*(1-k*.3), wy=18+k*22+Math.sin(a)*8;
-    drawWind(wx,wy,{s:.9,mood:t<130?'calm':'happy',f:(tick>>3)&7,flip:Math.sin(a)<0,blink:((t+30)%140)<5?1:0});
-    if(t>150&&(tick&7)<4) sparkle(80+(Math.random()-.5)*60,40+(Math.random()-.5)*30,'#fff6d0');
+  } else if(e.shot===1){ // los hermanos, en la plaza nevada: «Cierzo.» «...Raíz.»
+    const [bio,floor]=scState('1,1',{won:true,thawed:true,summered:true,autumned:true,cycled:true,force:3}), bg=scScreen('1,1',bio,floor); if(bg) ctx.drawImage(bg,0,8);
+    ctx.save(); ctx.translate(0,8); scOak('winter',0,0); ROBLE_ALTARS.forEach(A=>drawAltarRelic(A));
+    const k=CA_EASE.out(clamp(t/130,0,1)), wx=104, wy=Math.round(lerp(-24,62,k)+Math.sin(t*.05)*2);
+    drawShadow(64,86,6); ctx.drawImage(ELDER,56,72); glowAt(wx,wy+8,20,'rgba(220,236,255,.25)'); drawWind(wx,wy,{s:1,mood:t<130?'calm':'happy',f:(tick>>3)&7,flip:false,blink:((t+30)%140)<5?1:0});
+    ctx.restore();
+    const say=(s,x,y,a)=>{ if(a<=0) return; const w=textW(s)+8; ctx.globalAlpha=a; roundBox(x-(w>>1)-1,y-1,w+2,13,PAL.k); roundBox(x-(w>>1),y,w,11,'#fffbe8'); ctx.fillStyle='#fffbe8'; ctx.fillRect(x-1,y+11,3,2); ctx.fillStyle=PAL.k; ctx.fillRect(x,y+13,1,1); drawText(ctx,s,x-(w>>1)+4,y+2,'#2a2438','left',FONT_M); ctx.globalAlpha=1; };
+    say('Cierzo.',64,58,Math.min(1,(t-140)/8,(220-t)/8)); say('...Raíz.',104,42,Math.min(1,(t-212)/8,(300-t)/8));
   } else if(e.shot===2){ // el año gira, con todos mirando (barrido nítido desde la copa)
     const si=((t/75)|0)%4, w=t%75; drawTitleScene((si+3)%4,1,0,false);
     if(w<30){ ctx.save(); ctx.beginPath(); for(const [y,a,b] of caWipeSpans(w/30,'iris')) ctx.rect(a,y,b-a,1); ctx.clip(); drawTitleScene(si,1,0,false); ctx.restore(); } else drawTitleScene(si,1,0,false);
-    const crowd=[PETRA_SPR,LUPA_SPR,MOSS_SPR,TILO_SPR,CORTEZA_SPR,ELDER]; crowd.forEach((sp,i)=>{ const x=6+i*26, hop=((tick>>3)+i*3)%12===0?2:0; drawShadow(x+8,131,6); ctx.drawImage(sp,x,115-hop); });
+    const crowd=[PETRA_SPR,LUPA_SPR,MOSS_SPR,TILO_SPR,CORTEZA_SPR,ELDER]; crowd.forEach((sp,i)=>{ const x=6+i*26, hop=((tick>>3)+i*3)%12===0?2:0; drawShadow(x+8,131,6); ctx.drawImage(sp,x,115-hop);
+      const u=(t*.5+i*23)%64, na=Math.min(1,u/10,(64-u)/14); if(na>0){ ctx.globalAlpha=na; proNote(x+9+Math.sin((t+i*40)*.08)*3,108-u,'#fff6c0'); ctx.globalAlpha=1; } }); // cantan la nana
+    const mx=((t*.7)%200)-20, my=62+Math.sin(t*.09)*10; if(typeof MOTH_B!=='undefined') ctx.drawImage(MOTH_B[MOTH_FLAP[(tick>>1)&3]],Math.round(mx),Math.round(my)); // y la polillita, que ya no se come nada
   } else { // la novena semilla, de cerca: Sprout en grande (el mismo de las cinemáticas), bajo el Roble en flor
     drawTitleScene(0,1,0,false); ctx.fillStyle='rgba(255,246,210,.16)'; ctx.fillRect(0,0,160,144);
     const air=t>=150&&t<168?Math.sin((t-150)/18*Math.PI):0, fy=Math.round(132-air*16);

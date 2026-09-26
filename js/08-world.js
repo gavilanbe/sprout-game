@@ -71,7 +71,8 @@ function rebuildBg(){
 }
 function bgEnsure(f){ const J=bgJob; if(!J||J.ready[f]) return; J.ready[f]=true;
   if(!bgCanvas[f]){ bgCanvas[f]=mkCanvas(160,128); fgCanvas[f]=mkCanvas(160,128); }
-  const g=bgCanvas[f].getContext('2d'), fg=fgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128); renderScreenTo(g,J.rows,0,0,J.o,f,fg); }
+  const g=bgCanvas[f].getContext('2d'), fg=fgCanvas[f].getContext('2d'); g.clearRect(0,0,160,128); fg.clearRect(0,0,160,128); renderScreenTo(g,J.rows,0,0,J.o,f,fg);
+  if(typeof c5GradeBg==='function') c5GradeBg(g,fg,J.o.sx,J.o.sy); } // el capítulo 5: el valle, en el gris del Olvido (15o)
 function bgEnsureAll(){ for(let f=0;f<BG_FRAMES;f++) bgEnsure(f); }
 function bgWarm(){ const J=bgJob; if(!J) return; const f=J.ready.indexOf(false); if(f<0) return; bgEnsure(f); if(J===bgJob&&J.ready.indexOf(false)>=0) idleTask(bgWarm); }
 /* las pantallas de al lado se pintan una vez en borrador (en los ratos libres): así sus baldosas ya están hechas cuando llegues */
@@ -96,6 +97,7 @@ function ensureThumb(key){ // para partidas cargadas: dibuja la pantalla en frí
   const c=mkCanvas(160,128); const r=regionOf(x,y);
   const bio=screenBiome(x,y), floor=r==='norte'?((thawed&&y===-1)?'.':'n'):r==='marisma'?(summered?'.':'·'):'.';
   renderScreenTo(c.getContext('2d'),rows,0,0,{bio,style:'cave',floor,sx:x,sy:y,crystal:false,openChests:new Set()},0);
+  if(typeof c5GreyAmt==='function'){ const a=c5GreyAmt(x,y); if(a>0) c5Grade(c.getContext('2d'),160,128,a); }
   return thumbOf(key,c);
 }
 function markDirty(){ bgDirty=true; }
@@ -192,7 +194,7 @@ function loadScreen(nx,ny){
     else if(ch==='ł'){ grid[y][x]=regionFloor(); if(!collected.has('ł'+id)) pickups.push({kind:'bigkey',id:'ł'+id,x:x*16+4,y:y*16+4,t:0}); }
     else if(ch==='J'){ grid[y][x]='q'; if(!bossDone) boss=makeBoss('topo',x,y); else if(!hasEmber) pickups.push({kind:'ember',x:x*16,y:y*16,t:0}); }
     else if(ch==='!'){ grid[y][x]='q'; if(!boss2Done) boss=makeBoss('avispa',x,y); else if(!hasTear) pickups.push({kind:'tear',x:x*16,y:y*16,t:0}); }
-    else if(ch==='^'){ grid[y][x]='n'; if(!boss3Done) boss=makeBoss('viento',x,y); else if(!hasFlake) pickups.push({kind:'flake',x:x*16,y:y*16,t:0}); }
+    else if(ch==='^'){ grid[y][x]='n'; if(!boss3Done){ boss=makeBoss('viento',x,y); makeCocoon(boss); } /* envuelto en la ventisca gris (15n) */ else if(!hasFlake) pickups.push({kind:'flake',x:x*16,y:y*16,t:0}); }
     else if(ch==='Λ'){ grid[y][x]='q'; if(!boss4Done) boss=makeCiervo(x,y); else if(!hasAmber) pickups.push({kind:'amber',x:x*16,y:y*16,t:0}); }
     else if(ch==='C'){ if(opened.has('C:'+sx+','+sy+':'+x+','+y)) grid[y][x]=regionFloor(); }
     else if(ch==='='){ if(opened.has('G'+sx+','+sy)||opened.has('PZ'+sx+','+sy)) grid[y][x]='q'; }

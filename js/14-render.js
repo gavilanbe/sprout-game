@@ -163,6 +163,7 @@ function drawBoss(){
     if(bossRope){ const x0=player.x+8, y0=player.y+10, x1=b.x+16, y1=b.y+18, n=Math.max(2,(Math.hypot(x1-x0,y1-y0)/4)|0); for(let i=0;i<=n;i++){ ctx.fillStyle=i%2?PAL.l:PAL.d; ctx.fillRect((x0+(x1-x0)*i/n-1)|0,(y0+(y1-y0)*i/n-1+Math.sin(i*.8+tick*.5))|0,2,2); } }
   } else if(b.type==='ciervo'){ drawCiervo(b); // el Ciervo de Ámbar (12b)
   } else {
+    if(b.cocoon&&!b.echo){ drawCocoon(b); return; } // el Viento de verdad, en su capullo (15n)
     const resting=b.st==='rest';
     if(resting) glowAt(b.x+16,b.y+16,26,'rgba(120,232,120,'+(0.28+0.18*Math.sin(tick*.3))+')');
     const mood=b.st==='sweep'?'howl':b.st==='aim'?'blow':b.st==='drop'||resting?'sad':(((tick>>5)&3)===0?'howl':'storm'); // aúlla, sopla, se derrumba
@@ -191,7 +192,7 @@ function drawScene(){
   ctx.drawImage(bgCanvas[bgFrame()],0,0); if(sx===1&&sy===1&&typeof riteBgOld==='function') riteBgOld(); drawScorches();
   if(sx===1&&sy===1){
     if(typeof drawPlaza==='function') drawPlaza(); else drawGreatOak(37,-2); // el Roble vivo, sus raíces y los altares (15f)
-    if(cycled) [[26,70],[40,78],[58,70],[74,78],[90,70],[106,78],[26,86],[106,86]].forEach(([gx,gy],i)=>{ const bob=Math.sin(tick*.05+i*1.3)>0?0:1; ctx.drawImage(H_SEEDLING,gx,gy+bob); });
+    if(cycled&&!(typeof c5Fin!=='undefined'&&c5Fin)) [[26,70],[40,78],[58,70],[74,78],[90,70],[106,78],[26,86],[106,86]].forEach(([gx,gy],i)=>{ const bob=Math.sin(tick*.05+i*1.3)>0?0:1; ctx.drawImage(H_SEEDLING,gx,gy+bob); });
   }
   // fuego de las antorchas encendidas (parpadeo y luz cálida)
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';'){ glowAt(x*16+8,y*16+4,16,'rgba(248,160,48,.22)'); if((tick&7)===0) parts.push({x:x*16+7+Math.random()*3,y:y*16+2,vx:0,vy:-.4,life:10,col:(tick&8)?'#f8e060':'#f8a030',nog:true}); } }
@@ -200,12 +201,12 @@ function drawScene(){
   const L=[];
   for(const p of pickups) L.push({y:p.y+8,f:()=>drawPickup(p)});
   for(const b of bombs) L.push({y:b.y+12,f:()=>drawBomb(b)});
-  if(elderPos) L.push({y:elderPos[1]*16+16,f:()=>{ const sway=Math.sin(tick*.04)>0?0:1; drawShadow(elderPos[0]*16+7,elderPos[1]*16+15,6); ctx.drawImage(ELDER,elderPos[0]*16,elderPos[1]*16+sway+1);
+  if(elderPos) L.push({y:elderPos[1]*16+16,f:()=>{ const sway=Math.sin(tick*.04)>0?0:1; drawShadow(elderPos[0]*16+7,elderPos[1]*16+15,6); ctx.drawImage(typeof c5NpcImg==='function'?c5NpcImg(ELDER,'E',elderPos[0]*16,elderPos[1]*16):ELDER,elderPos[0]*16,elderPos[1]*16+sway+1);
     if((tick%85)===0) parts.push({x:elderPos[0]*16+14,y:elderPos[1]*16+4,vx:(Math.random()-.5)*.2,vy:-.25,life:22,col:PAL.l}); }});
   for(const n of npcs) L.push({y:n.y*16+16,f:()=>{ const sway=Math.sin(tick*.05+n.x)>0?0:1;
     if(n.guest==='viento'){ drawShadow(n.x*16+8,n.y*16+16,10); drawWind(n.x*16+8,n.y*16-2+sway,{s:.86,mood:'calm',f:(tick>>3)&7,flip:player.x>n.x*16}); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-26); } // el Viento, en paz, en su pico
     else if(n.guest){ const img=BOSS_SPR[n.guest]; drawShadow(n.x*16+8,n.y*16+16,10); ctx.drawImage(img,n.x*16-8,n.y*16-14+sway); if((tick&31)<16) txtO('…',n.x*16+5,n.y*16-24); }
-    else { drawShadow(n.x*16+8,n.y*16+15,5); ctx.drawImage(NPCS[n.ch].img,n.x*16,n.y*16+sway); } }});
+    else { drawShadow(n.x*16+8,n.y*16+15,5); ctx.drawImage(typeof c5NpcImg==='function'?c5NpcImg(NPCS[n.ch].img,n.ch,n.x*16,n.y*16):NPCS[n.ch].img,n.x*16,n.y*16+sway); } }}); // en el capítulo 5, apagados (15o)
   for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.pop>0){ const k=easeOutBack(1-e.pop/10), s=Math.max(.05,k); ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(s*(1+(1-k)*.3),s); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } // aparece de un soplo (11)
     else if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
   if(blockSlide) L.push({y:blockPos()[1]+16,f:drawBlockSlide});
@@ -232,9 +233,10 @@ function drawScene(){
   for(const w of windProjs) drawTornado(w); // el tornadito del Remolino (12b)
   drawGearFx(); drawBoomer(); drawMillFront();
   drawParts(); drawMoths(); // las polillas del Olvido (12d)
+  if(boss&&boss.cocoon&&!boss.echo&&!bossHidden) drawCocoonFx(boss); // las polillas que vuelan, el barrido y la barra de hilos (15n)
   for(const f of flyText){ const age=(f.max||(f.max=f.t))-f.t, hop=age<8?Math.round(Math.sin(age/8*Math.PI)*3):0; if(f.t<8&&(f.t&1)) continue; txtOL(f.txt,(f.x+6)|0,(f.y-10-hop)|0,f.col,'center',PAL.k,FONT_S); }
   drawDark(); drawScreenFx();
-  if(boss||midboss) drawBossBar(boss||midboss);
+  if((boss&&!boss.cocoon)||midboss) drawBossBar(boss||midboss);
 }
 /* barra de vida del guardián: marco, corona, y el daño se queda un instante en blanco */
 let bossBarLag=null;

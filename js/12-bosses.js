@@ -153,7 +153,7 @@ function updTopo(){
     if(b.flash===0&&meleeActive()&&rectsHit(meleeBox(),bb)) bossClang(b,cx,cy);
     if(b.t<=0&&b.st==='up'){ b.st='burrow'; b.t=(ph===1?100:ph===2?80:70)+hash(tick,7)%50; b.mx=b.x; b.my=b.y; } }
 }
-function updBoss(){ if(!boss||boss.dying) return; if(boss.type==='viento') updViento(); else if(boss.type==='avispa') updAvispa(); else if(boss.type==='ciervo') updCiervo(); else updTopo(); }
+function updBoss(){ if(!boss||boss.dying) return; if(boss.type==='viento'){ if(boss.cocoon&&!boss.echo) updCocoon(); else updViento(); } /* el de verdad está en su capullo (15n); su eco pelea como siempre */ else if(boss.type==='avispa') updAvispa(); else if(boss.type==='ciervo') updCiervo(); else updTopo(); }
 /* ===== MINIJEFES ===== */
 function midDefeated(){ const m=midboss; if(!m||m.dead) return; // cae: se queda quieto y llega su despedida (15j-15m); luego, la recompensa
   m.dead=true; m.flash=0; projs=[]; enemies=[]; queueBye(m.type,fb=>midReward(m,fb),{mid:true}); }

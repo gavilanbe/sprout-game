@@ -1,6 +1,9 @@
 # SPROUT · Tercera pasada: lo que el valle olvidó
 
-> **Estado:** propuesta. Nada de esto está implementado todavía.
+> **Estado:** en marcha. Hechas las fases **A** (canon y voz: `0c652ae`, `b4e53b0`, `f32e992`) y **B**
+> (la cima y el capítulo 5 con su final provisional: `js/15n-cima.js`, `js/15o-capitulo5.js`). El final
+> provisional es el nivel 4 del jefe (§7.4, «el Nombre») jugado en la plaza; cuando lleguen las fases E y F,
+> los Anillos del Roble y los niveles 1-3 se meten delante. Faltan C, D, E, F y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

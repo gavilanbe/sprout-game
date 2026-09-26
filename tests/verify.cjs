@@ -126,9 +126,14 @@ const server=http.createServer((req,res)=>{
       const ember=pickups.some(p=>p.kind==='ember'); __go(6,2,72,90); const guest=npcs.some(n=>n.guest==='topo'); player.x=5*16; player.y=3*16+2; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2); if(state==='itemget'){ itemT=0; __step(2); __skipDialog(); }
       return [hp,st,bossDone,ember,guest,amulets.has('topo')]; }),[18,'yield',true,true,true,true]);
   });
-  await check('El Viento se recuerda, no se vence; suelta el Copo',async()=>{
-    eq(await ev(()=>{ boss3Done=false; __go(1,-3,72,90); __skipDialog(); boss.hp=2; __step(2); __skipDialog(); boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); const d=state; __skipDialog(); __step(2);
-      return [d,boss3Done,boss===null,pickups.some(p=>p.kind==='flake')]; }),['dialog',true,true,true]);
+  await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
+    eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
+      const coc=!!(boss&&boss.cocoon&&boss.left===4); for(const th of boss.threads){ th.m=[]; cocCutThread(boss,th,80,80); }
+      let i=0; while(state!=='nombre'&&i++<600){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } __step(1); } const s1=state;
+      __step(24); const pick=ch=>{ nom.sel=NOMBRE_GRID.join('').indexOf(ch); keys.fire=true; __step(1); __step(3); };
+      pick('X'); const wrong=nom.typed; for(const ch of 'CIERZO') pick(ch); const typed=nom.typed;
+      i=0; while(i++<3000&&!pickups.some(p=>p.kind==='flake')){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } else if(state==='present'||state==='outro') keys.fire=true; __step(1); }
+      return [coc,s1,wrong,typed,boss3Done,boss===null,pickups.some(p=>p.kind==='flake')]; }),[true,'nombre','','CIERZO',true,true,true]);
   });
   await check('Guardar y cargar conserva objetos, amuletos, llaves y progreso',async()=>{
     eq(await ev(()=>{ curSlot=2; hasBlade=true; hasHook=true; amulets.clear(); amulets.add('buho'); equipped=['buho',null]; xItem='hook'; dungeonKeys={cueva:2}; bigKeys={tronco:true}; berries=42; pieces=3; thawed=true; save();
@@ -218,11 +223,26 @@ const server=http.createServer((req,res)=>{
       __go(15,0,72,60); enemies=[]; xItem='feather'; player.x=9*16; player.y=3*16-4; player.dir=2; keys.alt=true; __step(1); keys.left=true; __step(30); keys.left=false; log.push(['salto',(player.x+8)>>4,state]);
       xItem='lantern'; for(const [x,y,d] of [[3,1,2],[6,1,3],[3,6,2],[6,6,3]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); } log.push(['antorchas',grid[1][4]]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['puerta',grid[0][4]]); player.y=-6; __step(1); __skipDoor(); log.push(['cima',sx,sy]);
-      __skipDialog(); boss.hp=2; __step(3); __skipDialog(); boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
-      const fl=pickups.find(p=>p.kind==='flake'); if(fl){ player.x=fl.x; player.y=fl.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['copo',boss3Done,hasFlake]);
-      __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); for(let i=0;i<30&&state!=='credits';i++){ if(state==='dialog') __skipDialog(); else { __step(45); keys.fire=true; __step(1); } } log.push(['final',cycled,state]);
+      __skipDialog(); presentQ=null; bossHidden=false;
+      const skipAll=(until,max)=>{ let j=0; while(j++<(max||3000)&&!until()){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } else if(state==='present'||state==='outro'||state==='olvmoment'||state==='itemget') keys.fire=true; __step(1); } };
+      for(const th of boss.threads){ th.m=[]; cocCutThread(boss,th,80,80); } skipAll(()=>state==='nombre'); __step(24);
+      for(const ch of 'CIERZO'){ nom.sel=NOMBRE_GRID.join('').indexOf(ch); keys.fire=true; __step(1); __step(3); }
+      skipAll(()=>pickups.some(p=>p.kind==='flake')); const fl=pickups.find(p=>p.kind==='flake'); if(fl){ player.x=fl.x; player.y=fl.y-4; __step(3); itemT=0; __step(2); }
+      skipAll(()=>(state==='play'&&sx===1&&sy===1&&!presentQ)||state==='c5arrive'); log.push(['copo',boss3Done,hasFlake,sx,sy]);
+      // el capítulo 5: la polilla llega al Roble; el Copo, a su altar; Petra se acuerda; la maceta y el sueño; el final
+      skipAll(()=>c5.arrive&&state==='play',900); log.push(['olvido',c5.arrive,robleLook(),c5GreyAmt(1,1)>0]);
+      player.x=2*16; player.y=6*16-4; player.dir=3; keys.fire=true; __step(1); skipAll(()=>c5.copo&&state==='play',900); log.push(['altar',c5.copo]);
+      __go(0,1,32,100); player.x=2*16; player.y=6*16-4; player.dir=1; keys.fire=true; __step(1); skipAll(()=>state==='play',200); log.push(['petra',c5.hint]);
+      __go(9,9,48,60); player.x=3*16; player.y=3*16-4; player.dir=1; keys.fire=true; __step(1); skipAll(()=>state==='c5dream',200);
+      let d=0; while(state==='c5dream'&&d++<4000){ if(c5D) c5D.chars=999; keys.fire=true; __step(1); } skipAll(()=>state==='play',200); log.push(['sueño',c5.sueno]);
+      __go(1,1,72,98); const fin=state; d=0;
+      while(d++<12000&&state!=='ending'&&state!=='credits'){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; __step(1); continue; } if(c5Fin&&c5Fin.ph==='charge'){ keys.fireHeld=c5Fin.charge<1; __step(1); continue; } __step(1); }
+      keys.fireHeld=false; log.push(['nombre',fin,cycled,state]);
+      for(let i=0;i<30&&state==='ending';i++){ __step(35); keys.fire=true; __step(1); } log.push(['final',cycled,state]);
+      creditsT=CREDITS.length*22+100; keys.fire=true; __step(1); const post=state; for(let i=0;i<80;i++) __step(1); keys.fire=true; __step(1); log.push(['después',post,state]);
       return log; });
-    eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],['copo',true,true],['final',true,'credits']]);
+    eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],
+      ['copo',true,true,1,1],['olvido',true,'silk',true],['altar',true],['petra',true],['sueño',true],['nombre','c5fin',true,'ending'],['final',true,'credits'],['después','c5post','play']]);
   });
   await check('Camino crítico: el Molino de la Hojarasca (emboscadas, grieta, Espantapájaros, molinillo, molinetes, mapa, brújula, llave grande, Ciervo, otoño)',async()=>{
     const r=await ev(()=>{ const log=[];
@@ -398,12 +418,13 @@ const server=http.createServer((req,res)=>{
       keys.alt=true; __step(1); const y=boss.st; __step(16); const pin=boss.st;
       player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); return [y,pin,boss.hp<hp0]; }),['yanked','pinned',true]);
   });
-  await check('Viento del Norte: con los cuatro braseros cae al suelo; el vilano esquiva su barrido',async()=>{
-    eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; xItem='lantern'; __go(1,-3,72,90); __skipDialog(); enemies=[]; projs=[]; const hp0=boss.hp;
-      for(const [x,y,d] of [[1,2,1],[8,2,1],[1,5,0],[8,5,0]]){ player.x=x*16; player.y=y*16-4; player.dir=d; hitStop=0; keys.alt=true; __step(1); }
-      const s1=boss.st; __step(40); const s2=boss.st; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); const hit=boss.hp<hp0;
-      boss.st='sweep'; boss.x=player.x-8; boss.y=player.y-8; boss.vx=.1; player.inv=0; jumpT=10; const hpP=player.hp; __step(1);
-      return [s1,s2,hit,player.hp===hpP]; }),['drop','rest',true,true]);
+  await check('El capullo de la cima: con polillas encima el hilo no se corta; a la luz del brasero se lanzan y entonces sí; su barrido se esquiva saltando',async()=>{
+    eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; xItem='lantern'; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false; enemies=[]; projs=[];
+      const b=boss, th=b.threads[0]; b.sweepT=9999; let [x,y]=threadAt(th,.7); player.x=x-8; player.y=y+4; player.dir=1; player.atk=11; hitStop=0; __step(1); const zurcido=!th.cut&&th.m.length>0;
+      player.atk=0; __step(14); player.x=20; player.y=22; player.dir=1; hitStop=0; keys.alt=true; __step(1); const volando=b.fly.length>0&&th.m.length===0; // enciende el brasero de arriba a la izquierda
+      [x,y]=threadAt(th,.7); player.x=x-8; player.y=y+4; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); __step(2); const cortado=!!th.cut&&b.left===3;
+      b.sweep={st:'go',t:0,y:player.y-6,x:player.x+8,vx:.1}; player.inv=0; jumpT=10; const hp=player.hp; hitStop=0; __step(1); const salta=player.hp===hp;
+      return [zurcido,volando,cortado,salta]; }),[true,true,true,true]);
   });
   await check('Cinemática de estación y final: se ven, se saltan con Z y devuelven el control',async()=>{
     eq(await ev(()=>{ let done=0; newGame(); state='play'; inBed=false; introDone=true; hitStop=0;
@@ -717,12 +738,22 @@ const server=http.createServer((req,res)=>{
       log.push(state,olvM&&olvM.txt); __skipPres(); log.push(bossDone,pickups.some(p=>p.kind==='ember'),nameFrag(),loreList()[0].kind,loreList()[0].pages.join(' ').includes('CIER▒▒'));
       boss2Done=true; boss4Done=true; log.push(nameFrag(),nameKnown(),cierzoSaid(),RUNAS['1,0'].join(' ').includes('▒▒▒▒▒▒'));
       // la cima: el Viento ya no sabe cómo se llama; Sprout junta los tres trozos y lo dice
-      thawed=summered=autumned=true; hasLantern=hasFeather=hasHook=hasPinwheel=true; boss3Done=false; __go(1,-3,72,90); __skipDialog(); boss.hp=2; __step(2); __skipDialog();
-      boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); const who=[]; i=0;
-      while(state==='dialog'&&i++<80){ if(!who.includes(dlg.who)) who.push(dlg.who); if(dlg.who==='SPROUT'&&dlg.pages.join(' ').includes('Cierzo')&&!who.includes('dice')) who.push('dice'); dlg.chars=999; keys.fire=true; __step(1); if(presentQ||state==='present') __skipPres(); }
-      __skipPres(); __step(2);
+      thawed=summered=autumned=true; hasLantern=hasFeather=hasHook=hasPinwheel=true; boss3Done=false; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
+      for(const th of boss.threads){ th.m=[]; cocCutThread(boss,th,80,80); } const who=[]; i=0;
+      const talk=()=>{ if(dlg&&dlg.who&&!who.includes(dlg.who)) who.push(dlg.who); dlg.chars=999; keys.fire=true; };
+      while(state!=='nombre'&&i++<600){ if(state==='dialog') talk(); __step(1); }
+      __step(24); for(const ch of 'CIERZO'){ nom.sel=NOMBRE_GRID.join('').indexOf(ch); keys.fire=true; __step(1); __step(3); } who.push('escribe'); // en la cima lo dice Sprout: lo escribe el jugador
+      i=0; while(i++<3000&&!pickups.some(p=>p.kind==='flake')){ if(state==='dialog') talk(); else if(state==='present'||state==='outro') keys.fire=true; __step(1); }
       log.push(who.join(','),boss3Done,cierzoSaid(),RUNAS['1,0'].join(' ').includes('CIERZO'),paginate(['Tu hermano, ▒▒▒▒▒▒.'],null)[0].includes('CIERZO'),pickups.some(p=>p.kind==='flake'));
-      return log; }),[false,'▒▒▒▒▒▒','olvmoment','CIER',true,true,'CIER▒▒','nana',true,'CIERZO',true,false,true,'EL VIENTO,SPROUT,dice',true,true,true,true,true]);
+      return log; }),[false,'▒▒▒▒▒▒','olvmoment','CIER',true,true,'CIER▒▒','nana',true,'CIERZO',true,false,true,'EL VIENTO,escribe,CIERZO',true,true,true,true,true]);
+  });
+  await check('El capítulo 5: tras la cima el valle se vuelve gris y suena la nana comida; los vecinos olvidan (se les escapa cómo le llaman) y Raíz no tiene voz; el Copo espera a las otras tres',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=true; autumned=false; boss3Done=true; hasFlake=true; hitStop=0; c5.arrive=true;
+      __go(0,1,100,72); const grey=c5GreyAmt(0,1)>.5&&c5GreyAmt(6,0)===0, track=curTrack;
+      const lupa=NPC_TALK.j().join(' ').includes('tallito'), petra=NPC_TALK.h().join(' ').includes('verde'), trade=tradeInteract(2,5,'h');
+      __go(1,1,64,82); player.dir=1; elderTalk(); const pg=dlg?dlg.pages.join(''):'', mute=state==='dialog'&&dlg.who==='RAÍZ'&&pg.includes('▒')&&!pg.includes('CIERZO'); __skipDialog();
+      deliverSeason('invierno'); const wait=state==='dialog'&&!c5.copo; __skipDialog();
+      return [grey,track,lupa,petra,trade,mute,wait,chapterIdx(),robleLook()]; }),[true,'olvido',true,true,false,true,true,5,'silk']);
   });
   await check('La aplicación: versión al día, manifiesto instalable, arranca sin red y se actualiza (con aviso en plena partida, sola en el título)',async()=>{
     const {execSync}=require('node:child_process'); let upToDate=true; try{ execSync('node scripts/version.cjs --check',{cwd:root,stdio:'pipe'}); }catch(e){ upToDate=false; }

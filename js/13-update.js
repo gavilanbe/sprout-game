@@ -72,7 +72,7 @@ function update(){
   if(state==='credits'){ creditsT++; // los créditos avanzan; al final, Z vuelve al valle (post-juego)
     const si=((creditsT/420)|0)%4; if((tick%7)===0) parts.push({k:SEASONS[si].part,x:Math.random()*170-5,y:-4,vx:(Math.random()-.5)*.3,vy:.3+Math.random()*.3,life:240,max:240,sway:Math.random()*6,r:(tick&8)?1:0,col:SEASONS[si].partCol[(tick>>3)&1],nog:true});
     updParts(); const end=creditsT>CREDITS.length*22+80;
-    if(keys.fire&&end){ keys.fire=false; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } else if(keys.fire){ keys.fire=false; creditsT+=40; } return; }
+    if(keys.fire&&end){ keys.fire=false; if(typeof c5PostCredits==='function'&&c5PostCredits()) return; state='play'; fadeIn=40; parts=[]; setTrack('valle'); } else if(keys.fire){ keys.fire=false; creditsT+=40; } return; }
   if(state==='seasoncine'){ updSeasonCine(); return; }
   if(state==='rite'){ updRite(); return; } // la entrega en la plaza (15f)
   if(state==='door'){ updDoor(); return; } // entrar y salir por puertas, cuevas y escaleras (15g)
@@ -126,6 +126,12 @@ function update(){
   if(state==='trans'){ trans.t++; if(trans.t>=trans.dur){ state='play'; trans=null; } return; }
   if(state==='present'||state==='outro'){ updPresent(); return; } // el título de una mazmorra, la entrada o la salida de un jefe (15i)
   if(state==='olvmoment'){ updOlvMoment(); return; } // un momento del Olvido: la polilla de una muda, la que se posa en Sprout (12d)
+  if(state==='nombre'){ updNombre(); return; } // escribir el nombre del Viento (15n)
+  if(state==='c5arrive'){ updC5Arrive(); return; } // el capítulo 5 (15o): la polilla llega al Roble,
+  if(state==='c5copo'){ updC5Copo(); return; }     // el Copo a su altar,
+  if(state==='c5dream'){ updC5Dream(); return; }   // el sueño en la maceta,
+  if(state==='c5fin'){ updC5Fin(); return; }       // el final
+  if(state==='c5post'){ updC5Post(); return; }     // y la polillita, después de los créditos
 
   /* === PLAY === */
   if(sproutT>0){ updRebrote(); return; } // rebrotar: germina y sale de la tierra (15c)

@@ -273,11 +273,12 @@ const DREAM_PALS={ // 5 niveles, de oscuro a claro; los anillos alternan la esta
   verano:['#041618','#082a2c','#0e4042','#185a5a','#247676'],
   otono:['#1a0804','#321006','#4e1e0a','#6c2c0e','#8c3e14'],
   invierno:['#0a1422','#132840','#1e3c5c','#2c547a','#44729c'],
+  olvido:['#0e0b14','#1c1726','#2c2538','#3e364c','#544a64'], // el capítulo 5: gris lila
 };
 for(const k in DREAM_PALS) DREAM_PALS[k]=DREAM_PALS[k].map(hex2rgb);
 function dreamPalKey(){ const r=regionOf(sx,sy);
   if(r==='eco') return 'ciclo';
-  const ch=chapterIdx(); return ['mustio','primavera','verano','otono','invierno','ciclo'][ch]||'mustio'; }
+  const ch=chapterIdx(); return ['mustio','primavera','verano','otono','invierno','olvido','ciclo'][ch]||'mustio'; }
 const DREAM_C={x:80,y:70};
 let dreamCv=null, dreamImg=null, DR_D=null, DR_A=null, DR_SA=null, DR_CA=null, DR_SB=null, DR_CB=null;
 function dreamInit(){ if(DR_D) return; dreamCv=mkCanvas(VW,VH); dreamImg=dreamCv.getContext('2d').createImageData(VW,VH);
@@ -338,7 +339,7 @@ function drawDreamRoots(D){
 const WILT_BOSS={
   topo:'Al Topo Real lo marea el estruendo. Una bellota-bomba cuando asome.',
   avispa:'A la Reina, bájala con la Raíz-gancho. En el suelo es tuya.',
-  viento:'Mi hermano teme al fuego de sus braseros. El farol los prende; el Vilano te salva de sus soplidos.',
+  viento:'Las polillas van a la luz, brote. Enciende un brasero y los hilos se quedan solos. Y si barren tu fila, salta.',
   ciervo:'El manto de hojas del Ciervo resbala. Una ráfaga del Molinillo y queda al descubierto.' };
 const WILT_MID={
   king:'El Escarabajo Rey embiste recto. Apártate y dale en la cola cuando se atasque.',

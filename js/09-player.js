@@ -156,7 +156,7 @@ function toggleCrystal(){
   SFX.crystal(); shake=3; markDirty(); save();
 }
 function lightTorch(tx,ty){ grid[ty][tx]=';'; SFX.torch(); puff(tx*16+8,ty*16+4,'#f8a030',8,1.2); markDirty();
-  if(boss&&boss.type==='viento'){ vientoBrazierLit(); return; }
+  if(boss&&boss.type==='viento'){ if(boss.cocoon&&!boss.echo) cocoonBrazierLit(tx,ty); else vientoBrazierLit(); return; } // la luz llama a las polillas (15n)
   opened.add('T'+sx+','+sy+':'+tx+','+ty);
   let all=true; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') all=false;
   if(all){ opened.add('G'+sx+','+sy); SFX.puzzle(); shake=4; openGates(); showToast('¡LAS ANTORCHAS ARDEN!','la verja se abre'); }
@@ -166,7 +166,7 @@ function lightTorch(tx,ty){ grid[ty][tx]=';'; SFX.torch(); puff(tx*16+8,ty*16+4,
 function attack(){
   if(inBed){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); noise(.1,.04,false); return; }
   // el Viento exhausto se recuerda (Z a su lado)
-  if(boss&&boss.type==='viento'&&boss.hp<=2&&boss.st==='rest'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<34){
+  if(boss&&boss.type==='viento'&&!boss.cocoon&&boss.hp<=2&&boss.st==='rest'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<34){
     const bye=()=>queueBye('viento',fb=>{ const b=boss; if(!b) return; if(fb){ SFX.fanfare(); shake=14; // su despedida (15l); luego, el Copo donde estaba
         puff(b.x+16,b.y+16,'#dff0ff',18,2); puff(b.x+16,b.y+16,'#9ec7e8',12,1.6); }
       pickups.push({kind:'flake',x:b.x+8,y:b.y+8,t:0});
@@ -200,7 +200,7 @@ function interact([tx,ty,ch]){
     if(guest.guest==='topo'){ if(!topoGift){ topoGift=true; say(TOPO_AFTER,()=>giveAmulet('topo'),'EL TOPO REAL'); } else say(GUEST_TALK.topo(),null,'EL TOPO REAL'); }
     else if(guest.guest==='avispa') say(GUEST_TALK.avispa(),null,'LA REINA');
     else if(guest.guest==='ciervo') say(GUEST_TALK.ciervo(),null,'EL CIERVO');
-    else say(GUEST_TALK.viento(),null,'EL VIENTO');
+    else say(GUEST_TALK.viento(),null,'CIERZO'); // ya tiene nombre
     return true; }
   if(ch==='S'){ SFX.blip(); say(TXT.signs[sx+','+sy]||TXT.sign,null,null,'wood'); return true; }
   if(ch==='O'){ SFX.blip(); if(RUNAS[sx+','+sy]&&!collected.has('r:'+sx+','+sy)){ collected.add('r:'+sx+','+sy); showToast('RECUERDO ANOTADO','piedra rúnica'); save(); } say(RUNAS[sx+','+sy]||["Runas gastadas.\nNo se leen."],null,null,'stone'); return true; }
@@ -266,7 +266,7 @@ function interact([tx,ty,ch]){
   if(ch===':'&&xItem!=='lantern'&&hasLantern){ say(["Una antorcha\napagada. Equipa\nel FAROL y úsalo\ncon X."]); return true; }
   if(ch==='k'&&!hasHook){ say(["Un poste de raíz.\nAlgo podría\nagarrarse aquí."]); return true; }
   if(ch==='C'&&!hasBomb){ SFX.bump(); say(["Una roca\nagrietada. Con\nalgo que estalle\ncedería."]); return true; }
-  if(ch==='P'){ ask(["¿Echar una\nsiesta en la\nmaceta?"],null,yes=>{ if(yes){ player.hp=player.maxHp; SFX.heart(); fadeIn=40; save(); say(["Sueñas con hojas\nnuevas. ¡Vigor\nrestaurado!"]); } }); return true; }
+  if(ch==='P'){ if(typeof c5Pot==='function'&&c5Pot()) return true; ask(["¿Echar una\nsiesta en la\nmaceta?"],null,yes=>{ if(yes){ player.hp=player.maxHp; SFX.heart(); fadeIn=40; save(); say(["Sueñas con hojas\nnuevas. ¡Vigor\nrestaurado!"]); } }); return true; }
   return false;
 }
 /* entregar una reliquia: el rito en la plaza (la reliquia vuela a su altar y la estación sale del Roble, 15f),

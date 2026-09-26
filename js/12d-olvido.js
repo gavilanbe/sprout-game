@@ -94,7 +94,7 @@ function drawMoths(){
     if(out){ ctx.fillStyle='rgba(18,26,14,.18)'; ctx.fillRect(x+2,y+11,3,1); }                          // su sombrita en el suelo
     ctx.drawImage(img,x,y); } }
 /* ---------- el polvo de los guardianes (y de las mudas) ---------- */
-function olvDustLevel(b){ if(!b||b.echo) return 0;
+function olvDustLevel(b){ if(!b||b.echo) return 0; if(b.cocoon&&!b.dustOff) return 1; // el capullo, todo polvo hasta que se abre
   if(b.dustOff) return (b.dust0||.4)*Math.max(0,1-(tick-b.dustAt)/40); // la sacudida va por el reloj: sigue aunque salga su diálogo
   return clamp((b.hp-2)/Math.max(1,(b.maxHp||8)-2),0,1); }
 function olvDustFilter(b){ if(!OLV_FILTER) return null; const d=olvDustLevel(b); if(d<=.03) return null;
@@ -235,3 +235,39 @@ function drawFragMoment(M){ const n=M.txt.length, k=Math.min(1,M.t/10,(M.dur-M.t
     if(L.big){ const g=tlGlyph(M.txt[i],GOLD_PAL); ctx.drawImage(g,x-(g.width>>1),y-(g.height>>1)); proNote(x-2+(i&1?3:-3),y-16+Math.round(Math.sin((M.t+i*7)*.15)*2),'#f8d048'); } // su nota, encima
     else txtOL(M.txt[i],x,y-4,'#ffe070','center','#2a1804'); }
   if(M.t>=24&&M.dur-M.t>20&&(tick&31)<22){ ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,PLAY_H-11,43,11); txtS('Z: SALTAR',157,PLAY_H-8,'#e8e0d0','right'); } }
+/* ============================================================
+   LA POLILLA DEL OLVIDO, ENTERA (la revelación de la cima y el final). Se genera a su tamaño (s=1: 64 px de
+   envergadura) y con su aleteo (k: 1 abiertas … .2 de canto): nada se escala, se dibuja grande.
+   Alas anteriores con banda oscura y un ocelo que parece un ojo; posteriores más claras; cuerpo peludo y
+   segmentado; antenas de pluma. opt.sil='#color': toda de un color, con los ocelos huecos (en la tormenta).
+   ============================================================ */
+const BIGMOTH=new Map();
+const BM_PAL={ink:'#1a1422',wD:'#4a4258',w:'#7a7290',wM:'#9a92ac',wL:'#c4bcd4',wLL:'#e6e0ee',band:'#5a5070',body:'#3a3248',bodyL:'#6a6078',fur:'#a49cb8',o1:'#140e1c',o2:'#b8aec8',o3:'#f4eef8'};
+function bmInPoly(P,x,y){ let c=false; for(let i=0,j=P.length-1;i<P.length;j=i++){ const [xi,yi]=P[i],[xj,yj]=P[j]; if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) c=!c; } return c; }
+function bigMothArt(s,k,opt){ opt=opt||{}; const kk=Math.round(k*20)/20, key=s+'|'+kk+'|'+(opt.sil||''); let cached=BIGMOTH.get(key); if(cached) return cached;
+  const W=Math.round(70*s)+4, H=Math.round(54*s)+4, cx=W/2, cy=Math.round(24*s)+2, B=pxBuf(W,H), P=BM_PAL, sil=opt.sil;
+  const sc=(pts)=>pts.map(([x,y])=>[x*s*kk,y*s]);
+  const FORE=sc([[2,-7],[12,-13],[24,-17],[31,-15],[34,-10],[31,-2],[25,4],[14,5],[3,3]]), HIND=sc([[2,1],[11,3],[20,6],[23,12],[18,19],[10,21],[4,15],[2,8]]);
+  const OC=[19*s*kk,-5*s], OR=4.6*s*Math.max(.35,kk);                                           // el ocelo de cada ala anterior
+  const own=new Int8Array(W*H); // 0 nada · 1 ala anterior · 2 posterior · 3 cuerpo · 4 ocelo (hueco en la silueta)
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const px=Math.abs(x+.5-cx), py=y+.5-cy; let o=0;
+    if(bmInPoly(HIND,px,py)) o=2; if(bmInPoly(FORE,px,py)) o=1;
+    const bx=x+.5-cx; if((bx*bx)/(4.2*s*4.2*s)+((py+1*s)*(py+1*s))/(5.6*s*5.6*s)<=1) o=3; if((bx*bx)/(2.8*s*2.8*s)+((py-9*s)*(py-9*s))/(7.4*s*7.4*s)<=1) o=3; if(bx*bx+(py+7.4*s)*(py+7.4*s)<=2.9*s*2.9*s) o=3; // tórax peludo, abdomen y cabeza
+    if(o===1){ const dx=px-OC[0], dy=py-OC[1]; if((dx*dx)/(OR*OR)+(dy*dy)/((OR*1.1)*(OR*1.1))<=1) o=4; }
+    own[y*W+x]=o; }
+  const at=(x,y)=>x<0||y<0||x>=W||y>=H?0:own[y*W+x];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const o=own[y*W+x]; if(!o) continue; const px=Math.abs(x+.5-cx), py=y+.5-cy, d=BAYER4[y&3][x&3]/16;
+    if(sil){ if(o===4){ const dx=px-OC[0], dy=py-OC[1], r=Math.hypot(dx,dy/1.1)/OR; if(r>.62) B.set(x,y,sil); } else B.set(x,y,sil); continue; } // los ojos, huecos
+    let c;
+    if(o===3){ const fur=((x*7+y*3)&3)===0||(((x*3+y*5)&7)===1); c=py>3*s?(((Math.round(py/(1.7*s)))&1)?P.body:P.bodyL):(fur?P.wLL:P.fur); if(Math.abs(py+7.6*s)<1.1*s&&px>.7*s&&px<2.1*s) c=P.o1; } // cuerpo: tórax de pelo claro, abdomen a franjas y dos ojitos
+    else if(o===4){ const dx=px-OC[0], dy=py-OC[1], r=Math.hypot(dx,dy/1.1)/OR; c=r>.8?P.o1:r>.55?P.o2:r>.3?P.o1:(dx<0&&dy<0?P.o3:P.o1); } // el ocelo: anillo, iris y pupila
+    else { const reach=o===1?34*s*kk:23*s*kk, t=px/Math.max(1,reach), vein=((Math.round(Math.atan2(py,px)*9/s))%3===0)&&t>.25; // cuanto más lejos del cuerpo, más oscuro; banda al borde
+      const edge=at(x+(x<cx?-2:2),y)===0||at(x,y+2)===0||at(x,y-2)===0, v=(o===2?.7:.55)-t*.35-(py<0&&o===1?.05:0)+(d-.47)*.18;
+      c=edge?P.band:v>.62?P.wLL:v>.48?P.wL:v>.34?P.wM:v>.2?P.w:P.wD; if(vein&&!edge) c=P.wD; }
+    B.set(x,y,c); }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ if(own[y*W+x]&&!(sil&&own[y*W+x]===4)) continue; if(own[y*W+x]===4) continue;
+    if(at(x+1,y)||at(x-1,y)||at(x,y+1)||at(x,y-1)) B.set(x,y,sil||P.ink); } // contorno
+  for(const sd of [-1,1]) for(let i=0;i<Math.round(17*s);i++){ const u=i/(17*s), ax=Math.round(cx+sd*(1.6*s+u*11*s)), ay=Math.round(cy-9*s-u*12*s+u*u*4*s); B.set(ax,ay,sil||P.ink); // antenas de pluma
+    if(i%2===0&&i>2&&i<17*s-2){ B.set(ax+sd,ay-1,sil||P.wLL); B.set(ax-sd,ay+1,sil||P.wL); } }
+  cached=B.canvas(); cached.cx=Math.round(cx); cached.cy=cy; BIGMOTH.set(key,cached); if(BIGMOTH.size>60) BIGMOTH.delete(BIGMOTH.keys().next().value); return cached; }
+function drawBigMoth(x,y,s,k,opt){ const c=bigMothArt(s,k,opt); ctx.drawImage(c,Math.round(x-c.cx),Math.round(y-c.cy)); return c; }

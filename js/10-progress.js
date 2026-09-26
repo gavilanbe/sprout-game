@@ -11,7 +11,7 @@ function save(){
     hasBoomer,hasLantern,hasFeather,hasShield,pieces,dungeonKeys,bigKeys,bombAmmo,bombMax,dmaps:[...dmaps],dcomp:[...dcomp],hasBigSpin,shieldLvl,
     amulets:[...amulets],equipped,xItem,topoGift,mossGift,wilts,windVisit,
     berries,bladeLvl,hasSpin,shopHeart,shopPiece,tiloMet,cortezaMet,elderMet,petraWoke,wellDone,lettersGiven,playTime,
-    respawn:respawnPoint,maxHp:player.maxHp,side:sideSave(),
+    respawn:respawnPoint,maxHp:player.maxHp,side:sideSave(),c5:typeof c5Save==='function'?c5Save():undefined,
     collected:[...collected],cutQ:[...cutQ],opened:[...opened],visited:[...visited],
   })); }catch(e){}
 }
@@ -32,7 +32,7 @@ function loadGame(d){
     topoGift=!!d.topoGift; mossGift=!!d.mossGift; wilts=d.wilts||0; windVisit=!!d.windVisit;
     berries=d.berries||0; bladeLvl=d.bladeLvl||1; hasSpin=!!d.hasSpin; shopHeart=!!d.shopHeart; shopPiece=!!d.shopPiece;
     tiloMet=!!d.tiloMet; cortezaMet=!!d.cortezaMet; elderMet=!!d.elderMet||!!d.hasBlade; petraWoke=!!d.petraWoke||!!d.elderMet; wellDone=!!d.wellDone; lettersGiven=!!d.lettersGiven; playTime=d.playTime||0;
-    player.maxHp=d.maxHp||6; player.hp=player.maxHp; sideLoad(d.side);
+    player.maxHp=d.maxHp||6; player.hp=player.maxHp; sideLoad(d.side); if(typeof c5Load==='function') c5Load(d.c5);
     (d.collected||[]).forEach(i=>collected.add(i)); (d.cutQ||[]).forEach(i=>cutQ.add(i));
     (d.opened||[]).forEach(i=>opened.add(i)); (d.visited||[]).forEach(i=>visited.add(i));
     if(d.respawn&&MAPS[d.respawn.sx+','+d.respawn.sy]&&REGION_ANCHOR[d.respawn.reg]) respawnPoint={...d.respawn};
@@ -52,7 +52,7 @@ function newGame(){
   hasPinwheel=midScare=hasAmber=boss4Done=autumned=false;
   hasBoomer=hasLantern=hasFeather=hasShield=false; pieces=0; dungeonKeys={}; bigKeys={}; equipped=[null,null]; xItem=null; hasBigSpin=false; shieldLvl=1;
   bombAmmo=10; bombMax=10; dmaps.clear(); dcomp.clear();
-  topoGift=mossGift=false; wilts=0; windVisit=false; berries=0;
+  topoGift=mossGift=false; wilts=0; windVisit=false; berries=0; if(typeof c5Load==='function') c5Load(null);
   bladeLvl=1; hasSpin=shopHeart=shopPiece=tiloMet=cortezaMet=elderMet=false; petraWoke=wellDone=lettersGiven=false; playTime=0; npcs=[];
   giveFx=null; toast=null; toastQ=[]; qPrev=null; pausePage=0; pauseSel=0;
   respawnPoint={...REGION_ANCHOR.valle,reg:'valle'};
