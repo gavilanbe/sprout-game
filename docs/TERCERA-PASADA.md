@@ -47,6 +47,9 @@ Con eso:
 novena semilla, el tono (tierno y un poco triste), el arte, la música, las
 cinemáticas, el mapa del valle y los ocho primeros pasos con las semillas.
 
+**El listón:** todo lo nuevo llega con su arte, su microcinemática y su juice, al nivel
+de las cinemáticas de las armas. La sección 10 lo detalla cosa por cosa.
+
 ---
 
 ## 1. Lo que hay hoy
@@ -155,6 +158,8 @@ según el filo de la Hoja, son de dos a seis vueltas de volver a encender braser
 7. **Las pistas insinúan.** La solución la pone el jugador. Si cae, el sueño del Roble
    sí puede ser claro, como hoy.
 8. **Cada personaje habla distinto** y llama a Sprout a su manera.
+9. **Nada entra sin su momento.** Cada cosa nueva llega con su arte, su microcinemática y
+   su juice, al nivel de las cinemáticas de las armas (§10).
 
 ---
 
@@ -1165,7 +1170,7 @@ componerlas, el agente `composer`.
   sala tras la tregua).
 - Una partida que ya pasó la cima antigua (`boss3Done`) o que ya acabó (`cycled`) entra
   en el capítulo 5 al cargar: el Olvido sale de la cima «tarde». Es una decisión abierta
-  (§10).
+  (§11).
 - Las mazmorras rehechas cambian salas. Las llaves y los cofres guardados por coordenada
   (`opened`, `collected`) en salas que cambian se reinician al detectar la versión vieja
   del mapa.
@@ -1188,7 +1193,167 @@ fase:
 
 ---
 
-## 10. Decisiones abiertas
+## 10. La vara: gráficos, microcinemáticas y juice
+
+El juego ya tiene el listón alto: cada arma tiene su cinemática a lo *Oracle*, cada jefe
+su entrada y su despedida, las puertas pesan, la Hoja se dobla y el zurrón cae y rebota.
+**Nada de esta propuesta entra por debajo de ese listón.** Esta sección lo concreta para
+cada cosa nueva, para que el juice no se deje para el final.
+
+### 10.1 Las reglas
+
+1. **Cada cosa nueva tiene su momento.** La primera vez que aparece una mecánica, un
+   enemigo o un objeto, hay una microcinemática de 2 a 5 segundos: el mundo se para
+   (como en las presentaciones de `js/15i-presenta.js`), se ve la cosa hacer lo suyo y
+   vuelve el control. La segunda vez, en versión corta; a partir de la tercera, nada. Z
+   siempre la salta.
+2. **Anticipación, acción y reacción.** Todo lo que se mueve avisa antes (se encoge,
+   tiembla o brilla), actúa con peso (aplastar y estirar, hit-stop, sacudida) y deja
+   rastro (polvo, chispas, marcas que se desvanecen).
+3. **Lo importante se nota dos veces**: donde ocurre y en el HUD o en la música.
+4. **Un cambio fuera de la vista se enseña.** Cuando algo cambia en otra sala (la raíz
+   crece, la luz baja, las aspas giran), aparece un segundo en una esquina un recuadro
+   con la miniatura de esa sala (las del mapa del zurrón, `thumbOf`,
+   `js/08-world.js:87`) y se ve el cambio. Es el «se ha abierto una puerta en algún
+   sitio» de los Zelda, pero enseñándolo. El estado de mazmorra deja así de ser confuso.
+5. **Un vocabulario que no se mezcla.** El juice también tiene que ser coherente:
+   - **El gris lila y el violeta son solo del Olvido**: su polvo, sus polillas, sus ecos
+     y sus agujeros. Si algo es de ese color, es suyo.
+   - **Cada estación tiene sus partículas, y solo esas**: pétalos en primavera, motas de
+     sol en verano, hojas en otoño y nieve en invierno. Las usan el rito, el Anillo, los
+     Anillos del Roble y el final.
+   - **Las notas de la nana son el sonido de recordar.** Suenan en cada trozo del nombre,
+     cada hilo cortado, cada campana y cada nombre devuelto en el final. El olvido suena
+     al revés: notas que faltan.
+   - **Los agujeros de polilla tienen un solo dibujo** (borde roído, píxel a píxel) en
+     todas partes: runas, cartas, cajas de diálogo, carteles y el HUD.
+6. **Arte a tamaño nativo**: 160×144, sin escalar sprites ni texto, y con las reglas de
+   rendimiento de `ARCHITECTURE.md` (búferes `pxBuf`, un lienzo por volcado por lo del
+   iPhone, cachés). Lo grande se dibuja grande, como el Viento a 2× en su entrada; nunca
+   se estira.
+7. **El juice no tapa el juego.** Hit-stop y sacudidas cortos, microcinemáticas que no se
+   repiten y avisos que no pisan los diálogos (como ya pasa con los toasts).
+
+### 10.2 Cosa por cosa
+
+**Los presagios (capítulos 0-3)**
+
+- **Polillitas.** *La primera vez*, en el valle mustio, una se posa en la hoja de Sprout:
+  primer plano (`caFaceCut`, `js/15e-cinearma.js:364`), Sprout la mira bizco, estornuda
+  y la polilla sale volando. *Siempre*: aleteo de dos fotogramas y vuelo en ocho;
+  rodean el farol y las antorchas; en un rayo de sol, chispa y ceniza; huyen si corres.
+- **El polvo de los guardianes.** Cada golpe suelta una bocanada gris hacia donde va el
+  golpe, y cada vez menos, porque les queda menos. Al rendirse, una última sacudida: el
+  polvo cae como nieve gris y los colores del guardián pasan de apagados a vivos. Es el
+  dibujo de acordarse.
+- **La polilla de los minijefes** (1,5 s): la muda se deshace, algo se mueve dentro,
+  sale una polilla, se sacude las alas dos veces y se va hacia el norte en curva.
+- **El trozo del nombre.** Las letras salen del guardián como notas, dan una vuelta
+  alrededor de Sprout y se meten en el zurrón mientras suena la nana hasta donde se sabe.
+  En el zurrón, la página de la nana se cose letra a letra con hilo dorado.
+- **Runas y cartas con agujeros.** Los agujeros tienen borde roído. Después de la cima,
+  al abrirlas, se cosen con hilo dorado delante del jugador.
+- **El relámpago del título**: dos fotogramas de alas con ocelos.
+
+**Las mazmorras**
+
+- **El fogón.** *La primera vez*: el mundo se para, la mecha de la bomba prende el fogón
+  con un soplido, el calor hace ondular el aire (filas desplazadas), la escarcha se
+  retira de las paredes en ola, el nudo de raíz tiembla y la raíz crece casilla a casilla
+  echando hojitas y crujiendo. *Siempre*: brasas que chisporrotean, luz que respira y,
+  si Sprout se queda cerca, se calienta las manos.
+- **La grieta del suelo.** Se abre en estrella, hay un instante de silencio y se hunde.
+  Sprout cae (la caída de siempre) y aterriza abajo aplastándose entre polvo; por el
+  agujero entra un haz de luz desde arriba.
+- **La bellota que rueda.** Gira con fotogramas de rotación, bota en los cambios de rampa
+  y su mecha echa chispas cada vez más deprisa al final.
+- **El rayo de sol.** *La primera vez*: el tapón salta, entra un rayo con motas de polvo
+  dentro y el girasol se vuelve despacio hacia la luz y abre los pétalos uno a uno.
+  *Siempre*: el rayo tiembla un poco, la cera gotea al derretirse y las polillas se
+  lanzan a él y arden.
+- **La lente de rocío**: brilla al recibir el rayo y deja un arcoíris pequeño en el suelo.
+- **El saco de harina**: resbala arrastrándose, suelta una nube de harina al chocar y
+  suena un «tum».
+- **La Rueda Mayor.** *La primera vez*: corte al exterior, donde las aspas del molino de
+  la Ciénaga (`drawWindmillCienaga`, `js/12b-molino.js:317`) giran un cuarto de vuelta,
+  y el recuadro de miniaturas enseña las compuertas que se abren en otras salas.
+  *Siempre*: engranajes que traquetean en todas las salas y una sacudida suave.
+- **El hielo de verdad.** Sprout se desliza con los brazos abiertos dejando una estela de
+  escarcha; al chocar se aplasta, suena un «tong» y saltan chispitas de hielo. Al frenar
+  con el vilano, aterriza clavado con un anillo de nieve.
+- **Las campanas.** Cada campana tocada deja una onda visible y da su nota; las runas de
+  la puerta se encienden al acertar. Con la frase entera, las campanas tocan la nana
+  solas y la puerta se abre en una lluvia de escarcha.
+- **Las corrientes**: rejillas que soplan hojas hacia arriba; al planear, la hoja de
+  Sprout aletea y deja líneas de viento.
+- **El Topo busca el calor**: olisquea el aire hacia el fogón con el hocico temblando y
+  asoma con cara de gusto... hasta que ve la bomba y pone los ojos como platos.
+- **La Reina deslumbrada**: se tapa los ojos con las patas, le dan vueltas estrellitas y
+  pierde altura en espiral.
+
+**La cima**
+
+- **La llegada**: una presentación como la de hoy (el cielo se cierra), pero con la cara
+  triste de Cierzo dentro de la tormenta, los cuatro hilos brillando y el título «LA
+  CIMA · EL CAPULLO GRIS» en letras de hielo.
+- **Cortar un hilo**: el hilo restalla y las dos mitades se recogen de golpe; hit-stop;
+  la tormenta se estremece y, por un instante, la cara de Cierzo se ve más clara. Suena
+  una nota de la nana, y con los cuatro hilos suena el primer compás.
+- **La pantalla de nombre**: una rejilla tallada en hielo con un copo por cursor. Cada
+  letra buena se talla con su nota; una mala se la lleva una ráfaga dando vueltas.
+- **El nombre**: CIERZO se talla en grande. Un compás de silencio y la nana suena entera
+  por primera vez, con la letra a máquina debajo.
+- **La revelación**: la tormenta se oscurece y dos ocelos se abren como párpados, con un
+  latido. Aparece el cartel EL OLVIDO y la polilla se come sus letras píxel a píxel. La
+  música pierde notas hasta quedarse en silencio. La sombra sale de la cima y cruza el
+  valle (el plano del valle desde arriba, el del título) hacia el Roble.
+- **La salida**: vuelo en el último soplo de Cierzo sobre el valle (pantallas reales,
+  `scScreen`), aterrizaje en la plaza y plano hacia arriba del Roble envuelto en seda.
+
+**El capítulo 5**
+
+- **El valle se olvida**: al entrar en una pantalla, el gris la invade desde los bordes,
+  con borde roído.
+- **Raíz, mudo**: su caja de diálogo aparece y su voz empieza a sonar... pero las letras
+  se deshacen en polillas según se escriben.
+- **El Anillo del Año**: una cinemática completa, como las de las ocho armas (`CA_SCRIPT`,
+  `js/15e-cinearma.js:394`). Sprout, en grande, alza el anillo; el fondo pasa por las
+  cuatro estaciones en barridos; golpe congelado; el nombre enorme y su frase.
+- **Cambiar de estación**: Sprout alza el anillo y un círculo sale de él repintando la
+  sala. El agua se hiela desde la orilla con un crujido (y se agrieta al fundirse), las
+  enredaderas se despliegan casilla a casilla con un rebote, caen hojas que se amontonan
+  y entran rayos de sol. El anillo del HUD gira con inercia y hace clic en cada estación,
+  y la música de la mazmorra cambia de timbre con ella.
+- **Los recuerdos de los anillos**: figuras con un leve temblor de línea, en el sepia de
+  su estación. Al pisar su zona representan su escena (5-8 segundos), sin texto o con una
+  sola línea.
+- **La Oruga**: los segmentos ondulan en ola; al comer cruje y salta tierra; al recibir
+  un golpe, una ola de aplastamiento le recorre el cuerpo; al huir, se enrosca y se hunde
+  en una espiral de polvo.
+- **Nivel 1**: la crisálida late y se hincha con cada latido; las capas se pelan en tiras
+  que se enroscan, y de cada una cae un eco.
+- **Nivel 3**: cada aletazo levanta polvo en la dirección del ala, los ocelos brillan y el
+  HUD se roe (los corazones, mordidos).
+- **Nivel 4**: cada voz aparece como un retrato pequeño (`PORTRAITS`,
+  `js/02-sprites.js:1113`) con la voz propia del personaje (`voiceBlip`, `js/15-ui.js:108`).
+  Lo que devuelve cada nombre vuelve con un rebote. Al girar el año, el anillo de carga
+  se llena en cuatro colores.
+- **El final**: planos nuevos con Raíz y Cierzo juntos (Cierzo con su ánimo `happy` a
+  2×), la plaza cantando y la polillita.
+
+### 10.3 Cómo se comprueba
+
+- **Cada microcinemática tiene su prueba**: que se salta con Z, que la segunda vez es
+  corta y que no deja el juego en un estado raro, como ya hacen las pruebas de las
+  presentaciones (saltar títulos, entradas y salidas).
+- **Rendimiento**: `npm run perf` con las escenas nuevas (la tormenta, la Rueda Mayor, el
+  cambio de estación y la Polilla), también con la CPU 4× más lenta.
+- **Capturas** de cada momento para el README, como las de ahora, sacadas con
+  `__sprout.freeze`.
+
+---
+
+## 11. Decisiones abiertas
 
 1. **El Olvido como polilla**: ¿convence, o preferimos otra forma para el mismo papel?
 2. **El nombre**: ¿Cierzo? Hay otros vientos con nombre (Ábrego, Bóreas...), pero ninguno
