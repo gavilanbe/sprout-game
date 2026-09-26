@@ -303,7 +303,7 @@ const ROOM_HINTS={
   '16,-1':["(El puente se hundió hace muchos inviernos.)","(Aquí el aire baja: no hay vilano que planee. Pero por esa rejilla sube un frío raro...)"],
   '14,0':["(Hielo liso como un espejo. Quien lo pisa no para hasta chocar.)"],
   '14,1':["(Dos losas en el suelo y dos bloques sobre el hielo.)","(En el rincón, un bloque de hielo. Ese no es de piedra...)"],
-  '10,2':["(Un zumbido grave llena el panal. La Reina vuela alto, muy por encima de tu Hoja...)","(...algo tendría que TIRAR de ella hacia el suelo.)"],
+  '10,2':["(Un zumbido grave llena el panal, y el sol entra por cuatro nudos.)","(La Reina vuela rápida como un chispazo: el gancho ni la roza... a no ser que algo la ciegue.)"],
   '1,-3':["(Una tormenta gris gira sobre la cima. Dentro, algo llora con voz de viento.)","(Cuatro hilos grises la atan a las rocas. Las polillas no se despegan de ellos.)"],
   '1,-2':["(Aquí arriba el invierno nunca se fue. Sopla fuerte.)"],
   '2,3':["(Las hojas caen sin parar. Huele a otoño viejo...)"],

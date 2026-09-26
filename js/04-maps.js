@@ -453,15 +453,15 @@ const MAPS={
 "qqqβqqβqqv",
 "vvvvqqvvvv",
 ],
-'10,2':[ // Corazón del Panal — la Reina Avispa
+'10,2':[ // Corazón del Panal — la Reina Avispa: cuatro nudos (12g); al final solo queda el del oeste
 "vvvvqqvvvv",
 "vqqqqqqqqv",
 "vqqqqqqqqv",
-"vqqqq!qqqv",
+"Ꝋqqqq!qqqv",
 "vqqqqqqqqv",
+"vqqqqqqqqꝊ",
 "vqqqqqqqqv",
-"vqqqqqqqqv",
-"vvvvvvvvvv",
+"vvꝊvvvvꝊvv",
 ],
 /* ================= EL TEMPLO DE LA CIMA (mazmorra 3) ================= */
 '15,2':[ // Atrio helado — entrada; galerías al oeste y al este. Hielo de verdad (12e): quien lo pisa resbala hasta chocar

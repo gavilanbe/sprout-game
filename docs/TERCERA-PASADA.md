@@ -10,7 +10,8 @@
 > **Tronco** (`js/12g-tronco.js`: nudos con tapón que se quitan con la Hoja o se arrancan con el gancho, rayos de sol
 > que avanzan y alumbran lo oscuro, cera y miel cristalizada que se derriten, lentes de rocío que se empujan por la
 > columna de luz y la Hoja gira, la Columna que baja por tres salas y el Soldado de Cera, que solo se ablanda si cruza
-> un rayo en picado). Del Tronco falta la Reina deslumbrada. Faltan la Cueva (C y D), y E, F y G.
+> un rayo en picado; y la Reina deslumbrada: su enjambre tapa los cuatro nudos, el gancho solo la baja si un rayo
+> la ciega, herida manda abejas a tapar lo abierto y al final sella tres con cera dura). Faltan la Cueva (C y D), y E, F y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

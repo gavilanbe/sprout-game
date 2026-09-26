@@ -11,6 +11,10 @@
    · LA COLUMNA: el nudo grande de la Colmena Alta (11,-1) manda luz hacia abajo por la puerta del sur, a la
      Galería del Enjambre (11,0) y, cuando su sello de cera se derrite, a la Sala de la Miel (11,1).
    · La miel del Tronco ('~') es miel: no se pisa; el gancho la cruza.
+   · LA REINA, DESLUMBRADA (10,2): su sala entra con el sol de cuatro nudos y su enjambre los tapa al empezar.
+     Vuela demasiado rápido para el gancho... salvo si cruza un rayo: deslumbrada, el gancho la baja. Herida,
+     manda abejas a tapar lo abierto (se pueden cazar por el camino); al final sella tres nudos con cera dura
+     y deja uno: hay que hacer que se lance a través de él.
    ============================================================ */
 SOLID.add('Ꝋ'); SOLID.add('Ꝍ'); SOLID.add('Ѡ'); SOLID.add('Ӂ'); SOLID.add('⟋'); SOLID.add('⟍');
 const TRONCO_FEED={'11,0':{need:['KN11,-1:4,0'],x:4},'11,1':{need:['KN11,-1:4,0','WX11,0:4,7'],x:4}}; // la Columna: qué hace falta para que baje la luz
@@ -23,9 +27,9 @@ function inTronco(){ return regionOf(sx,sy)==='tronco'; }
 
 /* ---------- al entrar: lo abierto sigue abierto, y la luz ya está ahí ---------- */
 { const I0=initRoomRules; initRoomRules=function(){ I0(); initTronco(); }; }
-function initTronco(){ beams=[]; beamReach={}; melting={}; plugFx=[]; hookPlug=null; const key=sx+','+sy;
+function initTronco(){ beams=[]; beamReach={}; melting={}; plugFx=[]; hookPlug=null; plugBees=[]; const key=sx+','+sy, queen=key===QUEEN_ROOM;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const c=grid[y][x];
-    if(c==='Ꝋ'&&opened.has('KN'+key+':'+x+','+y)) grid[y][x]='Ꝍ';
+    if(c==='Ꝋ'&&(queen||opened.has('KN'+key+':'+x+','+y))) grid[y][x]='Ꝍ'; // la sala de la Reina siempre entra llena de sol: antes de que llegue ella, y cuando ya se ha rendido
     if((c==='Ѡ'||c==='Ӂ')&&opened.has('WX'+key+':'+x+','+y)) grid[y][x]='q'; }
   beamDirty=true; if(inTronco()){ traceBeams(); for(const b of beams) beamReach[b.key]=b.len; } }
 
@@ -84,8 +88,10 @@ function meltWax(x,y){ const key=sx+','+sy, honey=grid[y][x]==='Ӂ'; grid[y][x]=
   if(m.st==='stunned'&&m.beamSoft&&(tick%5)===0) parts.push({k:'dust',x:m.x+5+Math.random()*14,y:m.y+19,vx:0,vy:.5,life:16,max:16,r:1,col:(tick&8)?'#e8b848':'#f8d878',nog:true}); }; } // gotea cera
 
 /* ---------- quitar el tapón: la Hoja (de cerca) o el gancho (de lejos) ---------- */
-function unplug(x,y){ const key=sx+','+sy, col=key==='11,-1'&&x===4&&y===0; grid[y][x]='Ꝍ'; opened.add('KN'+key+':'+x+','+y); markDirty(); save();
-  const [dx,dy]=knotDir(x,y); shake=Math.max(shake,col?8:4); hitStop=Math.max(hitStop,4); screenFlash(col?10:6,'#fff6c0');
+function unplug(x,y){ const key=sx+','+sy, col=key==='11,-1'&&x===4&&y===0;
+  if(knotSealed(x,y)){ sealBounce(x,y); return; }
+  grid[y][x]='Ꝍ'; if(key!==QUEEN_ROOM){ opened.add('KN'+key+':'+x+','+y); save(); } markDirty();
+  const [dx,dy]=knotDir(x,y); shake=Math.max(shake,col?8:4); hitStop=Math.max(hitStop,4); screenFlash(col?8:3,'#fff6c0');
   if(AC){ const a=AC.currentTime; beep('square',f(84),f(96),.08,.03,a); [79,84,88,91].forEach((m,i)=>beep('triangle',f(m),0,.5,.025,a+.06+i*.05)); noise(.4,.02,true,a,6000);
     if(col) [67,74,79,86].forEach((m,i)=>beep('triangle',f(m),0,1.2,.03,a+.3+i*.12)); }
   plugFx.push({x:x*16+8+dx*4,y:y*16+8+dy*4,vx:dx*1.4+(Math.random()-.5),vy:dy*1.4-1.6,t:0}); // el tapón de cera sale volando
@@ -103,7 +109,7 @@ function turnLens(x,y){ const ch=grid[y][x]; grid[y][x]=ch==='⟋'?'⟍':'⟋'; 
   parts.push({x:x*16+8,y:y*16+8,vx:0,vy:0,life:8,col:'#e8f8ff',ring:true,r:9,nog:true}); }
 /* los nudos de las paredes quedan fuera del tajo (la caja de la Hoja apenas roza la pared): se prueba la casilla de delante */
 { const A0=attack; attack=function(){ const ft=facingTile(); if(inTronco()&&ft&&ft[2]==='Ꝋ'&&hasBlade&&state==='play'&&!inBed){ player.atk=14; SFX.sword(); player.squash=.28; unplug(ft[0],ft[1]); return; } A0(); }; }
-{ const H0=throwHook; throwHook=function(){ if(inTronco()){ const D=DIRV[player.dir], [ptx,pty]=playerTile();
+{ const H0=throwHook; throwHook=function(){ if(inTronco()){ const D=DIRV[player.dir], [ptx,pty]=playerTile(); if(boss&&hookBoss(D)) return;
     for(let i=1;i<=5;i++){ const tx=ptx+D[0]*i, ty=pty+D[1]*i, ch=grid[ty]&&grid[ty][tx]; if(ch===undefined) break;
       if(ch==='Ꝋ'){ hook={fx:player.x,fy:player.y,tx:player.x+D[0]*16*i,ty:player.y+D[1]*16*i,t:0,fail:true,dir:player.dir}; state='hook'; SFX.sword(); noise(.08,.04,true); hookPlug={x:tx,y:ty,t:0}; return; } // la raíz agarra el tapón y lo arranca
       if(BEAM_PASS.has(ch)||!isSolid(ch)) continue; break; } }
@@ -165,7 +171,8 @@ function drawBeams(){ const t=tick;
 function drawTroncoFx(){ if(!inTronco()) return; drawBeams();
   for(const k in melting){ const [x,y]=k.split(',').map(Number), q=melting[k]/MELT_T; ctx.fillStyle='rgba(255,240,190,'+(.4*q).toFixed(2)+')'; ctx.fillRect(x*16,y*16+Math.round(q*3),16,16-Math.round(q*3)); } // se derrite: brilla y se hunde
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꝋ'&&((tick+x*37+y*53)%70)===0) sparkle(x*16+6+Math.random()*4,y*16+6,'#fff6c0'); // por la rendija del tapón brilla el sol
-  for(const p of plugFx){ const X=Math.round(p.x), Y=Math.round(p.y); ctx.fillStyle=PAL.k; ctx.fillRect(X-2,Y-2,5,5); ctx.fillStyle='#e8b848'; ctx.fillRect(X-1,Y-1,3,3); ctx.fillStyle='#fff0b0'; ctx.fillRect(X-1,Y-1,1,1); }
+  for(const p of plugFx){ const X=Math.round(p.x), Y=Math.round(p.y), s2=(p.t>>2)&1; ctx.fillStyle=PAL.k; ctx.fillRect(X-3,Y-2,7,5); ctx.fillRect(X-2,Y-3,5,7); // el tapón: un corcho de cera que da vueltas
+    ctx.fillStyle='#c88a20'; ctx.fillRect(X-2,Y-2,5,5); ctx.fillStyle='#f8d878'; ctx.fillRect(X-2,Y-2,s2?3:5,s2?5:2); ctx.fillStyle='#fff6c0'; ctx.fillRect(X-1,Y-1,1,1); }
   if(state==='play'&&inBeam(player.x+8,player.y+10)&&(tick&7)===0) sparkle(player.x+4+Math.random()*8,player.y-2,'#fff6c0'); } // Sprout, al sol: la hoja contenta
 /* el Soldado de Cera, blando: se le escurre la cera (a tiras de 2 px, sin girar ni escalar nada) */
 addEventListener('DOMContentLoaded',()=>{ const D0=drawMidboss; drawMidboss=function(){ const m=midboss; if(m&&m.type==='drone'&&m.st==='stunned'&&m.beamSoft){ drawSoftDrone(m); return; } D0(); }; }); // 14 carga después
@@ -188,3 +195,76 @@ function beamGlow(){ if(!inTronco()) return; for(const b of beams) for(const [x,
 { const U0=updRoomRules; updRoomRules=function(){ U0(); updBeams(); }; }
 { const T0=tickFx; tickFx=function(){ T0(); updHookPlug(); }; } // también mientras el gancho vuela
 { const D0=drawScorches; drawScorches=function(){ D0(); drawTroncoFx(); }; }
+
+/* ============================================================
+   LA REINA, DESLUMBRADA (10,2)
+   ============================================================ */
+const QUEEN_ROOM='10,2', QUEEN_LAST=[0,3]; // el nudo que queda al final: su rayo cruza la sala a lo ancho
+let plugBees=[];
+function queenLit(b){ return !!b&&b.type==='avispa'&&!b.echo&&sx+','+sy===QUEEN_ROOM; }
+function knotSealed(x,y){ const b=boss; return queenLit(b)&&!!b.sealed&&!(x===QUEEN_LAST[0]&&y===QUEEN_LAST[1]); }
+function sealBounce(x,y){ SFX.clang(); shake=Math.max(shake,2); for(let i=0;i<5;i++) sparkle(x*16+3+Math.random()*10,y*16+3+Math.random()*10,'#fff0c0');
+  if(!opened.has('SEALfirst')){ opened.add('SEALfirst'); showToast('¡CERA DURA!','ese nudo ya no cede'); } }
+/* el enjambre sale de la Reina hacia cada nudo abierto con una bola de cera; si llega, lo tapa */
+function sendPlugBees(b){ let n=0;
+  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꝍ'&&!plugBees.some(p=>p.kx===x&&p.ky===y)){ const a=n*1.9;
+    plugBees.push({x:b.x+16+Math.cos(a)*6,y:b.y+6+Math.sin(a)*4,kx:x,ky:y,t:-n*6,f:0}); n++; }
+  if(n&&AC){ const a=AC.currentTime; for(let i=0;i<3;i++) beep('square',f(62+i*3),f(66+i*3),.12,.018,a+i*.05); } } // la Reina ordena: un zumbido que sube
+function updPlugBees(){ if(!plugBees.length) return;
+  for(const p of plugBees){ p.t++; if(p.t<0) continue; p.f++;
+    const tx=p.kx*16+8, ty=p.ky*16+8+(p.ky===SH-1?-4:0), dx=tx-p.x, dy=ty-p.y, d=Math.hypot(dx,dy)||1, sp=1.25;
+    if(d<3){ p.done=true; if(grid[p.ky][p.kx]==='Ꝍ'){ grid[p.ky][p.kx]='Ꝋ'; markDirty(); shake=Math.max(shake,2); // ¡plof!: tapado
+        if(AC){ noise(.12,.03,false,undefined,700); beep('triangle',f(55),f(48),.12,.03); }
+        for(let i=0;i<8;i++){ const a=Math.random()*6.283; parts.push({k:'dust',x:tx,y:ty,vx:Math.cos(a)*1.1,vy:Math.sin(a)*1.1,life:16,max:16,r:1+(i&1),col:i&1?'#f8d878':'#c89030',nog:true}); } }
+      continue; }
+    p.x+=dx/d*sp+Math.sin(p.f*.35)*.45; p.y+=dy/d*sp+Math.cos(p.f*.28)*.45;
+    if(p.f>14&&meleeActive()&&rectsHit(meleeBox(),[p.x-5,p.y-5,10,10])){ p.dead=true; SFX.edie(); puff(p.x,p.y,'#f8d030',6,1); // cazada: la cera cae al suelo
+      for(let i=0;i<4;i++) parts.push({k:'dust',x:p.x,y:p.y+3,vx:(Math.random()-.5)*.8,vy:.6+Math.random()*.5,life:18,max:18,r:1,col:'#e8b848',nog:true}); } }
+  plugBees=plugBees.filter(p=>!p.done&&!p.dead); }
+function drawPlugBees(){ for(const p of plugBees){ if(p.t<0) continue; const x=Math.round(p.x), y=Math.round(p.y), d=(p.kx*16+8)<p.x?-1:1, X=i=>d>0?x+i:x-i, up=(p.f>>1)&1;
+    ctx.fillStyle='#eaf6ff'; ctx.fillRect(X(-1),y-3-up,2,2); ctx.fillRect(X(1),y-3-up,2,2);               // alas
+    ctx.fillStyle=TK_INK; ctx.fillRect(x-3,y-1,7,4);                                                   // contorno
+    ctx.fillStyle='#f8d030'; ctx.fillRect(x-2,y,5,2); ctx.fillStyle=TK_INK; ctx.fillRect(X(0),y,1,2); ctx.fillRect(X(-2),y,1,2); // rayas
+    ctx.fillStyle=TK_INK; ctx.fillRect(x-1,y+3,3,3); ctx.fillStyle='#e8b848'; ctx.fillRect(x,y+3,1,2); ctx.fillStyle='#fff0b0'; ctx.fillRect(x,y+3,1,1); } } // la bola de cera, colgando
+function sealArt(){ return cached('seal',g=>{ // cera dura sobre el nudo: un goterón grueso con su brillo
+  for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot(x-7.5,(y-7)*1.1); if(d>7.2) continue; PX(g,x,y,d>6.2?PAL.k:d>5?'#a86a10':(x+y<12?'#f8d878':'#e0a830')); }
+  R(g,5,14,2,2,'#a86a10'); PX(g,5,15,PAL.k); R(g,10,13,2,2,'#a86a10'); PX(g,4,4,'#fff6c0'); PX(g,5,3,'#fff6c0'); R(g,9,9,2,1,'#c88a20'); }); }
+function queenSeal(b){ b.sealed=true; shake=Math.max(shake,6); screenFlash(4,'#fff0c0'); if(AC){ noise(.35,.05,false,undefined,500); beep('triangle',f(50),f(43),.5,.04); }
+  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const c=grid[y][x]; if((c==='Ꝋ'||c==='Ꝍ')&&knotSealed(x,y)){ grid[y][x]='Ꝋ';
+    for(let i=0;i<10;i++){ const a=Math.random()*6.283; parts.push({k:'dust',x:x*16+8,y:y*16+8,vx:Math.cos(a)*1.3,vy:Math.sin(a)*1.3-.3,life:20,max:20,r:1+(i&1),col:i&1?'#f8d878':'#a86a10',nog:true}); } } }
+  markDirty(); showToast('¡CERA DURA!','solo queda un nudo'); }
+function dazzle(b){ b.st='dazzled'; b.t=bossPhase(b)===3?80:100; b.flash=6; shake=Math.max(shake,4); hitStop=Math.max(hitStop,4); screenFlash(3,'#fff6c0');
+  if(AC){ const a=AC.currentTime; [84,88,91,96].forEach((m,i)=>beep('triangle',f(m),0,.35,.03,a+i*.04)); noise(.3,.03,true,a,7000); }
+  for(let i=0;i<14;i++){ const a=i/14*6.283; parts.push({k:'mote',x:b.x+16+Math.cos(a)*8,y:b.y+14+Math.sin(a)*6,vx:Math.cos(a)*1.2,vy:Math.sin(a)*.9,life:30,max:30,sway:Math.random()*6,col:i&1?'#fff6c0':'#ffffff',nog:true}); }
+  if(!opened.has('DAZfirst')){ opened.add('DAZfirst'); showToast('¡DESLUMBRADA!','ahora, el gancho'); } }
+function queenInBeam(b){ const bb=bossBox(b); for(const bm of beams) for(const [x,y] of litCells(bm)) if(rectsHit(bb,[x*16+4,y*16+4,8,8])) return true; return false; }
+{ const A0=updAvispa; updAvispa=function(){ const b=boss; if(!queenLit(b)) return A0();
+  updPlugBees();
+  if(!b.lit0){ b.lit0=true; b.dazImm=tick+100; sendPlugBees(b); } // al empezar: manda a oscurecer la sala (y mientras da la orden, el sol no la ciega)
+  if(b.st==='dazzled'||b.st==='rise'){ if(b.flash>0) b.flash--; if(b.clangT>0) b.clangT--; const cx=b.x+16, cy=b.y+16;
+    if(b.st==='dazzled'){ b.t--; if((tick&3)===0) sparkle(b.x+6+Math.random()*20,b.y+Math.random()*8,'#fff6c0'); if(b.t<=0){ b.st='rise'; b.t=999; b.dazImm=tick+110; } } // aturdida en el aire; al pasársele, un rato entorna los ojos y el sol no la ciega
+    else { const hy=10+Math.sin(tick*.11)*6; b.y+=(hy-b.y)*.1; b.t=999; if(Math.abs(b.y-hy)<1.5){ b.st='hover'; b.t=bossPhase(b)===3?40:70; } }
+    if(player.inv===0&&jumpT===0&&b.st==='rise'&&rectsHit(bossBox(b),hitPlayerBox())) hurt(2,cx,cy);
+    if(b.flash===0&&meleeActive()&&rectsHit(meleeBox(),bossBox(b))) bossClang(b,cx,cy);
+    if(bossRope&&--bossRope.t<=0) bossRope=null; return; }
+  const was=b.st, y0=b.y; A0(); if(boss!==b) return;
+  if(was==='pinned'&&b.st==='hover'){ b.y=y0; b.st='rise'; b.t=999; b.dazImm=tick+110; sendPlugBees(b); } // se suelta, herida: manda a tapar lo abierto
+  if(bossPhase(b)===3&&!b.sealed&&b.st!=='yield'&&b.st!=='pinned'&&b.st!=='yanked'){ queenSeal(b); sendPlugBees(b); } // la última fase: cera dura en todos menos uno
+  if((b.st==='hover'||b.st==='aim'||b.st==='dive')&&tick>(b.dazImm||0)&&queenInBeam(b)) dazzle(b);
+  if(b.st==='yield'&&!b.sunburst){ b.sunburst=tick; plugBees=[]; } // se rinde: el verano entra por todos los nudos
+  if(b.sunburst){ const k=tick-b.sunburst; if(k>0&&k%14===0){ let n=0; for(let y=0;y<SH&&!n;y++) for(let x=0;x<SW&&!n;x++) if(grid[y][x]==='Ꝋ'){ b.sealed=false; unplug(x,y); n++; }
+      if(!n) b.sunburst=0; } } }; }
+/* el gancho, con la Reina: solo si está deslumbrada; si no, la raíz la roza y resbala */
+{ const H0=hookBoss; hookBoss=function(D){ const b=boss; if(!queenLit(b)) return H0(D);
+  if(b.st==='dazzled'){ b.st='hover'; const r=H0(D); if(!r) b.st='dazzled'; return r; }
+  if(['hover','aim','tired','dive'].includes(b.st)){ const st=b.st; b.st='hover'; const x0=player.x+8, y0=player.y+10, bb=bossBox(b); let hit=false;
+    for(let s=8;s<=120&&!hit;s+=4){ const px=x0+D[0]*s, py=y0+D[1]*s; if(px>bb[0]-5&&px<bb[0]+bb[2]+5&&py>bb[1]-5&&py<bb[1]+bb[3]+5) hit=true; } b.st=st;
+    if(hit){ sparkle(b.x+16,b.y+12,'#c8d8ff'); if(AC) beep('square',f(76),f(72),.05,.02); if(!opened.has('QFAST')){ opened.add('QFAST'); showToast('¡DEMASIADO RÁPIDA!','el gancho resbala'); } } }
+  return false; }; }
+/* cómo se ve: deslumbrada, con halo y ojos en espiral; y los nudos sellados */
+addEventListener('DOMContentLoaded',()=>{ const D0=drawBoss; drawBoss=function(){ const b=boss; if(!queenLit(b)||(b.st!=='dazzled'&&b.st!=='rise')){ D0(); return; }
+  const st=b.st; b.st='hover'; if(st==='dazzled') glowAt(b.x+16,b.y+14,26+Math.sin(tick*.4)*3,'rgba(255,244,190,.45)'); D0(); b.st=st;
+  if(st==='dazzled'){ if(!SOFT_QUEEN) SOFT_QUEEN=tintTo(BOSS_SPR.avispa,'#fff6c0'); ctx.globalAlpha=.3+.2*Math.sin(tick*.5); ctx.drawImage(SOFT_QUEEN,Math.round(b.x),Math.round(b.y)); ctx.globalAlpha=1; drawDizzy(b.x+16,b.y+2); } }; });
+let SOFT_QUEEN=null;
+{ const D0=drawScorches; drawScorches=function(){ D0(); if(!queenLit(boss)) return; const b=boss; drawPlugBees();
+  if(b.sealed) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꝋ'&&knotSealed(x,y)) ctx.drawImage(sealArt(),x*16,y*16); }; }

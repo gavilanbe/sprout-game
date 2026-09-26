@@ -460,11 +460,16 @@ const server=http.createServer((req,res)=>{
       boss.st='burrow'; boss.t=200; boss.mx=64; boss.my=40; bombs=[{x:boss.mx+8,y:boss.my+16,t:1}]; hitStop=0; __step(1); const dz=boss.st;
       player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); return [clang,dz,boss.hp<hp0-1]; }),[true,'dazed',true]);
   });
-  await check('Reina Avispa: en vuelo la Hoja no hiere; la raíz-gancho la baja y queda a tu merced',async()=>{
-    eq(await ev(()=>{ boss2Done=false; hasHook=true; xItem='hook'; __go(10,2,72,96); __skipDialog(); enemies=[]; projs=[];
-      boss.st='hover'; boss.t=200; boss.x=64; boss.y=12; const hp0=boss.hp; player.x=72; player.y=90; player.dir=1; hitStop=0;
-      keys.alt=true; __step(1); const y=boss.st; __step(16); const pin=boss.st;
-      player.x=boss.x+8; player.y=boss.y+34; player.dir=1; player.atk=11; boss.flash=0; hitStop=0; __step(1); return [y,pin,boss.hp<hp0]; }),['yanked','pinned',true]);
+  await check('Reina Avispa: su enjambre tapa los nudos; en vuelo el gancho resbala; un rayo la deslumbra y entonces la baja; herida manda abejas a tapar; al final sella tres nudos con cera dura',async()=>{
+    eq(await ev(()=>{ boss2Done=false; hasHook=true; xItem='hook'; __go(10,2,72,96); __skipDialog(); enemies=[]; projs=[]; const b=boss, out=[grid[3][0]];
+      b.st='hover'; b.t=999; __step(140); out.push(grid[3][0],grid[5][9],grid[7][2],grid[7][7]);
+      b.x=64; b.y=12; player.x=72; player.y=90; player.dir=1; hitStop=0; keys.alt=true; __step(1); out.push(b.st); let w=0; while(state!=='play'&&w++<80) __step(1); // la raíz resbala y se agarra al suelo de enfrente
+      player.x=32; player.y=92; player.dir=0; __hit(); b.st='hover'; b.t=999; b.x=12; let i=0; while(b.st==='hover'&&i++<60) __step(1); out.push(b.st);
+      player.x=b.x+8; player.y=b.y+60; player.dir=1; hitStop=0; keys.alt=true; __step(1); out.push(b.st); __step(16); out.push(b.st); const hp0=b.hp;
+      b.flash=0; hitStop=0; player.x=b.x+8; player.y=b.y+34; player.dir=1; player.atk=11; __step(2); out.push(b.hp<hp0);
+      b.t=1; hitStop=0; __step(3); out.push(b.st,plugBees.length>0,b.dazImm>tick);
+      b.hp=6; b.st='hover'; b.t=999; __step(3); out.push(!!b.sealed); player.x=32; player.y=92; player.dir=0; __hit(); out.push(grid[7][2]);
+      return out; }),['Ꝍ','Ꝋ','Ꝋ','Ꝋ','Ꝋ','hover','dazzled','yanked','pinned',true,'rise',true,true,true,'Ꝋ']);
   });
   await check('El capullo de la cima: con polillas encima el hilo no se corta; a la luz del brasero se lanzan y entonces sí; su barrido se esquiva saltando',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; xItem='lantern'; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false; enemies=[]; projs=[];
