@@ -78,8 +78,9 @@ function wrapText(s,maxc){
     out.push(ln); }
   return out;
 }
+function nameFill(s){ return (typeof cierzoSaid==='function'&&cierzoSaid())?String(s).replace(/▒▒▒▒▒▒/g,'CIERZO'):s; } // lo que el Olvido se comió vuelve cuando alguien dice el nombre (12d)
 function paginate(pages,who){
-  const maxW=(who&&PORTRAITS[who])?DLG_TXT_POR:DLG_TXT, out=[];
+  const maxW=(who&&PORTRAITS[who])?DLG_TXT_POR:DLG_TXT, out=[]; pages=pages.map(nameFill);
   // los saltos del guion eran para la fuente vieja (17 columnas): se reflujan por ancho real
   for(const p of pages){ const ls=wrapPx(String(p).replace(/\s*\n\s*/g,' '),maxW); for(let i=0;i<ls.length;i+=3) out.push(ls.slice(i,i+3).join('\n')); }
   return out;

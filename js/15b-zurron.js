@@ -312,8 +312,9 @@ function drawLore(){
   txtS((loreSel+1)+'/'+L.length,151,23,MENU.dim,'right');
   for(let i=0;i<rows;i++){ const e=L[top+i]; if(!e) break; const y=32+i*11, sel=top+i===loreSel;
     if(sel){ ctx.fillStyle='#1b3a26'; ctx.fillRect(8,y-2,144,11); ctx.drawImage(CURSOR_SPR,9+((tick&15)<8?0:1),y); }
-    const ic=e.kind==='diario'?DIARY_SPR:e.kind==='carta'?LETTER_SPR:e.kind==='runa'?runeTile(0):bookshelfTile();
-    if(e.kind==='runa'||e.kind==='libro') ctx.drawImage(ic,0,0,16,16,19,y-1,9,9); else ctx.drawImage(ic,0,0,ic.width,ic.height,19,y,8,7);
+    if(e.kind==='nana') proNote(21,y+Math.round(Math.sin(tick*.1)),'#f8d048'); // la nana: una nota dorada
+    else { const ic=e.kind==='diario'?DIARY_SPR:e.kind==='carta'?LETTER_SPR:e.kind==='runa'?runeTile(0):bookshelfTile();
+    if(e.kind==='runa'||e.kind==='libro') ctx.drawImage(ic,0,0,16,16,19,y-1,9,9); else ctx.drawImage(ic,0,0,ic.width,ic.height,19,y,8,7); }
     let t=e.title; while(textW(t)>118&&t.length>3) t=t.slice(0,-2)+'…';
     txt(t,31,y,sel?'#fffbe8':'#9ec7aa'); }
   zSel(8,32+(loreSel-top)*11-2,144,11);

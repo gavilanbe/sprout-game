@@ -167,20 +167,22 @@ function attack(){
   if(inBed){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); noise(.1,.04,false); return; }
   // el Viento exhausto se recuerda (Z a su lado)
   if(boss&&boss.type==='viento'&&boss.hp<=2&&boss.st==='rest'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<34){
-    say(WIND_PEACE,()=>queueBye('viento',fb=>{ const b=boss; if(!b) return; if(fb){ SFX.fanfare(); shake=14; // su despedida (15l); luego, el Copo donde estaba
+    const bye=()=>queueBye('viento',fb=>{ const b=boss; if(!b) return; if(fb){ SFX.fanfare(); shake=14; // su despedida (15l); luego, el Copo donde estaba
         puff(b.x+16,b.y+16,'#dff0ff',18,2); puff(b.x+16,b.y+16,'#9ec7e8',12,1.6); }
       pickups.push({kind:'flake',x:b.x+8,y:b.y+8,t:0});
-      boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima'); }),'EL VIENTO');
+      boss=null; boss3Done=true; enemies=[]; projs=[]; save(); setTrack('cima'); });
+    // él ya no sabe cómo se llama; Sprout junta los tres trozos y lo dice en voz alta (12d)
+    say(WIND_PEACE,()=>say(WIND_NAME_SPROUT,()=>{ olvNana(9,.034); shake=6; screenFlash(8,'#e8f4ff'); say(WIND_NAME_BACK,bye,'EL VIENTO'); },'SPROUT'),'EL VIENTO');
     return;
   }
   if(boss&&boss.type==='ciervo'&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<40){ ciervoPeace(); return; } // el Ciervo de Ámbar (12b)
   if(boss&&boss.st==='yield'&&Math.hypot(player.x-boss.x-8,player.y-boss.y-8)<36){
     const isTopo=boss.type==='topo', bx0=boss.x, by0=boss.y;
-    say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>queueBye(isTopo?'topo':'avispa',fb=>{ const b=boss, bx=b?b.x:bx0, by=b?b.y:by0; // su despedida (15j/15k); luego, la reliquia donde estaba
+    say(isTopo?TOPO_PEACE:QUEEN_PEACE,()=>olvFragment(isTopo?'topo':'avispa',()=>queueBye(isTopo?'topo':'avispa',fb=>{ const b=boss, bx=b?b.x:bx0, by=b?b.y:by0; // su trozo de la nana (12d), su despedida (15j/15k); luego, la reliquia donde estaba
       if(fb){ SFX.fanfare(); shake=10; puff(bx+16,by+16,isTopo?'#7a5a38':'#f8d030',16,2); puff(bx+16,by+16,isTopo?'#e8d8c0':'#1a1410',10,1.5); }
       pickups.push({kind:isTopo?'ember':'tear',x:bx+8,y:by+8,t:0});
       if(isTopo) bossDone=true; else boss2Done=true;
-      boss=null; enemies=[]; projs=[]; save(); setTrack('cueva'); }),isTopo?'EL TOPO REAL':'LA REINA');
+      boss=null; enemies=[]; projs=[]; save(); setTrack('cueva'); })),isTopo?'EL TOPO REAL':'LA REINA');
     return;
   }
   const ft=facingTile();
@@ -220,7 +222,7 @@ function interact([tx,ty,ch]){
   if(ch==='∩'){ SFX.blip(); say(hasPinwheel?["Un ventisquero de nieve dura. Sopla con el MOLINILLO (X) para abrir paso."]:["Un ventisquero de nieve dura cierra el sendero.","Ni la Hoja ni las bombas lo mueven: se necesita VIENTO."]); return true; }
   if(ch==='ψ'){ SFX.blip(); say(["Una rueda de aspas de madera clavada en el suelo.","Gira con el viento. Algo en la sala escucha su chirrido."]); return true; }
   if(ch==='}'&&won&&hasFlake&&!cycled&&autumned){ deliverSeason('invierno'); return true; } // tu reliquia, a su altar
-  if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL\nINVIERNO.","El COPO no se\nderrite. Aquí\nvive el nombre del\nVIENTO DEL NORTE."]:["ALTAR DEL\nINVIERNO.","Está junto al del otoño, apartado de los del Roble, como esperando a alguien que no vuelve."]); return true; }
+  if(ch==='}'){ SFX.blip(); say(cycled?["ALTAR DEL INVIERNO.","El COPO no se derrite. Aquí vive el nombre de CIERZO."]:["ALTAR DEL\nINVIERNO.","Está junto al del otoño, apartado de los del Roble, como esperando a alguien que no vuelve."]); return true; }
   if(ch==='g'||(ch==='ñ'&&sx===8)){ openShop('tilo'); return true; }
   if(ch==='ö'||(ch==='ñ'&&sx===7)){ openShop('corteza'); return true; }
   if(ch==='j'&&hasBlade&&!hasBoomer&&berries>=10){ SFX.blip();

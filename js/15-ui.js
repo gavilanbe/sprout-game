@@ -115,6 +115,7 @@ const FRAMES={
   stone:{bg:'#5c5c74',bg2:'#50506a',border:'#2e2e40',inner:'#74748e',text:'#eef4ff',shadow:'#22222e',key:'#60f0e0',name:'#262030',corner:'#60f0e0'},
   paper:{bg:'#f2e2b4',bg2:'#e8d4a0',border:'#a07840',inner:'#d8c090',text:'#3a2c14',shadow:'#fff8e0',key:'#b83818',name:'#c8b078',corner:'#b83818'},
   letter:{bg:'#e8eef8',bg2:'#dce4f2',border:'#3a5a8a',inner:'#b8c8e0',text:'#1c2c48',shadow:'#ffffff',key:'#c83858',name:'#98acc8',corner:'#c83858'},
+  nana:{bg:'#f4e6bc',bg2:'#e6d29a',border:'#8a6428',inner:'#c8a868',text:'#3a2810',shadow:'#fffbe6',key:'#b86a08',name:'#c8b078',corner:'#b86a08'},
 };
 function roundBox(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(x+1,y,w-2,h); ctx.fillRect(x,y+1,w,h-2); }
 function leafPx(x,y,big,sway){ // hojita de 3 o 5 píxeles que se mece
@@ -139,6 +140,9 @@ function frameLive(x,y,w,h,st,F){
   if(st==='stone'){ const glow=.5+.5*Math.sin(tick*.08); ctx.globalAlpha=.5+glow*.5; ctx.fillStyle=F.key;
     for(const [cx,cy] of [[x+2,y+2],[x+w-7,y+2],[x+2,y+h-7],[x+w-7,y+h-7]]){ ctx.fillRect(cx+2,cy,1,5); ctx.fillRect(cx,cy+2,5,1); ctx.fillRect(cx,cy,1,1); ctx.fillRect(cx+4,cy+4,1,1); }
     ctx.globalAlpha=1; }
+  else if(st==='nana'){ const sx0=x+w-58, sy0=y<20?y+h+3:y-11; /* encima del borde; si la caja va arriba del todo, debajo */ ctx.fillStyle=PAL.k; ctx.fillRect(sx0-2,sy0-2,56,14); ctx.fillStyle=F.bg; ctx.fillRect(sx0-1,sy0-1,54,12); ctx.fillStyle='#c8a868'; for(let i=0;i<5;i++) ctx.fillRect(sx0,sy0+i*2+1,52,1); // un trocito de pentagrama sobre el borde
+    ctx.fillStyle='#8a6428'; ctx.fillRect(sx0+2,sy0,1,11); ctx.fillRect(sx0+3,sy0+1,2,1); ctx.fillRect(sx0+4,sy0+3,1,2); ctx.fillRect(sx0+1,sy0+6,3,1); // clave de sol, a su manera
+    for(let i=0;i<4;i++){ const nx=sx0+12+i*10, ny=sy0+2+((i*3)%5)+Math.round(Math.sin(tick*.08+i*1.7)); proNote(nx,ny-3,i===1?F.key:'#6a4418'); } }
   else if(!FRAMES[st]||st==='normal'){ frameSheen(x,y,w,h,false); for(let xx=x+7;xx<x+w-4;xx+=15) leafPx(xx,y-3+Math.round(Math.sin(xx*.33)),((xx-x)/15|0)%2===0,true);
     leafPx(x-2,y-2,true,true); leafPx(x+w-2,y+h-1,true,true); leafPx(x+w-4,y-3,false,true); } }
 function frameSheen(x,y,w,h,inside){ ctx.fillStyle='rgba(255,255,255,.07)';
@@ -155,6 +159,9 @@ function frameBody(x,y,w,h,st,F){
     ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h);
     for(let yy=y;yy<y+h;yy+=10){ ctx.fillStyle=F.border; ctx.fillRect(x,yy+9,w,1); const off=((yy-y)/10)&1?14:0; for(let xx=x+off;xx<x+w;xx+=28){ ctx.fillRect(xx,yy,1,9); ctx.fillStyle=F.inner; ctx.fillRect(xx+1,yy,26,1); ctx.fillStyle=F.border; } }
     return F; } // las runas que laten van en vivo (frameLive)
+  if(st==='nana'){ // la nana: el pergamino de siempre y, en la esquina, un trocito de pentagrama
+    frameBody(x,y,w,h,'paper',FRAMES.paper); ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h); ctx.fillStyle=F.bg2; for(let yy=y+2;yy<y+h;yy+=12) ctx.fillRect(x+2,yy,w-4,1);
+    return F; } // el pentagrama asoma por encima del borde (frameLive), para no tapar la letra
   if(st==='paper'){ // pergamino de bordes tostados e irregulares
     for(let xx=-2;xx<w+2;xx++){ const t=hash(xx,1)%3, b=hash(xx,2)%3; ctx.fillStyle=PAL.k; ctx.fillRect(x+xx,y-3+t,1,h+6-t-b); ctx.fillStyle=F.border; ctx.fillRect(x+xx,y-2+t,1,h+4-t-b); }
     ctx.fillStyle=F.bg; ctx.fillRect(x,y,w,h); ctx.fillStyle=F.bg2; for(let yy=y+2;yy<y+h;yy+=9) ctx.fillRect(x+2,yy,w-4,1);

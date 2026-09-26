@@ -141,6 +141,7 @@ function olvMoment(kind,o){ olvM=Object.assign({kind,t:0},o); state='olvmoment';
 function updOlvMoment(){ const M=olvM; if(!M){ state='play'; return; } M.t++;
   if(M.kind==='husk'){ M.m.t++; updHuskMoth(M.m); }
   else if(M.kind==='land') updLandMoment(M);
+  else if(M.kind==='frag') updFragMoment(M);
   updParts();
   if(keys.fire&&M.t>=24){ keys.fire=false; M.t=M.dur; if(M.m) M.m.dead=true; } // Z salta (como las presentaciones)
   keys.fire=keys.alt=false;
@@ -148,6 +149,7 @@ function updOlvMoment(){ const M=olvM; if(!M){ state='play'; return; } M.t++;
 function drawOlvMoment(){ const M=olvM; if(!M) return; const k=Math.min(1,M.t/10,(M.dur-M.t)/10);
   if(M.kind==='husk'){ if(M.m&&!M.m.dead&&M.m.t>=HUSK_T.crawl-4){ glowAt(M.m.x,M.m.y,20,'rgba(184,174,200,.2)'); drawHuskMoth(M.m); } presentBars(k,12); } // por encima de la oscuridad: que se vea en las mazmorras
   else if(M.kind==='land') drawLandMoment(M);
+  else if(M.kind==='frag'){ drawFragMoment(M); return; }
   if(M.t>=24&&M.dur-M.t>20&&(tick&31)<22){ ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,PLAY_H-11,43,11); txtS('Z: SALTAR',157,PLAY_H-8,'#e8e0d0','right'); } }
 /* la primera polilla: se posa en la hoja de Sprout y... «¡ACHÍS!» */
 const LAND_T={fly:48,sit:112,wind:124,sneeze:128,off:170,end:186};
@@ -192,3 +194,44 @@ function olvWhisper(wx,wy,t){ if(t<16||t>118) return; const k=Math.min(1,(t-16)/
   ctx.globalAlpha=k; ctx.drawImage(MOTH_S[MOTH_FLAP[(t>>1)&3]],Math.round(mx-3),Math.round(my-2));
   for(let i=0;i<4;i++){ const u=((t*.035+i*.25)%1), x=lerp(mx+2,wx-6,u), y=lerp(my+1,wy-7,u)+Math.sin(u*6+i)*1.5; ctx.fillStyle=i&1?OLV.dust:OLV.dustD; ctx.fillRect(Math.round(x),Math.round(y),1,1); } // lo que le dice, en polvo gris
   ctx.globalAlpha=1; }
+/* ============================================================
+   EL NOMBRE DEL VIENTO: CIERZO (§3.3). Cada guardián, al sacudirse el polvo, recuerda un trozo de la nana que
+   Cierzo cantaba cada invierno: el Topo «CIER», la Reina «Z», el Ciervo «O». Nada de esto se guarda aparte:
+   se deriva de quién se ha rendido (como las misiones). En el zurrón, la página de la nana se va llenando.
+   ============================================================ */
+const NANA_FRAG={topo:'CIER',avispa:'Z',ciervo:'O'};
+const NANA_NOTES=[[76,4],[79,4],[76,4],[74,4],[72,4],[74,4],[76,8],[72,4],[69,12]]; // mi sol mi · re do re · mi do · la: la nana de «casa» (06)
+function nameFrag(also){ return (bossDone||also==='topo'?'CIER':'▒▒▒▒')+(boss2Done||also==='avispa'?'Z':'▒')+(boss4Done||also==='ciervo'?'O':'▒'); } // also: el que acaba de rendirse (aún no cuenta como vencido)
+function nameKnown(){ return bossDone&&boss2Done&&boss4Done; }
+function cierzoSaid(){ return boss3Done; } // quien lo dijo en voz alta fue Sprout, en la cima
+function nanaNotesKnown(also){ return (bossDone||also==='topo'?3:0)+(boss2Done||also==='avispa'?3:0)+(boss4Done||also==='ciervo'?3:0); }
+function olvNana(n,vol,when){ if(!AC) return; let t=when||AC.currentTime; const v=vol||.03;
+  for(let i=0;i<Math.min(n,NANA_NOTES.length);i++){ const [m,d]=NANA_NOTES[i], dur=d*.075; beep('triangle',f(m),0,dur+.1,v,t); beep('p125',f(m+12),0,dur*.6,v*.22,t); t+=dur; } }
+function nanaPages(){ const n=nameFrag();
+  return ["LA NANA DEL VIENTO. La cantaba cada invierno, para que el Roble durmiera.",
+    "«Duérmete, Roble, duérmete ya, suelta tus hojas, que el año se va.",
+    "Cierra las yemas, no tengas frío: que baja el "+n+" y te arropará.»"]
+    .concat(cierzoSaid()?["«Duérmete, Roble, no llores, no, que en primavera me marcho yo;","y cuando el año te vuelva a dormir, bajará el CIERZO a cantarte a ti.»"]
+      :nameKnown()?["(Ya está entero. Solo falta decirlo en voz alta.)"]:["(Faltan letras. Algo se las ha comido.)"]); }
+/* el momento del trozo: las letras salen del guardián como notas doradas, rodean a Sprout y se le guardan */
+const GOLD_PAL=['#fffbe0','#f8d048','#a86808','#ffffff','#2a1804'];
+function olvFragment(type,cb){ const txt=NANA_FRAG[type]; if(!txt){ if(cb) cb(); return; }
+  const B=boss, x=B?B.x+(B.w||32)/2:player.x+8, y=B?B.y+2:player.y-24, n=txt.length, hold=14+n*12+18;
+  olvMoment('frag',{type,txt,x,y,hold,dur:hold+n*8+34,notes:nanaNotesKnown(type),after:()=>{ showToast('LA NANA DEL VIENTO','que baja el '+nameFrag(type).replace(/▒/g,'_')); if(cb) cb(); }}); }
+function fragLetterAt(M,i){ const n=M.txt.length, t=M.t, e0=14+i*12, f0=M.hold+i*8, sx0=M.x+(i-(n-1)/2)*16, sy0=M.y-20+Math.round(Math.sin((t+i*9)*.12)*2);
+  if(t<e0) return null;
+  if(t<f0){ const k=Math.min(1,(t-e0)/10), pop=t-e0>=5&&t-e0<7?-1:0; return {x:lerp(M.x,sx0,CA_EASE.out(k)),y:lerp(M.y,sy0,CA_EASE.out(k))+pop,big:t-e0>=5}; } // nace pequeña y, con un destello, crece a la tallada
+  const k=Math.min(1,(t-f0)/14); if(k>=1) return null; const px=player.x+8, py=player.y+4;
+  return {x:lerp(sx0,px,CA_EASE.in(k)),y:lerp(sy0,py,CA_EASE.in(k))-Math.sin(k*Math.PI)*10,big:k<.55}; } // y vuelve a la pequeña al entrar en Sprout: nada se escala
+function updFragMoment(M){ const n=M.txt.length, t=M.t;
+  for(let i=0;i<n;i++){ const e0=14+i*12, f0=M.hold+i*8;
+    if(t===e0){ const m=NANA_NOTES[Math.min(NANA_NOTES.length-1,Math.max(0,M.notes-n+i))][0]; if(AC){ beep('triangle',f(m),0,.5,.034); beep('p125',f(m+12),0,.25,.008); } for(let q=0;q<6;q++) parts.push({k:'shard',x:M.x,y:M.y,vx:(Math.random()-.5)*1.6,vy:-.6-Math.random(),life:14,max:14,col:q&1?'#fff6c0':'#f8d048',nog:true}); }
+    if(t===f0+14){ collectBurst(player.x+8,player.y+4,'#f8d048',i===n-1); if(AC) beep('square',f(84+i*2),0,.08,.02); } }
+  if(t===M.hold+n*8+16){ olvNana(M.notes,.028); player.squash=.25; } } // y la nana, hasta donde se sabe
+function drawFragMoment(M){ const n=M.txt.length, k=Math.min(1,M.t/10,(M.dur-M.t)/12);
+  presentBars(k,10); glowAt(M.x,M.y-6,18+Math.sin(M.t*.2)*2,'rgba(255,230,140,'+(.18*k).toFixed(2)+')');
+  for(let i=0;i<n;i++){ const L=fragLetterAt(M,i); if(!L) continue; const x=Math.round(L.x), y=Math.round(L.y);
+    glowAt(x,y,L.big?10:6,'rgba(255,236,160,.22)');
+    if(L.big){ const g=tlGlyph(M.txt[i],GOLD_PAL); ctx.drawImage(g,x-(g.width>>1),y-(g.height>>1)); proNote(x-2+(i&1?3:-3),y-16+Math.round(Math.sin((M.t+i*7)*.15)*2),'#f8d048'); } // su nota, encima
+    else txtOL(M.txt[i],x,y-4,'#ffe070','center','#2a1804'); }
+  if(M.t>=24&&M.dur-M.t>20&&(tick&31)<22){ ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(117,PLAY_H-11,43,11); txtS('Z: SALTAR',157,PLAY_H-8,'#e8e0d0','right'); } }

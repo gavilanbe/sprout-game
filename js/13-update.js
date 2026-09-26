@@ -387,7 +387,7 @@ function updPause(){
   else if(pausePage===3){
     const L=loreList();
     if(ud!==pauseUD){ pauseUD=ud; if(ud&&L.length){ loreSel=(loreSel+ud+L.length)%L.length; SFX.blip(); } }
-    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); zLore=true; say(e.pages,()=>{ state='pause'; zLore=false; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':'paper'); } }
+    if(keys.fire){ keys.fire=false; const e=L[loreSel]; if(e){ SFX.blip(); zLore=true; if(e.kind==='nana') olvNana(nanaNotesKnown(),.024); say(e.pages,()=>{ state='pause'; zLore=false; },null,e.kind==='runa'?'stone':e.kind==='carta'?'letter':e.kind==='nana'?'nana':'paper'); } }
   } else if(pausePage===4){ updOptions(lr,ud);
   } else { if(lr!==pauseLR) pauseLR=lr; if(ud!==pauseUD) pauseUD=ud; if(keys.fire){ keys.fire=false; SFX.blip(); } }
 }

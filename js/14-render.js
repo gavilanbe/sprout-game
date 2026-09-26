@@ -171,7 +171,7 @@ function drawBoss(){
     if(b.st==='aim'){ ctx.fillStyle='rgba(232,80,80,'+(0.25+0.2*Math.sin(tick*.4))+')'; ctx.fillRect(0,(b.row+14)|0,160,4); }
     if(resting&&b.hp<=2&&(tick&31)<20) txtO('Z',(b.x+14)|0,(b.y-18)|0);
   }
-  if(b.st==='yield'&&(tick&31)<20) txtO('Z',(b.x+14)|0,(b.y-16)|0);
+  if(b.st==='yield'&&(tick&31)<20&&state!=='olvmoment') txtO('Z',(b.x+14)|0,(b.y-16)|0); // (en los momentos del Olvido, no: tapa las letras)
 }
 function drawMidboss(){
   const m=midboss; if(m.type==='scare'){ drawScare(m); return; }

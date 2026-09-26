@@ -64,6 +64,7 @@ function newGame(){
 /* ---------- RECUERDOS: todo lo leído, en orden de descubrimiento ---------- */
 function loreList(){
   const L=[];
+  if(bossDone||boss2Done||boss4Done) L.push({id:'nana',kind:'nana',title:'La nana del Viento',pages:nanaPages()}); // arriba del todo: la que se va llenando (12d)
   for(const id of collected){
     if(id[0]==='d'){ const key=id==='dplaza'?'dplaza':id.slice(1).split(',').slice(0,2).join(','); if(DIARY[key]) L.push({id,kind:'diario',title:(key==='dplaza'?'La plaza nevada':(PLACE_NAMES[key]||key)),pages:DIARY[key]}); }
     else if(id.startsWith('r:')){ const key=id.slice(2); if(RUNAS[key]) L.push({id,kind:'runa',title:(PLACE_NAMES[key]||key),pages:RUNAS[key]}); }

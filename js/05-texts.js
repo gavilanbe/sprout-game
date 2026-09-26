@@ -76,6 +76,8 @@ const TXT = {
              "Su ALTAR espera junto al del otoño." ],
   thaw:[ "¿Lo notas en los pies, brote? La tierra está tibia.",
          "La primavera ha vuelto a casa.",
+         "Y el Topo te cantó algo, ¿verdad? «Cier...»",
+         "Me suena a algo que se me cayó hace mucho. Guárdalo.",
          "El verano cayó en el panal de la REINA AVISPA.",
          "Pidió un otoño para sus obreras. Nadie la escuchó.",
          "Yo, el primero.",
@@ -83,6 +85,9 @@ const TXT = {
          "Tus bombas abrirán las rocas de la playa del este.",
          "CAPÍTULO 2: LA LÁGRIMA DE VERANO" ],
   summer:[ "¿Sientes el sol, brote? Es verano en todo el valle.",
+           "¿Y la Reina? ¿Zumbaba? CIER... Z...",
+           "Lo tengo en la punta de la raíz...",
+           "...y se me deshace, como si algo gris me lo comiera.",
            "El otoño viejo de las marismas por fin se seca...",
            "...pero no se ha ido. Se lo llevó el CIERVO DE ÁMBAR al MOLINO.",
            "Es amigo de mi hermano.",
@@ -90,6 +95,9 @@ const TXT = {
            "Ve, brote. Y no le guardes rencor.",
            "CAPÍTULO 3: LA HOJA DE ÁMBAR" ],
   autumn:[ "La Hoja de Ámbar huele a castañas y a lluvia.",
+           "CIER. Z. O. Lo tienes entero, brote.",
+           "Yo no puedo decirlo: se me deshace en la boca.",
+           "Díselo tú. Es lo que pide su última carta.",
            "Queda el INVIERNO. Ese no lo guarda nadie:",
            "mi hermano se lo llevó consigo al PICO.",
            "Un VENTISQUERO tapa el sendero.",
@@ -106,6 +114,8 @@ const TXT = {
              "Dorada y tibia. Aunque la sueltes, cae despacio.",
              "El otoño entero cabe en ella. Llévala a su ALTAR, junto al Roble." ],
   cycle:[ "El Copo de mi hermano descansa junto al otoño.",
+          "Cierzo. Cierzo...",
+          "¿Lo oyes, brote? Ya puedo decirlo.",
           "Siempre llegaron juntos, el otoño y él.",
           "Por fin ha dejado de aullar. No le vencimos, brote:",
           "le recordamos. Es lo único que pedía.",
@@ -153,10 +163,10 @@ const DIARY={
 /* piedras rúnicas: la historia de los dos hermanos, gastada por el tiempo... y roída */
 const RUNAS={
   '0,12':[ "PIEDRA RÚNICA: «Aquí resuenan los que guardaron el año.","No son ellos: son su eco. No hablan ni ceden...","...pero se desvanecen cuando alguien les recuerda que ya no hace falta pelear.»" ],
-  '1,0':[ "PIEDRA RÚNICA: «Dos hermanos plantó la Tierra:",
-          "RAÍZ, el Roble, señor del verdor...",
-          "...y ▒▒▒▒▒▒, el Viento, que arropa el sueño del invierno.»",
-          "(Donde iba su nombre, la piedra está roída, como si algo se lo hubiera comido.)" ],
+  get '1,0'(){ return cierzoSaid()?[ "PIEDRA RÚNICA: «Dos hermanos plantó la Tierra:", "RAÍZ, el Roble, señor del verdor...",
+          "...y CIERZO, el Viento, que arropa el sueño del invierno.»", "(Donde la piedra estaba roída, el nombre ha vuelto a brillar.)" ]
+        :[ "PIEDRA RÚNICA: «Dos hermanos plantó la Tierra:", "RAÍZ, el Roble, señor del verdor...",
+          "...y ▒▒▒▒▒▒, el Viento, que arropa el sueño del invierno.»", "(Donde iba su nombre, la piedra está roída, como si algo se lo hubiera comido.)" ]; },
   '3,2':[ "PIEDRA RÚNICA: «Al Roble todos le cantaban.",
           "Del Viento, nadie recordaba el nombre.»" ],
   '1,-1':[ "PIEDRA RÚNICA: «Y el Olvido lo volvió amargo. Algo gris le susurraba en la ventisca:",
@@ -219,10 +229,15 @@ const CINE=[
 /* los jefes no se rematan: agotados, ceden su tesoro (Z a su lado) */
 const TOPO_PEACE=[
   "—¿No me rematas, chiquillo?",
+  "—Uf. Qué ligero.",
+  "—Como si me hubieras sacudido una nevada de encima.",
   "—Cavaba y cavaba, buscando algo caliente.",
   "—Ya ni me acordaba de para qué.",
-  "—Llévate la Brasa. Tú la necesitas más que yo.",
-  "(El Topo Real se hunde en la tierra, despacio, sin rencor.)",
+  "—Para que la tierra respire en primavera.",
+  "—Para eso cavamos los topos.",
+  "—Mi abuela me cantaba una nana aquí abajo...",
+  "—«...que baja el Cier...». El Cier. No me sale más.",
+  "—Llévate la Brasa. Ya me acuerdo de para qué cavo.",
 ];
 const TOPO_AFTER=[
   "—¿Vuelves, chiquillo? Aquí abajo se está calentito.",
@@ -231,12 +246,17 @@ const TOPO_AFTER=[
 ];
 const QUEEN_PEACE=[
   "—Zzz... Te la has ganado, pequeño.",
+  "—Qué raro. Me pesaban las alas...",
+  "—...como llenas de polvo gris.",
   "—Pedí un otoño para que mis obreras durmieran.",
   "—Nadie me escuchó.",
   "—Cuando me cayó el verano, lo sellé en cera.",
-  "—Creía que así llegaría el otoño... Zzz.",
+  "—Creía que así llegaría el otoño...",
+  "—Zzz... No. No es sueño.",
+  "—Así zumbábamos una nana en invierno:",
+  "—«...que baja el... ZZZ...»",
+  "—Solo me queda el zumbido.",
   "—Llévate la Lágrima. Mis obreras y yo dormiremos al fin.",
-  "(La Reina alza el vuelo hacia el corazón del panal.)",
 ];
 const QUEEN_AFTER=["—Zzz... Las flores vuelven a cerrar de noche.","—Gracias, pequeño."];
 const WIND_AFTER=["(La brisa peina la nieve, mansa.)","(Ya no aúlla: canturrea. Es la nana de Raíz.)"];
@@ -256,10 +276,16 @@ const WIND_WHISPER=[
 /* el final del Viento: no se vence, se recuerda (Z junto a él, exhausto) */
 const WIND_PEACE=[
   "—¿No alzas tu hoja, semillita?",
-  "(Sprout no alza la Hoja. Se acerca.)",
   "—Hace tanto que nadie sube...",
   "—Ahí abajo ya nadie se acuerda de mí.",
   "—Ni yo me acuerdo ya de cómo me llamo.",
+];
+const WIND_NAME_SPROUT=[ "(CIER, de la madriguera. Z, del panal. O, del molino...)", "—Cierzo." ];
+const WIND_NAME_BACK=[
+  "(El viento se queda muy quieto.)",
+  "—...Cierzo.",
+  "—Me llamo Cierzo.",
+  "—Hace tanto que nadie... ¿Tú lo has dicho, semillita?",
   "(El aullido se deshace en un suspiro largo.)",
   "(Algo frío y brillante cae a tus raíces.)",
 ];
@@ -267,7 +293,7 @@ const WIND_PEACE=[
 const CREDITS=[
   'SPROUT','y las 8 semillas','',
   'una aventura de','GAVILANBE','',
-  'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Ciervo de Ámbar','El Viento del Norte','',
+  'LOS GUARDIANES','El Topo Real','La Reina Avispa','El Ciervo de Ámbar','Cierzo, el Viento del Norte','',
   'LOS VECINOS','Petra · Lupa · Moss','Tilo · Corteza','',
   'LA VOZ DEL ROBLE','Raíz','',
   'Ocho semillas.','Cuatro estaciones.','Ningún guardián','ha muerto.','',
@@ -355,7 +381,7 @@ const GUEST_TALK={
   topo(){ const L=[];
     if(!thawed) L.push(["—La Brasa ya es tuya, chiquillo.","—Llévala al altar y que el valle respire."]);
     else if(!summered) L.push(["—¿Calorcito arriba? Aquí abajo se nota.","—Las raíces ya no tiemblan.","—Ve a ver a la Reina. Está más cansada que yo. Con razón."]);
-    else if(!cycled) L.push(["—Ese de allá arriba, el Viento... no es malo, chiquillo.","—Solo lleva mucho tiempo solo. Como yo antes de que bajaras."]);
+    else if(!cycled) L.push(["—Ese de allá arriba, el Cier... el Viento... no es malo, chiquillo.","—Solo lleva mucho tiempo solo. Como yo antes de que bajaras."]);
     else L.push(["—¿Nieva? Me gusta. La nieve es la manta de la tierra.","—Zzz... Cierra al salir, chiquillo."]);
     return L[0]; },
   avispa(){
@@ -364,7 +390,7 @@ const GUEST_TALK={
     return ["—Zzz... Verano, otoño, invierno. Así debe ser.","—Mis obreras duermen. Yo también. Zzz..."]; },
   viento(){
     if(!cycled) return ["(El Viento no dice nada. Canturrea bajito.)"];
-    return ["—...gracias por subir, semillita.","—Bajaré cada invierno. Y me iré cada primavera. Es lo justo."]; },
+    return ["—...gracias por decir mi nombre, semillita.","—Bajaré cada invierno. Y me iré cada primavera. Es lo justo."]; },
   ciervo(){
     if(!autumned) return ["—Lleva la HOJA DE ÁMBAR al Roble, caminante.","—Que caiga despacio en su altar.","—Yo me quedo aquí, entre las hojas. Por fin puedo tumbarme."];
     if(!cycled) return ["—El otoño ya está en casa. Ahora le toca al Viento del Norte.","—Si subes al pico, dile que el Ciervo...","—...sigue dejando caer las hojas.","—Él entenderá."];

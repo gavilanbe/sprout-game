@@ -177,18 +177,26 @@ function ciervoGust(b){
 }
 function ciervoAim(b){ const dx=player.x+8-(b.x+16), dy=player.y+12-(b.y+20), d=Math.hypot(dx,dy)||1; b.ax=dx/d; b.ay=dy/d; b.face=dx<0?-1:1; }
 function ciervoPeace(){ const b=boss;
-  say(CIERVO_PEACE,()=>queueBye('ciervo',fb=>{ // su despedida (15m); luego, el Ámbar donde estaba
+  say(CIERVO_PEACE,()=>olvFragment('ciervo',()=>queueBye('ciervo',fb=>{ // su trozo de la nana (12d), su despedida (15m); luego, el Ámbar donde estaba
     if(fb){ SFX.fanfare(); shake=10; puff(b.x+16,b.y+16,'#fcd878',18,2); puff(b.x+16,b.y+16,'#e8a040',12,1.6); }
     pickups.push({kind:'amber',x:b.x+8,y:b.y+8,t:0}); boss=null; boss4Done=true; enemies=[]; projs=[]; save();
-    setTrack(TRACKS.molino?'molino':'cueva'); }),'EL CIERVO'); }
+    setTrack(TRACKS.molino?'molino':'cueva'); })),'EL CIERVO'); }
 const CIERVO_PEACE=[
   "—No me hieras más, caminante. Tampoco yo quería pelear.",
-  "—El Viento del Norte me pidió que dejara caer las hojas cuando nadie las quería.",
+  "—Llevaba mucho tiempo con un frío gris en el pecho...",
+  "—...que no era mío.",
+  "—El Viento del Norte me pidió que dejara caer las hojas...",
+  "—...cuando nadie las quería.",
   "—El valle las barría con rabia.",
-  "—Así que guardé el otoño aquí, donde nadie pudiera barrerlo.",
+  "—Así que guardé el otoño aquí...",
+  "—...donde nadie pudiera barrerlo.",
   "—Pero un otoño guardado no es otoño.",
-  "—Llévate la HOJA DE ÁMBAR... y que nadie vuelva a odiar las hojas que caen.",
-  "(El Ciervo se tumba sobre la hojarasca, en paz.)",
+  "—Él cantaba una nana al pasar por el molino.",
+  "—La última letra la arrastraba, como el viento en las aspas...",
+  "—«...que baja el... ...ooo».",
+  "—Solo me acuerdo del final.",
+  "—Llévate la HOJA DE ÁMBAR...",
+  "—...y que nadie vuelva a odiar las hojas que caen.",
 ];
 function updCiervo(){
   const b=boss; if(b.flash>0)b.flash--; if(b.clangT>0) b.clangT--; b.t--; b.kx*=.8; b.ky*=.8;

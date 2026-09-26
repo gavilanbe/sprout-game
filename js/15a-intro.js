@@ -676,7 +676,7 @@ function drawArrive(){ const t=ARRIVE_T-arriveT; fileIris(player.x+8,player.y+8,
 let ending=null;
 const END_SHOTS=[
   {len:300,txt:['Las cuatro estaciones','volvieron a su sitio.']},
-  {len:300,txt:['Y el Viento del Norte','bajó a ver a su hermano.']},
+  {len:300,txt:['Y Cierzo, el Viento del Norte,','bajó a ver a su hermano.']},
   {len:300,txt:['El valle volvió a girar,','y todos salieron a verlo.']},
   {len:330,txt:['La novena semilla','ya no duerme.']},
 ];

@@ -24,9 +24,9 @@ const server=http.createServer((req,res)=>{
   await ev(()=>{
     window.__press=(k,n)=>{ keys[k]=true; if(k==='fire') keys.fireHeld=true; __step(n||1); if(k==='fire') keys.fireHeld=false; if(k!=='fire'&&k!=='alt'&&k!=='menu') keys[k]=false; };
     window.__hold=(k,n)=>{ keys[k]=true; __step(n); keys[k]=false; };
-    window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } if(presentQ) __skipPres(); };
+    window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } if(presentQ||state==='olvmoment') __skipPres(); };
     window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
-    window.__skipPres=()=>{ let i=0; if(presentQ&&presentQ.await) presentQ.await=false; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } while(state==='olvmoment'&&i++<1200){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas); y los momentos del Olvido (12d)
+    window.__skipPres=()=>{ let i=0; while(i++<2000){ if(state==='play'&&presentQ){ presentQ.await=false; __step(1); continue; } if(state==='present'||state==='outro'||state==='olvmoment'){ keys.fire=true; __step(1); continue; } break; } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas); y los momentos del Olvido (12d)
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
@@ -707,6 +707,22 @@ const server=http.createServer((req,res)=>{
       let i=0; while(state==='play'&&i++<200) __step(1); log.push(state,olvM&&olvM.kind);
       while(state==='olvmoment'&&i++<600) __step(1); log.push(state,!!(dlg&&dlg.pages.join(' ').includes('armario')),opened.has('OLV:land')); __skipDialog(); window.__olvLand=false;
       return log; }),['wilt',true,true,true,true,true,true,'yield',0,'olvmoment','play',true,'play',true,'olvmoment','land','dialog',true,true]);
+  });
+  await check('El nombre del Viento: el Topo, la Reina y el Ciervo recuerdan un trozo de su nana (CIER, Z, O); la página de la nana se llena; Sprout lo dice en la cima y lo roído vuelve',async()=>{
+    eq(await ev(()=>{ const log=[];
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; hasBomb=true; hitStop=0;
+      log.push(loreList().some(e=>e.kind==='nana'),nameFrag());
+      __go(6,2,72,90); presentQ=null; bossHidden=false; enemies=[]; boss.hp=2; __step(2); __skipDialog();
+      player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); let i=0; while(state==='dialog'&&i++<60){ dlg.chars=999; keys.fire=true; __step(1); }
+      log.push(state,olvM&&olvM.txt); __skipPres(); log.push(bossDone,pickups.some(p=>p.kind==='ember'),nameFrag(),loreList()[0].kind,loreList()[0].pages.join(' ').includes('CIER▒▒'));
+      boss2Done=true; boss4Done=true; log.push(nameFrag(),nameKnown(),cierzoSaid(),RUNAS['1,0'].join(' ').includes('▒▒▒▒▒▒'));
+      // la cima: el Viento ya no sabe cómo se llama; Sprout junta los tres trozos y lo dice
+      thawed=summered=autumned=true; hasLantern=hasFeather=hasHook=hasPinwheel=true; boss3Done=false; __go(1,-3,72,90); __skipDialog(); boss.hp=2; __step(2); __skipDialog();
+      boss.st='rest'; boss.x=64; boss.y=70; player.x=72; player.y=100; player.dir=1; keys.fire=true; __step(1); const who=[]; i=0;
+      while(state==='dialog'&&i++<80){ if(!who.includes(dlg.who)) who.push(dlg.who); if(dlg.who==='SPROUT'&&dlg.pages.join(' ').includes('Cierzo')&&!who.includes('dice')) who.push('dice'); dlg.chars=999; keys.fire=true; __step(1); if(presentQ||state==='present') __skipPres(); }
+      __skipPres(); __step(2);
+      log.push(who.join(','),boss3Done,cierzoSaid(),RUNAS['1,0'].join(' ').includes('CIERZO'),paginate(['Tu hermano, ▒▒▒▒▒▒.'],null)[0].includes('CIERZO'),pickups.some(p=>p.kind==='flake'));
+      return log; }),[false,'▒▒▒▒▒▒','olvmoment','CIER',true,true,'CIER▒▒','nana',true,'CIERZO',true,false,true,'EL VIENTO,SPROUT,dice',true,true,true,true,true]);
   });
   await check('La aplicación: versión al día, manifiesto instalable, arranca sin red y se actualiza (con aviso en plena partida, sola en el título)',async()=>{
     const {execSync}=require('node:child_process'); let upToDate=true; try{ execSync('node scripts/version.cjs --check',{cwd:root,stdio:'pipe'}); }catch(e){ upToDate=false; }
