@@ -154,13 +154,14 @@ const DIARY={
 };
 /* piedras rúnicas: la historia de los dos hermanos, gastada por el tiempo... y roída */
 const RUNAS={
-  '0,12':[ "PIEDRA RÚNICA: «Aquí resuenan los que guardaron el año.","No son ellos: son su eco. No hablan ni ceden...","...pero se desvanecen cuando alguien les recuerda que ya no hace falta pelear.»" ],
+  get '0,12'(){ return cycled?[ "PIEDRA RÚNICA: «Aquí resuenan los ecos que el Olvido no llegó a soltar.","No son los guardianes: son el polvo que guardó de ellos. No hablan ni ceden...","...pero se desvanecen cuando alguien les recuerda que ya no hace falta pelear.»" ]
+        :[ "PIEDRA RÚNICA: «Aquí resuenan los que guardaron el año.","No son ellos: son su eco. No hablan ni ceden...","...pero se desvanecen cuando alguien les recuerda que ya no hace falta pelear.»" ]; }, // después del final, la runa sabe de dónde salen (12l)
   get '1,0'(){ return cierzoSaid()?[ "PIEDRA RÚNICA: «Dos hermanos plantó la Tierra:", "RAÍZ, el Roble, señor del verdor...",
           "...y CIERZO, el Viento, que arropa el sueño del invierno.»", "(Donde la piedra estaba roída, el nombre ha vuelto a brillar.)" ]
         :[ "PIEDRA RÚNICA: «Dos hermanos plantó la Tierra:", "RAÍZ, el Roble, señor del verdor...",
           "...y ▒▒▒▒▒▒, el Viento, que arropa el sueño del invierno.»", "(Donde iba su nombre, la piedra está roída, como si algo se lo hubiera comido.)" ]; },
-  '3,2':[ "PIEDRA RÚNICA: «Al Roble todos le cantaban.",
-          "Del Viento, nadie recordaba el nombre.»" ],
+  get '3,2'(){ return [ "PIEDRA RÚNICA: «Al Roble todos le cantaban.", "Del Viento, nadie recordaba el nombre.»" ]
+        .concat(cycled?["(Debajo, alguien ha grabado otra línea, con letra torpe y reciente: «SE LLAMA CIERZO».)"]:[]); },
   '1,-1':[ "PIEDRA RÚNICA: «Y el Olvido lo volvió amargo. Algo gris le susurraba en la ventisca:",
            "'Quítales lo que más quieren, y tendrán que buscarte.'»" ],
   '2,1':[ "PIEDRA RÚNICA: «Ocho hijas de oro dio el Roble, a la vista de todo el valle...",
@@ -294,6 +295,34 @@ const POL_T={
   intro:["(La copa del Roble. Ramas sobre el vacío; allá abajo, muy lejos, el valle.)","(Y ella, entera, sacudiéndose el polvo de las alas. Va a la luz... como todas.)"],
   flee:["(La polilla se suelta, sube... y sigue subiendo. Se hace grande, grande, hasta taparlo todo.)","(Allá abajo, en la plaza, el valle mira al cielo.)"],
 };
+/* DESPUÉS DEL FINAL (12l): los tocones del valle, las cartas que Cierzo escribió ya con su nombre y Raíz leyéndolas */
+const TOC_T={
+  stump:["(Un tocón viejo. En los anillos del corte se ven las cuatro estaciones, una detrás de otra.)","(Parece esperar algo.)"],
+  stumpOn:["(Un tocón viejo, hermano pequeño del Gran Roble. Sus anillos laten al ritmo del tuyo.)","(Con el ANILLO DEL AÑO, aquí el año gira cuando tú quieras.)"],
+  vineDry:["(Una enredadera seca trepa por el risco hasta arriba del todo.)","(Está dormida... como si esperara la primavera.)"],
+  vineTop:["(Desde lo alto del risco se ve el valle entero.)"],
+  nest:["(Entre las flores de la enredadera hay un nido vacío... y dentro, una carta.)"],
+  raiz:["Brote, ¿has visto los TOCONES viejos del valle? Son hermanos míos que cortaron hace mucho.","Aún se acuerdan del año. Con el ANILLO, allí la estación gira cuando tú quieras.",
+    "Hay uno junto al LAGO DE LAS RUNAS, otro en el JUNCAL, otro en el BOSQUE DE LOS ECOS y otro en los RISCOS.","Mi hermano jugaba en todos cuando era pequeño. Seguro que escondió algo."],
+  raizSome:n=>["¿Otra carta de mi hermano? Ya llevas "+n+" de 4, brote.","Cuando las tengas todas, léemelas. Quiero oírlas enteras."],
+  raizRead:["¿Cartas... de mi hermano? ¿Y firmadas?","C-I-E-R-Z-O. Con todas sus letras.","«Yo solo lo despeino». Siempre fue así: hace las cosas bonitas y luego dice que no ha sido él.",
+    "¿Sabes qué, brote? Voy a leerlas en voz alta. Aquí, en la plaza. Para que le lleguen."],
+  sky:["¡TE HE OÍDO, HERMANO!"],
+  raizEnd:["Je. Le han llegado.","Toma, brote. Una bellota de mi copa, de las buenas. Que te crezca el vigor.","Y gracias. Por las cartas... y por el nombre."],
+  heart:["¡Una BELLOTA DEL ROBLE!","Tu vigor aumenta."],
+  raizDone:["Todavía se me escapa la risa: «Yo solo lo despeino».","Cada invierno, cuando baje, se lo voy a recordar."],
+};
+const CIERZO_LETTERS=[
+  { where:'el lago de las Runas', pages:["CARTA DE CIERZO (1 de 4):","«Semillita: si estás leyendo esto, has cruzado el lago resbalando.",
+    "Yo lo helaba entero cuando el Roble era un arbolito, y él se reía tanto que se le caían las bellotas.","Luego nadie volvió a patinar conmigo. Hasta hoy.»","CIERZO. (Ya puedo firmar. Qué bien queda.)"] },
+  { where:'el juncal del norte', pages:["CARTA DE CIERZO (2 de 4):","«Semillita: en verano yo no pinto nada. La Reina zumba, los nenúfares se abren sin pedirme permiso y el sol se lo queda todo.",
+    "Así que me escondo en el juncal a escuchar a las ranas.","Si algún agosto me echas de menos, ya sabes dónde estoy.»","CIERZO."] },
+  { where:'el bosque de los Ecos', pages:["CARTA DE CIERZO (3 de 4):","«Semillita: en otoño los setos del bosque se quedan en los huesos, y por fin se puede pasar.",
+    "Cada año barro este claro de un soplido y dejo las hojas más bonitas en un montón, para nadie.","Este año son para ti. Puedes tirarte encima.»","CIERZO."] },
+  { where:'los riscos del Silencio', pages:["CARTA DE CIERZO (4 de 4):","«Semillita: mi hermano no puede subir a los riscos. Es un árbol: no se mueve.",
+    "Por eso manda a la enredadera, que es como una mano muy lenta. Esta primavera le he pedido que te subiera a ti,",
+    "para que vieras el valle entero, como lo veo yo. ¿A que es bonito?","Todo eso lo cuidáis vosotros. Yo solo lo despeino.»","CIERZO."] },
+];
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
 const CV_T={
   mother:["(Un temblor sube desde lo más hondo de la cueva, por todas las raíces a la vez...)","—¡Brote! ¿Lo notas? Es mi raíz madre: ha despertado con el calor de los dos fogones.","—Te espera abajo, en la cripta. Ella guarda lo que buscas."],

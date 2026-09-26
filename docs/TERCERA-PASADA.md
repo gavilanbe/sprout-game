@@ -32,7 +32,12 @@
 > posa; el gancho le clava un ala y la Hoja le da. Con cada clavada el HUD se olvida (el color, el objeto, la música).
 > Su polvo vuelve grises las ramas y cada estación lo trata con su precio (el verano lo quema, pero ella va más rápida;
 > el otoño se lo lleva, pero la ráfaga —que avisa— te empuja; el invierno lo nieva, pero las ramas resbalan; la
-> primavera no lo limpia, pero la retiene posada más rato). Al huir al cielo, el Nombre (nivel 4). Falta G.
+> primavera no lo limpia, pero la retiene posada más rato). Al huir al cielo, el Nombre (nivel 4). De la fase **G**,
+> hechos los **tocones** (`js/12l-tocones.js`: en cuatro pantallas del valle el Anillo gira la estación de la pantalla;
+> el lago de las Runas se hiela y se resbala hasta un islote —comprobado con resolvedor—, los nenúfares del juncal se
+> abren en verano, los setos del bosque se pelan en otoño y la enredadera del risco florece en primavera y se trepa hasta
+> una panorámica del valle), las **cuatro cartas de Cierzo** que guardan (Raíz las lee en voz alta: nieva y contesta
+> desde el cielo), y el **Eco** con su runa nueva y el eco de Cierzo con su nombre. Falta la polillita.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

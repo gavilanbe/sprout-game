@@ -22,7 +22,7 @@
 const RING_X0=22, RING_X1=26;
 const SEASON_NAME=['PRIMAVERA','VERANO','OTOÑO','INVIERNO'], SEASON_TINT=['#f8a0d0','#f8d030','#e8803a','#dff0ff'];
 ['Ꞓ','ꞓ','Ꞔ','ꞔ','ꞕ','Ꞗ','ꞗ','Ꞙ','Ꞝ','Ꞟ','Ꞣ'].forEach(c=>GROUND.add(c));           // lo que se pisa (o por donde se cae)
-['Ꞥ','Ꞧ','Ꞡ','ꞡ','Ꞛ','Ꝡ','Ꞻ','Ꞵ'].forEach(c=>SOLID.add(c)); GROUND.add('ꞻ');                // Ꞧ el capullo helado · Ꝡ el Roble joven · Ꞻ el desgarro (ꞻ, abierto)                                          // lo que no
+['Ꞥ','Ꞧ','Ꞡ','ꞡ','Ꞛ','Ꝡ','Ꞻ','Ꞵ'].forEach(c=>SOLID.add(c)); GROUND.add('ꞻ'); WATER.add('Ꞥ'); // el capullo está en el agua: la orilla no lo rodea                // Ꞧ el capullo helado · Ꝡ el Roble joven · Ꞻ el desgarro (ꞻ, abierto)                                          // lo que no
 /* las salas de los Anillos: su estación de recuerdo (la que tienen al llegar) */
 const RING_ROOMS={
   '22,4':{ring:3,season:3,name:'La plaza del último invierno'},
@@ -38,6 +38,8 @@ const RING_ROOMS={
   '24,0':{ring:0,season:0,name:'El último desgarro',oruga:{tear:[4,0],hits:7,segs:13,spd:1.55,next:[23,-1,72,92]}},
 };
 function inRings(){ return regionOf(sx,sy)==='anillos'; }
+function seasonRoomAt(nx,ny){ return regionOf(nx,ny)==='anillos'||(typeof stumpAt==='function'&&stumpAt(nx,ny)); } // donde el Anillo gira el año: los Anillos y, tras el final, las pantallas con tocón (12l)
+function inSeasonRoom(){ return seasonRoomAt(sx,sy); }
 { const R0=regionOf; regionOf=function(nx,ny){ if(nx>=RING_X0&&nx<=RING_X1&&ny>=-6&&ny<=6) return 'anillos'; return R0(nx,ny); }; }
 function hasRing(){ return opened.has('ANILLO'); }
 function roomSeason(key){ for(let s=0;s<4;s++) if(opened.has('SE'+key+':'+s)) return s; const R=RING_ROOMS[key]; return R?R.season:0; }
@@ -78,12 +80,12 @@ function isPitRing(c){ return c==='°'||c==='Ꞝ'; }
 function stonesOf(key){ const out=[], pre='ST'+key+':'; for(const k of opened) if(k.startsWith(pre)) out.push(k.slice(pre.length).split(',').map(Number)); return out; }
 
 /* ---------- al entrar en una sala de los Anillos ---------- */
-{ const I0=initRoomRules; initRoomRules=function(){ I0(); if(inRings()) initRing(); else ringTurn=null; }; }
+{ const I0=initRoomRules; initRoomRules=function(){ I0(); if(inSeasonRoom()) initRing(); else ringTurn=null; }; }
 let ringTurn=null;
 function initRing(){ ringTurn=null; applySeason(roomSeason(sx+','+sy)); }
 
 /* ---------- el Anillo: X hace girar la estación de la sala ---------- */
-function useRing(){ if(!inRings()){ SFX.bump(); showToast('EL ANILLO NO GIRA','solo dentro del Roble'); return; }
+function useRing(){ if(!inSeasonRoom()){ SFX.bump(); showToast('EL ANILLO NO GIRA',cycled?'solo junto a un tocón viejo':'solo dentro del Roble'); return; }
   if(ringTurn&&ringTurn.t<20) return;
   const key=sx+','+sy, s0=roomSeason(key), s1=(s0+1)&3;
   if(bgDirty||!bgCanvas[0]) rebuildBg(); bgEnsure(bgFrame()); const snap=mkCanvas(160,128); snap.getContext('2d').drawImage(bgCanvas[bgFrame()],0,0);
@@ -117,7 +119,7 @@ function updRingFire(){ for(const q of flares){ const tx=q.x>>4, ty=(q.y-2)>>4, 
 { const B0=blowDrift; blowDrift=function(x,y){ if(!inRings()){ B0(x,y); return; } const key=sx+','+sy; for(let dx=-2;dx<=2;dx++){ const xx=x+dx; if(grid[y][xx]!=='∩') continue;
     grid[y][xx]='n'; opened.add('SD'+key+':'+xx+','+y); puff(xx*16+8,y*16+8,'#ffffff',10,1.4); } SFX.secret(); shake=4; markDirty(); save(); }; }
 /* el barro traga: pisarlo es caer (y volver a la entrada) */
-{ const U0=updRoomRules; updRoomRules=function(){ U0(); if(!inRings()) return; updRingFire(); if(ringTurn&&++ringTurn.t>34) ringTurn=null;
+{ const U0=updRoomRules; updRoomRules=function(){ U0(); if(!inSeasonRoom()) return; updRingFire(); if(ringTurn&&++ringTurn.t>34) ringTurn=null;
   if(state==='play'&&jumpT===0){ const [tx,ty]=playerTile(), c=grid[ty]&&grid[ty][tx]; if(c==='Ꞝ'||c==='Ꞔ'){ state='fall'; deathT=40; SFX.fall(); player.atk=0; } } }; }
 
 /* ---------- el Anillo como objeto de X ---------- */
@@ -148,11 +150,16 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
   if(c==='Ꞟv'){ R(g,6,0,4,16,'#3c8a34'); R(g,6,0,1,16,'#78c850'); R(g,9,0,1,16,'#1e5a28'); for(let y=1;y<16;y+=4){ R(g,4,y,2,2,'#58a840'); PX(g,4,y,'#a4e070'); R(g,10,y+2,2,2,'#58a840'); } return; } // la enredadera, de arriba abajo
   if(c==='Ꞟ'){ R(g,0,6,16,4,'#3c8a34'); R(g,0,6,16,1,'#78c850'); R(g,0,9,16,1,'#1e5a28'); for(let x=1;x<16;x+=4){ R(g,x,4,2,2,'#58a840'); PX(g,x,4,'#a4e070'); R(g,x+2,10,2,2,'#58a840'); } return; } // enredadera sobre el hueco
   if(c==='Ꞣ'){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot((x-7.5)/6.6,(y-8.5)/5.6); if(d>1) continue; PX(g,x,y,d>.86?PAL.k:y<7?'#a8a098':(x+y)%4?'#7a726a':'#8a8278'); } PX(g,5,5,'#d0c8c0'); PX(g,6,5,'#d0c8c0'); return; } // la piedra que dejó el bloque
-  if(c==='Ꞥ'){ for(const [x,y] of [[7,6],[8,6],[7,7],[8,7],[7,8]]) PX(g,x,y,'#58a840'); PX(g,7,5,'#f8a0d0'); PX(g,8,5,'#f8c0e0'); return; } // un capullo de nenúfar, cerrado
-  if(c==='Ꞧ'){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot((x-7.5)/5.2,(y-9)/4.2); if(d>1) continue; PX(g,x,y,d>.82?'#5a88b8':y<8?'#f0f8ff':(x+y)&1?'#c8e4f8':'#a8d0f0'); } // el capullo, preso en un bulto de hielo
-    for(const [x,y] of [[7,7],[8,7],[7,8]]) PX(g,x,y,'#6a9a60'); PX(g,7,6,'#d8a0c0'); PX(g,5,6,'#ffffff'); PX(g,6,5,'#ffffff'); return; }
+  if(c==='Ꞥ'){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot((x-8)/5.6,(y-10.5)/2.9); if(d>1||(x>=8&&x<=9&&y<=10&&y>=8)) continue; PX(g,x,y,d>.8?'#1e4a26':y<10?'#58a840':'#3e7a2e'); } // la hoja, medio hundida
+    for(const [x,y,c] of [[4,13,'#e8f6ff'],[12,13,'#e8f6ff'],[2,11,'#bfe6fa'],[14,11,'#bfe6fa']]) PX(g,x,y,c);
+    for(const [x,y,c] of [[7,4,'#1e4a26'],[8,3,'#1e4a26'],[9,4,'#1e4a26'],[7,5,'#d870a8'],[8,4,'#f8c0e0'],[9,5,'#f8a0d0'],[8,5,'#f8a0d0'],[7,6,'#d870a8'],[8,6,'#f8a0d0'],[9,6,'#d870a8'],[8,7,'#58a840'],[7,7,'#3e7a2e'],[9,7,'#3e7a2e'],[6,5,'#1e4a26'],[10,5,'#1e4a26'],[6,6,'#1e4a26'],[10,6,'#1e4a26']]) PX(g,x,y,c); // el capullo, cerrado y de pie
+    return; } // un capullo de nenúfar, cerrado
+  if(c==='Ꞧ'){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const a=Math.hypot((x+.5-8)/6.2,(y+.5-10)/4.4), b=Math.hypot((x+.5-7)/3.6,(y+.5-6.5)/3.2); if(a>1&&b>1) continue; // el capullo, preso en un montón de hielo
+      const edge=(a>.84&&b>.8)&&y>=8, c=edge?'#5a88b8':y<6?'#ffffff':y<9?'#dff0ff':(x+y)&1?'#b8dcf4':'#a8d0f0'; PX(g,x,y,c); }
+    for(const [x,y,c] of [[7,6,'#e8b8d4'],[8,6,'#f0c8dc'],[7,7,'#e0a8c8'],[8,7,'#e8b8d4'],[7,8,'#98bc9a'],[8,8,'#88b08c'],[6,9,'#98bc9a'],[9,9,'#98bc9a']]) PX(g,x,y,c); // se ve dentro, borroso
+    for(const [x,y] of [[5,5],[5,6],[6,4],[4,8],[11,9]]) PX(g,x,y,'#ffffff'); PX(g,12,12,'#8ab8e0'); PX(g,3,12,'#8ab8e0'); return; }
 }); }
-{ const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){ if(regionOf(opts.sx,opts.sy)!=='anillos') return G0(g,rows,x,y,ch,opts,f);
+{ const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){ if(!seasonRoomAt(opts.sx,opts.sy)) return G0(g,rows,x,y,ch,opts,f);
   const px=x*16, py=y*16, grass=()=>G0(g,rows,x,y,'.',opts,f), water=()=>G0(g,rows,x,y,'W',opts,f);
   if(ch==='Ꞓ'||ch==='ꞓ'){ grass(); g.drawImage(ringTileArt(ch,opts.bio),px,py); return; }
   if(ch==='Ꞔ'||ch==='ꞔ'||ch==='ꞕ'){ grass(); const e=edgesOf(rows,x,y,c=>c!=='Ꞔ'&&c!=='ꞔ'&&c!=='ꞕ'&&c!=='Ꞣ'); g.drawImage(ringMudTile(ch==='Ꞔ'?0:ch==='ꞔ'?1:2,e&15,(x*5+y*3)&3),px,py); return; }
@@ -161,7 +168,9 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
   if(ch==='°'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); return; }
   if(ch==='Ꞝ'){ g.drawImage(ringTileArt('Ꞝ',opts.bio),px,py); return; }
   if(ch==='Ꞟ'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); const v=c=>c==='Ꞟ'||c==='ꞓ'; const vert=(rows[y-1]&&v(rows[y-1][x]))||(rows[y+1]&&v(rows[y+1][x])); g.drawImage(ringTileArt(vert?'Ꞟv':'Ꞟ',opts.bio),px,py); return; }
-  if(ch==='Ꞣ'){ const b=[...(MAPS[opts.sx+','+opts.sy]||[])[y]||''][x]; if(b==='Ꞔ'){ grass(); g.drawImage(ringTileArt('Ꞔ',opts.bio),px,py); } else water(); g.drawImage(ringTileArt('Ꞣ',opts.bio),px,py); return; } // la piedra, en el agua o en el barro
+  if(ch==='Ꞣ'){ const b=[...(MAPS[opts.sx+','+opts.sy]||[])[y]||''][x]; if(b==='Ꞔ'){ grass(); g.drawImage(ringTileArt('Ꞔ',opts.bio),px,py); }
+    else if(opts.bio==='snow'){ const e=edgesOf(rows,x,y,c=>c!=='i'&&c!=='Ꞧ'&&c!=='#'&&c!=='Ꞣ'); g.drawImage(pondIceTile(e&15,(x*7+y*3)&3),px,py); } else water(); // en invierno, presa en el hielo
+    g.drawImage(ringTileArt('Ꞣ',opts.bio),px,py); return; } // la piedra, en el agua o en el barro
   if(ch==='Ꞥ'){ water(); g.drawImage(ringTileArt('Ꞥ',opts.bio),px,py); return; }
   if(ch==='i'||ch==='Ꞧ'){ const e=edgesOf(rows,x,y,c=>c!=='i'&&c!=='Ꞧ'&&c!=='#'&&c!=='Ꞣ'); g.drawImage(pondIceTile(e&15,(x*7+y*3)&3),px,py); if(ch==='Ꞧ') g.drawImage(ringTileArt('Ꞧ',opts.bio),px,py); return; }
   if(ch==='Ꞡ'||ch==='ꞡ'||ch==='Ꞛ'){ grass(); return; }
@@ -172,7 +181,7 @@ function drawRingTurn(){ const T=ringTurn; if(!T) return; const k=CA_EASE.out(Ma
   for(let y=0;y<128;y++){ const dy=y-cy, w=r*r-dy*dy; if(w<=0){ ctx.drawImage(T.snap,0,y,160,1,0,y,160,1); continue; } const h=Math.floor(Math.sqrt(w)), a=Math.max(0,cx-h), b=Math.min(160,cx+h+1);
     if(a>0) ctx.drawImage(T.snap,0,y,a,1,0,y,a,1); if(b<160) ctx.drawImage(T.snap,b,y,160-b,1,b,y,160-b,1);
     ctx.fillStyle=SEASON_TINT[T.s]; if(a>0) ctx.fillRect(a,y,1,1); if(b<160) ctx.fillRect(b-1,y,1,1); } } // el borde de la onda, del color de la estación
-{ const D0=drawScorches; drawScorches=function(){ D0(); if(inRings()) drawRingTurn(); }; }
+{ const D0=drawScorches; drawScorches=function(){ D0(); if(inSeasonRoom()) drawRingTurn(); }; }
 
 /* ============================================================
    LOS RECUERDOS: figuras del pasado, como fantasmas dorados, mientras la sala está en su estación
@@ -218,7 +227,7 @@ function initOruga(){ oruga=null; const key=sx+','+sy, R=RING_ROOMS[key]; if(!R|
   if(opened.has(oruKey())){ grid[ty][tx]='ꞻ'; return; }
   const dir=ty===0?1:-1; oruga={x:tx*16+8,y:ty===0?ty*16+20:ty*16-4,a:dir*Math.PI/2,dir,hist:[],segs:O.segs,hp:O.hits,spd:O.spd,flash:0,hurtT:0,eatT:60,st:'in',t:0,eaten:[],flee:null,O};
   for(let i=0;i<O.segs*6;i++) oruga.hist.push([oruga.x,oruga.y-i*.6*dir]); }
-{ const I0=initRing; initRing=function(){ I0(); initOruga(); NO_GLIDE.add(sx+','+sy); }; } // en los recuerdos el aire no sostiene al vilano
+{ const I0=initRing; initRing=function(){ I0(); initOruga(); if(inRings()) NO_GLIDE.add(sx+','+sy); }; } // en los recuerdos el aire no sostiene al vilano
 function oruSeg(i){ const O=oruga, k=Math.min(O.hist.length-1,i*6); return O.hist[k]; }
 function oruFree(x,y){ const c=tileAt(x|0,y|0); return c!==undefined&&(!isSolid(c)||c==='W')&&x>18&&x<142&&y>18&&y<110; } // repta sobre lo que ha roído (y sobre el agua: no se hunde)
 function updOruga(){ const O=oruga; if(!O) return; O.t++; if(O.flash>0) O.flash--; if(O.hurtT>0) O.hurtT--;
@@ -289,7 +298,7 @@ addEventListener('DOMContentLoaded',()=>{ const P0=drawPlaza; drawPlaza=function
   for(let i=0;i<4;i++){ ctx.fillStyle=SEASON_TINT[i]; ctx.fillRect(x-2+(i&1)*3,y-5+(i>>1)*4,1,1); }                       // dentro, los cuatro colores del año
   if((tick&15)===0) parts.push({k:'mote',x:x-2+Math.random()*4,y:y-4,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:SEASON_TINT[(tick>>4)&3],nog:true}); }; });
 /* el Molino (12b) quita los ventisqueros en partidas que ya subieron al Templo: en los Anillos manda la estación de la sala */
-{ const M0=initMill; initMill=function(){ M0(); if(inRings()) applySeason(roomSeason(sx+','+sy)); }; }
+{ const M0=initMill; initMill=function(){ M0(); if(inSeasonRoom()) applySeason(roomSeason(sx+','+sy)); }; }
 
 function pondIceTile(e,v){ return cached('pice'+e+v,g=>{ R(g,0,0,16,16,'#b8dcf4'); // el estanque helado: una lámina de hielo con sus vetas; borde oscuro donde acaba
   for(const [x,y,w] of [[2+v,4,7],[6,9,6-v],[1,13,5],[9+v%2,2,4]]){ R(g,x,y,w,1,'#e8f6ff'); PX(g,x+w,y+1,'#8ab8e0'); }

@@ -18,21 +18,21 @@
    ============================================================ */
 const MAPS={
 /* ================= EL VALLE ================= */
-'0,0':[ // Riscos del Silencio — semilla 1; la zarza guarda el paso al norte; cueva de Corteza
-"MMMMzzMMMM",
+'0,0':[ // Riscos del Silencio — semilla 1; la zarza guarda el paso al norte; cueva de Corteza · tras el final, la enredadera florece en primavera y se trepa (12l)
+"MMMMzzMꝞMM",
 "MG..V...⊂M",
 "M..M..M..M",
-"M.1M....VM",
+"M.1M.Ꝙ..VM",
 "MM.M..r..M",
 "M........M",
 "M.rM.b....",
 "MMM....T..",
 ],
-'1,0':[ // Bosque de los Ecos — semilla en arbusto brillante, piedra rúnica
+'1,0':[ // Bosque de los Ecos — semilla en arbusto brillante, piedra rúnica · tras el final, en otoño los setos se pasan (12l)
 "TTTTTTTTTT",
-"T.¿.T..T.T",
-"T.T...T..T",
-"T.Q.T.O..T",
+"T.¿.T.Ꝛ.¤T",
+"T.T...TꝚꝚT",
+"T.Q.TꝘO..T",
 "T...TT.T..",
 "..T..*.b..",
 "...T.T.Tø.",
@@ -48,13 +48,13 @@ const MAPS={
 "TS..t..¿.T",
 "TT.....t.T",
 ],
-'3,0':[ // Juncal del Norte — semilla en arbusto; isla con un cuarto de corazón (gancho)
+'3,0':[ // Juncal del Norte — semilla en arbusto; isla con un cuarto de corazón (gancho) · tras el final, en verano los capullos abren camino hasta el cofre (12l)
 "TTTTTTTTTT",
-"T...WWWWWW",
-"....WW♥kWW",
+"T...WWꞤꞤꞤ¤",
+"....WW♥kWꞤ",
 ".t..WWWWWW",
 "......WWWW",
-".b.Q...WWW",
+".b.Q.Ꝙ.WWW",
 "....V...WW",
 ".t......WW",
 ],
@@ -148,14 +148,14 @@ const MAPS={
 "ssssscssss",
 "MMMMCCMMMM",
 ],
-'3,2':[ // Lago de las Runas — corazón entero en la isla (gancho)
+'3,2':[ // Lago de las Runas — corazón entero en la isla (gancho) · tras el final, el tocón hiela el lago: se resbala hasta el islote (12l)
 "...s..WWWW",
 ".XOs.WWWWW",
-"..ssWWWWWW",
-".ssWWk9WWW",
+".ꝘssWWWWWW",
+".ssWWk9WWꝤ",
 ".ssWWWWWWW",
-"ssWWWWWWWW",
-"ssssWWWWWW",
+"ssWꝤWWWW¤W",
+"ssssWꝤWWWW",
 "MMMMMMMMMM",
 ],
 '4,2':[ // Cabo del Vilano — un cofre tras los agujeros (vilano)

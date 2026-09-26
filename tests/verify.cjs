@@ -255,6 +255,27 @@ const server=http.createServer((req,res)=>{
       Math.random=R0; [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno,hasSpin,hasFeather,hasHook]=was; c5Fin=null; boss=null; state='play'; player.inv=0; xItem=x0; return out; }),
       ['done','ꞻ','23,-2',true,true,'8,1','23,-3','polilla','fly',';','perch',':',true,'pinned',12,1,1,true,1,0,3,'i',false,'flee','1,1',true,true]);
   });
+  await check('Después del final, los tocones: el Anillo gira la estación de su pantalla (antes, no); invierno hiela el lago y se resbala hasta el islote; verano abre los nenúfares; otoño pela los setos; primavera hace trepar al risco; Raíz lee las cuatro cartas',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem, was=[won,thawed,summered,autumned,boss3Done,cycled,hasHook], hp0=player.maxHp; state='play'; hitStop=0; player.inv=9999;
+      const play=n=>{ for(let k=0;k<n;k++){ __step(1); if(state==='dialog') __skipDialog(); } };
+      const turn=()=>{ xItem='anillo'; keys.alt=true; __step(1); play(40); }, to=s=>{ let i=0; while(roomSeason(sx+','+sy)!==s&&i++<5) turn(); return roomSeason(sx+','+sy); };
+      const open=d=>{ player.dir=d; keys.fire=true; __step(1); const L=dlg&&dlg.pages&&dlg.pages[0]; __skipDialog(); toast=null; toastQ=[]; return L; };
+      won=thawed=summered=autumned=boss3Done=true; cycled=false; hasHook=true; opened.add('ANILLO'); for(let i=0;i<4;i++) collected.delete('ç'+i); for(const k of ['CZread','TOCin','RZpost','CZn1','CZn2','CZn3']) opened.delete(k);
+      __go(3,2,2*16,4*16-4); turn(); out.push(inSeasonRoom(),grid[4][5]);                                                       // antes del final, el tocón duerme
+      cycled=true; __go(3,2,2*16,4*16-4); play(10); out.push(to(3),grid[4][5]); out.push(['→','↓','←','↑','→','↓'].map(d=>__mv(d)).join(' '),open(0));
+      __go(3,0,3*16,2*16-4); play(10); out.push(to(1),grid[1][6]); player.dir=3; xItem='hook'; keys.alt=true; __step(1); let i=0; while(state==='hook'&&i++<80) __step(1); play(4);
+      out.push(['↑','→','→'].map(d=>__mv(d)).join(' '),open(3)); ['←','←','↓'].forEach(d=>__mv(d)); out.push(to(3),grid[1][8]);        // de vuelta al islote (sobre un nenúfar que se cierra, al agua); en invierno, el capullo helado tapa el cofre
+      setRoomSeason('1,0',0); __go(1,0,7*16,3*16-4); play(10); out.push(grid[2][7],to(2),grid[2][7],__mv('↑'),__mv('↑'),open(3));
+      setRoomSeason('0,0',1); __go(0,0,7*16,1*16-4); play(10); out.push(grid[0][7],to(0),grid[0][7]); player.dir=1; keys.fire=true; __step(1); out.push(state);
+      i=0; while(i++<900&&(state!=='play'||trepa)){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } __step(1); } out.push(cierzoCount(),playerTile().join());
+      __go(1,1,72,76); play(10); opened.add('RZpost'); opened.add('TOCin'); const e=elderPos, hpR=player.maxHp; player.x=e[0]*16; player.y=e[1]*16+12; player.dir=1; keys.fire=true; __step(1); // (el corazón de la isla del lago quizá ya subió el vigor)
+      i=0; while(i++<900&&state!=='itemget'){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } __step(1); } out.push(opened.has('CZread'),player.maxHp-hpR,RUNAS['0,12'][0].includes('Olvido'),ECO_NAME.viento);
+      i=0; while(i++<300&&state!=='play'){ keys.fire=true; __step(1); if(state==='dialog') __skipDialog(); }
+      for(const k of Object.keys(STUMPS)) for(let q=0;q<4;q++) opened.delete('SE'+k+':'+q);
+      [won,thawed,summered,autumned,boss3Done,cycled,hasHook]=was; player.maxHp=hp0; player.hp=hp0; player.inv=0; xItem=x0; state='play'; return out; }),
+      [false,'W',3,'i','9,4 9,6 6,6 6,3 8,3 8,4','CARTA DE CIERZO (1 de 4):',1,'@','6,1 7,1 8,1','CARTA DE CIERZO (2 de 4):',3,'Ꞧ',
+       'Ꝛ',2,'ꝛ','7,2','7,1','CARTA DE CIERZO (3 de 4):','Ꝟ',0,'ꝟ','trepa',4,'7,1',true,2,true,'ECO DE CIERZO']);
+  });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
       const coc=!!(boss&&boss.cocoon&&boss.left===4); for(const th of boss.threads){ th.m=[]; cocCutThread(boss,th,80,80); }
