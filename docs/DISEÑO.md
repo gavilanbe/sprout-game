@@ -2,9 +2,12 @@
 
 > Contiene spoilers de toda la aventura.
 >
-> Describe el juego tal como está. La propuesta de la tercera pasada (el Olvido, el
-> nombre del Viento, el capítulo 5 y las mazmorras nuevas) está en
-> [TERCERA-PASADA.md](TERCERA-PASADA.md).
+> Describe el juego antes de la tercera pasada. La tercera pasada ya está hecha (el
+> Olvido, el nombre del Viento, las mazmorras rehechas como puzles, el capítulo 5 con
+> los Anillos del Roble y el jefe final, y lo que hay después del final): su diseño,
+> con las soluciones comprobadas por resolvedor, está en [TERCERA-PASADA.md](TERCERA-PASADA.md),
+> y el camino crítico de cada sala, en las pruebas (`tests/verify.cjs`). Donde este
+> documento y aquel no coincidan, manda aquel.
 
 ## La historia
 
