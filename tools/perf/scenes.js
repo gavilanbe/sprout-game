@@ -52,6 +52,13 @@ window.SCEN={
       for(const [st,x,y,w,h] of L) drawFrame(x,y,w,h,st); ctx.globalAlpha=.6; drawFrame(40,60,80,20,'paper'); ctx.globalAlpha=1; }; },
     teardown(){ window.draw=window.__drawOrig; }},
   wiltLong:{frames:1100,setup(){ fresh(); SEASON_FORCE=0; warp(2,1,64,60); player.hp=0; die(); },input:i=>(i>900&&i%40===0?{fire:1}:null)},
+  // la tercera pasada: los Anillos del Roble, la médula, la copa, los tocones y la trepa
+  ringOruga:{frames:600,setup(){ fresh(); boss3Done=true; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); xItem='anillo'; god(); warp(22,1,72,100); },input:walker(40,11)},
+  ringTurn:{frames:400,setup(){ fresh(); boss3Done=true; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); xItem='anillo'; god(); warp(23,4,72,92); },input:i=>(i%45===0?{alt:1}:null)},
+  medulaEco:{frames:700,setup(){ fresh(); boss3Done=true; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); god(); med=null; opened.add('MEDL0'); warp(23,-1,72,92); },input:fightAI()},
+  copaPolilla:{frames:700,setup(){ fresh(); boss3Done=true; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); opened.add('MEDdone'); hasHook=hasLantern=true; god(); warp(23,-3,112,92); bossCard=null; pendingSay=null; },input:fightAI()},
+  stumpLake:{frames:500,setup(){ fresh(); cycled=true; opened.add('ANILLO'); xItem='anillo'; god(); warp(3,2,32,60); setRoomSeason('3,2',3); applySeason(3); markDirty(); },input:walker(35)},
+  trepa:{frames:420,setup(){ fresh(); cycled=true; god(); setRoomSeason('0,0',0); warp(0,0,112,12); player.dir=1; startTrepa(7,0); },input:i=>(state==='dialog'&&i%20===0?{fire:1}:null)},
   cineAll:{frames:3000,setup(){ fresh(); warp(2,1,64,60); window.__cineQ=Object.keys(MOMENT_ARMS); getItem(__cineQ.shift()); },input:i=>{ if(state==='play'&&__cineQ.length){ getItem(__cineQ.shift()); } else if(state==='dialog'&&i%20===0) return {fire:1}; return null; }},
 };
 function keysFrom(k){ const K=k||{}; for(const n of ['left','right','up','down']) keys[n]=!!K[n]; if(K.fire){ keys.fire=true; keys.fireHeld=true; } else keys.fireHeld=false; if(K.alt){ keys.alt=true; keys.altHeld=true; } else keys.altHeld=false; }

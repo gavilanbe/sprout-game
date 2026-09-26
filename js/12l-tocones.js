@@ -119,12 +119,15 @@ addEventListener('DOMContentLoaded',()=>{ const V0=drawValle; drawValle=function
 let trepa=null, trepaPano=null;
 const TREPA_UP=54, TREPA_FADE=18, TREPA_VIEW=330, TREPA_DOWN=30;
 function startTrepa(tx,ty){ trepa={t:0,ph:'up',x0:player.x,y0:player.y,tx,ty,first:!collected.has('ç3'),asked:false}; state='trepa'; playerHidden=true; player.dir=1; player.atk=0;
-  player.x=tx*16; if(AC){ noise(.2,.03,true,undefined,2600); beep('triangle',f(67),f(72),.18,.03); } trepaPano=null; }
-function trepaPanorama(){ if(trepaPano) return trepaPano; const c=mkCanvas(800,384), g=c.getContext('2d');
-  for(let y=0;y<3;y++) for(let x=0;x<5;x++){ const key=x+','+y; if(!MAPS[key]) continue; const s=scScreen(key,screenBiome(x,y),'.',0); if(s) g.drawImage(s,x*160,y*128); }
+  player.x=tx*16; if(AC){ noise(.2,.03,true,undefined,2600); beep('triangle',f(67),f(72),.18,.03); } trepaPano=null; trepaBuild=null; }
+/* la panorámica se pinta a trozos mientras Sprout trepa (una pantalla por fotograma: sin tirones) */
+let trepaBuild=null;
+function trepaPanoStep(){ if(trepaPano) return true; if(!trepaBuild) trepaBuild={c:mkCanvas(800,384),i:0}; const B=trepaBuild, g=B.c.getContext('2d');
+  if(B.i<15){ const x=B.i%5, y=(B.i/5)|0, key=x+','+y; B.i++; if(MAPS[key]){ const s=scScreen(key,screenBiome(x,y),'.',0); if(s) g.drawImage(s,x*160,y*128); } return false; }
   const c0=ctx; ctx=g; try{ if(typeof roblePaint==='function'&&typeof ROBLE_ART==='object') roblePaint(ROBLE_ART[robleLook()]||ROBLE_ART.base,160+ROBLE_X,128+ROBLE_Y,0,0); } finally{ ctx=c0; } // el Roble, en su plaza
-  trepaPano=c; return c; }
-function updTrepa(){ const T=trepa; if(!T){ state='play'; playerHidden=false; return; } T.t++; updParts();
+  trepaPano=B.c; trepaBuild=null; return true; }
+function trepaPanorama(){ while(!trepaPanoStep()); return trepaPano; }
+function updTrepa(){ const T=trepa; if(!T){ state='play'; playerHidden=false; return; } T.t++; updParts(); if(T.ph==='up'||T.ph==='fade') trepaPanoStep();
   if(T.ph==='up'){ const k=CA_EASE.io(Math.min(1,T.t/TREPA_UP)); player.y=T.y0+(-30-T.y0)*k;
     if((T.t&3)===0) parts.push({k:'blade',x:T.tx*16+4+Math.random()*8,y:Math.max(2,player.y+10),vx:(Math.random()-.5)*.6,vy:.6,life:28,max:28,col:Math.random()<.6?'#58b048':'#f8a0d0',rot:Math.random()*6,vr:.2});
     if((T.t&7)===0&&AC) noise(.06,.025,true,undefined,3400);
