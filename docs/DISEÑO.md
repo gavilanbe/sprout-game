@@ -1,6 +1,10 @@
 # SPROUT y las 8 semillas — diseño y soluciones
 
 > Contiene spoilers de toda la aventura.
+>
+> Describe el juego tal como está. La propuesta de la tercera pasada (el Olvido, el
+> nombre del Viento, el capítulo 5 y las mazmorras nuevas) está en
+> [TERCERA-PASADA.md](TERCERA-PASADA.md).
 
 ## La historia
 
