@@ -256,7 +256,7 @@ const server=http.createServer((req,res)=>{
     eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques',true,'q','##'],['pista','1,6 1,5 3,5 3,2 1,2 1,3 9,3',1],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['campanas',true,'q'],['puerta','q'],['cima',1,-3],
       ['copo',true,true,1,1],['olvido',true,'silk',true],['altar',true],['petra',true],['sueño',true],['nombre','c5fin',true,'ending'],['final',true,'credits'],['después','c5post','play']]);
   });
-  await check('Camino crítico: el Molino de la Hojarasca (emboscadas, grieta, Espantapájaros, molinillo, molinetes, mapa, brújula, llave grande, Ciervo, otoño)',async()=>{
+  await check('Camino crítico: el Molino de la Hojarasca (emboscada, grieta y mapa, Espantapájaros, la Rueda Mayor, brújula, el Foso de los Sacos, el eje, llave grande, Ciervo, otoño)',async()=>{
     const r=await ev(()=>{ const log=[];
       newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; hasBomb=true; bombAmmo=10; hasHook=true; xItem='bomb'; announced8=true; bloomDone=true;
       // la Ciénaga: con el verano, la hojarasca podrida ya no tapa la puerta del molino
@@ -264,35 +264,37 @@ const server=http.createServer((req,res)=>{
       player.x=7*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); log.push(['molino',sx,sy]);
       // Granero: emboscada → llave
       __go(18,2,130,60); const shut=grid[3][9]; enemies=[]; __step(2); const k1=pickups.find(p=>p.kind==='key'); if(k1){ player.x=k1.x; player.y=k1.y-4; __step(20); __skipDialog(); } log.push(['granero',shut,grid[3][9],dungeonKeys.molino]);
-      // Sala de los Sacos: la bomba abre la pared agrietada → llave
+      // Sala de los Sacos: la bomba abre la pared agrietada → el cofre del MAPA
       __go(20,2,20,60); enemies=[]; player.x=5*16; player.y=3*16-4; keys.alt=true; __step(1); player.x=2*16; player.y=5*16-4; __step(90); const c=grid[3][6];
-      const k2=pickups.find(p=>p.kind==='key'); if(k2){ player.x=k2.x; player.y=k2.y-4; __step(3); __skipDialog(); } log.push(['sacos',c,dungeonKeys.molino]);
-      // Engranajes: cerrojo del oeste (las llaves valen en cualquier orden)
+      player.x=6*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(1); itemT=0; __step(2); __skipDialog(); log.push(['sacos',c,dmaps.has('molino')]);
+      // Engranajes: cerrojo del oeste
       __go(19,1,72,88); enemies=[]; player.x=1*16; player.y=3*16-4; player.dir=2; keys.fire=true; __step(2); log.push(['cerrojo oeste',grid[3][0],grid[4][0],dungeonKeys.molino]);
       // el Espantapájaros: mareado, la Hoja le arranca paja; suelta el molinillo
       __go(18,1,130,60); __skipDialog(); enemies=[]; const mb=!!midboss&&midboss.type; let n=0;
       while(midboss&&n++<300){ midboss.st='dizzy'; midboss.t=60; midboss.hits=0; midboss.flash=0; midboss.hz=0; player.x=midboss.x+4; player.y=midboss.y+22; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); }
       __skipPres(); __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['espantapájaros',mb,midScare,hasPinwheel]);
-      // Engranajes: dos molinetes girando a la vez abren el norte para siempre
-      xItem='molinillo'; __go(19,1,72,88); enemies=[]; player.x=2*16; player.y=3*16-4; player.dir=1; keys.alt=true; __step(1); __step(14);
-      player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(12); log.push(['engranajes',grid[0][4],grid[0][5],opened.has('G19,1')]);
-      // Despensa: emboscada → cofre del mapa; y el cerrojo del norte
-      __go(20,1,20,60); enemies=[]; __step(2); const chest=grid[4][4]; player.x=4*16; player.y=5*16-4; player.dir=1; keys.fire=true; __step(1); const s1=state; itemT=0; __step(2); __skipDialog();
-      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['despensa',chest,s1,dmaps.has('molino'),grid[0][4],dungeonKeys.molino]);
-      // Sala del Viento: mientras gira un molinete la verja se abre; luego se cierra
-      __go(20,0,72,100); enemies=[]; const g0=grid[3][4]; player.x=2*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(10); const g1=grid[3][4]; __step(160); log.push(['viento',g0,g1,grid[3][4]]);
-      // Cámara de la Llave: la hojarasca frena la ráfaga; con el paso libre, una sola ráfaga gira los tres
-      __go(20,-1,72,100); enemies=[]; player.x=1*16; player.y=2*16-4; player.dir=3; keys.alt=true; __step(1); __step(14); const leaf=grid[2][3], gA=grid[5][6];
-      keys.alt=true; __step(1); __step(30); log.push(['molinetes',leaf,gA,grid[5][6]]);
-      const bk=pickups.find(p=>p.kind==='bigkey'); if(bk){ player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); } log.push(['llave grande',!!bigKeys.molino]);
-      // Sala de las Aspas: un cuarto de corazón bajo las hojas; la puerta del guardián
-      __go(19,0,72,100); enemies=[]; player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(14); const pc=pickups.find(p=>p.kind==='piece'), p0=pieces; if(pc){ player.x=pc.x; player.y=pc.y-4; __step(20); __skipDialog(); }
-      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['aspas',pieces-p0,grid[0][4]]);
-      // Laberinto de Hojarasca: bajo las hojas, suelo o agujero; la brújula al otro lado
+      // la Rueda Mayor: cada ráfaga la gira un cuarto (S → O: se abre el Laberinto)
+      xItem='molinillo'; const rueda=(k)=>{ __go(19,1,72,100); enemies=[]; for(let i=0;i<k;i++){ player.x=4*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); for(let j=0;j<44;j++) __step(1); } toast=null; toastQ=[]; return wheelPos; };
+      const w0=wheelPos; log.push(['rueda',w0,rueda(1)]);
+      // Laberinto de Hojarasca (con la rueda al OESTE, la compuerta de la Sala de las Aspas deja pasar): la brújula al otro lado
+      __go(19,0,72,100); enemies=[]; log.push(['compuertas',grid[3][0],grid[1][4]]);
       __go(18,0,120,60); enemies=[]; const gust=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); __step(12); };
       gust(6,4,2); gust(5,4,2); gust(4,4,2); gust(4,4,0); gust(4,5,2); gust(3,5,0);
       player.x=1*16; player.y=2*16-4; player.dir=1; keys.fire=true; __step(1); itemT=0; __step(2); __skipDialog();
       log.push(['laberinto',grid[4][5],grid[4][4],grid[4][3],grid[5][4],grid[5][3],grid[6][3],dcomp.has('molino')]);
+      // el Foso de los Sacos: la ráfaga empuja sacos por el foso (→ fila 5, ↓ col 3, ↑ col 7, → fila 5, ↓ col 7, ← fila 5)
+      log.push(['rueda',rueda(2)]);
+      __go(20,1,20,60); enemies=[]; __skipDialog(); const saco=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); let i=0; for(;i<40;i++) __step(1); while(sackAnims.length&&i++<120) __step(1); };
+      saco(1,5,3); saco(3,1,0); saco(7,6,1); saco(1,5,3); saco(7,1,0); saco(8,5,2); log.push(['foso',opened.has('G20,1'),grid[0][4]]);
+      // Sala del Viento (rueda al ESTE): el molinete del norte mueve el eje; en la Cámara de la Llave, a tiempo
+      __go(20,0,72,100); enemies=[]; log.push(['viento',grid[3][4]]); player.x=6*16; player.y=2*16-4; player.dir=3; keys.alt=true; __step(1); __step(20);
+      __go(20,-1,72,100); enemies=[]; player.x=1*16; player.y=2*16-4; player.dir=3; keys.alt=true; __step(1); __step(14); const leaf=grid[2][3], gA=grid[5][6];
+      keys.alt=true; __step(1); __step(30); log.push(['eje',leaf,gA,grid[5][6]]);
+      const bk=pickups.find(p=>p.kind==='bigkey'); if(bk){ player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); } log.push(['llave grande',!!bigKeys.molino]);
+      // la Rueda al NORTE: Sala de las Aspas, un cuarto de corazón bajo las hojas y la puerta del guardián
+      log.push(['rueda',rueda(3)]);
+      __go(19,0,72,100); enemies=[]; player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(14); const pc=pickups.find(p=>p.kind==='piece'), p0=pieces; if(pc){ player.x=pc.x; player.y=pc.y-4; __step(20); __skipDialog(); }
+      player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['aspas',pieces-p0,grid[1][4],grid[0][4]]);
       // el Ciervo de Ámbar: se rinde y cede la Hoja de Ámbar
       __go(19,-1,72,100); __skipDialog(); enemies=[]; projs=[]; boss.hp=2; hitStop=0; __step(3); __skipDialog(); const y=boss.st; player.atk=0; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
       const am=pickups.find(p=>p.kind==='amber'); if(am){ player.x=am.x; player.y=am.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['ciervo',y,boss4Done,hasAmber]);
@@ -302,8 +304,9 @@ const server=http.createServer((req,res)=>{
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __step(60); const st=state; for(let i=0;i<20&&state!=='play';i++){ if(state==='dialog') __skipDialog(); else { __step(45); keys.fire=true; __step(1); __step(25); } }
       log.push(['otoño',autumned,st,state,chapterIdx(),grid[6][6],questList().some(q=>q.id==='templo')]);
       return log; });
-    eq(r,[['ciénaga','.','G'],['molino',19,2],['granero','=','q',1],['sacos','q',2],['cerrojo oeste','q','q',1],['espantapájaros','scare',true,true],['engranajes','q','q',true],['despensa','¤','itemget',true,'q',0],
-      ['viento','=','q','='],['molinetes','q','=','q'],['llave grande',true],['aspas',1,'q'],['laberinto','q','q','°','q','q','q',true],['ciervo','yield',true,true],['salida',4,3,7,2],['otoño',true,'rite','play',4,'{',true]]);
+    eq(r,[['ciénaga','.','G'],['molino',19,2],['granero','=','q',1],['sacos','q',true],['cerrojo oeste','q','q',0],['espantapájaros','scare',true,true],
+      ['rueda',2,3],['compuertas','q','='],['laberinto','q','q','°','q','q','q',true],['rueda',1],['foso',true,'q'],['viento','q'],['eje','q','=','q'],['llave grande',true],
+      ['rueda',0],['aspas',1,'q','q'],['ciervo','yield',true,true],['salida',4,3,7,2],['otoño',true,'rite','play',4,'{',true]]);
   });
   await check('Molinillo: barre hojarasca (con bayas debajo, y se recuerda), tumba cuervos y desarma caballeros; la hojarasca podrida resiste hasta el verano',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=true; hasPinwheel=true; xItem='molinillo'; hitStop=0;
