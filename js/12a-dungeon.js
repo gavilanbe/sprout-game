@@ -13,14 +13,13 @@
    ============================================================ */
 const DUNGEON_NAMES={cueva:'LA CUEVA DEL TOPO',tronco:'EL TRONCO HUECO',templo:'EL TEMPLO DE LA CIMA'};
 const DUNGEON_SHORT={cueva:'CUEVA',tronco:'TRONCO',templo:'TEMPLO'};
-const DUNGEON_BOSS={cueva:'6,2',tronco:'10,2',templo:'15,0'}; // el templo: la puerta que sube a la cima
+const DUNGEON_BOSS={cueva:'8,2',tronco:'10,2',templo:'15,0'}; // el templo: la puerta que sube a la cima
 /* reglas por sala: clear = emboscada; reward = qué cae al vencer */
 const ROOM_RULES={
   '6,-1':{clear:true,reward:{kind:'key',x:5,y:3}},
-  '7,2': {clear:true,reward:{kind:'chest',x:4,y:4}},
   '11,-1':{clear:true,reward:{kind:'key',x:5,y:3}},
   '14,2':{clear:true,reward:{kind:'chest',x:4,y:4}},
-  '6,1': {clear:true,reward:{kind:'none'}},
+  '6,1': {clear:true,reward:{kind:'chest',x:4,y:4}}, // el Taller: al vencer, el cofre del MAPA (12h)
 };
 let roomShut=null, shutArm=false, regrow=[];
 function initRoomRules(){
@@ -68,7 +67,7 @@ function cutBellotero(x,y){
 }
 /* ---------- los cofres ---------- */
 const CHEST_EXTRA={
-  '7,2:4,4':{kind:'map',dk:'cueva'},
+  '6,1:4,4':{kind:'map',dk:'cueva'},
   '8,-1:4,3':{kind:'compass',dk:'cueva'},
   '10,-1:2,2':{kind:'compass',dk:'tronco'},
   '12,-1:5,2':{kind:'map',dk:'tronco'},

@@ -257,7 +257,7 @@ function drawMap(){
 }
 /* el mapa de la mazmorra: salas pisadas; con el MAPA, todas; con la BRÚJULA, el guardián y los cofres */
 function dungeonRooms(dk){ return Object.keys(MAPS).filter(k=>{ const [x,y]=k.split(',').map(Number); return dungeonOf(x,y)===dk; }); }
-function roomsJoin(a,b,dx,dy){ const A=MAPS[a], B=MAPS[b], open=c=>!SOLID.has(c)||c===')'||c==='Ł'||c==='C'||c==='=';
+function roomsJoin(a,b,dx,dy){ const A=MAPS[a], B=MAPS[b], open=c=>!SOLID.has(c)||c===')'||c==='Ł'||c==='C'||c==='='||c==='Ҳ'; // una puerta con tapón de hielo (12h) también es puerta
   if(dx){ for(let i=0;i<8;i++) if(open(A[i][dx>0?9:0])&&open(B[i][dx>0?0:9])) return true; } else { for(let i=0;i<10;i++) if(open(A[dy>0?7:0][i])&&open(B[dy>0?0:7][i])) return true; } return false; }
 function drawDungeonMap(dk){
   const rooms=dungeonRooms(dk), xs=rooms.map(k=>+k.split(',')[0]), ys=rooms.map(k=>+k.split(',')[1]);

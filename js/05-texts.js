@@ -259,6 +259,10 @@ const MID_INTRO={
   drone:["(Un zumbido rígido llena el nido. Es un soldado del panal, con coraza de cera dura.)","(La Hoja no le hará ni un rasguño... a no ser que algo lo ablande.)"],
   iceguard:["(Los bloques del templo se juntan y cobran forma: hielo vacío, con algo gris dentro.)","(La Hoja no le hace nada. Tendría que ablandarse... con un buen estallido.)"],
 };
+/* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
+const CV_T={
+  mother:["(Un temblor sube desde lo más hondo de la cueva, por todas las raíces a la vez...)","—¡Brote! ¿Lo notas? Es mi raíz madre: ha despertado con el calor de los dos fogones.","—Te espera abajo, en la cripta. Ella guarda lo que buscas."],
+};
 /* la cima, después del ciclo: la nana recuperada */
 const WIND_WHISPER=[
   "(La brisa peina la nieve, mansa.)",
@@ -296,7 +300,12 @@ const CREDITS=[
 /* pistas de sala (la primera vez): insinúan, no resuelven */
 const ROOM_HINTS={
   '7,0':["(Rocas-raíz... Si te plantas y empujas, quizá cedan.)"],
-  '6,2':["(El suelo tiembla bajo tus raíces. Algo enorme cava ahí abajo.)","(Por la forma de los túneles, tiene la cabeza dura como una roca.)","(En las esquinas, unos BELLOTEROS. Qué oportunos.)"],
+  '8,2':["(El suelo tiembla bajo tus raíces. Algo enorme cava ahí abajo, y le gusta el calor.)","(Cuatro fogones helados, uno en cada esquina. Y dos BELLOTEROS. Qué oportunos.)"],
+  '7,1':["(Un fogón de tierra, helado. Al otro lado de la sima, una puerta con un tapón de hielo...)","(Y en la pared, un nudo de raíz, gris y dormido. Aquí todo espera un poco de calor.)"],
+  '6,2':["(LAS HONDONADAS: el piso de abajo de la cueva. Arriba se oye el Taller.)"],
+  '7,2':["(Charcas heladas y otro fogón frío. El hielo tapa la salida del este.)"],
+  '6,3':["(Rampas de raíz que bajan hacia la sima. Una bellota rodaría por ellas...)","(En el cruce hay una placa. Y al otro lado de la sima, un fogón frío y un nudo dormido.)"],
+  '7,3':["(La cripta. La llave grande descansa en una isla, en medio de la sima.)","(En la pared, un nudo enorme, dormido. Es más viejo que la cueva.)"],
   '7,-1':["(Una grieta cruza la pared del este. Se cuela aire fresco...)"],
   '10,-1':["(Un foso de raíces sin fondo. Al otro lado brilla un cofre.)"],
   '16,2':["(Dos antorchas frías custodian un cofre tras una verja.)"],

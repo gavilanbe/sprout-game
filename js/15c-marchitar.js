@@ -337,7 +337,7 @@ function drawDreamRoots(D){
 }
 /* lo que dice el Roble: según dónde y cuántas veces */
 const WILT_BOSS={
-  topo:'Al Topo Real lo marea el estruendo. Una bellota-bomba cuando asome.',
+  topo:'El Topo Real busca el calor, brote. Enciende un fogón y sabrás por dónde asoma: déjale allí la bellota.',
   avispa:'La Reina no ve con el sol de cara, brote. Deslúmbrala con un rayo y bájala con el gancho.',
   viento:'Las polillas van a la luz, brote. Enciende un brasero y los hilos se quedan solos. Y si barren tu fila, salta.',
   ciervo:'El manto de hojas del Ciervo resbala. Una ráfaga del Molinillo y queda al descubierto.' };

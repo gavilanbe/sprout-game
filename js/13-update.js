@@ -76,6 +76,7 @@ function update(){
   if(state==='seasoncine'){ updSeasonCine(); return; }
   if(state==='rite'){ updRite(); return; } // la entrega en la plaza (15f)
   if(state==='door'){ updDoor(); return; } // entrar y salir por puertas, cuevas y escaleras (15g)
+  if(state==='via'){ updVia(); return; }   // entre los pisos de la Cueva: la grieta y las raíces (12h)
   if(state==='ending'){ updEnding(); return; }
   if(state==='cine'){
     cineT++; cineParts();

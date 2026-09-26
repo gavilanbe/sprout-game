@@ -906,7 +906,7 @@ const MIDBOSS_MARK={ 'ℜ':'king', 'Δ':'drone', 'Θ':'iceguard' };
 const BOSS_MARK={ J:'topo', '!':'avispa', '^':'viento' };
 const ITEM_MARK={ L:'blade', K:'bomb', '+':'hook', '£':'boomer', '§':'lantern', '¬':'feather', '¦':'shield', 'ł':'bigkey', '(':'key', '9':'container', '♥':'piece', '0':'diary', '✉':'letter' };
 const CLIFF_LIKE=ch=>ch==='M'||ch==='⊂'; // la grieta del risco también es risco
-const WALL_LIKE=ch=>ch==='v'||ch==='I'||ch==='Ꝋ'||ch==='Ꝍ'; // los nudos del Tronco son pared (12g)
+const WALL_LIKE=ch=>ch==='v'||ch==='I'||ch==='Ꝋ'||ch==='Ꝍ'||ch==='Ҝ'||ch==='ҝ'; // los nudos del Tronco (12g) y de la Cueva (12h) son pared
 function isGroundCh(ch){ return GROUND.has(ch); }
 /* qué suelo hay bajo un objeto: el de los vecinos, o el del bioma */
 function groundUnder(rows,x,y,opts){

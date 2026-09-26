@@ -11,7 +11,10 @@
 > que avanzan y alumbran lo oscuro, cera y miel cristalizada que se derriten, lentes de rocío que se empujan por la
 > columna de luz y la Hoja gira, la Columna que baja por tres salas y el Soldado de Cera, que solo se ablanda si cruza
 > un rayo en picado; y la Reina deslumbrada: su enjambre tapa los cuatro nudos, el gancho solo la baja si un rayo
-> la ciega, herida manda abejas a tapar lo abierto y al final sella tres con cera dura). Faltan la Cueva (C y D), y E, F y G.
+> la ciega, herida manda abejas a tapar lo abierto y al final sella tres con cera dura) y la **Cueva** (`js/12h-cueva.js`:
+> dos pisos, las Galerías y las Hondonadas; fogones que prenden con una bellota y cuyo calor derrite el hielo y despierta
+> raíces que hacen de puente y de escalera entre pisos y salas; grietas del suelo; bellotas que ruedan por rampas con un
+> cruce que cambia una roca; la raíz madre, que pide dos fogones; y el Topo Real que busca el calor). Faltan E, F y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

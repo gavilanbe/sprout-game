@@ -218,13 +218,13 @@ function loadScreen(nx,ny){
   if(sx===1&&sy===1&&!elderMet&&introDone&&!plazaCall){ plazaCall=true;
     pendingSay=["(El GRAN ROBLE se\nalza gris y mudo\nsobre la plaza.","El anciano espera\na sus raíces.)"]; }
   const key=sx+','+sy;
-  if(ROOM_HINTS[key]&&!hinted.has(key)&&!(key==='0,2'&&hasBlade)&&!(key==='6,2'&&bossDone)&&!(key==='10,2'&&boss2Done)&&!(key==='1,-3'&&boss3Done)&&!(key==='2,3'&&summered)&&!(key==='1,-2'&&cycled)){
+  if(ROOM_HINTS[key]&&!hinted.has(key)&&!(key==='0,2'&&hasBlade)&&!(key==='8,2'&&bossDone)&&!(key==='10,2'&&boss2Done)&&!(key==='1,-3'&&boss3Done)&&!(key==='2,3'&&summered)&&!(key==='1,-2'&&cycled)){
     hinted.add(key); pendingSay=ROOM_HINTS[key].slice(); }
   if(sx===1&&sy===-3&&cycled&&!windVisit){ windVisit=true; pendingSay=WIND_WHISPER.slice(); }
   if(sx===1&&sy===1&&cycled&&!collected.has('dplaza')&&[...collected].filter(i=>i[0]==='d').length>=6)
     pickups.push({kind:'diary',id:'dplaza',x:8*16+4,y:2*16+4,t:0});
   // huéspedes tras la tregua: los guardianes se quedan a charlar
-  if(sx===6&&sy===2&&bossDone) npcs.push({ch:'topo',x:5,y:2,guest:'topo'});
+  if(sx===8&&sy===2&&bossDone) npcs.push({ch:'topo',x:5,y:3,guest:'topo'}); // en su Refugio, abajo en las Hondonadas (12h)
   if(sx===10&&sy===2&&boss2Done) npcs.push({ch:'reina',x:5,y:2,guest:'avispa'});
   if(sx===1&&sy===-3&&boss3Done) npcs.push({ch:'viento',x:4,y:2,guest:'viento'});
   const r2=regionOf(sx,sy);
