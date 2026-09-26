@@ -44,7 +44,7 @@ function updViento(){
   if(calmed){
     if(b.st!=='rest'){ b.st='rest'; b.t=999; if(b.y<60)b.y=84; shake=4; SFX.bump(); }
     b.t=999;
-    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El viento cae y\nse queda quieto,\nencogido...)","(Ya no pelea.\nTrae memoria, no\nespada: acércate.)"]; }
+    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El viento cae y se queda quieto, encogido. De su ventisca se desprende un polvo gris...)","(Ya no pelea. Trae memoria, no espada: acércate.)"]; }
   }
   if(b.st==='float'){
     b.x+=Math.sin(tick*.04)*1.2; b.y=8+Math.sin(tick*.07)*8; b.x=Math.max(8,Math.min(120,b.x));
@@ -90,7 +90,7 @@ function updAvispa(){
   const b=boss; if(b.flash>0)b.flash--; if(b.clangT>0) b.clangT--; b.t--;
   const cx=b.x+16, cy=b.y+16, ph=bossPhase(b);
   if(b.hp<=2&&b.st!=='yield'){ b.st='yield'; b.t=999; b.y=Math.min(88,Math.max(40,b.y)); enemies=[]; projs=[]; SFX.bump(); shake=4;
-    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(La Reina se posa,\nagotada. Su\nzumbido suena a\ntregua...)","(Ya no pelea.\nAcércate y pulsa\nZ.)"]; } }
+    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(La Reina se sacude el polvo gris de las alas y se posa, agotada.)","(Ya no pelea. Acércate y pulsa Z.)"]; } }
   if(b.st==='yield'){ b.t=999; if((tick&7)===0) parts.push({x:cx,y:b.y+4,vx:(Math.random()-.5)*.5,vy:-.3,life:10,col:'#f8d030',nog:true}); }
   else if(b.st==='hover'){ b.x+=Math.sin(tick*.06)*(ph===3?1.6:1.1); b.y=10+Math.sin(tick*.11)*6; b.x=Math.max(8,Math.min(120,b.x));
     if(ph>=2&&--b.sting<=0){ b.sting=ph===3?48:70; queenStings(b,ph===3?5:3); }
@@ -129,7 +129,7 @@ function updTopo(){
   const ph=bossPhase(b);
   if(b.hp<=2&&b.st!=='yield'){ if(b.st==='burrow'||b.st==='warn'){ b.x=b.mx; b.y=b.my; puff(b.x+16,b.y+24,'#5a4a40',10,1.5); }
     b.st='yield'; b.t=999; projs=[]; SFX.bump(); shake=4;
-    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El Topo Real se\nencoge, jadeando,\nfuera de su\nagujero...)","(Ya no pelea.\nAcércate y pulsa\nZ.)"]; } }
+    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El Topo Real se sacude el último polvo gris y se queda quieto, jadeando.)","(Ya no pelea. Acércate y pulsa Z.)"]; } }
   if(b.st==='yield'){ b.t=999; if((tick&7)===0) parts.push({x:b.x+8+Math.random()*16,y:b.y+24,vx:(Math.random()-.5)*.4,vy:-.3,life:10,col:'#8a7460',nog:true}); }
   else if(b.st==='burrow'){ const d=Math.hypot(player.x-8-b.mx,player.y-8-b.my)||1, sp=ph===1?.9:ph===2?1.15:1.35;
     b.mx+=(player.x-8-b.mx)/d*sp; b.my+=(player.y-8-b.my)/d*sp; b.mx=Math.max(12,Math.min(116,b.mx)); b.my=Math.max(12,Math.min(84,b.my));
@@ -162,6 +162,7 @@ function midReward(m,fb){ if(midboss!==m) return;
   const reward=m.type==='king'?'bomb':m.type==='drone'?'hook':m.type==='scare'?'molinillo':'feather';
   if(m.type==='king') midKing=true; else if(m.type==='drone') midDrone=true; else if(m.type==='scare') midScare=true; else midIce=true;
   pickups.push({kind:reward,x:m.x+4,y:m.y+4,t:0}); midboss=null; enemies=[]; projs=[]; bossCard=null; save();
+  olvHuskMoth(m.x+12,m.y+14); // de la muda sale una polilla gris que se va hacia el norte (12d)
   const reg=regionOf(sx,sy); setTrack(reg==='templo'?'templo':reg==='molino'&&TRACKS.molino?'molino':'cueva');
   for(let i=0;i<6;i++) pickups.push({kind:'heart',x:m.x+Math.random()*24,y:m.y+Math.random()*24,t:0,drop:20});
 }

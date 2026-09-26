@@ -26,7 +26,7 @@ const server=http.createServer((req,res)=>{
     window.__hold=(k,n)=>{ keys[k]=true; __step(n); keys[k]=false; };
     window.__skipDialog=(max)=>{ let i=0; while(state==='dialog'&&i++<(max||40)){ dlg.chars=9999; keys.fire=true; __step(1); } if(presentQ) __skipPres(); };
     window.__skipRite=()=>{ let i=0; while((state==='rite'||state==='seasoncine')&&i++<40){ keys.fire=true; __step(1); __step(24); } }; // el rito de entrega y la cinemática del valle (15f)
-    window.__skipPres=()=>{ let i=0; if(presentQ&&presentQ.await) presentQ.await=false; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas)
+    window.__skipPres=()=>{ let i=0; if(presentQ&&presentQ.await) presentQ.await=false; if(state==='play'&&presentQ) __step(1); while((state==='present'||state==='outro')&&i++<900){ keys.fire=true; __step(1); } while(state==='olvmoment'&&i++<1200){ keys.fire=true; __step(1); } }; // títulos, entradas y salidas (15i): Z las salta (las salidas acaban solas); y los momentos del Olvido (12d)
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
@@ -165,7 +165,7 @@ const server=http.createServer((req,res)=>{
       __go(7,1,72,30); enemies=[]; player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['nido',dungeonKeys.cueva,grid[7][4]]);
       // el Rey cae a bombazos... no hay bombas aún: por detrás con la Hoja
       __go(8,0,72,96); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<400){ midboss.st='stuck'; midboss.t=50; midboss.flash=0; player.x=midboss.x+12-(midboss.dir>0?26:-26)-8; player.y=midboss.y+4; player.dir=midboss.dir>0?3:2; player.atk=11; hitStop=0; __step(1); }
-      __step(4); const bombPick=pickups.find(p=>p.kind==='bomb'); if(bombPick){ player.x=bombPick.x; player.y=bombPick.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
+      __skipPres(); __step(4); const bombPick=pickups.find(p=>p.kind==='bomb'); if(bombPick){ player.x=bombPick.x; player.y=bombPick.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
       log.push(['rey',midKing,hasBomb,xItem]);
       // la cripta tras la grieta: llave grande
       __go(8,1,72,80); enemies=[]; player.x=4*16; player.y=6*16-6; keys.alt=true; __step(1); __step(90); log.push(['grieta',grid[7][4],grid[7][5]]);
@@ -186,7 +186,7 @@ const server=http.createServer((req,res)=>{
       __go(1,3,72,60); player.x=4*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); log.push(['tronco',sx,sy]);
       __go(11,0,72,90); enemies=[]; const k=pickups.find(p=>p.kind==='key'); player.x=k.x; player.y=k.y-4; __step(3); __skipDialog(); player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.tronco,grid[3][9]]);
       __go(12,0,40,60); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<300){ midboss.st='stunned'; midboss.t=60; midboss.flash=0; player.x=midboss.x; player.y=midboss.y+26; player.dir=1; player.atk=11; hitStop=0; __step(1); }
-      __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['zángano',midDrone,hasHook]);
+      __skipPres(); __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['zángano',midDrone,hasHook]);
       __go(11,-1,72,60); __skipDialog(); enemies=[]; __step(2); const kc=pickups.find(p=>p.kind==='key'); player.x=kc.x; player.y=kc.y-4; __step(20); __skipDialog(); log.push(['colmena',dungeonKeys.tronco]);
       __go(11,1,72,40); enemies=[]; const east0=grid[5][7]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); log.push(['cristal',east0,grid[5][7],grid[5][2]]);
       player.atk=0; player.x=8*16; player.y=5*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo este',grid[5][9],grid[6][9],dungeonKeys.tronco]);
@@ -214,7 +214,7 @@ const server=http.createServer((req,res)=>{
       __go(15,1,20,60); enemies=[]; player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.templo,grid[3][9]]);
       __go(16,1,72,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.templo]);
       __go(16,0,72,100); __skipDialog(); enemies=[]; xItem='bomb'; let n=0; while(midboss&&n++<400){ hitStop=0; if(midboss.soft<=0){ player.x=midboss.x+4; player.y=midboss.y+24; keys.alt=true; __step(1); __step(82); } else { player.x=midboss.x+12-8; player.y=midboss.y+26; player.dir=1; player.atk=11; __step(1); } }
-      __step(4); const f=pickups.find(p=>p.kind==='feather'); if(f){ player.x=f.x; player.y=f.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['guardián',midIce,hasFeather]);
+      __skipPres(); __step(4); const f=pickups.find(p=>p.kind==='feather'); if(f){ player.x=f.x; player.y=f.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['guardián',midIce,hasFeather]);
       __go(15,0,72,60); enemies=[]; xItem='feather'; player.x=9*16; player.y=3*16-4; player.dir=2; keys.alt=true; __step(1); keys.left=true; __step(30); keys.left=false; log.push(['salto',(player.x+8)>>4,state]);
       xItem='lantern'; for(const [x,y,d] of [[3,1,2],[6,1,3],[3,6,2],[6,6,3]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); } log.push(['antorchas',grid[1][4]]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['puerta',grid[0][4]]); player.y=-6; __step(1); __skipDoor(); log.push(['cima',sx,sy]);
@@ -240,7 +240,7 @@ const server=http.createServer((req,res)=>{
       // el Espantapájaros: mareado, la Hoja le arranca paja; suelta el molinillo
       __go(18,1,130,60); __skipDialog(); enemies=[]; const mb=!!midboss&&midboss.type; let n=0;
       while(midboss&&n++<300){ midboss.st='dizzy'; midboss.t=60; midboss.hits=0; midboss.flash=0; midboss.hz=0; player.x=midboss.x+4; player.y=midboss.y+22; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); }
-      __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['espantapájaros',mb,midScare,hasPinwheel]);
+      __skipPres(); __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['espantapájaros',mb,midScare,hasPinwheel]);
       // Engranajes: dos molinetes girando a la vez abren el norte para siempre
       xItem='molinillo'; __go(19,1,72,88); enemies=[]; player.x=2*16; player.y=3*16-4; player.dir=1; keys.alt=true; __step(1); __step(14);
       player.x=7*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(12); log.push(['engranajes',grid[0][4],grid[0][5],opened.has('G19,1')]);
@@ -308,7 +308,7 @@ const server=http.createServer((req,res)=>{
       m.st='hop'; m.t=1; m.hops=9; __step(1); const plant=m.st; for(let i=0;i<40&&m.st==='plant';i++) __step(1); const spin=m.st;
       player.x=m.x+4; player.y=m.y+22; player.dir=1; player.atk=11; m.flash=0; player.inv=60; hitStop=0; __step(1); const clang=m.hp===hp0;
       let n=0; while(midboss&&n++<300){ midboss.st='dizzy'; midboss.t=60; midboss.hits=0; midboss.flash=0; player.x=midboss.x+4; player.y=midboss.y+22; player.dir=1; player.atk=11; player.inv=60; hitStop=0; __step(1); }
-      __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
+      __skipPres(); __step(4); const mp=pickups.find(p=>p.kind==='molinillo'); if(mp){ player.x=mp.x; player.y=mp.y-4; __step(3); itemT=0; __step(2); __skipDialog(); }
       return [plant,spin,clang,midScare,hasPinwheel,xItem]; }),['plant','spin',true,true,true,'molinillo']);
   });
   await check('El Ciervo de Ámbar: la Hoja resbala en su manto; el molinillo se lo arranca; marca la embestida en el suelo y al chocar se engancha; se rinde y se queda de huésped',async()=>{
@@ -687,6 +687,26 @@ const server=http.createServer((req,res)=>{
     await m.mouse.move(r.ax,r.ay); await m.mouse.down(); await m.mouse.move(r.ax+25,r.ay+18); log.push(await m.evaluate(()=>[keys.fire,keys.fireHeld])); await m.mouse.up(); log.push(await m.evaluate(()=>keys.fireHeld));
     await ctx.close();
     eq(log,[[true,true],'up',true,'right','up+right','right','-',[true,true],false]);
+  });
+  await check('El Olvido: polillas en lo gris que van a la luz y se deshacen de un tajo; los guardianes se sacuden el polvo al rendirse; la muda suelta su polilla (la primera vez, con el mundo quieto); la primera se posa en Sprout',async()=>{
+    eq(await ev(()=>{ const log=[];
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; hitStop=0; __go(1,2,40,60); enemies=[];
+      for(let i=0;i<260;i++){ tick++; updMoths(); } log.push(screenBiome(sx,sy),moths.length>0);
+      const m=moths[0]; m.x=player.x+8; m.y=player.y+2; m.st='wander'; player.dir=1; player.atk=8; mothNext=tick+99999; updMoths(); log.push(!moths.includes(m)); player.atk=0;
+      // la luz las atrae: una antorcha encendida en una sala del templo
+      won=thawed=summered=autumned=true; __go(16,2,72,60); enemies=[]; grid[1][1]=';'; moths=[]; olvSpawnMoth(); moths[0].x=60; moths[0].y=40; mothNext=tick+99999; for(let i=0;i<300;i++){ tick++; updMoths(); } log.push(moths.some(q=>q.st==='orbit'&&Math.hypot(q.x-24,q.y-18)<16));
+      // el Topo: apagado mientras le queda polvo; al rendirse se lo sacude
+      thawed=summered=autumned=false; bossDone=false; hasBomb=true; __go(6,2,72,90); presentQ=null; bossHidden=false; enemies=[]; const b=boss;
+      log.push(olvDustLevel(b)===1); b.hp=10; log.push(olvDustLevel(b)>0&&olvDustLevel(b)<1); b.hp=2; b.st='burrow'; __step(2); log.push(b.dustOff===true,b.st);
+      for(let i=0;i<45;i++) __step(1); log.push(olvDustLevel(b)); __skipDialog();
+      // la muda del Escarabajo Rey suelta su polilla: la primera vez el mundo se para (y Z lo salta)
+      __go(8,0,72,96); presentQ=null; bossHidden=false; enemies=[]; opened.delete('OLV:husk'); olvHuskMoth(72,56); log.push(state); __skipPres(); log.push(state,opened.has('OLV:husk'));
+      olvHuskMoth(72,56); log.push(state,moths.some(q=>q.st==='husk')); // la segunda ya no para nada
+      // la primera polilla que se posa en Sprout: con el valle gris, quieto un momento
+      newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; hitStop=0; __go(1,2,70,60); enemies=[]; window.__olvLand=true;
+      let i=0; while(state==='play'&&i++<200) __step(1); log.push(state,olvM&&olvM.kind);
+      while(state==='olvmoment'&&i++<600) __step(1); log.push(state,!!(dlg&&dlg.pages.join(' ').includes('armario')),opened.has('OLV:land')); __skipDialog(); window.__olvLand=false;
+      return log; }),['wilt',true,true,true,true,true,true,'yield',0,'olvmoment','play',true,'play',true,'olvmoment','land','dialog',true,true]);
   });
   await check('La aplicación: versión al día, manifiesto instalable, arranca sin red y se actualiza (con aviso en plena partida, sola en el título)',async()=>{
     const {execSync}=require('node:child_process'); let upToDate=true; try{ execSync('node scripts/version.cjs --check',{cwd:root,stdio:'pipe'}); }catch(e){ upToDate=false; }

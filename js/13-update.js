@@ -125,6 +125,7 @@ function update(){
   }
   if(state==='trans'){ trans.t++; if(trans.t>=trans.dur){ state='play'; trans=null; } return; }
   if(state==='present'||state==='outro'){ updPresent(); return; } // el título de una mazmorra, la entrada o la salida de un jefe (15i)
+  if(state==='olvmoment'){ updOlvMoment(); return; } // un momento del Olvido: la polilla de una muda, la que se posa en Sprout (12d)
 
   /* === PLAY === */
   if(sproutT>0){ updRebrote(); return; } // rebrotar: germina y sale de la tierra (15c)
@@ -194,7 +195,7 @@ function update(){
   updBombs(); updProjs(); updWind(); updBoomer(); updGear();
   if(!presentAwaiting()){ updBoss(); updMidboss(); } musicIntensity(boss&&boss.maxHp?bossPhase(boss)-1:midboss&&midboss.maxHp?(midboss.hp<=midboss.maxHp/2?1:0):0);
   updPickups();
-  updSpawns(); updEnemies(); updRoomRules(); updMill(); updSecrets(); updParts();
+  updSpawns(); updEnemies(); updRoomRules(); updMill(); updSecrets(); updOlvido(); updParts(); // updOlvido: polillas y polvo (12d)
   updExits();
 }
 function weather(){

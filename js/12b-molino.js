@@ -195,7 +195,7 @@ function updCiervo(){
   const ph=bossPhase(b), cx=b.x+16, cy=b.y+18, dx=player.x+8-cx, dy=player.y+12-cy, d=Math.hypot(dx,dy)||1;
   const move=(nx,ny)=>{ let hit=false; if(boxFree(nx+6,b.y+14,20,14)) b.x=nx; else hit=true; if(boxFree(b.x+6,ny+14,20,14)) b.y=ny; else hit=true; return hit; };
   if(b.hp<=2&&b.st!=='yield'){ b.st='yield'; b.t=999; b.mantle=0; b.exp=999; enemies=[]; projs=[]; SFX.bump(); shake=4;
-    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El Ciervo dobla las patas y se queda quieto, jadeando...)","(Ya no pelea. Acércate y pulsa Z.)"]; } }
+    if(!b.calmMsg){ b.calmMsg=true; pendingSay=["(El Ciervo se sacude un polvo gris del lomo y dobla las patas, jadeando.)","(Ya no pelea. Acércate y pulsa Z.)"]; } }
   if(b.st==='yield'){ b.t=999; if((tick&7)===0) parts.push({k:'leafF',x:cx+(Math.random()-.5)*20,y:b.y,vx:.1,vy:.3,life:60,max:60,sway:Math.random()*6,col:'#e8a040',nog:true}); return; }
   // el manto: al descubierto un rato; luego las hojas vuelven a él
   if(b.mantle===0){ if(b.exp>0) b.exp--; else { b.regrow++; if((tick&1)===0){ const a=Math.random()*6.283; parts.push({k:'blade',x:cx+Math.cos(a)*30,y:cy+Math.sin(a)*22,vx:-Math.cos(a)*1.2,vy:-Math.sin(a)*1.0,life:24,max:24,col:['#e8a040','#c86424'][tick&1],rot:a,vr:.3}); }

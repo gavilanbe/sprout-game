@@ -209,7 +209,8 @@ function drawScene(){
   for(const e of enemies) L.push({y:e.y+16,f:()=>{ if(e.pop>0){ const k=easeOutBack(1-e.pop/10), s=Math.max(.05,k); ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(s*(1+(1-k)*.3),s); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } // aparece de un soplo (11)
     else if(e.squash){ ctx.save(); ctx.translate(e.x+8,e.y+16); ctx.scale(1+e.squash*.6,1-e.squash*.5); ctx.translate(-(e.x+8),-(e.y+16)); drawEnemy(e); ctx.restore(); } else drawEnemy(e); }});
   if(blockSlide) L.push({y:blockPos()[1]+16,f:drawBlockSlide});
-  if(boss&&!bossHidden) L.push({y:boss.y+32,f:()=>{ if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});
+  if(boss&&!bossHidden) L.push({y:boss.y+32,f:()=>{ const df=olvDustFilter(boss), jx=olvShakeJitter(boss); if(df||jx){ ctx.save(); if(df) ctx.filter=df; ctx.translate(jx,0); drawBoss(); ctx.restore(); return; } // con polvo encima, apagado; al rendirse se lo sacude (12d)
+    if(boss.echo){ glowAt(boss.x+16,boss.y+16,30,'rgba(170,140,255,'+(0.3+0.1*Math.sin(tick*.1)).toFixed(2)+')'); if((tick&7)===0) parts.push({k:'mote',x:boss.x+4+Math.random()*24,y:boss.y+28,vx:0,vy:-.3,life:40,max:40,sway:Math.random()*6,col:'#d8c8ff',nog:true}); ctx.save(); ctx.globalAlpha=.8; drawBoss(); ctx.restore(); } else drawBoss(); }});
   if(midboss&&!bossHidden) L.push({y:midboss.y+24,f:drawMidboss});
   L.push({y:player.y+16+(jumpT>0?40:0),f:drawPlayer});
   L.sort((a,b)=>a.y-b.y); for(const o of L) o.f();
@@ -230,7 +231,7 @@ function drawScene(){
     if(p.kind==='spore') ctx.drawImage(SPORE_SPR,(p.x-3)|0,(p.y-3)|0); else if(p.kind==='ice'){ ctx.fillStyle=PAL.k; ctx.fillRect((p.x-3)|0,(p.y-3)|0,6,6); ctx.fillStyle='#a8d8f0'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,4,4); ctx.fillStyle='#fff'; ctx.fillRect((p.x-2)|0,(p.y-2)|0,2,1); } else ctx.drawImage(ROCK_PROJ,(p.x-3)|0,(p.y-3)|0); }
   for(const w of windProjs) drawTornado(w); // el tornadito del Remolino (12b)
   drawGearFx(); drawBoomer(); drawMillFront();
-  drawParts();
+  drawParts(); drawMoths(); // las polillas del Olvido (12d)
   for(const f of flyText){ const age=(f.max||(f.max=f.t))-f.t, hop=age<8?Math.round(Math.sin(age/8*Math.PI)*3):0; if(f.t<8&&(f.t&1)) continue; txtOL(f.txt,(f.x+6)|0,(f.y-10-hop)|0,f.col,'center',PAL.k,FONT_S); }
   drawDark(); drawScreenFx();
   if(boss||midboss) drawBossBar(boss||midboss);

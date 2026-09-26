@@ -490,6 +490,7 @@ function draw(){
   drawScene(); drawHint(); drawUI(); drawPlaceBanner(); drawZurronOut();
   if(state==='arrive') drawArrive(); // el iris que se abre al continuar (15a)
   if(state==='present'||state==='outro') drawPresent(); // títulos, entradas y salidas (15i)
+  if(state==='olvmoment') drawOlvMoment(); // los momentos del Olvido (12d)
   if(state==='rite') drawRite(); // la entrega en la plaza (15f)
   if(state==='door') drawDoor(); // la travesía por una puerta, cueva o escalera (15g)
   if(state==='itemget'&&moment) drawMoment(); // el momento del arma (15d)

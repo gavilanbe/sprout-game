@@ -172,6 +172,7 @@ function tiStormScene(t,sil){ const A=tiArt(), ph=t*.06, amp=tiOakAmpStorm(t);
   if(!sil&&t>TI_BOLTS[0]&&t<TI_DIVE+8){ const k=(t<TI_EYES?1-(t-TI_BOLTS[0])/14:.45)*(t<TI_DIVE?1:1-(t-TI_DIVE)/8); ctx.globalAlpha=Math.max(0,.7*k); ctx.drawImage(A.giant,112-66,24-51); ctx.globalAlpha=1; } // la sombra del gigante: el relámpago la dejó marcada
   ctx.drawImage(sil?A.cnL:A.cn,c2,-6); ctx.drawImage(sil?A.cnL:A.cn,c2+320,-6);
   if(lit){ ctx.globalAlpha=lit*.8; ctx.drawImage(A.cnL,c2,-6); ctx.drawImage(A.cnL,c2+320,-6); ctx.globalAlpha=1; }
+  if(sil&&fl&&fl.b===2) olvWingsSil(42,13,'#3c4680'); // el último relámpago: allí arriba, sobre el Roble, había algo más que el Viento. Unas alas con ocelos (12d)
   if(!sil&&t>=TI_EYES&&t<TI_DIVE+6){ const u=t-TI_EYES, h=u<2?1:u<4?3:(u>=8&&u<11)?1:t>=TI_DIVE-5?3:5, k=t<TI_DIVE?1:1-(t-TI_DIVE)/6; // los ojos se abren, parpadean y se entornan
     tiEye(97,27,h,k,true); tiEye(127,27,h,k,false); }
   ctx.drawImage(sil?A.sMount:A.mount,-40,52); ctx.drawImage(sil?A.sHills:A.hills,-90,66);

@@ -235,7 +235,7 @@ function loadScreen(nx,ny){
   const reg=regionOf(sx,sy);
   if(reg!=='casa'&&respawnPoint.reg!==reg&&REGION_ANCHOR[reg]) respawnPoint={...REGION_ANCHOR[reg],reg};
   if(sx===1&&sy===-3&&boss3Done) for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]===':') grid[y][x]=';'; // los braseros de la cima arden en paz
-  initRoomRules(); initSecrets(); initMill(); markDirty();
+  initRoomRules(); initSecrets(); initMill(); initOlvido(); markDirty(); // initOlvido: las polillas de esta pantalla (12d)
   queueSpawns(); queuePresent(); // los bichos aparecen un momento después de llegar (11) y lo que haya que presentar (15i)
   if(state!=='title'&&state!=='boot'&&state!=='file') save();
 }

@@ -320,6 +320,7 @@ function drawCineScene(p,t){
       const wx=caK(t,[[8,200],[40,124,'out'],[78,124],[112,112,'io'],[164,112],[204,-70,'in']]), wy=caK(t,[[8,-12],[40,34,'out'],[164,34],[204,20,'in']])+Math.round(Math.sin(t*.12)*2);
       if(blow){ ctx.fillStyle='rgba(225,238,255,.75)'; for(let i=0;i<16;i++){ const y=Math.round(wy-12+((i*11)%36)), L=8+(i%3)*8, x=wx-18-((t*6+i*29)%120); ctx.fillRect(Math.round(x),y,L,1); } } // el soplido
       proWind(wx,wy,1.1,t<40?'storm':howl?'howl':blow?'blow':'storm',false);
+      olvWhisper(wx,wy,t); // «algo gris le susurró al oído» (12d)
       ROBLE_SEEDS.forEach((_,i)=>{ const u=(t-proPluck(i))/44; if(u<0||u>=1) return; const j=(proPluck(i)-86)/7, [sx,sy]=proSeedXY(i,37,20,amp), a=Math.PI+(j-3.5)*.14; // arrancadas, vuelan valle abajo
         const at=v=>[sx+Math.cos(a)*v*v*210,sy+Math.sin(a)*v*v*105-Math.sin(v*Math.PI)*16];
         for(let q=1;q<=4;q++){ const [x,y]=at(Math.max(0,u-q*.03)); ctx.fillStyle='rgba(255,220,120,'+(.8-q*.17).toFixed(2)+')'; ctx.fillRect(Math.round(x),Math.round(y),1,1); }
