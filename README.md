@@ -5,7 +5,7 @@
 # SPROUT · y las 8 semillas
 
 **Un Zelda-like estilo Game Boy Color, hecho a mano con rectángulos.**<br>
-Un valle entero por explorar, ocho armas, cuatro mazmorras y un año que vuelve a girar.
+Un valle entero por explorar, ocho armas, cuatro mazmorras de puzles, un quinto capítulo<br>y un año que vuelve a girar.
 
 [![jugar ahora](https://img.shields.io/badge/▶_jugar_ahora-70d838?style=for-the-badge&logoColor=white&labelColor=2a4a34)](https://gavilanbe.github.io/sprout-game/)
 [![tráiler](https://img.shields.io/badge/🎬_tráiler-16:9-ffd966?style=for-the-badge&labelColor=3a2a10)](https://gavilanbe.github.io/sprout-game/docs/media/sprout-trailer.mp4)
@@ -15,7 +15,7 @@ Un valle entero por explorar, ocho armas, cuatro mazmorras y un año que vuelve 
 ![sin build](https://img.shields.io/badge/build-ninguno-2e8038?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-jugable_offline-3878d8?style=flat-square)
 ![resolución](https://img.shields.io/badge/160×144-Game_Boy-c06a38?style=flat-square)
-![pruebas](https://img.shields.io/badge/pruebas-74_en_navegador_real-6a4ab0?style=flat-square)
+![pruebas](https://img.shields.io/badge/pruebas-93_en_navegador_real-6a4ab0?style=flat-square)
 ![licencia](https://img.shields.io/badge/licencia-MIT-e8b050?style=flat-square)
 
 </div>
@@ -37,16 +37,60 @@ texto y rectángulos.
 
 | | |
 |---|---|
-| 🗺️ **87 pantallas** | El Valle Raíz, las montañas del norte, las marismas, un glaciar, una cala escondida y nueve secretos |
+| 🗺️ **103 pantallas** | El Valle Raíz, las montañas del norte, las marismas, un glaciar, una cala escondida, nueve secretos y los Anillos del Roble |
 | ⚔️ **8 armas y herramientas** | Hoja Ancestral, Bellota-bomba, Raíz-gancho, Vaina voladora, Farol de brasa, Vilano, Escudo de corteza y Molinillo, cada una con su cinemática |
-| 🏰 **4 mazmorras** | Largas, con emboscadas que cierran las puertas, llaves en cualquier orden, mapa y brújula |
-| 👑 **4 guardianes + 4 minijefes** | Que no mueren: se rinden y te hablan. Tras el final, el Eco de los Guardianes |
+| 🏰 **4 mazmorras + 1 final** | Cada una con su idea de puzle (dos pisos, rayos de luz, una rueda de molino, hielo de verdad), comprobadas con resolvedor |
+| 👑 **4 guardianes + 4 minijefes** | Que no mueren: se rinden y te hablan. Y un jefe final en cuatro niveles, que se vence con las cuatro estaciones |
 | 🍂 **4 estaciones** | El valle se viste de verdad con la estación que le devuelves |
-| 🎵 **19 pistas** | Chiptune en vivo, con un motivo que atraviesa toda la banda sonora |
+| 🎵 **20 pistas** | Chiptune en vivo, con un motivo que atraviesa toda la banda sonora (y una nana a la que le faltan notas) |
 | 🧿 **10 amuletos** | Equipables de dos en dos, cambian cómo juegas |
 | 📲 **PWA** | Se instala y funciona sin conexión, en vertical o en horizontal |
 
 ## ✨ Lo nuevo
+
+### La tercera pasada: lo que el valle olvidó
+
+La historia tenía agujeros y las mazmorras eran pasillos con llaves. Esta pasada
+([el plan entero, con spoilers](docs/TERCERA-PASADA.md)) rehace las cuatro
+mazmorras como puzles de verdad —cada una con su idea y cada sala comprobada con un
+resolvedor, también contra los atajos del gancho y del salto—, le da un sentido
+nuevo a la historia y le añade un **quinto capítulo** después de la cima: el valle
+empieza a olvidar cosas, y lo que se olvida no vuelve solo.
+
+- **La Cueva del Topo**, en dos pisos: fogones que prenden con una bellota y cuyo
+  calor derrite el hielo y despierta raíces que hacen de puente entre pisos.
+- **El Tronco Hueco**, a la luz: nudos que se destapan, rayos de sol que avanzan y
+  derriten la cera, lentes de rocío que se empujan y giran.
+- **El Molino** y su Rueda Mayor, y **el Templo** con su hielo de verdad (resbalas
+  hasta chocar) y un rito de campanas que toca una nana.
+- **El Anillo del Año**: con `X`, la sala entera cambia de estación en una onda de
+  color. El agua se hiela, los nenúfares se abren, las hojas tapan los hoyos, la
+  enredadera tiende puentes... y cada estación tiene su precio.
+- **Un jefe final en cuatro niveles**, con microcinemáticas, un HUD que se olvida
+  de cosas y una música a la que le faltan voces.
+- **Después del final**: tocones viejos por el valle donde el Anillo gira la
+  estación de la pantalla (un lago que se hiela, un risco que se trepa...), cartas
+  nuevas y una compañera pequeña que sabe deshacer lo que otros enredaron.
+
+| La Cueva, en dos pisos | El Tronco, a la luz |
+|:--:|:--:|
+| ![Cueva](docs/screenshots/24-cueva.png) | ![Tronco](docs/screenshots/25-tronco.png) |
+
+| El Molino y su Rueda | El Templo y sus campanas |
+|:--:|:--:|
+| ![Molino](docs/screenshots/26-molino.png) | ![Templo](docs/screenshots/27-templo-campanas.png) |
+
+| El año gira en una onda de color | Algo gris se come los recuerdos |
+|:--:|:--:|
+| ![Anillos](docs/screenshots/28-anillos.png) | ![Oruga](docs/screenshots/29-oruga.png) |
+
+| La médula del Roble | La copa |
+|:--:|:--:|
+| ![Médula](docs/screenshots/30-medula.png) | ![Copa](docs/screenshots/31-copa.png) |
+
+| Un tocón, tras el final | El valle, desde el risco |
+|:--:|:--:|
+| ![Tocón](docs/screenshots/32-tocon.png) | ![Risco](docs/screenshots/33-risco.png) |
 
 ### El título: «la semilla que el Viento no encontró»
 
@@ -131,10 +175,11 @@ Cómo está hecho: [tools/trailer/README.md](tools/trailer/README.md).
 
 ## 🎮 El juego
 
-- **87 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
+- **103 pantallas**: el Valle Raíz, las montañas del norte, las marismas del otoño,
   un glaciar, una cala escondida, nueve secretos (cuevas tras grietas, un manantial,
-  una madriguera helada, un tesoro enterrado…) y **cuatro mazmorras** largas, con
-  emboscadas que cierran las puertas, llaves en cualquier orden, mapa y brújula.
+  una madriguera helada, un tesoro enterrado…), **cuatro mazmorras** de puzles, con
+  emboscadas que cierran las puertas, llaves en cualquier orden, mapa y brújula, y
+  **los Anillos del Roble**, la mazmorra final, donde cada sala tiene su estación.
 - **Cuatro guardianes que no mueren** (el Topo Real, la Reina Avispa, el Ciervo de
   Ámbar y el Viento del Norte), por fases y cada uno exige la herramienta de su
   mazmorra, y **cuatro minijefes** (el Escarabajo Rey, el Zángano Capitán, el
@@ -146,8 +191,9 @@ Cómo está hecho: [tools/trailer/README.md](tools/trailer/README.md).
 - **Backtracking de verdad**: cada herramienta reabre el valle (rocas agrietadas,
   islas, agujeros, cuevas oscuras) con corazones, cuartos de corazón y amuletos.
 - **Puzles**: bloques sobre placas, pulsadores, antorchas que abren verjas,
-  cristales que alternan bloques rojos y azules, hielo resbaladizo, hojarasca que
-  esconde agujeros, llaves pequeñas y llaves grandes.
+  cristales que alternan bloques rojos y azules, hielo de verdad, rayos de luz y
+  lentes, fogones y raíces entre pisos, bellotas que ruedan, sacos que se deslizan,
+  campanas, corrientes para el vilano y salas que cambian de estación.
 - **Lore**: un prólogo de ocho planos (dos hermanos, el año que giraba, el olvido,
   la tormenta…), el diario de Raíz, piedras rúnicas, libros en las estanterías,
   las cinco **Cartas del Viento** que nadie abrió y guardianes que siguen hablando
@@ -230,6 +276,9 @@ Viento, el otoño y el invierno. Pero el valle olvidó al Viento, y una noche de
 tormenta le arrancó al Roble sus **ocho semillas doradas**. Eres **Sprout**, la
 semilla que el Viento no encontró, recién despierta en una maceta.
 
+Aunque quizá el Viento no estaba solo aquella noche. Hay algo gris que se alimenta
+de lo que el valle olvida... y lleva mucho tiempo comiendo.
+
 **Ningún guardián muere.** Cuando se rinden, acércate y habla con Z. Y si vuelves
 a visitarlos, tendrán algo que decirte.
 
@@ -274,7 +323,10 @@ Sin build. El orden de los `<script>` de `index.html` es el orden de ejecución.
 tiles, enemigos o misiones. [docs/DISEÑO.md](docs/DISEÑO.md) recoge la progresión,
 los puzles y sus soluciones (spoilers).
 
-Pruebas en navegador real (Playwright): 63 del juego y 11 de la demo.
+Pruebas en navegador real (Playwright): 82 del juego y 11 de la demo. Los puzles de
+las mazmorras nuevas se diseñaron con resolvedores (camino más corto, y sin atajos
+con el gancho o el salto); el plan de la tercera pasada está en
+[docs/TERCERA-PASADA.md](docs/TERCERA-PASADA.md) (spoilers).
 
 ```sh
 npm install && npx playwright install chromium && npm test

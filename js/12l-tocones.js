@@ -118,7 +118,7 @@ addEventListener('DOMContentLoaded',()=>{ const V0=drawValle; drawValle=function
    ============================================================ */
 let trepa=null, trepaPano=null;
 const TREPA_UP=54, TREPA_FADE=18, TREPA_VIEW=330, TREPA_DOWN=30;
-function startTrepa(tx,ty){ trepa={t:0,ph:'up',x0:player.x,y0:player.y,tx,ty,first:!collected.has('ç3'),asked:false}; state='trepa'; playerHidden=true; player.dir=1; player.atk=0;
+function startTrepa(tx,ty){ trepa={t:0,ph:'up',x0:player.x,y0:player.y,tx,ty,first:!collected.has('ç3'),asked:false,foes:enemies}; enemies=[]; state='trepa'; playerHidden=true; player.dir=1; player.atk=0; // los bichos esperan abajo
   player.x=tx*16; if(AC){ noise(.2,.03,true,undefined,2600); beep('triangle',f(67),f(72),.18,.03); } trepaPano=null; trepaBuild=null; }
 /* la panorámica se pinta a trozos mientras Sprout trepa (una pantalla por fotograma: sin tirones) */
 let trepaBuild=null;
@@ -139,7 +139,7 @@ function updTrepa(){ const T=trepa; if(!T){ state='play'; playerHidden=false; re
     return; }
   if(T.ph==='down'){ const k=CA_EASE.in(Math.min(1,T.t/TREPA_DOWN)); player.y=-30+(T.y0+30)*k;
     if((T.t&3)===0) parts.push({k:'blade',x:T.tx*16+4+Math.random()*8,y:Math.max(2,player.y+12),vx:(Math.random()-.5)*.8,vy:.3,life:24,max:24,col:'#58b048',rot:Math.random()*6,vr:.3});
-    if(T.t>=TREPA_DOWN){ player.y=T.y0; player.x=T.x0; trepa=null; trepaPano=null; state='play'; playerHidden=false; player.squash=-.4; shake=Math.max(shake,2); SFX.land(); stepDust(); stepDust(); } } }
+    if(T.t>=TREPA_DOWN){ player.y=T.y0; player.x=T.x0; enemies=T.foes||[]; trepa=null; trepaPano=null; state='play'; playerHidden=false; player.squash=-.4; shake=Math.max(shake,2); SFX.land(); stepDust(); stepDust(); } } }
 { const D0=drawScorches; drawScorches=function(){ D0(); drawTrepa(); }; }
 function drawTrepa(){ const T=trepa; if(!T) return; const px=Math.round(player.x), py=Math.round(player.y);
   if(T.ph==='up'||T.ph==='down'||T.ph==='fade'){ const fr=T.ph==='fade'?0:((T.t>>2)&1)?1:3; if(py>-20) ctx.drawImage(P_SPRITES[1][fr],px,py); } // de espaldas, trepando
