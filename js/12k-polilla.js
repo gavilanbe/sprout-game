@@ -69,8 +69,12 @@ function polTarget(b){ let best=null, bd=1e9; for(let y=0;y<SH;y++) for(let x=0;
   return best||[player.x+8,player.y+6,-1,-1]; }                                                         // va a la luz; si no hay, a ti
 function updPolilla(){ const b=boss, s=roomSeason(POL_COPA), fast=s===1?1.45:1; if(b.flash>0) b.flash--; if(b.clangT>0) b.clangT--; b.t++;
   if(b.st==='in'){ b.y+=1.2; b.k=.6+.4*Math.abs(Math.sin(b.t*.25)); if(b.y>=34){ b.st='fly'; b.t=0; } return; }
-  if(b.st==='flee'){ if(b.t===1) polMusicForget(0); b.y-=2.2; b.x+=Math.sin(b.t*.2)*1.5; b.k=.4+.6*Math.abs(Math.sin(b.t*.4)); if(b.t===80){ opened.add('POLdone'); save(); boss=null; say(POL_T.flee,()=>ringsFinish()); } return; }
-  if(b.st==='fly'){ const a=b.t*.022*fast; b.x+=(80+Math.cos(a)*48-b.x)*.06; b.y+=(40+Math.sin(a*2)*18-b.y)*.06; b.k=.55+.45*Math.abs(Math.sin(b.t*.22*fast));
+  if(b.st==='flee'){ if(b.t===1){ polMusicForget(0); if(AC){ noise(1.6,.04,true,undefined,700); beep('triangle',f(40),f(28),1.4,.05); } } // se suelta, sube... y crece hasta taparlo todo
+    b.y+=(18-b.y)*.05; b.x+=(80-b.x)*.05+Math.sin(b.t*.2)*.8; b.k=.5+.5*Math.abs(Math.sin(b.t*.18)); if((b.t&7)===0) shake=Math.max(shake,2+(b.t>>4));
+    if((b.t&1)===0) parts.push({k:'dust',x:b.x+(Math.random()-.5)*80,y:b.y+(Math.random()-.5)*50,vx:(Math.random()-.5)*1.4,vy:.4+Math.random(),life:30,max:30,r:1+(tick&1),col:(tick&2)?OLV.dust:OLV.dustD,nog:true});
+    if(b.t===80){ opened.add('POLdone'); save(); boss=null; polFleeDark=1; say(POL_T.flee,()=>{ polFleeDark=0; ringsFinish(); }); } return; }
+  if(b.st==='fly'){ const a=b.t*.022*fast; b.x+=(80+Math.cos(a)*48-b.x)*.06; b.y+=(40+Math.sin(a*2)*18-b.y)*.06; const k0=b.k; b.k=.55+.45*Math.abs(Math.sin(b.t*.22*fast));
+    if(k0>.98&&b.k<k0) for(const sd of [-1,1]) for(let i=0;i<2;i++) parts.push({k:'dust',x:b.x+sd*(22+Math.random()*4),y:b.y-2+Math.random()*6,vx:sd*(.6+Math.random()*.5),vy:.2+Math.random()*.3,life:22,max:22,r:1,col:i?OLV.dust:OLV.wingL,nog:true}); // cada aletazo suelta polvo hacia fuera
     if(b.t%Math.round(26/fast)===0) polDust(b);
     if(b.t>(b.pins>=2?110:150)/fast){ b.st='aim'; b.t=0; const T=polTarget(b); b.tx=T[0]; b.ty=T[1]; b.tb=T[2]>=0?[T[2],T[3]]:null; if(AC) beep('square',f(62),f(58),.2,.03); } }
   else if(b.st==='aim'){ b.k=.3+.1*Math.sin(b.t*.6); if(b.t>30){ b.st='dive'; b.t=0; const d=Math.hypot(b.tx-b.x,b.ty-b.y)||1, sp=3*fast; b.vx=(b.tx-b.x)/d*sp; b.vy=(b.ty-b.y)/d*sp; SFX.ehit(); } }
@@ -118,10 +122,15 @@ function clearDust(s){ let n=0; for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(g
     if(G===168&&AC) noise(.7,.03,true,undefined,1500);
     if(G<36){ player.kx=(player.kx||0)*.6+.75; if((tick&1)===0) parts.push({k:'blade',x:-4,y:Math.random()*128,vx:3+Math.random(),vy:(Math.random()-.5)*.6,life:50,max:50,col:LV[tick%3],rot:Math.random()*6,vr:.3});
       if((tick&1)===1) parts.push({k:'streak',x:-4,y:Math.random()*128,vx:4+Math.random()*2,vy:0,life:30,max:30,len:5+((Math.random()*6)|0),col:(tick&2)?'#ffffff':'#f8e8c8',nog:true}); } } }; } // (andando en contra, aguantas)
+let polFleeDark=0; // al huir, su sombra tapa la copa (y sigue tapada mientras se cuenta)
+{ const D0=drawScorches; drawScorches=function(){ D0(); if(polFleeDark&&inCopa()){ ctx.fillStyle='rgba(12,10,20,.72)'; ctx.fillRect(0,0,160,128); } }; }
 function drawPolilla(){ const b=boss; if(!b) return; const X=Math.round(b.x), Y=Math.round(b.y);
+  if(b.st==='flee'){ const g=CA_EASE.in(Math.min(1,b.t/80)); ctx.fillStyle='rgba(12,10,20,'+(g*.72).toFixed(2)+')'; ctx.fillRect(0,0,160,128); // crece hasta taparlo todo
+    ctx.globalAlpha=1-g*.35; drawBigMoth(X,Y,.52+g*1.5,b.k); ctx.globalAlpha=1; return; }
   if(b.st!=='in'&&b.st!=='flee'){ const sh=b.st==='perch'||b.st==='pinned'?8:Math.round(6+Math.sin(tick*.1)); ctx.fillStyle='rgba(10,10,20,.3)'; ctx.fillRect(X-sh*2,Math.min(118,Y+22),sh*4,3); }
   if(b.st==='aim'){ glowAt(X,Y,20+Math.sin(tick*.5)*3,'rgba(232,224,240,.3)'); }
   ctx.globalAlpha=b.flash>4?.6:1; drawBigMoth(X,Y,.52,b.k); ctx.globalAlpha=1;
+  if(b.st==='aim'||b.st==='dive'){ const w=Math.round(10*Math.max(.35,b.k)), p=.5+.5*Math.sin(tick*.6); for(const s of [-1,1]) glowAt(X+s*w,Y-3,3+p*2,'rgba(255,236,190,'+(.45+.35*p).toFixed(2)+')'); } // los ocelos se encienden: va a lanzarse
   if(b.st==='pinned'){ ctx.fillStyle=PAL.k; ctx.fillRect(X+10,Y-6,3,16); ctx.fillStyle='#8a5a30'; ctx.fillRect(X+11,Y-5,1,14); // la raíz que le clava el ala
     ctx.fillStyle='#78d838'; ctx.fillRect(X+10,Y-7,3,2); }
   if(bossRope){ const x0=player.x+8, y0=player.y+10, n=Math.max(2,(Math.hypot(X+11-x0,Y-x0*0)/4)|0); for(let i=0;i<=n;i++){ ctx.fillStyle=i%2?PAL.l:PAL.d; ctx.fillRect((x0+(X+11-x0)*i/n-1)|0,(y0+(Y-y0)*i/n-1)|0,2,2); } } }
