@@ -55,7 +55,7 @@ function tryPushBlock(){
   const D=DIRV[player.dir], dx=tx+D[0], dy=ty+D[1];
   if(dx<0||dy<0||dx>=SW||dy>=SH){ pushHold=0; return; }
   const dest=grid[dy][dx];
-  if(dest!=='_'&&dest!==regionFloor()&&dest!=='q'){ pushHold=0; return; }
+  if(dest!=='_'&&dest!==regionFloor()&&dest!=='q'&&!(typeof pushDestOk==='function'&&pushDestOk(dest))){ pushHold=0; return; } // pushDestOk: el barro duro de los Anillos (12i)
   if(enemies.some(e=>Math.abs(e.x-dx*16)<10&&Math.abs(e.y-dy*16)<10)){ pushHold=0; return; }
   pushHold=0; pushLatch=true;
   grid[ty][tx]=plateCells.has(tx+','+ty)?'_':regionFloor(); markDirty(); // la roca sale del fondo: se pinta aparte mientras se arrastra

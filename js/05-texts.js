@@ -267,6 +267,9 @@ const RING_T={
     '22,4':["(Un recuerdo: el valle de hace mucho, en invierno. El Roble era un arbolito.)","(Aquí siempre es invierno... a no ser que el año gire.)"],
     '23,4':["(Un estanque helado, con un islote. En la orilla, un bloque.)","(Y dos capullos de nenúfar, dormidos en el hielo.)"],
     '23,3':["(Algo gris se revuelve entre los árboles del recuerdo...)"],
+    '23,2':["(Otro recuerdo: el valle barriendo las hojas del otoño, con rabia. Nadie las quería.)","(El barro se traga lo que pisa. A no ser que esté helado.)"],
+    '22,2':["(Un barrizal y un campo de hoyos tapados de hojas. En la orilla, un bloque.)","(El barro se traga lo que pesa... y lo que se traga, ya no se mueve.)"],
+    '22,1':["(Hojas por todas partes. Y algo gris que las mastica.)"],
   },
 };
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */

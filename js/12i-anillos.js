@@ -27,7 +27,10 @@ const SEASON_NAME=['PRIMAVERA','VERANO','OTOÑO','INVIERNO'], SEASON_TINT=['#f8a
 const RING_ROOMS={
   '22,4':{ring:3,season:3,name:'La plaza del último invierno'},
   '23,4':{ring:3,season:3,name:'El estanque de las dos estaciones'},
-  '23,3':{ring:3,season:3,name:'El desgarro del invierno',oruga:{tear:[4,0],hits:4,segs:7,spd:1.05,next:null}},
+  '23,3':{ring:3,season:3,name:'El desgarro del invierno',oruga:{tear:[4,0],hits:4,segs:7,spd:1.05,next:[23,2,7*16,6*16-4]}},
+  '23,2':{ring:2,season:2,name:'La plaza de las escobas'},
+  '22,2':{ring:2,season:2,name:'El barrizal'},
+  '22,1':{ring:2,season:2,name:'El desgarro del otoño',oruga:{tear:[4,0],hits:5,segs:9,spd:1.25,next:null}},
 };
 function inRings(){ return regionOf(sx,sy)==='anillos'; }
 { const R0=regionOf; regionOf=function(nx,ny){ if(nx>=RING_X0&&nx<=RING_X1&&ny>=-6&&ny<=6) return 'anillos'; return R0(nx,ny); }; }
@@ -61,7 +64,7 @@ function applySeason(s){ const key=sx+','+sy, M=MAPS[key]; if(!M) return;
   for(const k of stonesOf(key)){ const [x,y]=k; grid[y][x]='Ꞣ'; }                                // las piedras que dejaron los bloques hundidos
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++) if(grid[y][x]==='Ꞛ'&&opened.has('SK'+key+':'+x+','+y)) grid[y][x]='.'; // la seda quemada
   // el hielo de verdad: en invierno, el agua helada resbala (el plano del Templo, 12e)
-  if(s===3){ TRUE_ICE.add(key); icePlan=grid.map(r=>r.map(c=>c==='i'?'i':'.')); } else { TRUE_ICE.delete(key); icePlan=null; }
+  if(s===3){ TRUE_ICE.add(key); icePlan=grid.map((r,y)=>r.map((c,x)=>c==='#'?(seasonTile([...M[y]][x],s)||'.'):c)); } else { TRUE_ICE.delete(key); icePlan=null; } // lo que hay debajo de cada bloque: hielo, barro helado o hierba
   ringPlatesCheck(true); }
 function vineBridge(x,y){ for(const [dx,dy] of [[0,-1],[1,0],[0,1],[-1,0]]){ let cx=x+dx, cy=y+dy; if(!isPitRing(grid[cy]&&grid[cy][cx])) continue;
     while(isPitRing(grid[cy]&&grid[cy][cx])){ grid[cy][cx]='Ꞟ'; cx+=dx; cy+=dy; } return; } }
@@ -87,8 +90,8 @@ function useRing(){ if(!inRings()){ SFX.bump(); showToast('EL ANILLO NO GIRA','s
   for(let i=0;i<18;i++){ const a=i/18*6.283; parts.push({k:s1===2?'blade':'mote',x:player.x+8,y:player.y+8,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.2,life:36,max:36,sway:Math.random()*6,rot:Math.random()*6,vr:.3,col:i&1?SEASON_TINT[s1]:'#ffffff',nog:true}); }
   showToast(SEASON_NAME[s1],['la enredadera despierta','se abren los nenúfares','caen las hojas','el agua se hiela'][s1]); }
 /* un bloque sobre el hielo que se funde: se hunde y deja una piedra para siempre */
-function sinkBlocks(s0,s1){ if(s0!==3||s1===3) return; const key=sx+','+sy, M=MAPS[key];
-  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]!=='#') continue; const base=[...M[y]][x]; if(base!=='W'&&base!=='Ꞥ') continue;
+function sinkBlocks(s0,s1){ const key=sx+','+sy, M=MAPS[key], thaw=s0===3&&s1!==3, soften=(s0===1||s0===3)&&(s1===0||s1===2); if(!thaw&&!soften) return;
+  for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]!=='#') continue; const base=[...M[y]][x]; if(!((thaw&&(base==='W'||base==='Ꞥ'))||(soften&&base==='Ꞔ'))) continue; // el hielo que se funde, o el barro que se ablanda: lo que pesa se hunde
     opened.add('ST'+key+':'+x+','+y); grid[y][x]='Ꞣ';
     for(let i=0;i<10;i++){ const a=Math.random()*6.283; parts.push({k:'dust',x:x*16+8,y:y*16+10,vx:Math.cos(a)*1,vy:Math.sin(a)*.6-.3,life:20,max:20,r:1+(i&1),col:i&1?'#a8d8f0':'#ffffff',nog:true}); }
     if(AC){ noise(.4,.04,false,undefined,700); beep('triangle',f(48),f(36),.4,.04); } } }
@@ -145,12 +148,13 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
 { const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){ if(regionOf(opts.sx,opts.sy)!=='anillos') return G0(g,rows,x,y,ch,opts,f);
   const px=x*16, py=y*16, grass=()=>G0(g,rows,x,y,'.',opts,f), water=()=>G0(g,rows,x,y,'W',opts,f);
   if(ch==='Ꞓ'||ch==='ꞓ'){ grass(); g.drawImage(ringTileArt(ch,opts.bio),px,py); return; }
-  if(ch==='Ꞔ'||ch==='ꞔ'||ch==='ꞕ'){ grass(); g.drawImage(ringTileArt(ch,opts.bio),px,py); return; }
+  if(ch==='Ꞔ'||ch==='ꞔ'||ch==='ꞕ'){ grass(); const e=edgesOf(rows,x,y,c=>c!=='Ꞔ'&&c!=='ꞔ'&&c!=='ꞕ'&&c!=='Ꞣ'); g.drawImage(mudTile(ch==='Ꞔ'?0:ch==='ꞔ'?1:2,e&15,(x*5+y*3)&3),px,py); return; }
   if(ch==='Ꞗ'){ grass(); g.drawImage(plateTile(1),px,py); g.drawImage(ringTileArt('Ꞗ',opts.bio),px,py); return; }
-  if(ch==='ꞗ'){ G0(g,rows,x,y,'°',opts,f); g.drawImage(ringTileArt('Ꞗ',opts.bio),px,py); return; }
+  if(ch==='ꞗ'){ const e=edgesOf(rows,x,y,c=>c!=='ꞗ'&&c!=='°'&&c!=='Ꞟ'); g.drawImage(leafPitTile(e&15,(x*7+y*5)&3),px,py); return; }
+  if(ch==='°'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); return; }
   if(ch==='Ꞝ'){ g.drawImage(ringTileArt('Ꞝ',opts.bio),px,py); return; }
-  if(ch==='Ꞟ'){ G0(g,rows,x,y,'°',opts,f); g.drawImage(ringTileArt('Ꞟ',opts.bio),px,py); return; }
-  if(ch==='Ꞣ'){ water(); g.drawImage(ringTileArt('Ꞣ',opts.bio),px,py); return; }
+  if(ch==='Ꞟ'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); g.drawImage(ringTileArt('Ꞟ',opts.bio),px,py); return; }
+  if(ch==='Ꞣ'){ const b=[...(MAPS[opts.sx+','+opts.sy]||[])[y]||''][x]; if(b==='Ꞔ'){ grass(); g.drawImage(ringTileArt('Ꞔ',opts.bio),px,py); } else water(); g.drawImage(ringTileArt('Ꞣ',opts.bio),px,py); return; } // la piedra, en el agua o en el barro
   if(ch==='Ꞥ'){ water(); g.drawImage(ringTileArt('Ꞥ',opts.bio),px,py); return; }
   if(ch==='i'||ch==='Ꞧ'){ const e=edgesOf(rows,x,y,c=>c!=='i'&&c!=='Ꞧ'&&c!=='#'&&c!=='Ꞣ'); g.drawImage(pondIceTile(e&15,(x*7+y*3)&3),px,py); if(ch==='Ꞧ') g.drawImage(ringTileArt('Ꞧ',opts.bio),px,py); return; }
   if(ch==='Ꞡ'||ch==='ꞡ'||ch==='Ꞛ'){ grass(); return; }
@@ -168,13 +172,20 @@ function drawRingTurn(){ const T=ringTurn; if(!T) return; const k=CA_EASE.out(Ma
    ============================================================ */
 const RING_GHOSTS={
   '22,4':[{kind:'wind',x:92,y:50,mood:'happy',notes:true}],   // Cierzo le canta la nana al Roble dormido
+  '23,2':[{kind:'npc',ch:'g',x:112,y:24,sweep:1},{kind:'npc',ch:'ö',x:24,y:88,sweep:-1},{kind:'npc',ch:'h',x:128,y:88,sweep:1}], // el valle barre las hojas, con rabia
 };
 let GHOST_TINT=new Map();
-function ghostImg(img){ let t=GHOST_TINT.get(img); if(!t){ t=tintTo(img,'#fff0c8'); GHOST_TINT.set(img,t); } return t; }
+function ghostImg(img){ let t=GHOST_TINT.get(img); if(!t){ const fill=tintTo(img,'#fff4d8'), edge=tintTo(img,'#6a5238'); t=mkCanvas(img.width+2,img.height+2); const g=t.getContext('2d'); // el recuerdo: claro, con un contorno cálido para que se lea
+    for(const [dx,dy] of [[0,1],[2,1],[1,0],[1,2]]) g.drawImage(edge,dx,dy); g.drawImage(fill,1,1); GHOST_TINT.set(img,t); } return t; }
 function drawRingGhosts(){ const key=sx+','+sy, G=RING_GHOSTS[key], R=RING_ROOMS[key]; if(!G||!R||roomSeason(key)!==R.season) return;
-  for(const q of G){ const bob=Math.round(Math.sin(tick*.05)*2), a=.42+.12*Math.sin(tick*.07);
-    if(q.kind==='wind'){ const img=windArt({s:1,mood:q.mood,f:(tick>>3)&7,flip:true}); ctx.globalAlpha=a; ctx.drawImage(ghostImg(img),Math.round(q.x-(img.width-22)),Math.round(q.y-17+bob)); ctx.globalAlpha=1;
-      if(q.notes&&(tick%40)===0) parts.push({k:'mote',x:q.x-10,y:q.y-10,vx:-.25,vy:-.35,life:60,max:60,sway:Math.random()*6,col:'#fff6c0',nog:true}); } } }
+  for(const q of G){ const bob=Math.round(Math.sin(tick*.05)*2), a=.56+.1*Math.sin(tick*.07);
+    if(q.kind==='wind'){ const img=windArt({s:1,mood:q.mood,f:(tick>>3)&7,flip:true}); ctx.globalAlpha=a; ctx.drawImage(ghostImg(img),Math.round(q.x-(img.width-22))-1,Math.round(q.y-17+bob)-1); ctx.globalAlpha=1;
+      if(q.notes&&(tick%40)===0) parts.push({k:'mote',x:q.x-10,y:q.y-10,vx:-.25,vy:-.35,life:60,max:60,sway:Math.random()*6,col:'#fff6c0',nog:true}); }
+    else if(q.kind==='npc'){ const N=NPCS[q.ch]; if(!N) continue; const sw=q.sweep?Math.round(Math.sin(tick*.12+q.x)*6):0, x=Math.round(q.x+sw), y=Math.round(q.y+bob*.5);
+      ctx.globalAlpha=a+.12; ctx.drawImage(ghostImg(N.img),x-1,y-1);
+      if(q.sweep){ const bx=x+(q.sweep>0?14:-2), ph=Math.sin(tick*.24+q.x); ctx.fillStyle='#fff0c8'; for(let i=0;i<9;i++) ctx.fillRect(Math.round(bx+ph*i*.35*q.sweep),y+4+i,1,1); ctx.fillRect(Math.round(bx+ph*3*q.sweep)-2,y+13,5,2); // la escoba, a zarpazos
+        if((tick%9)===0) parts.push({k:'blade',x:bx,y:y+14,vx:(Math.random()-.2)*q.sweep*1.4,vy:-.6-Math.random()*.6,life:24,max:24,col:['#c86424','#e8a040','#a04818'][tick%3],rot:Math.random()*6,vr:.3}); }
+      ctx.globalAlpha=1; } } }
 function drawYoungOak(x,y,bio){ const P=BIOMES[bio]||BIOMES.valley, c=P.canopy, sn=bio==='snow'; // el Roble joven: un arbolito de tronco fino
   const X=x*16, Y=y*16; ctx.fillStyle=PAL.k; ctx.fillRect(X+6,Y+6,4,10); ctx.fillStyle='#6a4424'; ctx.fillRect(X+7,Y+6,2,10); ctx.fillStyle='#8a5a30'; ctx.fillRect(X+7,Y+6,1,10);
   for(let yy=-10;yy<8;yy++) for(let xx=-8;xx<8;xx++){ const d=Math.hypot(xx+.5,(yy+1)*1.1); if(d>7.6) continue; ctx.fillStyle=d>6.8?PAL.k:sn?((xx+yy)&1?'#dff0ff':'#ffffff'):(yy<-3?c[2]:(xx+yy)%3?c[1]:c[0]); ctx.fillRect(X+8+xx,Y+2+yy,1,1); } }
@@ -189,7 +200,7 @@ function initOruga(){ oruga=null; const key=sx+','+sy, R=RING_ROOMS[key]; if(!R|
   if(opened.has(oruKey())){ grid[ty][tx]='ꞻ'; return; }
   oruga={x:tx*16+8,y:ty*16+20,a:Math.PI/2,hist:[],segs:O.segs,hp:O.hits,spd:O.spd,flash:0,hurtT:0,eatT:60,st:'in',t:0,eaten:[],flee:null,O};
   for(let i=0;i<O.segs*6;i++) oruga.hist.push([oruga.x,oruga.y-i*.6]); }
-{ const I0=initRing; initRing=function(){ I0(); initOruga(); }; }
+{ const I0=initRing; initRing=function(){ I0(); initOruga(); NO_GLIDE.add(sx+','+sy); }; } // en los recuerdos el aire no sostiene al vilano
 function oruSeg(i){ const O=oruga, k=Math.min(O.hist.length-1,i*6); return O.hist[k]; }
 function oruFree(x,y){ const c=tileAt(x|0,y|0); return c!==undefined&&(!isSolid(c)||c==='W')&&x>18&&x<142&&y>18&&y<110; } // repta sobre lo que ha roído (y sobre el agua: no se hunde)
 function updOruga(){ const O=oruga; if(!O) return; O.t++; if(O.flash>0) O.flash--; if(O.hurtT>0) O.hurtT--;
@@ -267,3 +278,15 @@ function pondIceTile(e,v){ return cached('pice'+e+v,g=>{ R(g,0,0,16,16,'#b8dcf4'
   if(v&1){ PX(g,11,11,'#ffffff'); PX(g,12,11,'#ffffff'); } else { PX(g,4,7,'#ffffff'); }
   if(e&1){ R(g,0,0,16,1,'#5a88b8'); R(g,0,1,16,1,'#ffffff'); } if(e&4){ R(g,0,15,16,1,'#5a88b8'); R(g,0,14,16,1,'#98c4e8'); }
   if(e&8){ R(g,0,0,1,16,'#5a88b8'); R(g,1,0,1,16,'#e8f6ff'); } if(e&2){ R(g,15,0,1,16,'#5a88b8'); R(g,14,0,1,16,'#98c4e8'); } }); }
+
+/* los bloques se empujan también sobre el barro duro (09: pushDestOk) */
+function pushDestOk(c){ return inRings()&&(c==='ꞔ'||c==='ꞕ'); }
+
+function mudTile(k,e,v){ return cached('mud'+k+e+v,g=>{ // el barrizal, de una pieza: blando y brillante, seco y agrietado, o helado
+  const base=['#4a2e14','#9a7448','#b8d8f0'][k], dark=['#3a2410','#7a5a38','#8ab8e0'][k], lit=['#6a4a28','#b89468','#e8f6ff'][k]; R(g,0,0,16,16,base);
+  if(k===0){ for(const [x,y] of [[3+v,4],[10,9-v],[6,12]]){ R(g,x,y,3,1,lit); PX(g,x+1,y-1,'#8a6a48'); } for(const [x,y] of [[12,3],[2,10]]) PX(g,x,y,dark); } // charcos que brillan
+  if(k===1){ for(const [x,y,w] of [[1,5,6],[7,6,1],[8,2,4],[4,11,7],[10,12,1],[11,8,4]]) R(g,x,y,w,1,dark); } // grietas del barro seco
+  if(k===2){ for(const [x,y,w] of [[2+v,3,6],[7,10,5]]) R(g,x,y,w,1,lit); PX(g,11,5,'#ffffff'); }
+  if(e&1) R(g,0,0,16,2,shade(base,-.35)); if(e&4) R(g,0,14,16,2,shade(base,.18)); if(e&8) R(g,0,0,2,16,shade(base,-.25)); if(e&2) R(g,14,0,2,16,shade(base,-.25)); }); }
+function leafPitTile(e,v){ return cached('lpit'+e+v,g=>{ g.drawImage(simaTile(e),0,0); // un hoyo lleno de hojarasca: sostiene... en otoño
+  for(let i=0;i<40;i++){ const x=((i*7+v*5)%16), y=((i*11+v*3)%15)+((e&1)&&((i*11+v*3)%15)<5?5:0); if(y>15) continue; R(g,x,y,2,1,['#c86424','#e8a040','#a04818','#f0c060','#8a4a18'][(i+v)%5]); } }); }

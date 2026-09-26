@@ -46,7 +46,7 @@ const server=http.createServer((req,res)=>{
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:92});
+      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:95});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -188,7 +188,19 @@ const server=http.createServer((req,res)=>{
       let n=0; while(oruga&&oruga.st==='crawl'&&n++<20){ if(state!=='play'){ __skipDialog(); __skipPres(); if(state!=='play') __step(1); continue; } const [tx,ty]=oruSeg(O.segs-1); player.x=tx-8; player.y=ty+2; player.dir=1; player.atk=11; O.flash=0; hitStop=0; __step(1); for(let k=0;k<14;k++) __step(1); }
       for(let k=0;k<120;k++){ __step(1); if(state==='dialog') __skipDialog(); } out.push(O.hp,grid[0][4],opened.has('ORU23,3'));
       player.inv=0; player.x=64; player.y=20; keys.up=true; i=0; while(sx===23&&i++<80) __step(1); keys.up=false; i=0; while(state==='door'&&i++<200) __step(1); out.push(opened.has('RINGSDONE'),sx+','+sy);
-      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; opened.delete('RINGSDONE'); c5Fin=null; state='play'; xItem=x0; return out; }),['22,4',3,'∩',0,'.',3,'∩','#',1,'Ꞣ','@','@','23,3',true,true,0,'ꞻ',true,true,'1,1']);
+      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; opened.delete('RINGSDONE'); c5Fin=null; state='play'; xItem=x0; return out; }),['22,4',3,'∩',0,'.',3,'∩','#',1,'Ꞣ','@','@','23,3',true,true,0,'ꞻ',true,false,'23,2']); // el desgarro del invierno lleva al anillo del otoño
+  });
+  await check('El anillo del otoño: el barro solo se cruza helado; en el barrizal, el bloque hundido en el barro deja una piedra donde esperar el otoño, y la hojarasca tapa los hoyos',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem, was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]; state='play'; hitStop=0;
+      boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); xItem='anillo';
+      const turn=()=>{ keys.alt=true; __step(1); for(let k=0;k<40;k++){ __step(1); if(state==='dialog') __skipDialog(); } };
+      __go(23,2,7*16,6*16-4); __step(40); __skipDialog(); out.push(roomSeason('23,2'),grid[3][5]); turn(); out.push(roomSeason('23,2'),grid[3][5]);
+      player.x=112; player.y=44; keys.left=true; let i=0; while(sx===23&&i++<160) __step(1); keys.left=false; i=0; while(state!=='play'&&i++<200) __step(1); for(let k=0;k<60;k++){ __step(1); if(state==='dialog') __skipDialog(); } out.push(sx+','+sy);
+      player.x=128; player.y=44; turn(); for(let n=0;n<3;n++){ const bx=grid[2].indexOf('#'); player.x=(bx+1)*16; player.y=28; player.dir=2; keys.left=true; i=0; while(!iceBlockAnim&&!blockSlide&&i++<40) __step(1); keys.left=false; for(let k=0;k<30;k++) __step(1); }
+      out.push(grid[2].indexOf('#')); player.x=128; player.y=44; turn(); out.push(grid[2][4]); turn(); player.x=64; player.y=28; __step(4); turn(); out.push(roomSeason('22,2'),grid[2][3],state);
+      keys.left=true; for(let k=0;k<50;k++) __step(1); keys.left=false; for(let k=0;k<10;k++) __step(1); keys.up=true; i=0; while(sx===22&&sy===2&&i++<80) __step(1); keys.up=false; for(let k=0;k<60;k++){ __step(1); if(state==='dialog') __skipDialog(); }
+      out.push(sx+','+sy,!!oruga&&oruga.segs);
+      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; state='play'; xItem=x0; return out; }),[2,'Ꞔ',3,'ꞕ','22,2',4,'Ꞣ',2,'ꞗ','play','22,1',9]);
   });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;
