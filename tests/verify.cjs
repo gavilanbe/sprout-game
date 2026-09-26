@@ -30,6 +30,15 @@ const server=http.createServer((req,res)=>{
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
+    // el hielo de verdad del Templo (12e): un paso o un resbalón completo; empujar un bloque (resbala hasta el tope); derretir con el farol
+    const K={'↑':'up','↓':'down','←':'left','→':'right'};
+    window.__mv=(d)=>{ const k=K[d]; const [tx0,ty0]=playerTile(); keys[k]=true; let i=0, slid=false;
+      while(i++<140){ if(state==='dialog'){ __skipDialog(); continue; } __step(1); if(iceSlide){ slid=true; keys[k]=false; continue; } if(slid) break;
+        const [tx,ty]=playerTile(); if(tx!==tx0||ty!==ty0){ const cx=(player.x+8)%16, cy=(player.y+12)%16; if(Math.abs(cx-8)<=1.5&&Math.abs(cy-8)<=1.5) break; } }
+      keys[k]=false; __step(2); if(state==='dialog') __skipDialog(); return playerTile().join(','); };
+    window.__push=(d)=>{ const k=K[d]; keys[k]=true; for(let i=0;i<14;i++) __step(1); keys[k]=false; let i=0; while((iceBlockAnim||blockSlide)&&i++<120) __step(1); __step(2); };
+    window.__melt=(d)=>{ player.dir={'↑':1,'↓':0,'←':2,'→':3}[d]; const x0=xItem; xItem='lantern'; keys.alt=true; __step(1); for(let i=0;i<24;i++) __step(1); xItem=x0; };
+    window.__ice=(moves)=>moves.split(' ').map(m=>{ if(m.includes('·')){ __push(m[0]); return m; } if(m.includes('🔥')){ __melt(m[0]); return m; } return __mv(m); }).join(' ');
   });
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
@@ -113,10 +122,10 @@ const server=http.createServer((req,res)=>{
     eq(await ev(()=>{ hasFeather=true; xItem='feather'; __go(4,2,60,60); lastEntry={sx:4,sy:2,x:60,y:60}; player.x=4*16; player.y=3*16-4; player.dir=3; keys.alt=true; __step(1); const j=jumpT>0; __hold('right',30); const landed=[(player.x+8)>>4,state];
       player.x=6*16; player.y=3*16-4; __step(3); const fell=state; __step(45); return [j,landed,fell,state,player.x,player.hp<player.maxHp]; }),[true,[7,'play'],'fall','play',60,true]);
   });
-  await check('El farol enciende antorchas; con las cuatro, la verja se abre',async()=>{
-    eq(await ev(()=>{ hasLantern=true; xItem='lantern'; __go(15,0,72,60); enemies=[]; hitStop=0; const g0=grid[1][4];
-      for(const [x,y,d] of [[3,1,2],[6,1,3],[3,6,2],[6,6,3]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); }
-      return [g0,grid[1][2],grid[1][7],grid[6][2],grid[6][7],grid[1][4]]; }),['=',';',';',';',';','q']);
+  await check('El farol enciende antorchas; con todas, la verja se abre (la Capilla de las Llamas)',async()=>{
+    eq(await ev(()=>{ hasLantern=true; xItem='lantern'; __go(16,2,72,60); enemies=[]; hitStop=0; const g0=grid[3][4];
+      for(const [x,y,d] of [[1,2,1],[8,2,1]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); }
+      return [g0,grid[1][1],grid[1][8],grid[3][4]]; }),['=',';',';','q']);
   });
   await check('El cristal cambia los bloques rojos/azules y persiste al recargar la sala',async()=>{
     eq(await ev(()=>{ __go(11,1,72,40); const a=[grid[1][2],grid[1][7]]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); const b=[grid[1][2],grid[1][7],crystalOn]; __go(11,1,72,40); return [a,b,[grid[1][2],grid[1][7]]]; }),[['ª','æ'],['º','Æ',true],['º','Æ']]);
@@ -204,24 +213,27 @@ const server=http.createServer((req,res)=>{
       return log; });
     eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['colmena',1],['cristal','æ','Æ','º'],['cerrojo este','q','q',0],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'summer','summer']]);
   });
-  await check('Camino crítico: el Templo de la Cima (bloques, cerrojo, llave grande, Guardián, vilano, antorchas, cima, Viento)',async()=>{
+  await check('Camino crítico: el Templo de la Cima (bloques en el hielo, la Pista, cerrojo, llave grande, Guardián, vilano, campanas, cima, Viento... y el capítulo 5 hasta los créditos)',async()=>{
     const r=await ev(()=>{ const log=[];
       newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; summered=true; autumned=true; hasPinwheel=true; hasBomb=true; hasHook=true; hasLantern=true; xItem='bomb'; announced8=true; bloomDone=true;
       __go(1,-2,72,90); enemies=[]; const drift=grid[5][4]; xItem='molinillo'; player.x=4*16; player.y=6*16-4; player.dir=1; keys.alt=true; __step(1); __step(30); log.push(['ventisquero',drift,grid[5][4]]);
       xItem='bomb'; player.x=4*16; player.y=5*16-4; keys.alt=true; __step(1); __step(90); log.push(['grieta',grid[4][4]]);
       xItem='hook'; player.x=4*16; player.y=4*16-4; player.dir=1; keys.alt=true; __step(1); __step(70); log.push(['canal',(player.y+12)>>4]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); log.push(['templo',sx,sy]);
-      __go(14,1,72,90); enemies=[]; __skipDialog();
-      player.x=1*16; player.y=2*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); __settle(); player.x=3*16; player.y=1*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1); __settle();
-      player.x=5*16; player.y=4*16-4; player.dir=3; keys.right=true; for(let i=0;i<14;i++) __step(1); keys.right=false; __step(1); __settle(); player.x=7*16; player.y=3*16-4; player.dir=0; keys.down=true; for(let i=0;i<14;i++) __step(1); keys.down=false; __step(1); __settle();
-      log.push(['bloques',grid[3][3],grid[5][7],pickups.some(p=>p.kind==='key')]);
-      const k=pickups.find(p=>p.kind==='key'); if(k){ player.x=k.x; player.y=k.y-4; __step(20); __skipDialog(); }
+      // la Galería de bloques: sobre el hielo de verdad, los bloques resbalan; el de hielo se derrite (resolvedor: 14 movimientos)
+      __go(14,1,140,44); enemies=[]; __skipDialog(); player.x=9*16; player.y=3*16-4; hitStop=0;
+      __ice('← ←· ← ↑ ←· ← ↓· → ↓ ← ←🔥 ↑ ← ↓·'); log.push(['bloques',opened.has('PZ14,1'),grid[0][4],grid[5][1]+grid[5][2]]);
+      // la Pista: la llave espera en la puerta del este (↑ ← ↑ → ↑ ← ↓ →)
+      __go(14,0,64,92); enemies=[]; __skipDialog(); hitStop=0; const pz=__ice('← ↑ → ↑ ← ↓ →'); log.push(['pista',pz,dungeonKeys.templo]);
       __go(15,1,20,60); enemies=[]; player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.templo,grid[3][9]]);
       __go(16,1,72,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.templo]);
       __go(16,0,72,100); __skipDialog(); enemies=[]; xItem='bomb'; let n=0; while(midboss&&n++<400){ hitStop=0; if(midboss.soft<=0){ player.x=midboss.x+4; player.y=midboss.y+24; keys.alt=true; __step(1); __step(82); } else { player.x=midboss.x+12-8; player.y=midboss.y+26; player.dir=1; player.atk=11; __step(1); } }
       __skipPres(); __step(4); const f=pickups.find(p=>p.kind==='feather'); if(f){ player.x=f.x; player.y=f.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['guardián',midIce,hasFeather]);
-      __go(15,0,72,60); enemies=[]; xItem='feather'; player.x=9*16; player.y=3*16-4; player.dir=2; keys.alt=true; __step(1); keys.left=true; __step(30); keys.left=false; log.push(['salto',(player.x+8)>>4,state]);
-      xItem='lantern'; for(const [x,y,d] of [[3,1,2],[6,1,3],[3,6,2],[6,6,3]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); } log.push(['antorchas',grid[1][4]]);
+      __go(15,0,72,92); enemies=[]; xItem='feather'; player.x=9*16; player.y=3*16-4; player.dir=2; keys.alt=true; __step(1); keys.left=true; __step(25); keys.left=false; __step(4); log.push(['salto',(player.x+8)>>4,state]);
+      // el rito de la nieve: mi (vaina, en su foso) sol (Hoja) mi (vaina) re do (Hoja)
+      hasBoomer=true; const vaina=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; xItem='boomer'; keys.alt=true; keys.altHeld=false; __step(1); for(let i=0;i<50;i++) __step(1); };
+      const golpe=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; player.atk=0; keys.fire=true; __step(1); for(let i=0;i<16;i++) __step(1); };
+      vaina(2,4,3); golpe(7,2,1); vaina(2,4,3); golpe(2,5,0); golpe(7,5,0); for(let i=0;i<60;i++) __step(1); log.push(['campanas',opened.has('G15,0'),grid[1][4]]);
       player.x=4*16; player.y=1*16-4; player.dir=1; keys.fire=true; __step(2); log.push(['puerta',grid[0][4]]); player.y=-6; __step(1); __skipDoor(); log.push(['cima',sx,sy]);
       __skipDialog(); presentQ=null; bossHidden=false;
       const skipAll=(until,max)=>{ let j=0; while(j++<(max||3000)&&!until()){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; } else if(state==='present'||state==='outro'||state==='olvmoment'||state==='itemget') keys.fire=true; __step(1); } };
@@ -241,7 +253,7 @@ const server=http.createServer((req,res)=>{
       for(let i=0;i<30&&state==='ending';i++){ __step(35); keys.fire=true; __step(1); } log.push(['final',cycled,state]);
       creditsT=CREDITS.length*22+100; keys.fire=true; __step(1); const post=state; for(let i=0;i<80;i++) __step(1); keys.fire=true; __step(1); log.push(['después',post,state]);
       return log; });
-    eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques','#','#',true],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['antorchas','q'],['puerta','q'],['cima',1,-3],
+    eq(r,[['ventisquero','∩','n'],['grieta','n'],['canal',1],['templo',15,2],['bloques',true,'q','##'],['pista','1,6 1,5 3,5 3,2 1,2 1,3 9,3',1],['cerrojo',0,'q'],['llave grande',true],['guardián',true,true],['salto',6,'play'],['campanas',true,'q'],['puerta','q'],['cima',1,-3],
       ['copo',true,true,1,1],['olvido',true,'silk',true],['altar',true],['petra',true],['sueño',true],['nombre','c5fin',true,'ending'],['final',true,'credits'],['después','c5post','play']]);
   });
   await check('Camino crítico: el Molino de la Hojarasca (emboscadas, grieta, Espantapájaros, molinillo, molinetes, mapa, brújula, llave grande, Ciervo, otoño)',async()=>{
@@ -746,6 +758,26 @@ const server=http.createServer((req,res)=>{
       i=0; while(i++<3000&&!pickups.some(p=>p.kind==='flake')){ if(state==='dialog') talk(); else if(state==='present'||state==='outro') keys.fire=true; __step(1); }
       log.push(who.join(','),boss3Done,cierzoSaid(),RUNAS['1,0'].join(' ').includes('CIERZO'),paginate(['Tu hermano, ▒▒▒▒▒▒.'],null)[0].includes('CIERZO'),pickups.some(p=>p.kind==='flake'));
       return log; }),[false,'▒▒▒▒▒▒','olvmoment','CIER',true,true,'CIER▒▒','nana',true,'CIERZO',true,false,true,'EL VIENTO,escribe,CIERZO',true,true,true,true,true]);
+  });
+  await check('El Templo: en el hielo de verdad se resbala hasta chocar y el vilano frena; el farol derrite el bloque de hielo; una nota equivocada reinicia el rito; sin corriente el vilano no planea en el Puente Roto y con ella llega a la isla',async()=>{
+    eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=autumned=true; hasLantern=hasFeather=hasPinwheel=hasBoomer=true; hitStop=0; const out=[];
+      // resbalar: desde la baldosa (4,6) de la Pista, a la izquierda hasta el muro
+      __go(14,0,64,92); __skipDialog(); enemies=[]; out.push(__mv('←'));
+      // frenar: resbalando hacia arriba desde (1,6)... salta a mitad y se queda donde cae (no sigue resbalando)
+      player.x=16; player.y=6*16-4; __step(1); keys.right=false; xItem='feather'; keys.up=true; __step(1); keys.up=false; __step(4); const was=!!iceSlide; keys.alt=true; __step(1); for(let i=0;i<40;i++) __step(1);
+      const [fx,fy]=playerTile(); __step(10); const [gx,gy]=playerTile(); out.push(was,!iceSlide,fx===gx&&fy===gy);
+      // el bloque de hielo de la Galería: sólido; la llamarada lo deja en hielo
+      __go(14,1,140,44); __skipDialog(); enemies=[]; out.push(grid[3][1]); player.x=2*16; player.y=3*16-4; __melt('←'); out.push(grid[3][1]);
+      // las campanas: sol antes de tiempo no cuenta; mi, sí
+      __go(15,0,24,60); __skipDialog(); enemies=[]; const golpe=(x,y,d)=>{ player.x=x*16; player.y=y*16-4; player.dir=d; player.atk=0; keys.fire=true; __step(1); for(let i=0;i<16;i++) __step(1); };
+      golpe(7,2,1); out.push(bellSt.i); player.x=2*16; player.y=4*16-4; player.dir=3; xItem='boomer'; keys.alt=true; __step(1); for(let i=0;i<50;i++) __step(1); out.push(bellSt.i); golpe(7,5,0); out.push(bellSt.i,opened.has('G15,0'));
+      // el Puente Roto
+      __go(16,-1,64,92); __skipDialog(); enemies=[]; lastEntry={sx:16,sy:-1,x:64,y:92};
+      const salto=(glide)=>{ player.x=5*16; player.y=6*16-4; player.dir=1; xItem='feather'; keys.up=true; keys.alt=true; keys.altHeld=true; __step(1); let i=0; for(;i<200&&jumpT>0&&state==='play';i++){ keys.up=true; keys.right=player.x<7*16; __step(1); } keys.up=keys.right=false; keys.altHeld=false; };
+      salto(); out.push(state); for(let i=0;i<60;i++) __step(1); __skipDialog();
+      player.x=4*16; player.y=6*16-4; player.dir=3; xItem='molinillo'; keys.alt=true; __step(1); for(let i=0;i<20;i++) __step(1); out.push(!!drafts['5,6']);
+      salto(); __skipDialog(); out.push(state,playerTile().join(','),collected.has('♥16,-1,8,1'));
+      return out; }),['1,6',true,true,true,'Ж','i',0,1,0,false,'fall',true,'play','7,1',true]);
   });
   await check('El capítulo 5: tras la cima el valle se vuelve gris y suena la nana comida; los vecinos olvidan (se les escapa cómo le llaman) y Raíz no tiene voz; el Copo espera a las otras tres',async()=>{
     eq(await ev(()=>{ newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; won=thawed=summered=true; autumned=false; boss3Done=true; hasFlake=true; hitStop=0; c5.arrive=true;

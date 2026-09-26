@@ -88,6 +88,7 @@ function drawParts(){
       case 'petal': { const f=((tick>>3)+(p.sway*5|0))&1; ctx.fillStyle=p.col; ctx.fillRect(x,y,2,1); ctx.fillRect(x+f,y+1,1,1); ctx.fillStyle='#ffffff'; ctx.fillRect(x,y,1,1); break; }
       case 'ripple': { const r=Math.round((1-k)*7)+2; ctx.fillStyle=p.col; ctx.globalAlpha=Math.min(1,k*2); for(let i=0;i<14;i++){ const a=i/14*6.283; ctx.fillRect(Math.round(p.x+Math.cos(a)*r),Math.round(p.y+Math.sin(a)*r*.45),1,1); } ctx.globalAlpha=1; break; }
       case 'leafF': { const f=((tick>>3)+(p.sway*5|0))&1; ctx.drawImage(tintCached(LEAF_FALL[f],p.col),x,y); break; }
+      case 'streak': { ctx.globalAlpha=Math.min(1,k*2)*.85; ctx.fillStyle=p.col; if(Math.abs(p.vy||0)>=Math.abs(p.vx||0)) ctx.fillRect(x,y,1,p.len||3); else ctx.fillRect(x,y,p.len||3,1); ctx.globalAlpha=1; break; } // una raya de aire (las corrientes del Templo)
       default: // partículas clásicas
         ctx.fillStyle=p.col;
         if(p.ring){ ctx.strokeStyle=p.col; ctx.lineWidth=2; ctx.globalAlpha=p.life/12; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1-p.life/12)+2,0,6.283); ctx.stroke(); ctx.globalAlpha=1; }

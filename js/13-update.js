@@ -158,6 +158,7 @@ function update(){
     player.anim=0;
     if(jumpT===0){ SFX.land(); player.squash=-.45; stepDust(); stepDust(); } }
   else if(blockSlide&&updBlockSlide()){ if(!(keys.left||keys.right||keys.up||keys.down)){ pushLatch=false; pushHold=0; } } // empujando la roca: Sprout va detrás (soltar la cruceta ya vale para el siguiente empujón)
+  else if(typeof iceSlide!=='undefined'&&iceSlide&&updIceSlide()){ if(!(keys.left||keys.right||keys.up||keys.down)){ pushLatch=false; pushHold=0; } } // el hielo de verdad del Templo: resbala hasta chocar (12e)
   else if(player.atk>0){ player.atk--; if(player.atk===10) cutAt(swordBox()); leafSwingTick(); } // briznas, rocío y el tintineo del temple (12b)
   else {
     let dx=0,dy=0;
@@ -165,6 +166,7 @@ function update(){
     if(keys.up)dy=-1; else if(keys.down)dy=1;
     if(player.tug>10){ dx=0; dy=0; } // las raíces aún tiran de él
     if(inBed&&(dx||dy)){ inBed=false; puff(player.x+8,player.y+12,'#3a2410',8,1.1); puff(player.x+8,player.y+10,'#c06030',4,.8); noise(.1,.04,false); }
+    if(typeof iceWalk==='function'&&iceWalk(dx,dy)){ dx=0; dy=0; } // pisas hielo de verdad: arrancas a resbalar (12e)
     if(dx||dy){ player.dir=dy<0?1:dy>0?0:(dx<0?2:3); tryPushBlock(); if(dx&&dy){dx*=.72;dy*=.72;} } else { pushLatch=false; pushHold=0; }
     let sp=playerSpeed();
     const slow=(onTile==='m'||onTile==='w')&&!hasAmulet('rana'); if(slow) sp*=.55;
