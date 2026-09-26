@@ -23,8 +23,10 @@
 > desgarro), el **anillo del verano** (el prado de la Reina —su recuerdo pidiendo descanso; el sol de un claro de la copa
 > derrite la cera—, el claro del sol —el arbusto del propio verano tapa el rayo hasta quemarlo en otoño— y el tercer
 > desgarro) y el **de la primavera**, recortado a dos salas (el primer día —la Tierra planta dos semillas; la enredadera tiende
-> el puente— y el último desgarro, con la Oruga más grande). De momento ese desgarro lleva al Nombre; faltan la médula y
-> los niveles 1-3 (F), y G.
+> el puente— y el último desgarro, con la Oruga más grande). De la fase **F**, hecha la **médula** (`js/12j-medula.js`): el
+> nivel 1, la Crisálida (cuatro puntas de raíz, cada una azota solo en su estación; las orugas las envuelven en seda y el
+> farol la quema), y el nivel 2, los Ecos (el de cada estación solo se hiere en ella; al disolverse se oye al guardián de
+> verdad). De momento, al reventar el capullo se va al Nombre; faltan la subida y la copa (nivel 3), y G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

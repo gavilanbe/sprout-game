@@ -35,7 +35,7 @@ const RING_ROOMS={
   '24,2':{ring:1,season:1,name:'El claro del sol',sun:true},
   '24,3':{ring:1,season:1,name:'El desgarro del verano',oruga:{tear:[4,7],hits:6,segs:11,spd:1.4,next:[24,1,6*16,6*16-4]}},
   '24,1':{ring:0,season:0,name:'El primer día'},
-  '24,0':{ring:0,season:0,name:'El último desgarro',oruga:{tear:[4,0],hits:7,segs:13,spd:1.55,next:null}},
+  '24,0':{ring:0,season:0,name:'El último desgarro',oruga:{tear:[4,0],hits:7,segs:13,spd:1.55,next:[23,-1,72,92]}},
 };
 function inRings(){ return regionOf(sx,sy)==='anillos'; }
 { const R0=regionOf; regionOf=function(nx,ny){ if(nx>=RING_X0&&nx<=RING_X1&&ny>=-6&&ny<=6) return 'anillos'; return R0(nx,ny); }; }
@@ -155,7 +155,7 @@ function ringTileArt(c,bio){ return cached('ring'+c+bio,g=>{ const P=BIOMES[bio]
 { const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){ if(regionOf(opts.sx,opts.sy)!=='anillos') return G0(g,rows,x,y,ch,opts,f);
   const px=x*16, py=y*16, grass=()=>G0(g,rows,x,y,'.',opts,f), water=()=>G0(g,rows,x,y,'W',opts,f);
   if(ch==='Ꞓ'||ch==='ꞓ'){ grass(); g.drawImage(ringTileArt(ch,opts.bio),px,py); return; }
-  if(ch==='Ꞔ'||ch==='ꞔ'||ch==='ꞕ'){ grass(); const e=edgesOf(rows,x,y,c=>c!=='Ꞔ'&&c!=='ꞔ'&&c!=='ꞕ'&&c!=='Ꞣ'); g.drawImage(mudTile(ch==='Ꞔ'?0:ch==='ꞔ'?1:2,e&15,(x*5+y*3)&3),px,py); return; }
+  if(ch==='Ꞔ'||ch==='ꞔ'||ch==='ꞕ'){ grass(); const e=edgesOf(rows,x,y,c=>c!=='Ꞔ'&&c!=='ꞔ'&&c!=='ꞕ'&&c!=='Ꞣ'); g.drawImage(ringMudTile(ch==='Ꞔ'?0:ch==='ꞔ'?1:2,e&15,(x*5+y*3)&3),px,py); return; }
   if(ch==='Ꞗ'){ grass(); g.drawImage(plateTile(1),px,py); g.drawImage(ringTileArt('Ꞗ',opts.bio),px,py); return; }
   if(ch==='ꞗ'){ const e=edgesOf(rows,x,y,c=>c!=='ꞗ'&&c!=='°'&&c!=='Ꞟ'); g.drawImage(leafPitTile(e&15,(x*7+y*5)&3),px,py); return; }
   if(ch==='°'){ g.drawImage(simaTile(edgesOf(rows,x,y,c=>c!=='°'&&c!=='ꞗ'&&c!=='Ꞟ')&15),px,py); return; }
@@ -300,7 +300,7 @@ function pondIceTile(e,v){ return cached('pice'+e+v,g=>{ R(g,0,0,16,16,'#b8dcf4'
 /* los bloques se empujan también sobre el barro duro (09: pushDestOk) */
 function pushDestOk(c){ return inRings()&&(c==='ꞔ'||c==='ꞕ'); }
 
-function mudTile(k,e,v){ return cached('mud'+k+e+v,g=>{ // el barrizal, de una pieza: blando y brillante, seco y agrietado, o helado
+function ringMudTile(k,e,v){ return cached('mud'+k+e+v,g=>{ // el barrizal, de una pieza: blando y brillante, seco y agrietado, o helado
   const base=['#4a2e14','#9a7448','#b8d8f0'][k], dark=['#3a2410','#7a5a38','#8ab8e0'][k], lit=['#6a4a28','#b89468','#e8f6ff'][k]; R(g,0,0,16,16,base);
   if(k===0){ for(const [x,y] of [[3+v,4],[10,9-v],[6,12]]){ R(g,x,y,3,1,lit); PX(g,x+1,y-1,'#8a6a48'); } for(const [x,y] of [[12,3],[2,10]]) PX(g,x,y,dark); } // charcos que brillan
   if(k===1){ for(const [x,y,w] of [[1,5,6],[7,6,1],[8,2,4],[4,11,7],[10,12,1],[11,8,4]]) R(g,x,y,w,1,dark); } // grietas del barro seco

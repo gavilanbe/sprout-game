@@ -208,12 +208,7 @@ function rootLadderTile(up){ return cached('rlad'+(up?1:0),g=>{ const c=CV_ROOT;
   if(up){ R(g,4,0,8,3,'#06040a'); R(g,4,0,8,1,PAL.k); for(let y=0;y<16;y++){ const x=6+Math.round(Math.sin(y*.5)); R(g,x-1,y,6,1,PAL.k); R(g,x,y,4,1,y%5===0?c[2]:c[3]); PX(g,x+1,y,c[4]); }
     for(let y=3;y<16;y+=4){ const s=(y>>2)&1?1:-1; R(g,s>0?11:2,y,3,1,c[2]); PX(g,s>0?13:2,y,PAL.k); } } // la raíz con sus nudillos (se trepa por ellos)
   else { R(g,2,2,12,12,PAL.k); R(g,3,3,10,10,'#06040a'); R(g,3,3,10,3,'#3a2e28'); for(let i=0;i<4;i++){ R(g,6+i,1+i,4,1,c[3]); PX(g,6+i,1+i,PAL.k); } R(g,7,4,3,10,c[3]); R(g,8,4,1,10,c[4]); R(g,6,4,1,10,PAL.k); R(g,10,4,1,10,PAL.k); } }); }
-function crackTile(open){ return cached('fcrack'+(open?1:0),g=>{ // una grieta en el suelo; abierta, un agujero de bordes rotos
-  if(open){ for(let y=0;y<16;y++) for(let x=0;x<16;x++){ const d=Math.hypot(x-7.5,(y-8)*1.15)+Math.sin(x*2.1+y*1.3)*.9; if(d>7) continue; PX(g,x,y,d>6.1?PAL.k:y<6?'#3a2e28':'#06040a'); }
-    for(const [x,y] of [[3,5],[11,4],[6,3]]) PX(g,x,y,'#5a4a40'); }
-  else { const P=[[2,4],[3,5],[4,5],[5,6],[6,8],[7,8],[8,9],[9,9],[10,10],[11,12],[12,12],[7,7],[8,6],[9,5],[10,4],[5,9],[4,10],[4,11],[9,10],[9,11]];
-    for(const [x,y] of P){ PX(g,x,y,'#161010'); PX(g,x,y+1,'#6a5e54'); } } }); }
-function iceTile(){ return cached('cvice',g=>{ R(g,1,1,14,15,PAL.k); R(g,2,2,12,13,'#8ab8e0'); R(g,2,2,12,4,'#c8e4f8'); R(g,2,2,12,1,'#ffffff'); // un bloque de hielo gris de invierno
+function cvIceTile(){ return cached('cvice',g=>{ R(g,1,1,14,15,PAL.k); R(g,2,2,12,13,'#8ab8e0'); R(g,2,2,12,4,'#c8e4f8'); R(g,2,2,12,1,'#ffffff'); // un bloque de hielo gris de invierno
   for(const [x,y,w] of [[4,7,5],[9,10,3],[3,12,4]]) R(g,x,y,w,1,'#a8d0f0'); PX(g,4,4,'#ffffff'); PX(g,11,5,'#ffffff'); R(g,2,14,12,1,'#5a88b8'); R(g,13,2,1,13,'#6a98c8'); }); }
 function rampTile(d,rail){ const key='ramp'+d.join('')+(rail?1:0); return cached(key,g=>{ const c=CV_ROOT, h=d[1]===0; // la rampa de raíz: tablas con su canal · el raíl: una raíz fina sobre la sima
   if(rail){ const a=6; for(let i=0;i<16;i++) for(let j=0;j<4;j++){ const x=h?i:a+j, y=h?a+j:i; PX(g,x,y,(j===0||j===3)?PAL.k:j===1?c[4]:c[3]); } }
@@ -236,7 +231,7 @@ function rampTile(d,rail){ const key='ramp'+d.join('')+(rail?1:0); return cached
   return G0(g,rows,x,y,ch,opts,f); }; }
 { const O0=drawObject; drawObject=function(g,rows,x,y,ch,opts,f,fg){
   if(ch==='Ҩ'||ch==='ҩ'){ g.drawImage(fogonTile(ch==='ҩ'),x*16,y*16); return; }
-  if(ch==='Ҳ'){ g.drawImage(iceTile(),x*16,y*16); return; }
+  if(ch==='Ҳ'){ g.drawImage(cvIceTile(),x*16,y*16); return; }
   if(ch==='Ҝ'||ch==='ҝ'){ O0(g,rows,x,y,'v',opts,f,fg); g.drawImage(rootKnotTile(ch==='ҝ'),x*16,y*16); return; }
   return O0(g,rows,x,y,ch,opts,f,fg); }; }
 function drawFogonFire(x,y){ const t=tick, cx=x*16+8, cy=y*16+9; // tres lenguas de fuego que tiemblan, y chispas
@@ -247,7 +242,7 @@ function drawCueva(){ if(!inCueva()) return;
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ const c=grid[y][x];
     if(c==='ҩ'){ glowAt(x*16+8,y*16+8,18+Math.sin(tick*.27+x)*2,'rgba(255,150,60,.3)'); drawFogonFire(x,y); }
     else if(c==='ҝ'&&(tick&31)===((x*5+y*3)&31)) sparkle(x*16+8,y*16+6,'#a8ec78'); }
-  for(const M of cvMelt){ if(M.t<=0||M.pool) continue; const k=Math.min(1,M.t/36), cut=Math.round(k*13); ctx.drawImage(iceTile(),0,cut,16,16-cut,M.x*16,M.y*16+cut,16,16-cut); } // el hielo se hunde al derretirse
+  for(const M of cvMelt){ if(M.t<=0||M.pool) continue; const k=Math.min(1,M.t/36), cut=Math.round(k*13); ctx.drawImage(cvIceTile(),0,cut,16,16-cut,M.x*16,M.y*16+cut,16,16-cut); } // el hielo se hunde al derretirse
   for(const k in CV_FORKS){ const [room,xy]=k.split(':'); if(room!==sx+','+sy) continue; const [x,y]=xy.split(',').map(Number), F=CV_FORKS[k], on=grid[F.plate[1]][F.plate[0]]==='#'; drawForkSwitch(x,y,F,on); }
   drawVia(); }
 { const D0=drawScorches; drawScorches=function(){ D0(); drawCueva(); }; }

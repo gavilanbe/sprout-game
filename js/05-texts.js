@@ -277,6 +277,17 @@ const RING_T={
     '24,0':["(Hasta aquí ha huido. Detrás de ese desgarro ya no hay recuerdos: solo la médula del Roble.)"],
   },
 };
+/* la médula (12j): la Crisálida y los Ecos */
+const MED_T={
+  intro:["(La médula del Roble. Aquí dentro ya no hay recuerdos: solo lo que el Olvido se ha guardado.)","(En el centro cuelga un capullo gris. Late.)","(De las paredes asoman cuatro raíces, las de los altares. Cada una huele a una estación.)"],
+  echoName:['ECO DEL TOPO REAL','ECO DE LA REINA','ECO DEL CIERVO','ECO DE CIERZO'],
+  voice:[["(Muy lejos, bajo tierra, una voz ronca:)","—¡Aquí, chiquillo! ¡Que no se te olvide quién te enseñó a cavar!"],
+    ["(Muy lejos, en el panal, un zumbido que sonríe:)","—Zzz... ¡Ahora, pequeño! Ya descansaré después."],
+    ["(Muy lejos, en el molino, un paso de pezuñas sobre hojas:)","—Levántate, caminante. Las hojas caen para volver."],
+    ["(Muy lejos, en la cima, el viento canta dos notas de la nana:)","—¡Semillita! ¡Te estamos llamando!"]],
+  voiceWho:['EL TOPO REAL','LA REINA','EL CIERVO','CIERZO'],
+  rise:["(El capullo revienta. De dentro sale ella: la polilla, entera, con las alas llenas de polvo gris.)","(Sube por el tronco, hacia la copa. Hacia el cielo del valle.)","(Y en el valle, alguien grita tu nombre...)"],
+};
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
 const CV_T={
   mother:["(Un temblor sube desde lo más hondo de la cueva, por todas las raíces a la vez...)","—¡Brote! ¿Lo notas? Es mi raíz madre: ha despertado con el calor de los dos fogones.","—Te espera abajo, en la cripta. Ella guarda lo que buscas."],

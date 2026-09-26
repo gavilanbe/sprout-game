@@ -141,13 +141,13 @@ function sackTile(){ return cached('sack',g=>{ grid16(g,[
 "....kkkkkkkk....",
 "................",
 "................"],{T:'#6a4a2a',W:'#d8c09a',b:'#a88a62',f:'#8a6a44'}); PX(g,6,4,'#f4ecd8'); PX(g,7,4,'#f4ecd8'); R(g,6,5,1,2,'#efe4cc'); }); }
-function postTile(){ return cached('millpost',g=>{ R(g,4,1,8,14,PAL.k); R(g,5,2,6,12,'#8a5a30'); R(g,5,2,2,12,'#b07a44'); R(g,9,2,2,12,'#6a4222'); R(g,4,4,8,1,'#3a2410'); R(g,4,11,8,1,'#3a2410'); R(g,3,14,10,2,'#2a1a0c'); }); }
+function millPostTile(){ return cached('millpost',g=>{ R(g,4,1,8,14,PAL.k); R(g,5,2,6,12,'#8a5a30'); R(g,5,2,2,12,'#b07a44'); R(g,9,2,2,12,'#6a4222'); R(g,4,4,8,1,'#3a2410'); R(g,4,11,8,1,'#3a2410'); R(g,3,14,10,2,'#2a1a0c'); }); }
 function wheelPitTile(){ return cached('wheelpit',g=>{ R(g,0,0,16,16,'#3a2a1c'); R(g,1,1,14,14,'#2a1c10'); for(let i=0;i<4;i++) PX(g,3+i*3,3+((i*5)%9),'#4a3624'); }); }
 { const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){
   if(ch==='ш'||ch==='Ю'||ch==='Ѫ'){ const t=c=>c==='ш'||c==='Ю'||c==='Ѫ'||c==='Ѳ', e=edgesOf(rows,x,y,c=>!t(c)); g.drawImage(troughTile(e&15,ch==='Ю'||(ch==='Ѫ'&&sackPlan&&sackPlan[y]&&sackPlan[y][x]==='Ю')),x*16,y*16); if(ch==='Ѫ') g.drawImage(sackTile(),x*16,y*16); return; }
   return G0(g,rows,x,y,ch,opts,f); }; }
 { const O0=drawObject; drawObject=function(g,rows,x,y,ch,opts,f,fg){
-  if(ch==='Ѳ'){ const t=c=>c==='ш'||c==='Ю'||c==='Ѫ', e=edgesOf(rows,x,y,c=>!t(c)&&c!=='Ѳ'); g.drawImage(troughTile(e&15,false),x*16,y*16); g.drawImage(postTile(),x*16,y*16); return; }
+  if(ch==='Ѳ'){ const t=c=>c==='ш'||c==='Ю'||c==='Ѫ', e=edgesOf(rows,x,y,c=>!t(c)&&c!=='Ѳ'); g.drawImage(troughTile(e&15,false),x*16,y*16); g.drawImage(millPostTile(),x*16,y*16); return; }
   if(ch==='Я'){ g.drawImage(wheelPitTile(),x*16,y*16); return; }
   return O0(g,rows,x,y,ch,opts,f,fg); }; }
 
