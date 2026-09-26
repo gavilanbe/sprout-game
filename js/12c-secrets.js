@@ -40,7 +40,7 @@ function initSecrets(){
 TXT.signs['2,0']=["CORRO DE LAS HADAS.","Donde la hierba alta baila en corro, el Roble esconde un agua que cura."];
 TXT.signs['1,10']=["MANANTIAL DE SAVIA.","El agua del Roble cura a quien la pisa. Y en la isla... algo late."];
 RUNAS['0,10']=["PIEDRA RÚNICA:\n«El Eco duerme aquí.","Repite lo último que oyó el valle antes de apagarse:","una nana que nadie recuerda haber cantado.»"];
-RUNAS['3,-1']=["PIEDRA RÚNICA:\n«Desde aquí el Viento miraba crecer las bellotas.","Contaba nueve. Siempre nueve.","Nunca supo dónde estaba la novena.»"];
+RUNAS['3,-1']=["PIEDRA RÚNICA: «Desde aquí el Viento miraba crecer las bellotas.","Contaba ocho. Siempre ocho...","...y siempre le sobraba una.»"];
 RUNAS['3,10']=["PIEDRA RÚNICA:\n«Las marismas guardan el otoño que nadie quiso.","Hojas que caen sin llegar al suelo, esperando permiso.»"];
 /* una bomba sobre un tile secreto */
 function blastSecret(x,y,ch){
@@ -98,14 +98,14 @@ function tradeTo(step,who,lines,after){ // el vecino habla, y te da el objeto si
 }
 function tradeInteract(tx,ty,ch){
   const guest=npcs.find(n=>n.guest&&n.x===tx&&n.y===ty);
-  if(ch==='h'&&tradeStep===0&&hasBlade){ SFX.blip(); tradeTo(1,'PETRA',["¡Brote! Mira lo que encontré en la CASCADA DEL ÁMBAR: una CANICA DE ÁMBAR.","Corteza dice que las piedras bonitas tienen alma. ¿Se la enseñas? Te la dejo, pero solo prestada, ¿eh?"]); return true; }
-  if(tradeStep===1&&(ch==='ö'||(ch==='ñ'&&sx===7))){ SFX.blip(); tradeTo(2,'CORTEZA',["¿Ámbar? Resina del Roble de hace mil años... Con esto tallaré algo que proteja, criatura.","Toma, a cambio: una PLUMA DE BÚHO que se me cayó del alero. Al viejo Moss le chiflan."]); return true; }
-  if(tradeStep===2&&ch==='y'){ SFX.blip(); tradeTo(3,'MOSS',["¡Una pluma de búho! Con esto haré el mejor señuelo del valle, brote.","Toma: una PERLA DE RÍO. Salió de la barriga de una trucha. Brilla como el rocío."]); return true; }
-  if(tradeStep===3&&guest&&guest.guest==='avispa'){ SFX.blip(); tradeTo(4,'LA REINA',["—Zzz... ¿Una perla? Como una gota de rocío que nunca se evapora...","—Toma: JALEA REAL de mi panal. Nadie fuera de la colmena la ha probado."]); return true; }
-  if(tradeStep===4&&(ch==='g'||(ch==='ñ'&&sx===8))){ SFX.blip(); tradeTo(5,'TILO',["¡JALEA REAL! ¡Mi receta de savia por fin completa!","Toma, llévate este CALCETÍN DE LANA. Lo tejí yo. El Topo siempre dice que tiene frío ahí abajo."]); return true; }
-  if(tradeStep===5&&guest&&guest.guest==='topo'){ SFX.blip(); tradeTo(6,'EL TOPO REAL',["—¿Un calcetín? ¡CALENTITO! Nadie me había regalado nada nunca.","—Toma: un MAPA viejo que desenterré. Tiene una X en las DUNAS DEL ESTE. A mí me da pereza subir."]); return true; }
+  if(ch==='h'&&tradeStep===0&&hasBlade){ SFX.blip(); tradeTo(1,'PETRA',["¡Sprout! Mira lo que encontré en la CASCADA DEL ÁMBAR: ¡una CANICA DE ÁMBAR!","Corteza dice que las piedras bonitas tienen alma. ¿Se la enseñas?","Te la dejo, pero solo prestada, ¿eh?"]); return true; }
+  if(tradeStep===1&&(ch==='ö'||(ch==='ñ'&&sx===7))){ SFX.blip(); tradeTo(2,'CORTEZA',["¿Ámbar? Resina del Roble, de cuando el valle aún no tenía nombre...","Con esto tallaré algo que proteja, criatura.","Toma, a cambio: una PLUMA DE BÚHO que se me cayó del alero. Al viejo Moss le chiflan."]); return true; }
+  if(tradeStep===2&&ch==='y'){ SFX.blip(); tradeTo(3,'MOSS',["¿Una pluma de búho? El mejor señuelo del valle, grumete.","Toma: una PERLA DE RÍO. Salió de la barriga de una trucha.","Brilla como el rocío."]); return true; }
+  if(tradeStep===3&&guest&&guest.guest==='avispa'){ SFX.blip(); tradeTo(4,'LA REINA',["—Zzz... ¿Una perla, pequeño? Como una gota de rocío que nunca se evapora...","—Toma: JALEA REAL de mi panal.","—Nadie fuera de la colmena la ha probado."]); return true; }
+  if(tradeStep===4&&(ch==='g'||(ch==='ñ'&&sx===8))){ SFX.blip(); tradeTo(5,'TILO',["¡JALEA REAL! ¡Mi receta de savia, por fin completa!","Esto no se paga con bayas, cliente. Llévate este CALCETÍN DE LANA: lo tejí yo.","El Topo siempre dice que tiene frío ahí abajo."]); return true; }
+  if(tradeStep===5&&guest&&guest.guest==='topo'){ SFX.blip(); tradeTo(6,'EL TOPO REAL',["—¿Un calcetín? ¡CALENTITO!","—Nadie me había regalado nada nunca, chiquillo.","—Toma: un MAPA viejo que desenterré. Tiene una X en las DUNAS DEL ESTE.","—A mí me da pereza subir."]); return true; }
   if(tradeStep===7&&ch==='j'){ SFX.blip();
-    say(["¡Un BULBO DORADO! Dicen que solo florece si lo cuidan las cuatro estaciones...","Lo plantaré aquí, en la plaza, junto al Roble. Y tú, brote... toma esto."],()=>{ tradeStep=8; giveAmulet('trebol'); save(); },'LUPA'); return true; }
+    say(["¡Un BULBO DORADO! Dicen que solo florece si lo cuidan las cuatro estaciones...","Lo plantaré aquí, en la plaza, junto al Roble.","Y tú, tallito... toma esto."],()=>{ tradeStep=8; giveAmulet('trebol'); save(); },'LUPA'); return true; }
   // el tesoro de las dunas: el cofre guarda el bulbo
   if(ch==='¤'&&sx===2&&sy===2&&tx===7&&ty===3&&!opened.has('CH2,2:7,3')){ opened.add('CH2,2:7,3'); markDirty(); SFX.secret();
     if(tradeStep===6){ tradeStep=7; giveThing(TRADE[7].big,TRADE[7].name,["¡Un "+TRADE[7].name+"!",TRADE[7].desc]); }
@@ -113,7 +113,7 @@ function tradeInteract(tx,ty,ch){
     save(); return true; }
   // la pesca con Moss (si no hay otra cosa que hacer con él)
   if(ch==='y'&&hasBlade&&!(summered&&!mossGift)&&!(berries>=5&&player.hp<=player.maxHp-2)){ SFX.blip();
-    ask(fishDex===0?["¿Pescamos, brote? Te dejo mi caña vieja.","¿Echamos la caña?"]:["¿Otra tanda de pesca?"],'MOSS',yes=>{
+    ask(fishDex===0?["¿Pescamos, grumete? Te dejo mi caña vieja.","¿Echamos la caña?"]:["¿Otra tanda de pesca, grumete?"],'MOSS',yes=>{
       if(yes) startFishing(); else say(NPC_TALK.y(),null,'MOSS'); }); return true; }
   return false;
 }

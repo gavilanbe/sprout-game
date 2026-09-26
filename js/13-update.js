@@ -112,7 +112,7 @@ function update(){
       if(dlg.pause>0&&!keys.fire) dlg.pause--;
       else { const before=dlg.chars|0; dlg.chars+=(keys.fire?3:0.6*(opts.textSpeed||1)); const now=Math.min(pg.length,dlg.chars|0);
         for(let i=before;i<now;i++){ const c=pg[i]; if('.!?…'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:10); else if(',;:'.includes(c)) dlg.pause=Math.max(dlg.pause,keys.fire?0:5); }
-        if((tick&3)===0&&dlg.chars<pg.length) voiceBlip(dlg.who,pg[dlg.chars|0]); } }
+        if((tick&3)===0&&dlg.chars<pg.length){ const ch=pg[dlg.chars|0]; if(ch==='▒'){ if(AC) noise(.03,.02,true,undefined,2600); } else voiceBlip(dlg.who,ch); } } } // lo roído no suena a voz: suena a papel
     const lastDone=dlg.page===dlg.pages.length-1&&dlg.chars>=pg.length;
     if(dlg.ask&&lastDone){ const lr=(keys.right?1:0)-(keys.left?1:0); if(lr&&dlg.lr!==lr){ dlg.sel=lr>0?1:0; SFX.menu(); } dlg.lr=lr;
       if(keys.alt){ keys.alt=false; const cb=dlg.ask; dlg=null; state='play'; SFX.bump(); cb(false); updParts(); return; } }
@@ -138,7 +138,7 @@ function update(){
   if(wakeT>0){ wakeT--; if(wakeT===25) SFX.blip();
     if(wakeT===0){ if(!petraWoke){ petraWoke=true; npcs.push({ch:'h',x:5,y:5}); puff(5*16+8,5*16+12,'#e8d0a0',6,1); noise(.1,.04,false);
         say(PETRA_WAKE,()=>{ const n=npcs.find(q=>q.ch==='h'); if(n){ npcs=npcs.filter(q=>q!==n); puff(n.x*16+8,n.y*16+8,'#f0f0e0',8,1.2); } say(PETRA_WAKE2); save(); },'PETRA'); }
-      else say(["(¡Brote! ¡Brote!\nUna voz te llama\ndesde fuera.)"]); }
+      else say(["(¡Sprout! ¡Sprout! Una voz te llama desde fuera.)"]); }
     updParts(); return; }
   if(player.inv>0)player.inv--;
   if(hasAmulet('musgo')&&player.hp<player.maxHp&&++regen>=900){ regen=0; player.hp++; SFX.heart(); amuletFx('musgo'); }
@@ -290,7 +290,8 @@ function updPickups(){
       else if(p.kind==='bigkey'){ const dk=dungeonOf(sx,sy)||'x'; bigKeys[dk]=true; collected.add(p.id); SFX.key(); puff(p.x+4,p.y+4,PAL.y,10,1.4); say(TXT.bigkeyGet); save(); }
       else if(p.kind==='letter'){ collected.add(p.id); SFX.secret(); puff(p.x+6,p.y+4,'#a8c0d8',10,1.2); const key=sx+','+sy; const n=lettersCount();
         showToast('CARTA DEL VIENTO',n+'/5'); say((LETTERS[key]||["(Una carta\nilegible.)"]).concat(n>=5?LETTERS_DONE:[]),null,null,'letter'); save(); }
-      else if(p.kind==='diary'){ collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); say(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de\ndiario ilegible.)"],null,null,'paper'); save(); }
+      else if(p.kind==='diary'){ const first=![...collected].some(i=>i[0]==='d'); collected.add(p.id); SFX.heart(); puff(p.x+4,p.y+4,'#e8d0a0',8,1); // la primera hoja cuenta de dónde salen
+        say((first?TXT.diaryFirst:[]).concat(DIARY[p.id==='dplaza'?'dplaza':sx+','+sy]||["(Una hoja de diario ilegible.)"]),null,null,'paper'); save(); }
       else if(big){ getItem(p.kind); }
       else if(p.kind==='lure'){ hasLure=true; collected.add('lure'); giveThing(LURE_SPR,'CEBO DORADO',["¡El CEBO DORADO!","Moss dice que el VIEJO BIGOTES no se resiste a nada que brille así."]); }
       else if(p.kind==='bombs'){ bombAmmo=Math.min(bombMax,bombAmmo+(p.n||3)); SFX.blip(); collectBurst(p.x+4,p.y+4,'#e8a040'); flyText.push({x:p.x+4,y:p.y-2,txt:'+'+(p.n||3),t:22,col:'#ffd890'}); }

@@ -132,6 +132,7 @@ const GLYPHS_S={ // versalitas 3×5 (M, N, W más anchas)
 const ACCENTS={'Á':['A','´'],'É':['E','´'],'Í':['I','´'],'Ó':['O','´'],'Ú':['U','´'],'Ü':['U','¨'],'Ñ':['N','~'],
   'á':['a','´'],'é':['e','´'],'í':['ı','´'],'ó':['o','´'],'ú':['u','´'],'ü':['u','¨'],'ö':['o','¨'],'ñ':['n','~']};
 GLYPHS_M['ı']=["..","..","#.","#.","#.","#.","#."]; // i sin punto (para la í)
+GLYPHS_M['▒']=["#.#.#",".#.#.","#.#.#",".#.#.","#.#.#",".#.#.","#.#.#"]; // lo que se comió la polilla: en las cajas de texto se pinta roído (mothHole, 15-ui); aquí solo cuenta su ancho
 const FONT_M={glyphs:GLYPHS_M, asc:3, h:9, space:3, cache:new Map(), atlas:null, map:{}};
 const FONT_S={glyphs:GLYPHS_S, asc:0, h:5, space:2, cache:new Map(), atlas:null, map:{}, caps:true};
 function buildFont(F){

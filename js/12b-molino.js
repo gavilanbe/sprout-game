@@ -20,16 +20,16 @@ MIDBOSS_MARK['Ξ']='scare'; BOSS_MARK['Λ']='ciervo';
 ENEMY_STATS.crow={hp:2,dmg:1}; ENEMY_STATS.knight={hp:4,dmg:2}; ENEMY_STATS.root={hp:3,dmg:1};
 ITEM_NAMES.molinillo='MOLINILLO'; ITEM_NAMES.amber='HOJA DE ÁMBAR';
 MID_CARD.scare='EL ESPANTAPÁJAROS';
-MID_INTRO.scare=["(Un espantapájaros clavado en medio del granero... ¿Se ha movido?)","(Cuando gira, no te acerques. Cuando se marea, ¡ahora!)"];
+MID_INTRO.scare=["(Un espantapájaros clavado en medio del granero... ¿Se ha movido?)","(Paja y un palo. Nadie gira tanto sin acabar mareado.)"];
 Object.assign(ROOM_RULES,{'18,2':{clear:true,reward:{kind:'key',x:5,y:3}},'20,1':{clear:true,reward:{kind:'chest',x:4,y:4}}});
 Object.assign(CHESTS,{'20,1:4,4':{kind:'map',dk:'molino'},'18,0:1,1':{kind:'compass',dk:'molino'}});
 Object.assign(ROOM_HINTS,{
   '19,2':["(EL MOLINO DE LA HOJARASCA. Huele a trigo viejo y a hojas que no terminan de caer...)"],
   '19,1':["(Dos molinetes clavados en el suelo. La verja del norte no cede...)"],
-  '20,0':["(Un molinete a cada lado de la verja. Mientras gira, la verja se abre.)"],
+  '20,0':["(Un molinete a cada lado de la verja. La verja chirría cada vez que uno gira...)"],
   '20,-1':["(Tres molinetes en fila. Un montón de hojarasca estorba en medio...)"],
   '18,0':["(Bajo la hojarasca el suelo cruje. Algunas hojas tapan agujeros.)"],
-  '19,-1':["(Un ciervo enorme descansa bajo un manto de hojas secas...)","(La Hoja resbala sobre su MANTO DE HOJARASCA. ¡Sóplaselo con el MOLINILLO!)"],
+  '19,-1':["(Un ciervo enorme descansa bajo un manto de hojas secas...)","(Hojas secas. De esas que no aguantan un buen soplo.)"],
 });
 { let base=ROOM_HINTS['1,-2']||[]; // la pista del Sendero habla del ventisquero solo mientras sigue ahí
   Object.defineProperty(ROOM_HINTS,'1,-2',{enumerable:true,configurable:true,set:v=>{ base=v||[]; },
@@ -182,10 +182,12 @@ function ciervoPeace(){ const b=boss;
     pickups.push({kind:'amber',x:b.x+8,y:b.y+8,t:0}); boss=null; boss4Done=true; enemies=[]; projs=[]; save();
     setTrack(TRACKS.molino?'molino':'cueva'); }),'EL CIERVO'); }
 const CIERVO_PEACE=[
-  "—No me hieras más, brote. Tampoco yo quería pelear.",
-  "—El Viento del Norte me pidió que guardara el otoño cuando nadie lo quería.",
-  "—Dejé caer las hojas, año tras año, aunque el valle me lo reprochara. Alguien tenía que hacerlo.",
-  "—Llévate la HOJA DE ÁMBAR. Que el otoño vuelva a su sitio... y que nadie vuelva a odiar las hojas que caen.",
+  "—No me hieras más, caminante. Tampoco yo quería pelear.",
+  "—El Viento del Norte me pidió que dejara caer las hojas cuando nadie las quería.",
+  "—El valle las barría con rabia.",
+  "—Así que guardé el otoño aquí, donde nadie pudiera barrerlo.",
+  "—Pero un otoño guardado no es otoño.",
+  "—Llévate la HOJA DE ÁMBAR... y que nadie vuelva a odiar las hojas que caen.",
   "(El Ciervo se tumba sobre la hojarasca, en paz.)",
 ];
 function updCiervo(){

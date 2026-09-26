@@ -224,16 +224,16 @@ function interact([tx,ty,ch]){
   if(ch==='g'||(ch==='ñ'&&sx===8)){ openShop('tilo'); return true; }
   if(ch==='ö'||(ch==='ñ'&&sx===7)){ openShop('corteza'); return true; }
   if(ch==='j'&&hasBlade&&!hasBoomer&&berries>=10){ SFX.blip();
-    ask(["Traes 10 BAYAS...\n¿Me las das para\nmi invento\nvolador?"],'LUPA',yes=>{
-      if(yes){ berries-=10; SFX.fanfare(); save(); say(["¡Trato es trato,\nbrote!","Una vaina de\nsemilla curvada:\n¡la VAINA VOLADORA!"],()=>getItem('boomer'),'LUPA'); }
-      else say(["Sin prisa, brote.\nAquí estaré."],null,'LUPA'); });
+    ask(["¿Esas 10 BAYAS son para mi invento volador, tallito?"],'LUPA',yes=>{
+      if(yes){ berries-=10; SFX.fanfare(); save(); say(["¡Trato es trato, tallito!","Una vaina de semilla curvada: ¡la VAINA VOLADORA!"],()=>getItem('boomer'),'LUPA'); }
+      else say(["Sin prisa, tallito. Aquí estaré."],null,'LUPA'); });
     return true; }
   if(ch==='y'&&summered&&!mossGift){ SFX.blip(); mossGift=true;
-    say(["¡Brote! Los peces\nvolvieron gracias\na ti.","Toma: una piel de\nrana que pesqué\nhace años. Con\nella el barro no\nte frena."],()=>giveAmulet('rana'),'MOSS'); return true; }
+    say(["¡Grumete! Los peces volvieron gracias a ti.","Toma: una piel de rana que pesqué hace años.","Con ella, el barro no te frena."],()=>giveAmulet('rana'),'MOSS'); return true; }
   if(ch==='y'&&hasBlade&&berries>=5&&player.hp<=player.maxHp-2){ SFX.blip();
-    ask(["Mal aspecto traes.\n¿Sopa de pescador\npor 5 BAYAS?\nCura del todo."],'MOSS',yes=>{
-      if(yes){ berries-=5; player.hp=player.maxHp; SFX.heart(); save(); say(["5 bayas, marchando\nsopa de pescador...","¡Como nuevo,\nbrote!"],null,'MOSS'); }
-      else say(["Tú mismo. La olla\nsigue al fuego."],null,'MOSS'); });
+    ask(["Mal aspecto traes, grumete.","¿Sopa de pescador por 5 BAYAS? Cura del todo."],'MOSS',yes=>{
+      if(yes){ berries-=5; player.hp=player.maxHp; SFX.heart(); save(); say(["Cinco bayas: marchando una sopa de pescador...","¡Como nuevo, grumete!"],null,'MOSS'); }
+      else say(["Tú mismo. La olla sigue al fuego."],null,'MOSS'); });
     return true; }
   if(NPCS[ch]){ SFX.blip(); say(NPC_TALK[ch](),null,NPCS[ch].name.toUpperCase()); return true; }
   if(ch==='D'){
@@ -283,18 +283,18 @@ function elderTalk(){
   if(hasAmber&&!autumned){ deliverSeason('otono'); return; }
   if(hasFlake&&!cycled&&!autumned){ sayR(["¿El Copo...? Aún no, brote. El OTOÑO sigue preso en el MOLINO de la Ciénaga.","Sin otoño, el invierno no tiene dónde posarse. Tráeme primero la HOJA DE ÁMBAR."]); return; }
   if(hasFlake&&!cycled){ deliverSeason('invierno'); return; }
-  if(cycled) sayR(["Las cuatro\nestaciones giran.\nEl valle respira.","¿Aún no lo ves,\nbrote? Mírame\nbien. Mira el árbol.","Yo SOY el Roble.\nViejo y plantado,\nsoñando este valle.","Y tú creciste de\nmi última bellota,\nla novena...","...la única que mi\nhermano Viento\nnunca encontró.","Gracias por traer\na casa a tus\nhermanas. ♥"].concat(opened.has('ECO4,12')?[]:["Una cosa más, brote. Desde que el año gira, algo resuena en la GRUTA DE LOS ECOS, bajo los riscos del noroeste.","Son los ecos de quienes guardaron las estaciones. No hablan ni ceden. Si buscas un desafío... baja a verlos."]));
-  else if(autumned&&boss3Done) sayR(["¿Ese frío azul en\ntu zurrón...?\n¡El Copo! Tráelo."]);
-  else if(autumned) sayR(["Solo queda el INVIERNO, en el pico del norte.","Un VENTISQUERO tapa el Sendero del Último Invierno: tu MOLINILLO lo barrerá.","Necesitarás también bomba, gancho y el farol de Tilo para cruzar el TEMPLO DE LA CIMA. No subas a luchar: sube a recordar."]);
-  else if(summered&&boss4Done) sayR(["¿Ese brillo dorado en tu zurrón...? ¡La HOJA DE ÁMBAR! Tráemela, brote."]);
-  else if(summered) sayR(["El otoño se ha refugiado en el viejo MOLINO de la Ciénaga, al este de las marismas.","Lo guarda el CIERVO DE ÁMBAR, un viejo amigo de mi hermano. No es malo, brote: está cansado.","Las hojas podridas que tapaban la puerta ya se han secado con el verano."]);
-  else if(thawed&&boss2Done) sayR(["¿Un brillo azul en\ntu zurrón? ¡Corre,\ntráemelo!"]);
-  else if(thawed) sayR(["El sur huele a\notoño viejo...","Hay rocas agrieta-\ndas en la playa\neste. Tus bombas","saben qué hacer.\nBusca el TRONCO\nHUECO, brote."]);
-  else if(won&&bossDone) sayR(["¿Esa luz en tu\nzurrón...?\n¡Corre, tráela!"]);
-  else if(won) sayR(["¿Ves la copa? Tus\nsemillas brillan\nen ella otra vez.","Pero oigo aullar\nalgo en las\nmontañas del norte.","Dicen que el TOPO\nREAL guarda la\nBRASA DE PRIMAVERA.","La zarza seca del\nnoroeste ya no\nte cierra el paso.\nVe, brote."]);
-  else if(!hasBlade) sayR(TXT.elderIntro);
+  if(cycled) sayR(["Las cuatro estaciones giran, brote. El valle respira.","Mi hermano bajará cada invierno y se irá cada primavera.","Es lo justo. Y esta vez, alguien le dará las gracias."].concat(opened.has('ECO4,12')?[]:["Una cosa más. Desde que el año gira, algo resuena en la GRUTA DE LOS ECOS, bajo los riscos.","Son los ecos de quienes guardaron las estaciones.","No hablan ni ceden. Si buscas un desafío... baja a verlos."]));
+  else if(autumned&&boss3Done) sayR(["¿Ese frío en tu zurrón...? ¡El Copo de mi hermano!","Tráelo, brote."]);
+  else if(autumned) sayR(["Solo queda el INVIERNO, en el pico del norte.","Barre el VENTISQUERO con tu MOLINILLO.","Para el TEMPLO: bomba, gancho y el farol de Tilo.","No subas a luchar, brote. Sube a recordar."]);
+  else if(summered&&boss4Done) sayR(["¿Ese brillo dorado...? ¡La HOJA DE ÁMBAR!","Tráemela, brote."]);
+  else if(summered) sayR(["El otoño se ha refugiado en el MOLINO de la Ciénaga, al este de las marismas.","Lo guarda el CIERVO DE ÁMBAR. No es malo, brote: está cansado.","Las hojas podridas de la puerta ya se habrán secado con el sol."]);
+  else if(thawed&&boss2Done) sayR(["¿Eso que brilla en tu zurrón...? ¡Tráemelo, brote!"]);
+  else if(thawed) sayR(["El sur huele a otoño viejo...","Tus bombas abrirán las rocas de la playa del este.","Busca el TRONCO HUECO, brote."]);
+  else if(won&&bossDone) sayR(["¿Esa luz en tu zurrón...? ¡Tráela, brote!"]);
+  else if(won) sayR(["¿Ves la copa? Tus semillas brillan en ella otra vez.","La primavera está bajo tierra, con el TOPO REAL.","La zarza seca del noroeste ya no te cierra el paso. Ve, brote."]);
+  else if(!hasBlade) sayR(TXT.elderRemind);
   else if(seeds===0) sayR(TXT.elderBlade);
-  else sayR(["Llevas "+seeds+" de 8\nsemillas. Atento:","A la vista: riscos\nNO, claro del\nbosque, orilla de\nMoss,","camino sur y\ndunas del este.","Brillan arbustos:\nbosque, juncal\nnorte y playa\nsuroeste."]);
+  else sayR(["Llevas "+seeds+" de 8 semillas, brote. Escucha:","A la vista laten en los riscos del noroeste, el claro del bosque, la orilla de Moss,","el camino del sur y las dunas del este.","Bajo arbustos que brillan: el bosque, el juncal del norte y la playa del suroeste."]);
 }
 function giveAmulet(id){ amulets.add(id); const a=AMULETS[id]; SFX.fanfare(); shake=4;
   itemSpr=AMULET_SPR[id]; itemPages=TXT.amuletGet(a); state='itemget'; itemT=100; itemCardName=a.name; player.dir=0; player.atk=0;
@@ -406,7 +406,7 @@ function shopList(){
 function openShop(kind){
   SFX.blip(); shopSel=0; shopUD=0; shopKind=kind;
   if(kind==='tilo'&&!tiloMet){ tiloMet=true; save();
-    say(["¡Un cliente! Soy\nTILO. Afilo hojas\ny cuezo savia.","Pago en BAYAS:\nla hierba, los\narbustos y los\nbichos las sueltan.","Échale un ojo al\ngénero, brote."],()=>{ state='shop'; },'TILO'); }
+    say(["¡Un cliente! Soy TILO. Afilo hojas y cuezo savia.","Cobro en BAYAS: la hierba, los arbustos y los bichos las sueltan.","Échale un ojo al género, cliente."],()=>{ state='shop'; },'TILO'); }
   else if(kind==='corteza'&&!cortezaMet){ cortezaMet=true; save();
     say(["Corteza tallo\namuletos, criatura.\nDos a la vez\npuedes llevar.","Mira el género y\nno toques nada\ncon las raíces\nsucias."],()=>{ state='shop'; },'CORTEZA'); }
   else state='shop';

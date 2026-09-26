@@ -104,6 +104,7 @@ const SPEAKER={
   'TILO':{col:'#b0e050',ink:'#243a08',f:640,w:'square'}, 'CORTEZA':{col:'#b088d8',ink:'#2a1440',f:300,w:'triangle'},
   'EL VIENTO':{col:'#b8d8f8',ink:'#18304a',f:230,w:'sine'}, 'EL TOPO REAL':{col:'#c08858',ink:'#3a1e08',f:170,w:'square'},
   'LA REINA':{col:'#f8d030',ink:'#3a2a00',f:1150,w:'square'}, 'SPROUT':{col:'#a4e070',ink:'#1d4f22',f:820,w:'square'},
+  'EL CIERVO':{col:'#e8a040',ink:'#3a1804',f:260,w:'triangle'},
 };
 function voiceBlip(who,ch){ if(!AC) return; const S=SPEAKER[who], base=S?S.f:900, k=1+(((ch||'a').charCodeAt(0)%7)-3)*.045;
   beep(S?S.w:'square',base*k,base*k*1.12,.04,S&&S.w!=='square'?.05:.022); }
@@ -186,12 +187,35 @@ function drawRichLine(ln,x,y,budget,F,live){
   ln.replace(/[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\-]{2,}|\d+\/\d+|\b\d+\b/g,(m,off)=>{ wn++; for(let i=0;i<m.length;i++) keyAt[off+i]=wn; return m; });
   const n=Math.min(ln.length,budget); let cx=x;
   for(let i=0;i<n;i++){ const c=ln[i]; if(c===' '){ cx+=FONT_M.space+1; continue; }
+    if(c==='▒'){ let j=i; while(j<n&&ln[j]==='▒') j++; const w=(j-i)*6-1, fresh=live&&n-j<2; // un tramo roído: se pinta de una vez
+      mothHole(cx+(fresh?((tick>>1)&1?1:-1):0),y,w,F,hash(i,ln.length)%97); cx+=w+1; i=j-1; continue; }
     const age=n-1-i, drop=live&&age<3?[-3,-2,-1][age]:0;
     const wave=keyAt[i]&&!live?(Math.sin(tick*.09+keyAt[i]*2.1)>.55?-1:0):0, yy=y+drop+wave;
     let col=keyAt[i]?F.key:F.text; if(keyAt[i]&&!live&&(((tick>>1)-i)%56+56)%56<2) col=shade(F.key,.45); // un brillo que recorre la palabra
     if(F.shadow) drawText(ctx,c,cx,yy+1,F.shadow,'left',FONT_M);
     cx=drawText(ctx,c,cx,yy,col,'left',FONT_M); }
 }
+/* un agujero de polilla en el papel: lo que el Olvido se comió (docs/TERCERA-PASADA.md §10: un solo dibujo en todas partes).
+   Es la unión de varios mordiscos redondos a lo largo del tramo: por dentro, casi negro; abajo, el canto del papel
+   que se ve al fondo; alrededor, fibras roídas un poco más oscuras. Se compone una vez por tamaño, semilla y piel.
+   Encima, en vivo, de vez en cuando sube una mota gris lila: el polvo de la polilla */
+const MOTH_DUST='#b8aec8', MOTH_HOLES=new Map();
+function mothHoleArt(w,seed,bg){ const key=w+'|'+seed+'|'+bg; let c=MOTH_HOLES.get(key); if(c) return c;
+  const W=w+6, H=13, IN=new Uint8Array(W*H), n=Math.max(2,Math.round(w/4.3)), R=[];
+  for(let k=0;k<n;k++) R.push(2.9+(hash(seed,k)%3)*.35);                                 // cada mordisco, de su tamaño
+  for(let k=0;k<n;k++){ const r=R[k], cx=3+r*.8+(w-r*1.6)*k/(n-1), cy=6.2+((hash(k,seed)%3)-1)*.6;   // de punta a punta del tramo, sin salirse
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const dx=x+.5-cx, dy=(y+.5-cy)*1.15; if(dx*dx+dy*dy<=r*r) IN[y*W+x]=1; } }
+  const at=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&IN[y*W+x]===1;
+  const dark=mix(bg,'#000000',.82), lip=mix(bg,'#000000',.55), rim=shade(bg,-.2), lit=shade(bg,.2);
+  const B=pxBuf(W,H);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    if(at(x,y)){ B.set(x,y,!at(x,y+1)?lip:dark); continue; }                  // dentro: negro, y al fondo el canto del papel
+    if(at(x,y-1)){ if(hash(x,seed)%4) B.set(x,y,lit); }                          // bajo el agujero, el borde levantado coge luz
+    else if((at(x-1,y)||at(x+1,y)||at(x,y+1))&&hash(x+seed,y*3)%3) B.set(x,y,rim); } // alrededor, fibras roídas (sueltas)
+  c=B.canvas(); MOTH_HOLES.set(key,c); if(MOTH_HOLES.size>64) MOTH_HOLES.delete(MOTH_HOLES.keys().next().value); return c; }
+function mothHole(x,y,w,F,seed){ const bg=F.bg||'#244a30'; ctx.drawImage(mothHoleArt(w,seed,bg),x-3,y-3);
+  const ph=(tick+seed*37)%96; if(ph<32){ const mx=x+1+(seed*13+((tick/96)|0)*7)%Math.max(1,w-2), my=y+2-(ph>>2); // la mota que sube
+    ctx.globalAlpha=Math.min(1,(32-ph)/10)*.9; ctx.fillStyle=MOTH_DUST; ctx.fillRect(mx,my,1,1); ctx.globalAlpha=1; } }
 const DLG_W=152, DLG_TXT_POR=98, DLG_TXT=136;
 function drawDialog(){
   const full=dlg.pages[dlg.page], lines=full.split('\n'), pt=dlg.pt||0;

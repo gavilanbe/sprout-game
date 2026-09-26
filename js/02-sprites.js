@@ -1551,6 +1551,7 @@ function ciervoArt(mantle){ return mkArt(32,32,g=>{
   else { g.fillStyle='rgba(252,216,120,.5)'; g.fillRect(21,1,2,2); g.fillRect(28,1,2,2); } });}
 const CIERVO_SPR=ciervoArt(true), CIERVO_BARE=ciervoArt(false), CIERVO_BARE_W=whiten(ciervoArt(false));
 BOSS_SPR.scare=SCARE_SPR; BOSS_WHITE.scare=whiten(SCARE_SPR); BOSS_SPR.ciervo=CIERVO_SPR; BOSS_WHITE.ciervo=whiten(CIERVO_SPR);
+PORTRAITS['EL CIERVO']=CIERVO_BARE; // en su retrato, ya sin el manto: el Ciervo que habla es el que se ha tumbado en paz
 PORTRAITS['EL CIERVO']=CIERVO_BARE;
 /* el MOLINILLO (objeto X) y la HOJA DE ÁMBAR (reliquia del Otoño) */
 /* la cabeza del molinillo, píxel a píxel: cuatro aspas de papel plegado (cara clara, pliegue oscuro y el canto que brilla),
