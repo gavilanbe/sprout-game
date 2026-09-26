@@ -46,7 +46,7 @@ const server=http.createServer((req,res)=>{
   await check('Todos los mapas miden 10×8; hay 8 semillas, 5 corazones, 9 cuartos y 10 diarios',async()=>{
     eq(await ev(()=>{ const bad=Object.entries(MAPS).filter(([k,r])=>r.length!==8||r.some(s=>[...s].length!==10)).map(([k])=>k);
       const all=Object.values(MAPS).flat().join(''); return {bad,seeds:(all.match(/[1-8Q]/g)||[]).length,hearts:(all.match(/9/g)||[]).length,pieces:(all.match(/♥/g)||[]).length,diaries:(all.match(/0/g)||[]).length,maps:Object.keys(MAPS).length}; }),
-      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:101});
+      {bad:[],seeds:8,hearts:5,pieces:9,diaries:10,maps:103});
   });
   await check('Todas las pantallas se renderizan sin tiles desconocidos ni errores',async()=>{
     const r=await ev(()=>{ const out=[]; for(const key in MAPS){ const [x,y]=key.split(',').map(Number); loadScreen(x,y); rebuildBg();
@@ -216,7 +216,7 @@ const server=http.createServer((req,res)=>{
       player.x=64; player.y=92; keys.up=true; let i=0; while(sx===24&&sy===1&&i++<120) __step(1); keys.up=false; i=0; while(state!=='play'&&i++<200) __step(1); play(60); out.push(sx+','+sy,!!oruga&&oruga.segs);
       [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; oruga=null; state='play'; xItem=x0; return out; }),[1,'.',1,'Ꞡ','5,3','ꞡ','.',1,'.','Ꞟ','Ꞟ','Ꞟ','24,0',13]);
   });
-  await check('La médula: la Crisálida (cada punta de raíz solo azota en su estación; la seda de las orugas la quema el farol) y los Ecos (solo se les hiere en su estación); con las cuatro capas, el capullo revienta y se va al Nombre',async()=>{
+  await check('La médula: la Crisálida (cada punta de raíz solo azota en su estación; la seda de las orugas la quema el farol) y los Ecos (solo se les hiere en su estación); con las cuatro capas, el capullo revienta y rasga el techo hacia la copa',async()=>{
     eq(await ev(()=>{ const out=[], x0=xItem, was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]; state='play'; hitStop=0;
       boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); hasLantern=true; for(const s of [0,1,2,3]){ opened.delete('MEDL'+s); opened.delete('MEDE'+s); } opened.delete('SE23,-1:0'); opened.delete('RINGSDONE');
       const skip=()=>{ let i=0; while(i++<3000){ if(state==='dialog'){ dlg.chars=999; keys.fire=true; __step(1); continue; } if(state==='present'||state==='outro'){ keys.fire=true; __step(1); continue; } if(state==='play'&&presentQ){ presentQ.await=false; __step(1); continue; } break; } };
@@ -230,8 +230,30 @@ const server=http.createServer((req,res)=>{
       b.hp=2; __step(2); skip(); play(20); skip(); out.push(!!boss,opened.has('MEDE0'));
       for(const s of [1,2,3]){ setRoomSeason('23,-1',s); applySeason(s); markDirty(); const T=MED_TIPS[s]; med.silk[s]=false; const [px,py,d]=T.x===9?[128,T.y*16-4,3]:T.y===7?[T.x*16,6*16-4,0]:[T.x*16,1*16-4,1];
         player.x=px; player.y=py; player.dir=d; keys.fire=true; __step(1); play(70); skip(); if(boss){ out.push(boss.type); boss.hp=2; __step(2); skip(); play(10); skip(); } }
-      out.push(medDone(),med.st); let i=0; while(i++<600&&!(sx===1&&sy===1)){ __step(1); if(state==='dialog'){ dlg.chars=999; keys.fire=true; } } out.push(opened.has('RINGSDONE'),sx+','+sy);
-      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; c5Fin=null; boss=null; state='play'; player.inv=0; xItem=x0; return out; }),[0,'idle','idle','idle',false,true,'topo',true,true,true,false,true,'avispa','ciervo','viento',true,'burst',true,'1,1']);
+      out.push(medDone(),med.st); let i=0; while(i++<600&&med.st!=='done'){ __step(1); if(state==='dialog'){ dlg.chars=999; keys.fire=true; } } out.push(med.st,grid[0][5],opened.has('RINGSDONE'));
+      [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; boss=null; state='play'; player.inv=0; xItem=x0; return out; }),[0,'idle','idle','idle',false,true,'topo',true,true,true,false,true,'avispa','ciervo','viento',true,'burst','done','ꞻ',false]);
+  });
+  await check('La subida y la Polilla: la rejilla sopla con el Remolino y el vilano sube a la copa; la Polilla va a la luz, apaga el brasero y se posa; el gancho la clava y la Hoja le da; el HUD se olvida; el polvo gris y las estaciones; huye y se va al Nombre',async()=>{
+    eq(await ev(()=>{ const out=[], x0=xItem, was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno,hasSpin,hasFeather,hasHook]; state='play'; hitStop=0;
+      boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); opened.add('MEDdone'); hasLantern=hasSpin=hasFeather=hasHook=true; for(const k of ['POLdone','POLin','POLpin','RINGSDONE']) opened.delete(k); hinted.delete('23,-2');
+      const R0=Math.random; let seed=97531; Math.random=()=>((seed=(seed*16807)%2147483647)/2147483647); player.inv=9999;
+      const play=n=>{ for(let k=0;k<n;k++){ __step(1); if(state==='dialog') __skipDialog(); } };
+      __go(23,-1,88,20); play(10); out.push(med.st,grid[0][5]);
+      player.x=80; player.y=4; keys.up=true; let i=0; while(sx===23&&sy===-1&&i++<80) __step(1); keys.up=false; i=0; while(state!=='play'&&i++<200){ __step(1); if(state==='dialog') __skipDialog(); } play(30); out.push(sx+','+sy,hinted.has('23,-2'));
+      player.x=32; player.y=92; player.dir=1; xItem='feather'; keys.fireHeld=true; for(let k=0;k<60;k++) __step(1); keys.fireHeld=false; play(12); out.push(Object.keys(drafts).length>0); // el Remolino, sobre la rejilla
+      keys.alt=true; keys.altHeld=true; keys.up=true; keys.right=true; for(let k=0;k<160;k++) __step(1); keys.altHeld=false; keys.up=false; keys.right=false; play(20); out.push(playerTile().join());
+      player.x=112; player.y=12; __walk('up'); play(80); const b=boss; out.push(sx+','+sy,b&&b.type,b&&b.st);
+      player.x=16; player.y=28; player.dir=1; xItem='lantern'; keys.alt=true; __step(1); play(10); out.push(grid[1][1]);   // un brasero encendido: allá irá
+      b.st='fly'; b.t=999; i=0; while(b.st!=='perch'&&i++<300) __step(1); out.push(b.st,grid[1][1],Math.abs(b.x-24)<6&&Math.abs(b.y-20)<6);
+      xItem='hook'; player.x=b.x-8; player.y=b.y+50; player.dir=1; hitStop=0; keys.alt=true; __step(1); play(4); out.push(b.st);
+      for(let h=0;h<4;h++){ b.flash=0; hitStop=0; player.x=b.x-8; player.y=b.y+10; player.dir=1; player.atk=11; __step(2); play(8); } out.push(b.hp,b.pins,polHud.hearts);
+      player.x=64; player.y=60; i=0; while(countDust()===0&&i++<30){ b.st='fly'; b.t=0; play(26); } out.push(countDust()>0); // en primavera, su polvo vuelve grises las ramas
+      xItem='anillo'; keys.alt=true; __step(1); play(40); out.push(roomSeason('23,-3'),countDust());                        // el verano lo quema
+      keys.alt=true; __step(1); play(40); keys.alt=true; __step(1); play(40); out.push(roomSeason('23,-3'),grid[4][4],TRUE_ICE.has('23,-3')); // el invierno hiela las ramas: resbalan, pero no son el hielo del Templo
+      b.x=72; b.y=52; b.hp=1; b.st='pinned'; b.t=0; b.hits=0; b.flash=0; hitStop=0; player.x=64; player.y=62; player.dir=1; player.atk=11; __step(2); out.push(b.st);
+      i=0; while(i++<600&&!(sx===1&&sy===1)){ __step(1); if(state==='dialog'){ dlg.chars=999; keys.fire=true; } } out.push(sx+','+sy,opened.has('POLdone'),opened.has('RINGSDONE'));
+      Math.random=R0; [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno,hasSpin,hasFeather,hasHook]=was; c5Fin=null; boss=null; state='play'; player.inv=0; xItem=x0; return out; }),
+      ['done','ꞻ','23,-2',true,true,'8,1','23,-3','polilla','fly',';','perch',':',true,'pinned',12,1,1,true,1,0,3,'i',false,'flee','1,1',true,true]);
   });
   await check('La cima: se cortan los cuatro hilos y el capullo se abre; el nombre se escribe (la letra que no es se la lleva el viento) y Cierzo suelta el Copo',async()=>{
     eq(await ev(()=>{ boss3Done=false; hasLantern=true; hasFeather=true; __go(1,-3,72,90); __skipDialog(); presentQ=null; bossHidden=false;

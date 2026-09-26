@@ -275,6 +275,7 @@ const RING_T={
     '24,3':["(El verano zumba. Algo gris se come la hierba.)"],
     '24,1':["(El recuerdo más viejo del valle: el día que la Tierra plantó dos semillas.)","(Una iba a ser un roble. La otra, el viento.)"],
     '24,0':["(Hasta aquí ha huido. Detrás de ese desgarro ya no hay recuerdos: solo la médula del Roble.)"],
+    '23,-2':["(Por dentro, el Roble está hueco: un pozo de madera que sube hacia la copa.)","(Abajo, una rejilla vieja. Si algo le soplara dentro, el árbol respiraría hacia arriba.)"],
   },
 };
 /* la médula (12j): la Crisálida y los Ecos */
@@ -286,7 +287,12 @@ const MED_T={
     ["(Muy lejos, en el molino, un paso de pezuñas sobre hojas:)","—Levántate, caminante. Las hojas caen para volver."],
     ["(Muy lejos, en la cima, el viento canta dos notas de la nana:)","—¡Semillita! ¡Te estamos llamando!"]],
   voiceWho:['EL TOPO REAL','LA REINA','EL CIERVO','CIERZO'],
-  rise:["(El capullo revienta. De dentro sale ella: la polilla, entera, con las alas llenas de polvo gris.)","(Sube por el tronco, hacia la copa. Hacia el cielo del valle.)","(Y en el valle, alguien grita tu nombre...)"],
+  rise:["(El capullo revienta. De dentro sale ella: la polilla, entera, con las alas llenas de polvo gris.)","(Rasga el techo de la médula y sube por el tronco, hacia la copa.)","(Síguela.)"],
+};
+/* la subida y la copa (12k): la Polilla */
+const POL_T={
+  intro:["(La copa del Roble. Ramas sobre el vacío; allá abajo, muy lejos, el valle.)","(Y ella, entera, sacudiéndose el polvo de las alas. Va a la luz... como todas.)"],
+  flee:["(La polilla se suelta, sube... y sigue subiendo. Se hace grande, grande, hasta taparlo todo.)","(Allá abajo, en la plaza, el valle mira al cielo.)"],
 };
 /* la Cueva (12h): la raíz madre despierta lejos, y Raíz lo nota por sus raíces */
 const CV_T={

@@ -26,7 +26,13 @@
 > el puente— y el último desgarro, con la Oruga más grande). De la fase **F**, hecha la **médula** (`js/12j-medula.js`): el
 > nivel 1, la Crisálida (cuatro puntas de raíz, cada una azota solo en su estación; las orugas las envuelven en seda y el
 > farol la quema), y el nivel 2, los Ecos (el de cada estación solo se hiere en ella; al disolverse se oye al guardián de
-> verdad). De momento, al reventar el capullo se va al Nombre; faltan la subida y la copa (nivel 3), y G.
+> verdad); al reventar, el capullo rasga el techo. Y el **nivel 3** (`js/12k-polilla.js`): la subida por dentro del tronco
+> (la rejilla sopla con el tornadito del Remolino y el vilano sube en la corriente) y la copa, ramas sobre el vacío con
+> cuatro braseros, donde la **Polilla** va a la luz: se lanza contra el brasero encendido (o contra ti), lo apaga y se
+> posa; el gancho le clava un ala y la Hoja le da. Con cada clavada el HUD se olvida (el color, el objeto, la música).
+> Su polvo vuelve grises las ramas y cada estación lo trata con su precio (el verano lo quema, pero ella va más rápida;
+> el otoño se lo lleva, pero la ráfaga —que avisa— te empuja; el invierno lo nieva, pero las ramas resbalan; la
+> primavera no lo limpia, pero la retiene posada más rato). Al huir al cielo, el Nombre (nivel 4). Falta G.
 > **Spoilers:** todos, incluido el final nuevo.
 > Escrito tras revisar el juego en `8a9123e` (26-09-2026). Las referencias a código
 > (`fichero:línea`) son de esa versión.

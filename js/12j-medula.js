@@ -23,6 +23,7 @@ function medEcho(s){ return opened.has('MEDE'+s); }
 function medDone(){ return [0,1,2,3].every(s=>medLayer(s)&&medEcho(s)); }
 { const I0=initRoomRules; initRoomRules=function(){ I0(); med=null; if(inMedula()) initMedula(); }; }
 function initMedula(){ med={silk:[false,false,false,false],larvae:[],st:'idle',t:0,beat:0,lash:null,gust:0,gustT:200,spawnT:140,burst:null,intro:!opened.has('MEDin')};
+  if(opened.has('MEDdone')){ med.st='done'; grid[0][5]='ꞻ'; return; } // ya reventó: el techo, abierto
   if(!opened.has('MEDin')){ opened.add('MEDin'); pendingSay=MED_T.intro.slice(); }
   // si se fue a medias de un eco: vuelve el mismo eco
   for(let s=0;s<4;s++) if(medLayer(s)&&!medEcho(s)){ spawnEcho(s,true); break; } }
@@ -86,12 +87,14 @@ function medBurst(){ med.st='burst'; med.t=0; shake=Math.max(shake,12); if(AC){ 
 function updBurst(){ const M=med; M.t++;
   if(M.t<60&&(M.t&3)===0) parts.push({k:'blade',x:MED_COC.x+(Math.random()-.5)*20,y:MED_COC.y+Math.random()*MED_COC.h,vx:(Math.random()-.5)*2,vy:-Math.random(),life:40,max:40,col:OLV.wingL,rot:Math.random()*6,vr:.3});
   if(M.t===60){ screenFlash(10,'#ffffff'); shake=Math.max(shake,10); }
-  if(M.t===170){ opened.add('MEDdone'); save(); say(MED_T.rise,()=>{ ringsFinish(); }); } }
-/* hasta que exista la subida (nivel 3): de la médula, al Nombre */
+  if(M.t===110){ grid[0][5]='ꞻ'; markDirty(); shake=Math.max(shake,8); for(let i=0;i<14;i++) parts.push({k:'dust',x:88,y:6,vx:(Math.random()-.5)*1.6,vy:Math.random()*1.4,life:30,max:30,r:1+(i&1),col:i&1?OLV.dust:OLV.dustD,nog:true}); } // rasga el techo
+  if(M.t===170){ opened.add('MEDdone'); save(); say(MED_T.rise,()=>{ med.st='done'; }); } }
+/* cuando la Polilla huye de la copa (nivel 3, 12k): al Nombre */
 function ringsFinish(){ opened.add('RINGSDONE'); save(); placeAt(1,1,72,76,0); }
 
 /* ---------- cada fotograma ---------- */
 { const U0=updRoomRules; updRoomRules=function(){ U0(); if(!inMedula()||!med||state!=='play') return; med.beat++;
+  if(med.st==='done'){ const [tx,ty]=playerTile(); if(tx===5&&ty===0&&grid[0][5]==='ꞻ') placeAt(23,-2,24,5*16-4,1); return; } // tras ella, por el techo
   if(med.st==='idle'||med.st==='echo'){ updLarvae(); updMedFire(); }
   if(med.st==='lash') updLash(); else if(med.st==='burst') updBurst();
   if(roomSeason(MED_ROOM)===2&&med.st!=='burst'){ if(--med.gustT<=0){ med.gust=40; med.gustT=220; if(AC) noise(.8,.03,true,undefined,1800); } // el otoño: un vendaval de hojas que también te empuja
@@ -104,7 +107,7 @@ function tipArt(s,awake,silk){ return cached('mtip'+s+(awake?1:0)+(silk?1:0),g=>
   if(silk){ for(let i=0;i<5;i++){ const y=3+i*2; for(let x=2;x<14;x++) if(Math.hypot(x-7.5,y-7.5)<6.6) PX(g,x,y+((x>>2)&1),i&1?OLV.dust:OLV.wingL); } } }); }
 { const O0=drawObject; drawObject=function(g,rows,x,y,ch,opts,f,fg){ if(ch==='Ꝑ'){ O0(g,rows,x,y,'T',opts,f,fg); return; } return O0(g,rows,x,y,ch,opts,f,fg); }; }
 { const G0=drawGround; drawGround=function(g,rows,x,y,ch,opts,f){ if(ch==='Ꝑ'){ G0(g,rows,x,y,'.',opts,f); return; } return G0(g,rows,x,y,ch,opts,f); }; }
-function drawChrysalis(){ const M=med; if(!M||M.st==='burst'&&M.t>60) return; const C=MED_COC, sum=roomSeason(MED_ROOM)===1, pulse=Math.sin(M.beat*(sum?.2:.12))>.82?1:0, cx=C.x, top=C.y, sway=Math.round(Math.sin(M.beat*.03)*1.5);
+function drawChrysalis(){ const M=med; if(!M||M.st==='done'||M.st==='burst'&&M.t>60) return; const C=MED_COC, sum=roomSeason(MED_ROOM)===1, pulse=Math.sin(M.beat*(sum?.2:.12))>.82?1:0, cx=C.x, top=C.y, sway=Math.round(Math.sin(M.beat*.03)*1.5);
   ctx.fillStyle='#e8e0f0'; ctx.fillRect(cx,0,1,top+2); ctx.fillStyle=OLV.dustD; ctx.fillRect(cx+1,0,1,top); // el hilo del que cuelga
   const left=[0,1,2,3].filter(s=>!medLayer(s));
   for(let y=0;y<C.h;y++){ const k=y/C.h, prof=k<.12?.28+k*3:Math.pow(Math.sin(Math.PI*Math.min(1,(k-.04)*1.02)),.55), w=Math.max(1,Math.round(prof*(C.w/2+pulse))); // cuello, panza y la punta redonda
