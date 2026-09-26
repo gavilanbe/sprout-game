@@ -262,6 +262,7 @@ const MID_INTRO={
 };
 /* los Anillos del Roble (12i) */
 const RING_T={
+  back:["(El tronco te reconoce: la savia te lleva de vuelta, anillo a anillo, hasta donde te quedaste.)"],
   get:["¡El ANILLO DEL AÑO!","Un corte del tronco del Roble, con los cuatro colores del año.","Dentro del Roble, con X, hace girar la estación de la sala en la que estás."],
   enter:["(Dentro del tronco huele a savia y a nieve vieja.)","(Esto es un recuerdo del valle: el último invierno que alguien cantó.)"],
   hints:{

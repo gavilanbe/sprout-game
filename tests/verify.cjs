@@ -233,6 +233,13 @@ const server=http.createServer((req,res)=>{
       out.push(medDone(),med.st); let i=0; while(i++<600&&med.st!=='done'){ __step(1); if(state==='dialog'){ dlg.chars=999; keys.fire=true; } } out.push(med.st,grid[0][5],opened.has('RINGSDONE'));
       [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; boss=null; state='play'; player.inv=0; xItem=x0; return out; }),[0,'idle','idle','idle',false,true,'topo',true,true,true,false,true,'avispa','ciervo','viento',true,'burst','done','ꞻ',false]);
   });
+  await check('Volver al Roble desde la plaza lleva al anillo más hondo alcanzado (la primera vez, al primero)',async()=>{
+    eq(await ev(()=>{ const out=[], keep=['RINGin','RINGback','ORU23,3','ORU22,1','ORU24,3','ORU24,0'].filter(k=>opened.has(k)), was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno];
+      boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; for(const k of ['RINGin','RINGback','ORU23,3','ORU22,1','ORU24,3','ORU24,0']) opened.delete(k);
+      const go=()=>{ state='play'; enterRings(); let i=0; while(state==='door'&&i++<200) __step(1); if(state==='dialog') __skipDialog(); __step(2); if(state==='dialog') __skipDialog(); return sx+','+sy; };
+      out.push(go()); opened.add('ORU23,3'); opened.add('ORU22,1'); out.push(go()); opened.add('ORU24,0'); out.push(go());
+      for(const k of ['RINGin','RINGback','ORU23,3','ORU22,1','ORU24,0']) opened.delete(k); for(const k of keep) opened.add(k); [boss3Done,cycled,c5.arrive,c5.copo,c5.sueno]=was; state='play'; return out; }),['22,4','25,2','23,-1']);
+  });
   await check('La subida y la Polilla: la rejilla sopla con el Remolino y el vilano sube a la copa; la Polilla va a la luz, apaga el brasero y se posa; el gancho la clava y la Hoja le da; el HUD se olvida; el polvo gris y las estaciones; huye y se va al Nombre',async()=>{
     eq(await ev(()=>{ const out=[], x0=xItem, was=[boss3Done,cycled,c5.arrive,c5.copo,c5.sueno,hasSpin,hasFeather,hasHook]; state='play'; hitStop=0;
       boss3Done=true; cycled=false; c5.arrive=c5.copo=c5.sueno=true; opened.add('ANILLO'); opened.add('MEDdone'); hasLantern=hasSpin=hasFeather=hasHook=true; for(const k of ['POLdone','POLin','POLpin','RINGSDONE']) opened.delete(k); hinted.delete('23,-2');

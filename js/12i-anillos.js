@@ -282,11 +282,15 @@ function tearArt(open){ return cached('tear'+(open?1:0),g=>{ for(let y=0;y<16;y+
    ============================================================ */
 function ringsOpen(){ return olvidoLoose()&&c5.sueno; }
 { const I0=interact; interact=function(ft){ const [tx,ty,ch]=ft; if(sx===1&&sy===1&&ch==='Ñ'&&tx>=4&&tx<=5&&ty===3&&ringsOpen()&&player.dir===1){ SFX.blip(); enterRings(); return true; } return I0(ft); }; }
-function enterRings(){ placeAt(22,4,72,76,1); if(!opened.has('RINGin')){ opened.add('RINGin'); pendingSay=RING_T.enter.slice(); } }
+/* el hueco del Roble lleva al anillo más hondo al que hayas llegado (volver desde la plaza no obliga a rehacerlos) */
+const RING_BACK=[['ORU24,0',23,-1,72,92],['ORU24,3',24,1,6*16,6*16-4],['ORU22,1',25,2,5*16,5*16-4],['ORU23,3',23,2,7*16,6*16-4]];
+function enterRings(){ const B=RING_BACK.find(r=>opened.has(r[0]));
+  if(B&&opened.has('RINGin')){ placeAt(B[1],B[2],B[3],B[4],1); if(!opened.has('RINGback')){ opened.add('RINGback'); pendingSay=RING_T.back.slice(); } return; }
+  placeAt(22,4,72,76,1); if(!opened.has('RINGin')){ opened.add('RINGin'); pendingSay=RING_T.enter.slice(); } }
 { const X0=exitDungeon; exitDungeon=function(){ if(inRings()){ placeAt(1,1,72,76,0); return; } X0(); }; }
 function ringTearStep(){ if(state!=='play'||!inRings()) return; const [tx,ty]=playerTile(); if(grid[ty]&&grid[ty][tx]==='ꞻ'){ const R=RING_ROOMS[sx+','+sy]; if(!R||!R.oruga) return;
     if(R.oruga.next){ const [nx,ny,px,py]=R.oruga.next; placeAt(nx,ny,px,py,1); }
-    else { opened.add('RINGSDONE'); save(); placeAt(1,1,72,76,0); } } } // de momento: del primer anillo, al Nombre (la médula y los otros anillos, pendientes)
+    else { opened.add('RINGSDONE'); save(); placeAt(1,1,72,76,0); } } } // (todos los desgarros llevan a algún sitio: esto solo por si faltara)
 { const U0=updRoomRules; updRoomRules=function(){ U0(); ringTearStep(); }; }
 
 /* las pistas de cada sala (08: ROOM_HINTS) */
