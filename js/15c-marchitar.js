@@ -343,7 +343,7 @@ const WILT_BOSS={
   ciervo:'El manto de hojas del Ciervo resbala. Una ráfaga del Molinillo y queda al descubierto.' };
 const WILT_MID={
   king:'El Escarabajo Rey embiste recto. Apártate y dale en la cola cuando se atasque.',
-  drone:'El Zángano se lanza en picado. Cuando se estrelle, quedará aturdido.',
+  drone:'La cera se ablanda al sol, brote. Haz que el Soldado se lance a través de un rayo.',
   iceguard:'El Guardián de Hielo es duro. Una bellota-bomba lo ablanda.',
   scare:'El Espantapájaros se marea de tanto girar. Ése es tu momento.' };
 const WILT_DUNGEON={

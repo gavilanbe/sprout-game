@@ -78,16 +78,16 @@ function updBlockSlide(){ const B=blockSlide; if(!B) return false;
     if((B.t&1)===0){ const D=DIRV[B.dir], s=(B.t&2)?1:-1; // el polvo del arrastre sale por los lados de la roca (nunca encima de Sprout)
       if(D[0]===0) parts.push({k:'dust',x:bx+8+s*8,y:by+(D[1]<0?13:15),vx:s*.3,vy:-.06,life:14,max:14,r:1+(B.t&4?1:0),col:groundDustCol(),nog:true});
       else parts.push({k:'dust',x:bx+8-D[0]*4+s*3,y:by+15,vx:-D[0]*.15+s*.1,vy:-.1,life:14,max:14,r:1+(B.t&4?1:0),col:groundDustCol(),nog:true}); }
-    if(B.t>=BLOCK_SLIDE){ B.land=1; const onPlate=plateCells.has(B.tx+','+B.ty), cx=B.tx*16+8, cy=B.ty*16+14;
+    if(B.t>=BLOCK_SLIDE){ B.land=1; const onPlate=!B.ch&&plateCells.has(B.tx+','+B.ty), cx=B.tx*16+8, cy=B.ty*16+14;
       SFX.pushLand(); shake=Math.max(shake,2); player.squash=.22; player.frame=0;
       for(const s of [-1,1]) for(let i=0;i<3;i++) parts.push({k:'dust',x:cx+s*(6+i*2),y:cy,vx:s*(.5+i*.25),vy:-.12-i*.05,life:16,max:16,r:1+(i&1),col:groundDustCol(),nog:true});
       if(onPlate){ let n=0; for(const c of plateCells){ const [x,y]=c.split(',').map(Number); if(grid[y][x]==='#') n++; } SFX.plate(n);
         parts.push({x:cx,y:cy-6,vx:0,vy:0,life:12,col:'#fff6c0',ring:true,r:12,nog:true}); for(let i=0;i<5;i++) sparkle(cx-6+Math.random()*12,cy-12+Math.random()*6,'#fff6c0'); } }
     return true; }
-  if(++B.land>BLOCK_LAND){ blockSlide=null; grid[B.ty][B.tx]='#'; markDirty(); if(opened.has('PZ'+sx+','+sy)) saveBlocks(); checkPlates(); return false; }
+  if(++B.land>BLOCK_LAND){ blockSlide=null; grid[B.ty][B.tx]=B.ch||'#'; markDirty(); if(!B.ch){ if(opened.has('PZ'+sx+','+sy)) saveBlocks(); checkPlates(); } return false; } // B.ch: otra cosa que se arrastra igual (las lentes del Tronco, 12g)
   return true; }
 /* la roca en movimiento, en la capa de actores: se arrastra con un leve vaivén y al asentarse se aplasta y recupera */
-function drawBlockSlide(){ const B=blockSlide; if(!B) return; const [bx,by]=blockPos(), img=blockTile();
+function drawBlockSlide(){ const B=blockSlide; if(!B) return; const [bx,by]=blockPos(), img=B.img?B.img():blockTile();
   drawShadow(bx+8,by+15,7);
   if(B.land){ const k=B.land/BLOCK_LAND, sq=Math.sin(k*Math.PI)*(1-k*.5)*.16; ctx.save(); ctx.translate(bx+8,by+16); ctx.scale(1+sq,1-sq); ctx.drawImage(img,-8,-16); ctx.restore(); }
   else ctx.drawImage(img,Math.round(bx),Math.round(by)-((B.t>>1)&1)); }

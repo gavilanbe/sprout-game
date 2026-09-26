@@ -30,6 +30,9 @@ const server=http.createServer((req,res)=>{
     window.__skipDoor=()=>{ let i=0; while(state==='door'&&i++<200) __step(1); __skipPres(); }; // la travesía de una puerta, cueva o escalera (15g)
     window.__go=(nx,ny,px,py)=>{ __sprout.warp(nx,ny,px,py); hitStop=0; __step(2); if(state==='dialog') __skipDialog(); };
     window.__settle=()=>{ let i=0; while(blockSlide&&i++<60) __step(1); }; // la roca empujada se arrastra y se asienta (09)
+    window.__walk=(k,n)=>{ const x0=sx, y0=sy; keys[k]=true; let i=0; while(sx===x0&&sy===y0&&i++<(n||160)){ __step(1); if(state==='dialog'){ keys[k]=false; __skipDialog(); keys[k]=true; } } keys[k]=false; // andar hasta cambiar de sala (y dejar que se asiente)
+      i=0; while(state!=='play'&&i++<200){ __step(1); if(state==='dialog') __skipDialog(); } for(let j=0;j<40;j++){ __step(1); if(state==='dialog') __skipDialog(); } __skipPres(); for(let j=0;j<4;j++){ __step(1); if(state==='dialog') __skipDialog(); } return sx+','+sy; }; // lo que diga la sala al llegar (o tras presentarse su jefe), también
+    window.__hit=()=>{ keys.fire=true; __step(1); __step(8); };
     // el hielo de verdad del Templo (12e): un paso o un resbalón completo; empujar un bloque (resbala hasta el tope); derretir con el farol
     const K={'↑':'up','↓':'down','←':'left','→':'right'};
     window.__mv=(d)=>{ const k=K[d]; const [tx0,ty0]=playerTile(); keys[k]=true; let i=0, slid=false;
@@ -127,8 +130,23 @@ const server=http.createServer((req,res)=>{
       for(const [x,y,d] of [[1,2,1],[8,2,1]]){ player.x=x*16; player.y=y*16-4; player.dir=d; keys.alt=true; __step(1); }
       return [g0,grid[1][1],grid[1][8],grid[3][4]]; }),['=',';',';','q']);
   });
-  await check('El cristal cambia los bloques rojos/azules y persiste al recargar la sala',async()=>{
-    eq(await ev(()=>{ __go(11,1,72,40); const a=[grid[1][2],grid[1][7]]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); const b=[grid[1][2],grid[1][7],crystalOn]; __go(11,1,72,40); return [a,b,[grid[1][2],grid[1][7]]]; }),[['ª','æ'],['º','Æ',true],['º','Æ']]);
+  await check('La luz del Tronco: la Hoja quita un tapón y el rayo derrite la cera (y sigue así al volver); el gancho arranca tapones tras la miel; la lente se empuja con Sprout detrás y la Hoja la gira',async()=>{
+    eq(await ev(()=>{ const out=[], hk0=hasHook, xi0=xItem; state='play'; inBed=false; hasBlade=true; hitStop=0; // sin partida nueva: las pruebas de después cuentan con lo de antes
+      __go(10,0,72,72); __step(40); __skipDialog(); enemies=[]; player.x=16; player.y=44; player.dir=2; __hit(); out.push(grid[3][0],beams.length); __step(80); out.push(grid[3][9]);
+      __go(10,0,72,72); out.push(grid[3][0],grid[3][9],beams.length);
+      hasHook=true; xItem='hook'; __go(12,1,8,76); __step(40); __skipDialog(); enemies=[]; player.x=48; player.y=44; player.dir=2; keys.alt=true; __step(1); out.push(state); __step(200); out.push(grid[3][0],grid[3][5],grid[3][7]);
+      opened.add('KN11,-1:4,0'); opened.add('WX11,0:4,7'); __go(11,1,72,20); __step(40); __skipDialog(); enemies=[];
+      player.x=96; player.y=76; player.dir=2; keys.left=true; let i=0; while(!blockSlide&&i++<40) __step(1); __step(20); keys.left=false; __settle(); out.push(grid[5][5],grid[5][4],player.x<92); // Sprout va detrás
+      player.x=80; player.y=76; player.dir=2; __hit(); __step(80); out.push(grid[5][4],grid[5][7]);
+      hasHook=hk0; xItem=xi0; return out; }),['Ꝍ',1,'q','Ꝍ','q',1,'hook','Ꝍ','q','q','q','⟋',true,'⟍','q']);
+  });
+  await check('El Soldado de Cera: al estrellarse ni se inmuta y vuelve arriba volando; si cruza un rayo en picado se ablanda y la Hoja entra',async()=>{
+    eq(await ev(()=>{ state='play'; inBed=false; hasBlade=true; hitStop=0;
+      __go(12,0,40,60); __skipPres(); bossHidden=false; enemies=[]; player.x=128; player.y=44; player.dir=3; __hit(); __step(20); const m=midboss, out=[grid[3][9]];
+      player.x=40; player.y=92; player.inv=999; m.st='dive'; m.x=100; m.y=70; m.vx=0; m.vy=3; m.t=40; for(let i=0;i<14;i++) __step(1); out.push(m.st); for(let i=0;i<80;i++) __step(1); out.push(m.st);
+      player.x=40; player.y=12; player.dir=1; player.atk=11; const hp0=m.hp; __step(3); out.push(m.hp===hp0);
+      m.st='dive'; m.x=100; m.y=8; m.vx=0; m.vy=3; m.t=40; let i=0; while(m.st==='dive'&&i++<40) __step(1); out.push(m.st,!!m.beamSoft);
+      m.flash=0; hitStop=0; player.x=m.x; player.y=m.y+26; player.dir=1; player.atk=11; __step(3); out.push(m.hp<hp0); player.inv=0; midboss=null; return out; }),['Ꝍ','rise','hover',true,'stunned',true,true]);
   });
   await check('El Topo Real cede la Brasa con Z al rendirse; luego regala su corona',async()=>{
     eq(await ev(()=>{ bossDone=false; topoGift=false; __go(6,2,72,90); __skipDialog(); const hp=boss.hp; boss.hp=2; __step(2); __skipDialog(); const st=boss.st; player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(2);
@@ -194,24 +212,39 @@ const server=http.createServer((req,res)=>{
       return log; });
     eq(r,[['cueva',6,0],['guardias','=','q',1],['galería',2],['placas','#','#','q'],['pulsador','q'],['llave',1,'q'],['nido',0,'q'],['rey',true,true,'bomb'],['grieta','q','q'],['llave grande',true],['puerta','q'],['brasa',true,true],['deshielo','rite',true,'valley']]);
   });
-  await check('Camino crítico: el Tronco Hueco (llave, Zángano, gancho, cristal, llave grande, Reina)',async()=>{
+  await check('Camino crítico: el Tronco Hueco (el primer rayo, llave, Soldado de Cera, gancho, la Columna, el sello, la lente, la jaula, llave grande, Reina)',async()=>{
     const r=await ev(()=>{ const log=[];
       newGame(); state='play'; inBed=false; introDone=true; elderMet=true; hasBlade=true; seeds=8; won=true; thawed=true; hasBomb=true; xItem='bomb'; announced8=true; bloomDone=true;
-      __go(1,3,72,60); player.x=4*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); log.push(['tronco',sx,sy]);
-      __go(11,0,72,90); enemies=[]; const k=pickups.find(p=>p.kind==='key'); player.x=k.x; player.y=k.y-4; __step(3); __skipDialog(); player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.tronco,grid[3][9]]);
-      __go(12,0,40,60); __skipDialog(); enemies=[]; let n=0; while(midboss&&n++<300){ midboss.st='stunned'; midboss.t=60; midboss.flash=0; player.x=midboss.x; player.y=midboss.y+26; player.dir=1; player.atk=11; hitStop=0; __step(1); }
-      __skipPres(); __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['zángano',midDrone,hasHook]);
-      __go(11,-1,72,60); __skipDialog(); enemies=[]; __step(2); const kc=pickups.find(p=>p.kind==='key'); player.x=kc.x; player.y=kc.y-4; __step(20); __skipDialog(); log.push(['colmena',dungeonKeys.tronco]);
-      __go(11,1,72,40); enemies=[]; const east0=grid[5][7]; player.x=5*16; player.y=3*16-4; player.dir=1; player.atk=11; __step(1); log.push(['cristal',east0,grid[5][7],grid[5][2]]);
-      player.atk=0; player.x=8*16; player.y=5*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo este',grid[5][9],grid[6][9],dungeonKeys.tronco]);
-      __go(12,1,40,90); enemies=[]; const bk=pickups.find(p=>p.kind==='bigkey'); player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); log.push(['llave grande',!!bigKeys.tronco]);
-      xItem='hook'; __go(10,1,72,20); enemies=[]; player.x=4*16; player.y=2*16-4; player.dir=0; keys.alt=true; __step(1); const hs=state; __step(70); log.push(['canal',hs,(player.y+12)>>4]);
+      __go(1,3,72,60); player.x=4*16; player.y=2*16-4; player.dir=1; keys.up=true; __step(2); keys.up=false; __skipDoor(); __skipDialog(); __step(40); __skipDialog(); log.push(['tronco',sx,sy]);
+      enemies=[]; player.x=16; player.y=44; player.dir=2; __hit(); __step(90); __skipDialog(); log.push(['primer rayo',grid[3][0],grid[3][9]]);
+      player.x=120; player.y=44; log.push(['al este',__walk('right')]);
+      enemies=[]; const k=pickups.find(p=>p.kind==='key'); player.x=k.x; player.y=k.y-4; __step(3); __skipDialog(); player.x=8*16; player.y=3*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo',dungeonKeys.tronco,grid[3][9]]);
+      player.x=120; player.y=44; log.push(['al nido',__walk('right')]); __skipPres(); bossHidden=false; enemies=[];
+      player.x=32; player.y=92; player.dir=0; __hit(); player.x=128; player.y=44; player.dir=3; __hit(); __step(30); log.push(['nudos',grid[7][2],grid[3][9]]);
+      let n=0; while(midboss&&!midboss.dead&&n++<40){ const m=midboss; m.st='dive'; m.x=100; m.y=8; m.vx=0; m.vy=3; m.t=40; let i=0; while(m.st==='dive'&&i++<40) __step(1); // se lanza cruzando el rayo del este
+        if(m.st!=='stunned') break; m.flash=0; player.x=m.x; player.y=m.y+26; player.dir=1; player.inv=60; player.atk=11; hitStop=0; __step(1); __step(10); }
+      __skipPres(); __step(4); const hk=pickups.find(p=>p.kind==='hook'); if(hk){ player.x=hk.x; player.y=hk.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['soldado',midDrone,hasHook]);
+      xItem='hook'; __go(11,0,72,20); enemies=[]; player.x=64; player.y=4; log.push(['a la colmena',__walk('up')]);
+      player.x=64; player.y=60; __step(3); const shut=!!roomShut; enemies=[]; spawnQ=[]; __step(8); const kc=pickups.find(p=>p.kind==='key'); if(kc){ player.x=kc.x; player.y=kc.y-4; __step(20); __skipDialog(); } log.push(['emboscada',shut,dungeonKeys.tronco]);
+      player.x=64; player.y=28; player.dir=1; keys.alt=true; __step(1); __step(12); log.push(['columna',grid[0][4]]);
+      player.x=64; player.y=96; log.push(['a la galería',__walk('down')]); enemies=[]; __step(80); log.push(['sello',grid[7][4]]);
+      player.x=64; player.y=100; log.push(['a la miel',__walk('down')]); enemies=[]; __step(20);
+      player.x=96; player.y=76; player.dir=2; keys.left=true; let i=0; while(!blockSlide&&i++<40) __step(1); __step(20); keys.left=false; __settle();
+      player.x=80; player.y=76; player.dir=2; __hit(); __step(80); log.push(['lente al este',grid[5][4],grid[5][7]]);
+      player.x=8*16; player.y=5*16-4; player.dir=3; keys.fire=true; __step(2); log.push(['cerrojo este',grid[5][9],grid[6][9],dungeonKeys.tronco]);
+      player.x=64; player.y=92; player.dir=1; for(let q=0;q<2;q++){ keys.up=true; i=0; while(!blockSlide&&i++<40) __step(1); __step(20); keys.up=false; __settle(); __step(2); }
+      player.dir=1; __hit(); __step(80); log.push(['lente al oeste',grid[3][4],grid[3][2]]);
+      player.x=136; player.y=76; log.push(['a la jaula',__walk('right')]); enemies=[];
+      player.x=48; player.y=44; player.dir=2; keys.alt=true; __step(1); __step(200); const bk=pickups.find(p=>p.kind==='bigkey'); if(bk){ player.x=bk.x; player.y=bk.y-4; __step(3); __skipDialog(); } log.push(['llave grande',grid[3][5],grid[3][7],!!bigKeys.tronco]);
+      __go(11,1,72,20); enemies=[]; player.x=48; player.y=44; player.dir=2; keys.left=true; __step(40); keys.up=true; log.push(['al canal',__walk('left')]); keys.up=false; enemies=[];
+      player.x=4*16; player.y=2*16-4; player.dir=0; keys.alt=true; __step(1); const hs=state; __step(70); log.push(['canal',hs,(player.y+12)>>4]);
       player.x=4*16; player.y=6*16-4; player.dir=0; keys.fire=true; __step(2); log.push(['puerta',grid[7][4]]);
       __go(10,2,72,96); __skipDialog(); boss.hp=2; __step(3); __skipDialog(); player.x=boss.x+8; player.y=boss.y+34; player.dir=1; keys.fire=true; __step(1); __skipDialog(); __step(3);
       const t=pickups.find(p=>p.kind==='tear'); if(t){ player.x=t.x; player.y=t.y-4; __step(3); itemT=0; __step(2); __skipDialog(); } log.push(['lágrima',boss2Done,hasTear]);
       __go(1,1,64,72); player.dir=1; keys.fire=true; __step(1); __skipRite(); __skipDialog(); __step(2); __skipDialog(); log.push(['verano',summered,screenBiome(2,3),screenBiome(2,1)]);
       return log; });
-    eq(r,[['tronco',10,0],['cerrojo',0,'q'],['zángano',true,true],['colmena',1],['cristal','æ','Æ','º'],['cerrojo este','q','q',0],['llave grande',true],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'summer','summer']]);
+    eq(r,[['tronco',10,0],['primer rayo','Ꝍ','q'],['al este','11,0'],['cerrojo',0,'q'],['al nido','12,0'],['nudos','Ꝍ','Ꝍ'],['soldado',true,true],['a la colmena','11,-1'],['emboscada',true,1],['columna','Ꝍ'],
+      ['a la galería','11,0'],['sello','q'],['a la miel','11,1'],['lente al este','⟍','q'],['cerrojo este','q','q',0],['lente al oeste','⟋','q'],['a la jaula','12,1'],['llave grande','q','q',true],['al canal','10,1'],['canal','hook',5],['puerta','q'],['lágrima',true,true],['verano',true,'summer','summer']]);
   });
   await check('Camino crítico: el Templo de la Cima (bloques en el hielo, la Pista, cerrojo, llave grande, Guardián, vilano, campanas, cima, Viento... y el capítulo 5 hasta los créditos)',async()=>{
     const r=await ev(()=>{ const log=[];

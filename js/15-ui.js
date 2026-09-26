@@ -254,7 +254,7 @@ function drawDialog(){
     else if(dlg.page<dlg.pages.length-1){ const b=Math.abs(Math.sin(tick*.15))*2; ctx.drawImage(NEXT_SPR,x+w-12,(y+h-10+b)|0); }
     else { const s2=1+Math.round(Math.abs(Math.sin(tick*.1))); ctx.fillStyle=F.key; ctx.fillRect(x+w-9-s2,y+h-8-s2,2+s2*2,2+s2*2); ctx.fillStyle=PAL.k; ctx.fillRect(x+w-8,y+h-7,2,2); } }
 }
-const BOSS_SUB={'EL TOPO REAL':'guardián de la Brasa','LA REINA AVISPA':'guardiana de la Lágrima','EL VIENTO DEL NORTE':'hermano del Roble','EL ESCARABAJO REY':'morro de hierro','EL ZÁNGANO CAPITÁN':'aguijón del panal','EL GUARDIÁN DE HIELO':'roca que no siente','EL CIERVO DE ÁMBAR':'guardián del Otoño','EL ESPANTAPÁJAROS':'paja con malas pulgas'};
+const BOSS_SUB={'EL TOPO REAL':'guardián de la Brasa','LA REINA AVISPA':'guardiana de la Lágrima','EL VIENTO DEL NORTE':'hermano del Roble','EL ESCARABAJO REY':'morro de hierro','EL SOLDADO DE CERA':'coraza de cera dura','EL GUARDIÁN DE HIELO':'roca que no siente','EL CIERVO DE ÁMBAR':'guardián del Otoño','EL ESPANTAPÁJAROS':'paja con malas pulgas'};
 function drawBossCard(){ if(!bossCard) return;
   const t=130-bossCard.t, a=Math.max(0,Math.min(1,t/6,bossCard.t/20));
   const w=Math.min(164,8+t*16), slide=Math.max(0,1-t/16);

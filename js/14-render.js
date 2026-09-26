@@ -277,6 +277,7 @@ function drawDark(){
   hole(player.x+8,player.y+8,lightRadius(deep));
   if(boss) hole(boss.x+16,boss.y+16,40); if(midboss) hole(midboss.x+12,midboss.y+12,34);
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';') hole(x*16+8,y*16+6,30); }
+  if(typeof beamHoles==='function') beamHoles(hole); // los rayos de sol del Tronco (12g)
   for(const b of bombs) hole(b.x+8,b.y+8,18+(tick&3));
   for(const p of pickups) if(ITEM_SPRS[p.kind]||p.kind==='bigkey') hole(p.x+8,p.y+8,26);
   for(const e of enemies) if(e.type==='wisp') hole(e.x+8,e.y+8,22);
@@ -285,6 +286,7 @@ function drawDark(){
   // luz cálida: las fuentes tiñen un poco lo que alumbran
   ctx.save(); ctx.globalCompositeOperation='lighter';
   glowAt(player.x+8,player.y+8,hasLantern?60:40,r==='templo'?'rgba(80,120,160,.10)':'rgba(120,80,30,.12)');
+  if(typeof beamGlow==='function') beamGlow();
   for(let y=0;y<SH;y++) for(let x=0;x<SW;x++){ if(grid[y][x]===';') glowAt(x*16+8,y*16+6,26+((tick>>2)&1)*2,'rgba(160,90,20,.16)'); }
   ctx.restore();
 }

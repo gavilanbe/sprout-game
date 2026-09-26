@@ -11,7 +11,7 @@
    x felpudo · u maceta · P cama · ñ mostrador · ⌐ estante · ¶ pilar
    enemigos: B blob V murc Z escar U erizo N fantasma X rana * pincho ∞ ráfaga $ ardilla ¡ carámbano
              ¿ setón c cangrejo Φ fuego fatuo β abeja Γ golemito Σ caracol
-   minijefes: ℜ Escarabajo Rey · Δ Zángano · Θ Guardián de hielo   jefes: J Topo · ! Reina · ^ Viento
+   minijefes: ℜ Escarabajo Rey · Δ Soldado de Cera · Θ Guardián de hielo   jefes: J Topo · ! Reina · ^ Viento
    objetos: L hoja · K bomba · + gancho · £ vaina · § farol · ¬ vilano · ¦ escudo · 1-8 semillas
             9 corazón entero · ♥ cuarto de corazón · 0 diario · ( llave · ł llave grande
    vecinos: h Petra · j Lupa · y Moss · g Tilo · ö Corteza
@@ -393,35 +393,35 @@ const MAPS={
 "vvvvvvvvvv",
 ],
 /* ================= EL TRONCO HUECO (mazmorra 2) ================= */
-'10,0':[ // Umbral del Tronco
+'10,0':[ // Umbral del Tronco — el PRIMER RAYO (12g): la Hoja corta el tapón del nudo y el sol derrite la cera de la salida
 "vvvvvvvvvv",
 "vqqqqqqqqv",
 "vqvq*qqvqv",
-"vqqqqqqqqq",
-"vqvqqqqvqq",
+"ꝊqqqqqqqqѠ",
+"vqvqqqqvqv",
 "vqqqqqqqqv",
 "vqqqxxqqqv",
 "vvvvvvvvvv",
 ],
-'11,0':[ // Galería del Enjambre: la llave y el cerrojo; al norte, la Colmena
+'11,0':[ // Galería del Enjambre: la llave y el cerrojo; al norte, la Colmena; al sur, un sello de cera que solo derrite la Columna
 "vvvvqqvvvv",
 "vqqqqβqqqv",
 "vqvqqqqvqv",
 "qqqvqqβqq)",
-"qqqq(qqqq)",
+"vqqq(qqqq)",
 "vqvqqqqvqv",
 "vqqqqΣqqqv",
-"vvvvqqvvvv",
+"vvvvѠvvvvv",
 ],
-'12,0':[ // Nido del Zángano Capitán
+'12,0':[ // Nido del Soldado de Cera — dos nudos (este y suelo; arriba lo taparía la barra del jefe): se ablanda al cruzar un rayo de sol en picado
 "vvvvvvvvvv",
 "vqqqqqqqqv",
 "vqqqqqqqqv",
-"qqqqΔqqqqv",
+"qqqqΔqqqqꝊ",
 "qqqqqqqqqv",
 "vqqqqqqqqv",
 "vqqqqqqqqv",
-"vvvvvvvvvv",
+"vvꝊvvvvvvv",
 ],
 '10,1':[ // Canal de la Memoria — solo se cruza con el gancho
 "vvvvvvvvvv",
@@ -433,22 +433,22 @@ const MAPS={
 "vqq0qqqqqv",
 "vvvvŁŁvvvv",
 ],
-'11,1':[ // Sala del Cristal: golpea el cristal para cambiar los bloques; cerrojo al este
-"vvvvqqvvvv",
-"qqªqqqqæqv",
-"qqªqq¢qæqv",
-"vqªqqqqæqv",
-"vqªqqqqæqv",
-"vqªqqqqæq)",
-"vqªq*qqæq)",
+'11,1':[ // Sala de la Miel Cristalizada: la luz de la Columna baja por x=4; los pilares solo dejan torcerla al este abajo (filas 5-6) y al oeste arriba (1-3): la lente se empuja por la columna y la Hoja la gira; cerrojo al este
+"vvvvqvvvvv",
+"qqӁqqqvӁqv",
+"qqӁqqqvӁΣv",
+"vqӁqqqvӁqv",
+"vqӁvqqvӁqv",
+"vβӁvq⟋qӁq)",
+"vqӁvqqqӁq)",
 "vvvvvvvvvv",
 ],
-'12,1':[ // Cámara de la Llave Grande — al sur, el estanque
+'12,1':[ // Cámara de la Llave Grande — enjaulada en cera; el nudo, tras un foso de miel: solo el gancho arranca su tapón; al sur, el estanque
 "vvvvvvvvvv",
-"vqqqqqqqqv",
-"vq¶qqqq¶qv",
-"vqqqq¶łqqv",
-"vqqqqqqqqv",
+"v~~qqqqqqv",
+"v~~qqqѠqqv",
+"Ꝋ~~qqѠłѠqv",
+"v~~qqqѠqqv",
 "qq¶q0qq¶qv",
 "qqqβqqβqqv",
 "vvvvqqvvvv",
@@ -574,13 +574,13 @@ const MAPS={
 "vq♣qqqq♣qv",
 "vvvvvvvvvv",
 ],
-'11,-1':[ // Colmena Alta — EMBOSCADA: al vencer cae una llave
-"vvvvvvvvvv",
-"vqqqqqqqqv",
-"vqβqvvqβqv",
+'11,-1':[ // Colmena Alta — EMBOSCADA: al vencer cae una llave; arriba, el nudo de la COLUMNA (solo el gancho llega)
+"vvvvꝊvvvvv",
+"vqq°°°qqqv",
+"vqβvqqvβqv",
 "qqqqqqqqqq",
 "qqqqΣqqqqq",
-"vqβqvvqΣqv",
+"vqβvqqvΣqv",
 "vqqqqqqqqv",
 "vvvvqqvvvv",
 ],
@@ -912,6 +912,6 @@ const CHESTS={
 /* nombres de lugar */
 const PLACE_NAMES={'0,0':'Riscos del Silencio','1,0':'Bosque de los Ecos','2,0':'Claro del Primer Brote','3,0':'Juncal del Norte','4,0':'Cascada del Ámbar','0,1':'Barrio del Roble','1,1':'Plaza de las Estaciones','2,1':'Pradera del Recuerdo','3,1':'Orilla de Moss','4,1':'Orilla del Este','0,2':'Playa de la Hoja','1,2':'Camino de los Dientes de León','2,2':'Dunas del Este','3,2':'Lago de las Runas','4,2':'Cabo del Vilano','0,-1':'Ladera de la Vigilia','1,-1':'Campo del Deshielo','2,-1':'Boca de la Cueva','3,-1':'Mirador del Ámbar','1,-2':'Sendero del Último Invierno','1,-3':'Cima del Viento','2,3':'Marisma de las Cartas','1,3':'Tronco de la Reina','3,3':'Jardín Sumergido',
 '6,0':'Vestíbulo del Topo','7,0':'Cámara de las Raíces','8,0':'Trono del Escarabajo','6,1':'Taller de las Bellotas','7,1':'Sala del Pulsador','8,1':'Galería de los Rodapúas','6,2':'Refugio del Topo Real','8,2':'Cripta de la Llave','6,-1':'Sala de las Guardias','7,-1':'Galería Oscura','8,-1':'Cámara del Eco','7,2':'Nido de Topillos','11,-1':'Colmena Alta','10,-1':'Paso de los Agujeros','12,-1':'Despensa de Miel','12,2':'Estanque del Panal','14,2':'Galería del Hielo','16,2':'Capilla de las Llamas','16,-1':'Puente Roto',
-'10,0':'Umbral del Tronco','11,0':'Galería del Enjambre','12,0':'Nido del Zángano','10,1':'Canal de la Memoria','11,1':'Sala del Cristal','12,1':'Cámara de la Llave','10,2':'Corazón del Panal',
+'10,0':'Umbral del Tronco','11,0':'Galería del Enjambre','12,0':'Nido del Soldado','10,1':'Canal de la Memoria','11,1':'Sala de la Miel','12,1':'Cámara de la Llave','10,2':'Corazón del Panal',
 '15,2':'Atrio Helado','15,1':'Sala del Vacío','14,1':'Galería de Bloques','16,1':'Cámara de la Llave','15,0':'Sala de las Campanas','14,0':'Pista de Hielo','16,0':'Trono del Guardián',
 '5,9':'Gruta de los Ecos','0,12':'Antesala del Eco','1,12':'Eco del Topo','2,12':'Eco de la Reina','3,12':'Eco del Ciervo','4,12':'Eco del Viento','5,12':'El Alba','4,9':'Bodega del Bosque','3,9':'Madriguera del Camino','4,-1':'Glaciar del Silencio','0,3':'Cala del Silencio','4,3':'Ciénaga de las Cartas','9,9':'Tu maceta','8,9':'La tienda de Tilo','7,9':'La cabaña de Corteza'};

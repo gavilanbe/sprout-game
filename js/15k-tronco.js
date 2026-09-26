@@ -4,7 +4,7 @@
    Panal, miel, abejas y madera. Contrato de los registros en 15i.
    · DNG_CARD.tronco   el título al entrar: el panal se llena celda a celda,
                        la miel gotea, cruzan abejas y cae el nombre.
-   · BOSS_INTRO.drone  el Zángano Capitán entra en picado y saluda.
+   · BOSS_INTRO.drone  el Soldado de Cera entra en picado y saluda.
    · BOSS_INTRO.avispa el enjambre forma a la Reina, que se posa en su
                        trono de panal; título con golpe (y su eco).
    · BOSS_OUTRO.avispa una gota de miel envuelve a Sprout y el enjambre
@@ -136,16 +136,16 @@ function tkHexBig(cx,cy,pal){ const W=[7,9,11,13,15,15,15,15,15,13,11,9,7]; cx=M
   ctx.fillStyle=pal[0]; ctx.fillRect(cx-3,cy-7,4,1); ctx.fillRect(cx-5,cy-6,1,2); }
 
 /* =========================================================
-   2) EL ZÁNGANO CAPITÁN: entra en picado, saluda, y su franja a rayas
+   2) EL SOLDADO DE CERA: entra en picado, saluda, y su franja a rayas
    ========================================================= */
-const TK_BEE=['#fff8c0','#f8e048','#f0c020','#c08010','#5a3a08'];   // amarillo de abeja para el nombre del Zángano
+const TK_BEE=['#fff8c0','#f8e048','#f0c020','#c08010','#5a3a08'];   // amarillo de cera para el nombre del Soldado
 /* el picado: el punto más hondo que queda lejos de Sprout (nunca cae sobre él) y dentro de la sala */
 const TK_DIVES=[[0,50],[-24,46],[24,46],[-36,36],[36,36],[0,32],[-44,20],[44,20],[0,18],[-30,10],[30,10],[0,8]];
 function tkDiveFor(m0){ const pcx=player.x+8, pcy=player.y+10;
   for(const [dx,dy] of TK_DIVES){ const x=m0.x+dx, y=m0.y+dy; if(x<4||x>VW-28||y+24>PLAY_H-6) continue;
     if(Math.hypot(x+12-pcx,y+12-pcy)>=44) return [dx,dy]; }
   return [0,4]; }
-function tkDroneAt(P,u){ const m0=P.st.m0, sx0=P.st.side>0?172:-44, D=P.st.dive; // dónde está el Zángano en el guion
+function tkDroneAt(P,u){ const m0=P.st.m0, sx0=P.st.side>0?172:-44, D=P.st.dive; // dónde está el Soldado en el guion
   if(u<4) return null;
   if(u<48){ const k=presentSeg(u,4,46), e=presentEase.out(k); return [sx0+(m0.x-sx0)*e+Math.sin(k*9.42)*16*(1-k), m0.y-16*Math.sin(k*Math.PI)+Math.sin(u*.3)*2]; } // entra por el lado contrario a Sprout
   if(u<54) return [m0.x,m0.y-8*presentEase.out(presentSeg(u,48,54))];                // coge impulso
@@ -174,7 +174,7 @@ BOSS_INTRO.drone={ dur:178, shortDur:88,
       tkDrawDrone(P,x,y);
       if(u>=74&&(u-74)%36<5){ const g=3-Math.abs(((u-74)%36)-2); caStar(x+12,y+23,g,'#ffffff'); } } // el aguijón brilla
     const bk=Math.min(presentSeg(u,66,74),rem/12); presentBars(bk,16);
-    if(u>=90&&bk>.9) txtOL(tkType('AGUIJÓN DEL PANAL',(u-90)*1.2),80,VH-10,'#e0a830','center',TK_INK,FONT_S);
+    if(u>=90&&bk>.9) txtOL(tkType('CORAZA DE CERA DURA',(u-90)*1.2),80,VH-10,'#e0a830','center',TK_INK,FONT_S);
     if(u>=72){ const inK=presentEase.out(presentSeg(u,72,82)), outK=presentEase.in(clamp(1-rem/16,0,1)), x=Math.round((1-inK)*VW-outK*VW), y0=80;
       ctx.save(); ctx.translate(x,0);
       ctx.fillStyle='#140c04'; ctx.fillRect(0,y0,VW,46);
@@ -182,8 +182,8 @@ BOSS_INTRO.drone={ dur:178, shortDur:88,
       ctx.fillStyle='#3a2410'; ctx.fillRect(0,y0+3,VW,1); ctx.fillRect(0,y0+42,VW,1);
       for(let c=-1;c<25;c++) for(let r=0;r<5;r++){ const hx=c*7, hy=y0+8+r*8+((c&1)?4:0); ctx.fillStyle='#22160a'; ctx.fillRect(hx-2,hy-4,5,1); ctx.fillRect(hx-4,hy-2,1,4); ctx.fillRect(hx+4,hy-2,1,4); ctx.fillRect(hx-2,hy+3,5,1); }
       txtOL('MINIJEFE',80,y0+6,'#f8d030','center',TK_INK,FONT_S);
-      if(u>=78){ const k=presentEase.out(presentSeg(u,78,84)); txtOL('EL ZÁNGANO',Math.round(80+(1-k)*80),y0+13,'#fffbe8','center',TK_INK); }
-      if(u>=80){ const img=tkBig('CAPITÁN',TK_BEE), ix=Math.round(80-img.width/2), k=presentSeg(u,80,84);
+      if(u>=78){ const k=presentEase.out(presentSeg(u,78,84)); txtOL('EL SOLDADO',Math.round(80+(1-k)*80),y0+13,'#fffbe8','center',TK_INK); }
+      if(u>=80){ const img=tkBig('DE CERA',TK_BEE), ix=Math.round(80-img.width/2), k=presentSeg(u,80,84);
         let iy=Math.round(y0+23-(1-presentEase.in(k))*30); if(u>84) iy+=Math.round(Math.sin((u-84)*1.1)*3*Math.exp(-(u-84)*.25));
         if(u>=112&&u<132) tkShine(img,ix,iy,(u-112)/20); else ctx.drawImage(img,ix,iy); }
       ctx.restore(); } },
@@ -271,7 +271,7 @@ BOSS_INTRO.avispa={ dur:330, shortDur:112,
    · La Reina: se yergue, hace una reverencia, su enjambre la envuelve, se deshace en abejas que salen por
      el techo dejando polen, y donde estaba queda una gota de luz: ahí caerá la Lágrima. Su eco, en violeta,
      se disuelve en el aire.
-   · El Zángano: se queda tieso, su zumbido se apaga, cae en barrena, se estrella y revienta en polen y cera;
+   · El Soldado de Cera: se queda tieso, su zumbido se apaga, cae en barrena, se estrella y revienta en polen y cera;
      sus alas bajan revoloteando. La recompensa cae donde se estrelló.
    ========================================================= */
 const TK_BYE_N=44;
@@ -313,7 +313,7 @@ BOSS_BYE.avispa={ dur:186,
       if(t>=160){ const g=Math.round(6-Math.abs(t-170)/2); if(g>0) caStar(ex,ey,g,'#ffffff'); parts.length<400&&t===160&&parts.push({x:ex,y:ey,vx:0,vy:0,life:14,col:'#fffbe8',ring:true,r:14,nog:true}); } } },
   end(P){ bossHidden=false; const b=boss; if(b&&P.st.b0){ b.x=P.st.b0.x; b.y=P.st.b0.y; } } };
 
-/* el Zángano: dónde está en su caída (en barrena hacia un sitio libre, nunca encima de Sprout) */
+/* el Soldado: dónde está en su caída (en barrena hacia un sitio libre, nunca encima de Sprout) */
 function tkCrashFor(m0){ const pcx=player.x+8, pcy=player.y+10;
   for(const [dx,dy] of [[0,40],[-18,36],[18,36],[-30,26],[30,26],[0,24],[-36,12],[36,12],[0,10],[0,0]]){ const x=m0.x+dx, y=m0.y+dy;
     if(x<4||x>VW-28||y+24>PLAY_H-6) continue; if(Math.hypot(x+12-pcx,y+12-pcy)>=36) return [x,y]; }

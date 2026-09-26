@@ -253,10 +253,10 @@ const QUEEN_PEACE=[
 const QUEEN_AFTER=["—Zzz... Las flores vuelven a cerrar de noche.","—Gracias, pequeño."];
 const WIND_AFTER=["(La brisa peina la nieve, mansa.)","(Ya no aúlla: canturrea. Es la nana de Raíz.)"];
 /* minijefes: presentaciones (insinúan; no resuelven) */
-const MID_CARD={king:'EL ESCARABAJO REY',drone:'EL ZÁNGANO CAPITÁN',iceguard:'EL GUARDIÁN DE HIELO'};
+const MID_CARD={king:'EL ESCARABAJO REY',drone:'EL SOLDADO DE CERA',iceguard:'EL GUARDIÁN DE HIELO'};
 const MID_INTRO={
   king:["(Un caparazón enorme cruje en la penumbra... Está vacío. Y aun así, se mueve.)","(Por delante es puro hierro.)"],
-  drone:["(Un zumbido de acero llena el nido. Tiene forma de zángano, pero es rígido como la cera...)","(Embiste a lo loco. A ver qué pasa cuando se estrelle.)"],
+  drone:["(Un zumbido rígido llena el nido. Es un soldado del panal, con coraza de cera dura.)","(La Hoja no le hará ni un rasguño... a no ser que algo lo ablande.)"],
   iceguard:["(Los bloques del templo se juntan y cobran forma: hielo vacío, con algo gris dentro.)","(La Hoja no le hace nada. Tendría que ablandarse... con un buen estallido.)"],
 };
 /* la cima, después del ciclo: la nana recuperada */
@@ -308,13 +308,16 @@ const ROOM_HINTS={
   '1,-2':["(Aquí arriba el invierno nunca se fue. Sopla fuerte.)"],
   '2,3':["(Las hojas caen sin parar. Huele a otoño viejo...)"],
   '0,2':["(La arena susurra. Algo brilla entre las dunas...)"],
-  '11,1':["(Un cristal zumba en el centro. Bloques rojos y azules...)"],
+  '11,1':["(La luz de la Columna llega hasta aquí abajo. A los lados, miel cristalizada: dura como la piedra.)","(Abajo, una lente de rocío. Los pilares no dejan que la luz vaya a cualquier sitio...)"],
+  '11,0':["(Al sur, la salida está sellada con cera dura. Aquí dentro no entra ni un rayo...)"],
+  '11,-1':["(Arriba, un nudo enorme tapado con cera: el de la COLUMNA. El foso no deja llegar hasta él.)"],
+  '12,1':["(La llave grande, enjaulada en cera.)","(El nudo de la pared queda al otro lado de la miel...)"],
   '15,0':["(Cinco campanas de hielo. En la verja hay cinco notas talladas.)","(Esa melodía... la has oído antes.)"],
   '15,1':["(Un vacío negro parte la sala. Haría falta volar...)"],
   '5,9':["(Está muy oscuro. Algo brilla al fondo.)"],
   '15,2':["(EL TEMPLO DE LA CIMA. Su hielo es de verdad: si lo pisas, resbalas hasta chocar.)"],
   '6,0':["(LA CUEVA DEL TOPO. Huele a tierra removida.)"],
-  '10,0':["(EL TRONCO HUECO. La madera zumba por dentro.)"],
+  '10,0':["(EL TRONCO HUECO. La madera zumba por dentro, y está oscuro como una colmena.)","(En la pared del oeste, un nudo tapado con cera. Por la rendija se cuela un hilo de sol...)"],
 };
 /* Petra te despierta: ella plantó la maceta, la regó y le puso nombre al brote */
 const PETRA_WAKE=[

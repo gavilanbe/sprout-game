@@ -972,14 +972,15 @@ const KING_BEETLE=mkTile(g=>{ // El Escarabajo Rey — mira a la derecha; morro 
   artOutline(g,24,24);
   g.fillStyle='#ffffff'; g.fillRect(17,11,1,1); g.fillStyle='#e84848'; g.fillRect(17,12,1,1);   // ojo
 },24,24);
-const DRONE=mkTile(g=>{ // El Zángano Capitán — avispa grande con casco
+const DRONE=mkTile(g=>{ // El Soldado de Cera — avispa grande con yelmo de cera dura
   blobArt(g,0,0,11,10,[{x:5.5,y:5,r:5,ry:4.2}],['#8aa8c0','#b8d0e0','#d8e8f4','#f0f8ff','#ffffff'],{outline:false,dither:.5});
   blobArt(g,13,0,11,10,[{x:5.5,y:5,r:5,ry:4.2}],['#8aa8c0','#b8d0e0','#d8e8f4','#f0f8ff','#ffffff'],{outline:false,dither:.5});
   g.fillStyle='#8aa8c0'; g.fillRect(3,4,5,1); g.fillRect(16,4,5,1);
   blobArt(g,6,11,12,11,[{x:6,y:5.5,r:5.2,ry:5.4}],['#6a4a08','#b88810','#f0c020','#f8e060','#fff8c0'],{outline:false,grad:.3});
   artClip(g,[[6,13,12,2],[6,17,12,2]],()=>blobArt(g,6,11,12,11,[{x:6,y:5.5,r:5.2,ry:5.4}],['#0c0a0a','#1a1410','#2a2218','#3a3020','#4a4030'],{outline:false}));
   g.fillStyle='#1a1410'; g.fillRect(11,22,2,1); g.fillRect(12,23,1,1);
-  blobArt(g,7,4,10,9,[{x:5,y:4.5,r:4.8,ry:4.2}],IRON5,{outline:false,dither:.4});        // casco
+  blobArt(g,7,4,10,9,[{x:5,y:4.5,r:4.8,ry:4.2}],['#6a4210','#9a6a18','#c89030','#e8b848','#f8e088'],{outline:false,dither:.4}); // yelmo de cera
+  g.fillStyle='#9a6a18'; g.fillRect(9,5,2,1); g.fillRect(12,4,2,1); g.fillRect(14,6,1,1); g.fillStyle='#fff4c0'; g.fillRect(10,4,1,1); // celdillas y un brillo
   g.fillStyle='#1a1420'; g.fillRect(8,8,8,2); g.fillStyle='#e84848'; g.fillRect(9,8,2,1); g.fillRect(13,8,2,1); // visera y ojos
   g.fillStyle='#f8d848'; g.fillRect(11,3,2,2);
   artOutline(g,24,24);
